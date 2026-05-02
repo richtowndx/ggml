@@ -1,54 +1,54 @@
-#ifndef HVX_DIV_H
-#define HVX_DIV_H
+#ifndef HVX_DIV_H  // 如果未定义 HVX_DIV_H 则编译
+#define HVX_DIV_H  // 宏定义 HVX_DIV_H
 
-#include <HAP_farf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
 
-#include <math.h>
-#include <string.h>
-#include <assert.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
+#include <assert.h>  // 引入 assert.h 头文件
+#include <stddef.h>  // 引入 stddef.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
 
-#include "hvx-base.h"
-#include "hex-utils.h"
-#include "hvx-inverse.h"
-#include "hvx-arith.h"
+#include "hvx-base.h"  // 引入 hvx-base.h 头文件
+#include "hex-utils.h"  // 引入 hex-utils.h 头文件
+#include "hvx-inverse.h"  // 引入 hvx-inverse.h 头文件
+#include "hvx-arith.h"  // 引入 hvx-arith.h 头文件
 
-#if __HVX_ARCH__ < 79
-#define HVX_OP_MUL_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))
-#define HVX_OP_MUL_F16(a, b) Q6_Vhf_equals_Wqf32(Q6_Wqf32_vmpy_VhfVhf(a, b))
-#else
-#define HVX_OP_MUL_F32(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)
-#define HVX_OP_MUL_F16(a, b) Q6_Vhf_vmpy_VhfVhf(a, b)
-#endif
+#if __HVX_ARCH__ < 79  // 条件编译
+#define HVX_OP_MUL_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))  // 宏定义 HVX_OP_MUL_F32
+#define HVX_OP_MUL_F16(a, b) Q6_Vhf_equals_Wqf32(Q6_Wqf32_vmpy_VhfVhf(a, b))  // 宏定义 HVX_OP_MUL_F16
+#else  // 否则
+#define HVX_OP_MUL_F32(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)  // 宏定义 HVX_OP_MUL_F32
+#define HVX_OP_MUL_F16(a, b) Q6_Vhf_vmpy_VhfVhf(a, b)  // 宏定义 HVX_OP_MUL_F16
+#endif  // 条件编译结束
 
 // Compute div by scaler in f32. Requires first by expanding fp32 to fp16 and converting the result back to fp32.
 static inline HVX_Vector hvx_div_mul_f16_const_using_f32(HVX_Vector vec1_hf, HVX_Vector vec2_sf_const, HVX_Vector vec_hf_one_1_0) {
-#if __HVX_ARCH__ < 79
+#if __HVX_ARCH__ < 79  // 条件编译
     HVX_VectorPair src_to_f32 = Q6_Wqf32_vmpy_VhfVhf(vec1_hf, vec_hf_one_1_0);
     HVX_Vector src_to_f32_0 = Q6_Vsf_equals_Vqf32(Q6_V_lo_W(src_to_f32));
     HVX_Vector src_to_f32_1 = Q6_Vsf_equals_Vqf32(Q6_V_hi_W(src_to_f32));
-#else
+#else  // 否则
     HVX_VectorPair src_to_f32 = Q6_Wsf_vmpy_VhfVhf(vec1_hf, vec_hf_one_1_0);
     HVX_Vector src_to_f32_0 = Q6_V_lo_W(src_to_f32);
     HVX_Vector src_to_f32_1 = Q6_V_hi_W(src_to_f32);
-#endif
+#endif  // 条件编译结束
 
     HVX_Vector div_f32_0 = HVX_OP_MUL_F32(src_to_f32_0, vec2_sf_const);
     HVX_Vector div_f32_1 = HVX_OP_MUL_F32(src_to_f32_1, vec2_sf_const);
 
-#if __HVX_ARCH__ < 79
+#if __HVX_ARCH__ < 79  // 条件编译
     HVX_Vector res = hvx_vec_f32_to_f16(div_f32_0, div_f32_1);
-#else
+#else  // 否则
     HVX_Vector res = Q6_Vhf_vcvt_VsfVsf(div_f32_0, div_f32_1);
-#endif
-    return res;
+#endif  // 条件编译结束
+    return res;  // 返回
 }
 
 // Variant for <v79: Use pre-computed f16 reciprocal constant
 static inline HVX_Vector hvx_div_mul_f16_const_using_f16(HVX_Vector vec1_hf, HVX_Vector const_inv_hf) {
     // Multiply by pre-computed f16 reciprocal constant
-    return HVX_OP_MUL_F16(vec1_hf, const_inv_hf);
+    return HVX_OP_MUL_F16(vec1_hf, const_inv_hf);  // HVX_OP_MUL_F16
 }
 
 #define hvx_div_scaler_f16_loop_body(dst_type, src_type, vec_store)                                    \
@@ -111,7 +111,7 @@ static inline void hvx_div_scalar_f16_uu(uint8_t * restrict dst, const uint8_t *
 
 // Compute div by using hvx_vec_inverse_f32_guard. Requires first by exapnding fp32 to fp16 and convert the result back to fp32.
 static inline HVX_Vector hvx_vec_div_f16_using_f32(HVX_Vector vec1, HVX_Vector vec2, HVX_Vector f32_nan_inf_mask, HVX_Vector vec_hf_one_1_0) {
-#if __HVX_ARCH__ < 79
+#if __HVX_ARCH__ < 79  // 条件编译
     // Convert first input to fp32
     HVX_VectorPair vec1_to_f32   = Q6_Wqf32_vmpy_VhfVhf(vec1, vec_hf_one_1_0);  // *1.0
     HVX_Vector     vec1_to_f32_0 = Q6_Vsf_equals_Vqf32(Q6_V_lo_W(vec1_to_f32));
@@ -121,7 +121,7 @@ static inline HVX_Vector hvx_vec_div_f16_using_f32(HVX_Vector vec1, HVX_Vector v
     HVX_VectorPair vec2_to_f32   = Q6_Wqf32_vmpy_VhfVhf(vec2, vec_hf_one_1_0);  // *1.0
     HVX_Vector     vec2_to_f32_0 = Q6_Vsf_equals_Vqf32(Q6_V_lo_W(vec2_to_f32));
     HVX_Vector     vec2_to_f32_1 = Q6_Vsf_equals_Vqf32(Q6_V_hi_W(vec2_to_f32));
-#else
+#else  // 否则
     // Convert first input to fp32
     HVX_VectorPair vec1_to_f32   = Q6_Wsf_vmpy_VhfVhf(vec1, vec_hf_one_1_0);  // *1.0
     HVX_Vector     vec1_to_f32_0 = Q6_V_lo_W(vec1_to_f32);
@@ -131,7 +131,7 @@ static inline HVX_Vector hvx_vec_div_f16_using_f32(HVX_Vector vec1, HVX_Vector v
     HVX_VectorPair vec2_to_f32   = Q6_Wsf_vmpy_VhfVhf(vec2, vec_hf_one_1_0);  // *1.0
     HVX_Vector     vec2_to_f32_0 = Q6_V_lo_W(vec2_to_f32);
     HVX_Vector     vec2_to_f32_1 = Q6_V_hi_W(vec2_to_f32);
-#endif
+#endif  // 条件编译结束
 
     // Inverse second input in fp32
     HVX_Vector     vec2_inv_f32_0 = hvx_vec_inverse_f32_guard(vec2_to_f32_0, f32_nan_inf_mask);
@@ -142,24 +142,24 @@ static inline HVX_Vector hvx_vec_div_f16_using_f32(HVX_Vector vec1, HVX_Vector v
     HVX_Vector     div_f32_1 = HVX_OP_MUL_F32(vec1_to_f32_1, vec2_inv_f32_1);
 
     // Convert back to fp16
-#if __HVX_ARCH__ < 79
+#if __HVX_ARCH__ < 79  // 条件编译
     HVX_Vector     recip = hvx_vec_f32_to_f16(div_f32_0, div_f32_1);
-#else
+#else  // 否则
     HVX_Vector     recip = Q6_Vhf_vcvt_VsfVsf(div_f32_0, div_f32_1);
-#endif
+#endif  // 条件编译结束
 
-    return recip;
+    return recip;  // 返回
 }
 
 // Hybrid approach: f16 reciprocal for <v79, f32 precision for >=v79
 static inline HVX_Vector hvx_vec_hybrid_div_f16(HVX_Vector vec1, HVX_Vector vec2, HVX_Vector f32_nan_inf_mask, HVX_Vector f16_nan_inf_mask, HVX_Vector vec_hf_one_1_0) {
-#if __HVX_ARCH__ < 79
+#if __HVX_ARCH__ < 79  // 条件编译
     // For older architectures, use f16 reciprocal to avoid NaN/-inf issues
     HVX_Vector vec2_inv = hvx_vec_inverse_f16_guard(vec2, f16_nan_inf_mask);
-    return HVX_OP_MUL_F16(vec1, vec2_inv);
-#else
-    return hvx_vec_div_f16_using_f32(vec1, vec2, f32_nan_inf_mask, vec_hf_one_1_0);
-#endif
+    return HVX_OP_MUL_F16(vec1, vec2_inv);  // HVX_OP_MUL_F16
+#else  // 否则
+    return hvx_vec_div_f16_using_f32(vec1, vec2, f32_nan_inf_mask, vec_hf_one_1_0);  // hvx_vec_div_f16_using_f32
+#endif  // 条件编译结束
 }
 
 #define hvx_div_f16_loop_body(dst_type, src0_type, src1_type, vec_store)                  \
@@ -288,4 +288,4 @@ HVX_DIV_DISPATCHER(hvx_div_f16)
 #undef HVX_OP_MUL_F32
 #undef HVX_OP_MUL_F16
 
-#endif // HVX_DIV_H
+#endif // HVX_DIV_H  // 条件编译结束

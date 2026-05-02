@@ -1,26 +1,26 @@
-#define GGML_COMMON_IMPL_C
-#include "ggml-common.h"
+#define GGML_COMMON_IMPL_C  // 宏定义 GGML_COMMON_IMPL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
 
-#include "ggml-cpu-impl.h"
-#include "simd-mappings.h"
-#include "ggml-quants.h"
-#include "quants.h"
+#include "ggml-cpu-impl.h"  // 引入 ggml-cpu-impl.h 头文件
+#include "simd-mappings.h"  // 引入 simd-mappings.h 头文件
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
+#include "quants.h"  // 引入 quants.h 头文件
 
-#include "arch-fallback.h"
+#include "arch-fallback.h"  // 引入 arch-fallback.h 头文件
 
-#include <string.h>
-#include <assert.h>
-#include <float.h>
-#include <stdlib.h> // for qsort
-#include <stdio.h>  // for GGML_ASSERT
+#include <string.h>  // 引入 string.h 头文件
+#include <assert.h>  // 引入 assert.h 头文件
+#include <float.h>  // 引入 float.h 头文件
+#include <stdlib.h> // for qsort  // 引入 stdlib.h 头文件
+#include <stdio.h>  // for GGML_ASSERT  // 引入 stdio.h 头文件
 
-#define GROUP_MAX_EPS 1e-15f
-#define GROUP_MAX_EPS_IQ3_XXS 1e-8f
-#define GROUP_MAX_EPS_IQ2_S 1e-8f
-#define GROUP_MAX_EPS_IQ1_M 1e-7f
-#define GROUP_MAX_EPS_IQ1_S 1e-12f
+#define GROUP_MAX_EPS 1e-15f  // 宏定义 GROUP_MAX_EPS
+#define GROUP_MAX_EPS_IQ3_XXS 1e-8f  // 宏定义 GROUP_MAX_EPS_IQ3_XXS
+#define GROUP_MAX_EPS_IQ2_S 1e-8f  // 宏定义 GROUP_MAX_EPS_IQ2_S
+#define GROUP_MAX_EPS_IQ1_M 1e-7f  // 宏定义 GROUP_MAX_EPS_IQ1_M
+#define GROUP_MAX_EPS_IQ1_S 1e-12f  // 宏定义 GROUP_MAX_EPS_IQ1_S
 
-#define UNUSED GGML_UNUSED
+#define UNUSED GGML_UNUSED  // 宏定义 UNUSED
 
 void quantize_row_q1_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k) {
     quantize_row_q1_0_ref(x, y, k);

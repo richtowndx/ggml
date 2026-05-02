@@ -1,19 +1,19 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#include "../node_context.h"  // 引入 ../node_context.h 头文件
+#include "../op_table.h"  // 引入 ../op_table.h 头文件
+#include "../utils.h"  // 引入 ../utils.h 头文件
 
-#include <memory>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/gelu.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/sigmoid.hpp>
-#include <openvino/op/slice.hpp>
+#include <memory>  // 引入 memory 头文件
+#include <openvino/core/node_output.hpp>  // 引入 openvino/core/node_output.hpp 头文件
+#include <openvino/op/constant.hpp>  // 引入 openvino/op/constant.hpp 头文件
+#include <openvino/op/gelu.hpp>  // 引入 openvino/op/gelu.hpp 头文件
+#include <openvino/op/multiply.hpp>  // 引入 openvino/op/multiply.hpp 头文件
+#include <openvino/op/sigmoid.hpp>  // 引入 openvino/op/sigmoid.hpp 头文件
+#include <openvino/op/slice.hpp>  // 引入 openvino/op/slice.hpp 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
+namespace op {  // 命名空间
 
 OutputVector translate_glu_geglu(const NodeContext & context) {
     num_inputs_check(context, 1, 2);
@@ -52,7 +52,7 @@ OutputVector translate_glu_geglu(const NodeContext & context) {
     auto gelu = std::make_shared<ov::op::v7::Gelu>(src0);
     auto res = std::make_shared<ov::op::v1::Multiply>(gelu, src1);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    return rename_outputs_with_suffix({res}, context.get_name());  // 返回
 }
 
 }  // namespace op

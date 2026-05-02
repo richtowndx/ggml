@@ -1,33 +1,33 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "ggml.h"
-#include "ggml-alloc.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
 
-#ifdef GGML_BACKEND_SHARED
+#ifdef GGML_BACKEND_SHARED  // 如果定义了 GGML_BACKEND_SHARED 则编译
 #    if defined(_WIN32) && !defined(__MINGW32__)
-#        ifdef GGML_BACKEND_BUILD
-#            define GGML_BACKEND_API __declspec(dllexport) extern
+#        ifdef GGML_BACKEND_BUILD  // 如果定义了 GGML_BACKEND_BUILD 则编译
+#            define GGML_BACKEND_API __declspec(dllexport) extern  // 宏定义 GGML_BACKEND_API
 #        else
-#            define GGML_BACKEND_API __declspec(dllimport) extern
+#            define GGML_BACKEND_API __declspec(dllimport) extern  // 宏定义 GGML_BACKEND_API
 #        endif
 #    else
-#        define GGML_BACKEND_API __attribute__ ((visibility ("default"))) extern
+#        define GGML_BACKEND_API __attribute__ ((visibility ("default"))) extern  // 宏定义 GGML_BACKEND_API
 #    endif
-#else
-#    define GGML_BACKEND_API extern
-#endif
+#else  // 否则
+#    define GGML_BACKEND_API extern  // 宏定义 GGML_BACKEND_API
+#endif  // 条件编译结束
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
-    typedef struct ggml_backend_buffer_type * ggml_backend_buffer_type_t;
-    typedef struct ggml_backend_buffer * ggml_backend_buffer_t;
-    typedef struct ggml_backend_event * ggml_backend_event_t;
-    typedef struct ggml_backend * ggml_backend_t;
-    typedef void * ggml_backend_graph_plan_t;
-    typedef struct ggml_backend_reg * ggml_backend_reg_t;
-    typedef struct ggml_backend_device * ggml_backend_dev_t;
+    typedef struct ggml_backend_buffer_type * ggml_backend_buffer_type_t;  // 类型定义
+    typedef struct ggml_backend_buffer * ggml_backend_buffer_t;  // 类型定义
+    typedef struct ggml_backend_event * ggml_backend_event_t;  // 类型定义
+    typedef struct ggml_backend * ggml_backend_t;  // 类型定义
+    typedef void * ggml_backend_graph_plan_t;  // 类型定义
+    typedef struct ggml_backend_reg * ggml_backend_reg_t;  // 类型定义
+    typedef struct ggml_backend_device * ggml_backend_dev_t;  // 类型定义
 
 
     //
@@ -46,7 +46,7 @@ extern "C" {
     // Backend buffer
     //
 
-    enum ggml_backend_buffer_usage {
+    enum ggml_backend_buffer_usage {  // 枚举定义
         GGML_BACKEND_BUFFER_USAGE_ANY = 0,
         GGML_BACKEND_BUFFER_USAGE_WEIGHTS = 1,
         GGML_BACKEND_BUFFER_USAGE_COMPUTE = 2,
@@ -131,7 +131,7 @@ extern "C" {
     // Backend device
     //
 
-    enum ggml_backend_dev_type {
+    enum ggml_backend_dev_type {  // 枚举定义
         // CPU device using system memory
         GGML_BACKEND_DEVICE_TYPE_CPU,
         // GPU device using dedicated memory
@@ -145,7 +145,7 @@ extern "C" {
     };
 
     // functionality supported by the device
-    struct ggml_backend_dev_caps {
+    struct ggml_backend_dev_caps {  // 结构体定义
         // asynchronous operations
         bool async;
         // pinned host buffer
@@ -157,7 +157,7 @@ extern "C" {
     };
 
     // all the device properties
-    struct ggml_backend_dev_props {
+    struct ggml_backend_dev_props {  // 结构体定义
         // device name
         const char * name;
         // device description
@@ -203,24 +203,24 @@ extern "C" {
     // Common functions that may be obtained using ggml_backend_reg_get_proc_address
 
     // Context management and operations for faster communication between backends, used for tensor parallelism (meta backend)
-    typedef void * (*ggml_backend_comm_init_t)(ggml_backend_t * backends, size_t n_backends);
-    typedef void   (*ggml_backend_comm_free_t)(void * comm_ctx);
-    typedef bool   (*ggml_backend_comm_allreduce_tensor_t)(void * comm_ctx, struct ggml_tensor ** tensors);
+    typedef void * (*ggml_backend_comm_init_t)(ggml_backend_t * backends, size_t n_backends);  // 类型定义
+    typedef void   (*ggml_backend_comm_free_t)(void * comm_ctx);  // 类型定义
+    typedef bool   (*ggml_backend_comm_allreduce_tensor_t)(void * comm_ctx, struct ggml_tensor ** tensors);  // 类型定义
 
     // Split buffer type for tensor parallelism (old)
-    typedef ggml_backend_buffer_type_t   (*ggml_backend_split_buffer_type_t)(int main_device, const float * tensor_split);
+    typedef ggml_backend_buffer_type_t   (*ggml_backend_split_buffer_type_t)(int main_device, const float * tensor_split);  // 类型定义
     // Set the number of threads for the backend
-    typedef void                         (*ggml_backend_set_n_threads_t)(ggml_backend_t backend, int n_threads);
+    typedef void                         (*ggml_backend_set_n_threads_t)(ggml_backend_t backend, int n_threads);  // 类型定义
     // Get additional buffer types provided by the device (returns a NULL-terminated array)
-    typedef ggml_backend_buffer_type_t * (*ggml_backend_dev_get_extra_bufts_t)(ggml_backend_dev_t device);
+    typedef ggml_backend_buffer_type_t * (*ggml_backend_dev_get_extra_bufts_t)(ggml_backend_dev_t device);  // 类型定义
     // Set the abort callback for the backend
-    typedef void                         (*ggml_backend_set_abort_callback_t)(ggml_backend_t backend, ggml_abort_callback abort_callback, void * abort_callback_data);
+    typedef void                         (*ggml_backend_set_abort_callback_t)(ggml_backend_t backend, ggml_abort_callback abort_callback, void * abort_callback_data);  // 类型定义
     // Get a list of feature flags supported by the backend (returns a NULL-terminated array)
-    struct ggml_backend_feature {
+    struct ggml_backend_feature {  // 结构体定义
         const char * name;
         const char * value;
     };
-    typedef struct ggml_backend_feature * (*ggml_backend_get_features_t)(ggml_backend_reg_t reg);
+    typedef struct ggml_backend_feature * (*ggml_backend_get_features_t)(ggml_backend_reg_t reg);  // 类型定义
 
     //
     // Backend registry
@@ -302,7 +302,7 @@ extern "C" {
     }
     */
 
-    typedef struct ggml_backend_sched * ggml_backend_sched_t;
+    typedef struct ggml_backend_sched * ggml_backend_sched_t;  // 类型定义
 
     // Evaluation callback for each node in the graph (set with ggml_backend_sched_set_eval_callback)
     // when ask == true, the scheduler wants to know if the user wants to observe this node
@@ -311,7 +311,7 @@ extern "C" {
     // when ask == false, the scheduler is passing the node tensor to the user for observation
     // if the user returns false, the scheduler will cancel the graph compute
     //
-    typedef bool (*ggml_backend_sched_eval_callback)(struct ggml_tensor * t, bool ask, void * user_data);
+    typedef bool (*ggml_backend_sched_eval_callback)(struct ggml_tensor * t, bool ask, void * user_data);  // 类型定义
 
     // Initialize a backend scheduler, backends with low index are given priority over backends with high index
     GGML_API ggml_backend_sched_t ggml_backend_sched_new(ggml_backend_t * backends, ggml_backend_buffer_type_t * bufts, int n_backends, size_t graph_size, bool parallel, bool op_offload);
@@ -355,9 +355,9 @@ extern "C" {
     // Meta backend
     //
 
-#define GGML_BACKEND_META_MAX_DEVICES 16
+#define GGML_BACKEND_META_MAX_DEVICES 16  // 宏定义 GGML_BACKEND_META_MAX_DEVICES
 
-    enum ggml_backend_meta_split_axis {
+    enum ggml_backend_meta_split_axis {  // 枚举定义
         // tensor split by tensor dimensions:
         GGML_BACKEND_SPLIT_AXIS_0 = 0,
         GGML_BACKEND_SPLIT_AXIS_1 = 1,
@@ -373,7 +373,7 @@ extern "C" {
     };
     GGML_API const char * ggml_backend_meta_split_axis_name(enum ggml_backend_meta_split_axis split_axis);
 
-    struct ggml_backend_meta_split_state {
+    struct ggml_backend_meta_split_state {  // 结构体定义
         enum ggml_backend_meta_split_axis axis;
 
         // for tensors with axis >= 0 && axis < GGML_MAX_DIMS:
@@ -390,7 +390,7 @@ extern "C" {
     };
 
     // function to assign split states for statically allocated tensors, compute tensor split states will be assigned to be compatible:
-    typedef struct ggml_backend_meta_split_state(*ggml_backend_meta_get_split_state_t)(const struct ggml_tensor * tensor, void * userdata);
+    typedef struct ggml_backend_meta_split_state(*ggml_backend_meta_get_split_state_t)(const struct ggml_tensor * tensor, void * userdata);  // 类型定义
 
     // create a new meta device from "simple" devices, meta buffer type/buffer/backend is then derived from this:
     // TODO: this looks a bit strange - a backend API creates a device. I think we should try
@@ -402,7 +402,7 @@ extern "C" {
     // Utils
     //
 
-    struct ggml_backend_graph_copy {
+    struct ggml_backend_graph_copy {  // 结构体定义
         ggml_backend_buffer_t buffer;
         struct ggml_context * ctx_allocated;
         struct ggml_context * ctx_unallocated;
@@ -413,7 +413,7 @@ extern "C" {
     GGML_API struct ggml_backend_graph_copy ggml_backend_graph_copy(ggml_backend_t backend, struct ggml_cgraph * graph);
     GGML_API void                           ggml_backend_graph_copy_free(struct ggml_backend_graph_copy copy);
 
-    typedef bool (*ggml_backend_eval_callback)(int node_index, struct ggml_tensor * t1, struct ggml_tensor * t2, void * user_data);
+    typedef bool (*ggml_backend_eval_callback)(int node_index, struct ggml_tensor * t1, struct ggml_tensor * t2, void * user_data);  // 类型定义
 
     // Compare the output of two backends
     GGML_API bool ggml_backend_compare_graph_backend(ggml_backend_t backend1, ggml_backend_t backend2, struct ggml_cgraph * graph, ggml_backend_eval_callback callback, void * user_data, struct ggml_tensor const * const * test_nodes, size_t num_test_nodes);
@@ -426,6 +426,6 @@ extern "C" {
     GGML_API ggml_backend_buffer_t      ggml_backend_cpu_buffer_from_ptr(void * ptr, size_t size);
     GGML_API ggml_backend_buffer_type_t ggml_backend_cpu_buffer_type(void);
 
-#ifdef  __cplusplus
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束

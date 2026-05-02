@@ -10,29 +10,29 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_GEMM_HPP
-#define GGML_SYCL_GEMM_HPP
+#ifndef GGML_SYCL_GEMM_HPP  // 如果未定义 GGML_SYCL_GEMM_HPP 则编译
+#define GGML_SYCL_GEMM_HPP  // 宏定义 GGML_SYCL_GEMM_HPP
 
-#include "ggml-sycl.h"
+#include "ggml-sycl.h"  // 引入 ggml-sycl.h 头文件
 
-#if GGML_SYCL_DNNL
+#if GGML_SYCL_DNNL  // 条件编译
 
-#include "dnnl.hpp"
-#include "dnnl_sycl.hpp"
+#include "dnnl.hpp"  // 引入 dnnl.hpp 头文件
+#include "dnnl_sycl.hpp"  // 引入 dnnl_sycl.hpp 头文件
 
-class DnnlGemmWrapper {
+class DnnlGemmWrapper {  // 类定义
 public:
-    using dt = dnnl::memory::data_type;
-    using tag = dnnl::memory::format_tag;
+    using dt = dnnl::memory::data_type;  // using 声明
+    using tag = dnnl::memory::format_tag;  // using 声明
 
-    template<typename T>
+    template<typename T>  // 模板
     static constexpr dt to_dt() {
-        if constexpr (std::is_same_v<T, float>) return dt::f32;
+        if constexpr (std::is_same_v<T, float>) return dt::f32;  // constexpr
         else if constexpr (std::is_same_v<T, sycl::half>) return dt::f16;
-#ifdef GGML_SYCL_HAS_BF16
+#ifdef GGML_SYCL_HAS_BF16  // 如果定义了 GGML_SYCL_HAS_BF16 则编译
         else if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) return dt::bf16;
-#endif
-        else static_assert(0);
+#endif  // 条件编译结束
+        else static_assert(0);  // static_assert
     }
 
     static void gemm(ggml_backend_sycl_context & ctx, int m, int n, int k,
@@ -57,9 +57,9 @@ public:
         dnnl::primitive_attr primitive_attr;
         primitive_attr.set_scratchpad_mode(dnnl::scratchpad_mode::user);
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
         primitive_attr.set_fpmath_mode(dnnl::fpmath_mode::f16);
-#endif
+#endif  // 条件编译结束
 
         auto a_mem = dnnl::memory(a_in_md, eng, const_cast<void*>(a));
         auto b_mem = dnnl::memory(b_in_md, eng, const_cast<void*>(b));
@@ -88,6 +88,6 @@ public:
     }
 };
 
-#endif
+#endif  // 条件编译结束
 
-#endif // GGML_SYCL_GEMM_HPP
+#endif // GGML_SYCL_GEMM_HPP  // 条件编译结束

@@ -1,12 +1,12 @@
-#include "apir_cs.h"
-#include "apir_cs_rpc.h"
-#include "ggml-impl.h"
+#include "apir_cs.h"  // 引入 apir_cs.h 头文件
+#include "apir_cs_rpc.h"  // 引入 apir_cs_rpc.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
 
 // ggml_buffer_to_apir_host_handle(ggml_backend_buffer_t buffer);
 
-static inline void apir_encode_ggml_buffer_host_handle(apir_encoder * enc, const apir_buffer_host_handle_t * handle);
+static inline void apir_encode_ggml_buffer_host_handle(apir_encoder * enc, const apir_buffer_host_handle_t * handle);  // apir_encode_ggml_buffer_host_handle
 
-static inline ggml_backend_buffer_t apir_decode_ggml_buffer(apir_decoder * dec);
+static inline ggml_backend_buffer_t apir_decode_ggml_buffer(apir_decoder * dec);  // apir_decode_ggml_buffer
 
 /* apir_rpc_tensor */
 
@@ -39,7 +39,7 @@ static inline const ggml_tensor * apir_decode_ggml_tensor(apir_decoder * dec) {
     const apir_rpc_tensor * apir_rpc_tensor = apir_decode_apir_rpc_tensor_inplace(dec);
 
     if (!apir_rpc_tensor) {
-        return NULL;
+        return NULL;  // 返回
     }
 
     ggml_init_params params{
@@ -52,7 +52,7 @@ static inline const ggml_tensor * apir_decode_ggml_tensor(apir_decoder * dec) {
 
     const ggml_tensor * tensor = apir_deserialize_tensor(ctx, apir_rpc_tensor);
 
-    return tensor;
+    return tensor;  // 返回
 }
 
 /* *** ggml_backend_buffer_type_t *** */
@@ -84,7 +84,7 @@ static inline apir_buffer_type_host_handle_t apir_decode_apir_buffer_type_host_h
 
     apir_decoder_read(dec, sizeof(handle), &handle, sizeof(handle));
 
-    return handle;
+    return handle;  // 返回
 }
 
 /* *** ggml_backend_type_t *** */
@@ -108,15 +108,15 @@ static inline ggml_backend_buffer_t apir_decode_ggml_buffer(apir_decoder * dec) 
     if (buffer) {
         extern std::unordered_set<ggml_backend_buffer_t> backend_buffers;
         if (backend_buffers.find(buffer) == backend_buffers.end()) {
-            GGML_LOG_WARN("ggml-virtgpu-backend: %s: Invalid buffer handle from guest: %p\n", __func__,
+            GGML_LOG_WARN("ggml-virtgpu-backend: %s: Invalid buffer handle from guest: %p\n", __func__,  // 打印警告日志
                           (void *) buffer);
             // Set fatal flag to prevent further processing with invalid handle
             apir_decoder_set_fatal(dec);
-            return NULL;
+            return NULL;  // 返回
         }
     }
 
-    return buffer;
+    return buffer;  // 返回
 }
 
 /* enum ggml_status */
@@ -164,7 +164,7 @@ static inline ggml_cgraph * apir_decode_ggml_cgraph(apir_decoder * dec, size_t c
     apir_decode_uint32_t(dec, &n_tensors);
     const apir_rpc_tensor * tensors = apir_decode_apir_rpc_tensor_array_inplace(dec, n_tensors);
 
-    return apir_deserialize_graph(n_nodes, n_tensors, tensors, nodes);
+    return apir_deserialize_graph(n_nodes, n_tensors, tensors, nodes);  // apir_deserialize_graph
 }
 
 static inline void apir_encode_ggml_buffer_handle(apir_encoder * enc, const apir_buffer_host_handle_t * handle) {
@@ -228,5 +228,5 @@ static inline const ggml_tensor * apir_decode_ggml_tensor_inplace(apir_decoder *
         tensor->src[i] = tensor_src;  // overwrite op->src[i] pointer with the actual location of the src tensor
     }
 
-    return tensor;
+    return tensor;  // 返回
 }

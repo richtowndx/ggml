@@ -1,34 +1,34 @@
 // Benchmark quantization specific functions on synthetic data
 
-#include "ggml.h"
-#include "ggml-cpu.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
 
 #undef NDEBUG
-#include <algorithm>
-#include <assert.h>
-#include <functional>
-#include <math.h>
-#include <memory>
-#include <stdio.h>
-#include <string>
-#include <vector>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <assert.h>  // 引入 assert.h 头文件
+#include <functional>  // 引入 functional 头文件
+#include <math.h>  // 引入 math.h 头文件
+#include <memory>  // 引入 memory 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER)  // 条件编译
 #pragma warning(disable: 4244 4267) // possible loss of data
-#endif
+#endif  // 条件编译结束
 
-#define MAX_ALIGNMENT 64
-#define QK 32
-#define WARMUP 5
-#define ITERATIONS 10
-#define MAX_ITERATIONS 100000000
+#define MAX_ALIGNMENT 64  // 宏定义 MAX_ALIGNMENT
+#define QK 32  // 宏定义 QK
+#define WARMUP 5  // 宏定义 WARMUP
+#define ITERATIONS 10  // 宏定义 ITERATIONS
+#define MAX_ITERATIONS 100000000  // 宏定义 MAX_ITERATIONS
 
-#define L1_SIZE      32*128
-#define L2_SIZE     32*2048
-#define L3_SIZE    32*20480
-#define MEM_SIZE 32*2048000
+#define L1_SIZE      32*128  // 宏定义 L1_SIZE
+#define L2_SIZE     32*2048  // 宏定义 L2_SIZE
+#define L3_SIZE    32*20480  // 宏定义 L3_SIZE
+#define MEM_SIZE 32*2048000  // 宏定义 MEM_SIZE
 
-struct quantize_perf_params {
+struct quantize_perf_params {  // 结构体定义
     std::vector<std::string> include_types;
     std::vector<size_t> test_sizes;
     size_t alignment_offset = 0;
@@ -40,24 +40,24 @@ struct quantize_perf_params {
     int64_t iterations = ITERATIONS;
 };
 
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__)  // 条件编译
 
-#include <x86intrin.h>
+#include <x86intrin.h>  // 引入 x86intrin.h 头文件
 inline int64_t cpu_cycles() {
 // Rough way to detect new-ish CPUs
-#ifdef __POPCNT__
+#ifdef __POPCNT__  // 如果定义了 __POPCNT__ 则编译
     unsigned int dummy;
-    return __rdtscp(&dummy);
-#else
-    return __rdtsc();
-#endif
+    return __rdtscp(&dummy);  // __rdtscp
+#else  // 否则
+    return __rdtsc();  // __rdtsc
+#endif  // 条件编译结束
 }
 
-#else
+#else  // 否则
 
-#define cpu_cycles() 0
+#define cpu_cycles() 0  // 宏定义 cpu_cycles
 
-#endif
+#endif  // 条件编译结束
 
 
 // Generate synthetic data
@@ -222,15 +222,15 @@ int main(int argc, char * argv[]) {
             params.iterations = number;
         } else if ((arg == "-h") || (arg == "--help")) {
             usage(argv);
-            return 1;
+            return 1;  // 返回
         } else {
             fprintf(stderr, "error: unknown argument: %s\n", arg.c_str());
-            return 1;
+            return 1;  // 返回
         }
     }
     if (invalid_param) {
         fprintf(stderr, "error: invalid parameter for argument: %s\n", arg.c_str());
-        return 1;
+        return 1;  // 返回
     }
 
     if (params.test_sizes.empty()) {
@@ -281,7 +281,7 @@ int main(int argc, char * argv[]) {
                     printf("    %zu values (%.2f MB)\n", size, 4*size/(float)(1024*1024));
                     auto quantize_fn = [&](void) -> float {
                         qfns->from_float_ref(test_data1, test_q1, size);
-                        return test_q1[0];
+                        return test_q1[0];  // 返回
                     };
                     size_t quantized_size = ggml_row_size(type, size);
                     benchmark_function(size, quantized_size, iterations, quantize_fn);
@@ -295,7 +295,7 @@ int main(int argc, char * argv[]) {
                     printf("    %zu values (%.2f MB)\n", size, 4*size/(float)(1024*1024));
                     auto quantize_fn = [&](void) -> float {
                         qfns_cpu->from_float(test_data1, test_q1, size);
-                        return test_q1[0];
+                        return test_q1[0];  // 返回
                     };
                     size_t quantized_size = ggml_row_size(type, size);
                     benchmark_function(size, quantized_size, iterations, quantize_fn);
@@ -310,7 +310,7 @@ int main(int argc, char * argv[]) {
                     printf("    %zu values (%.2f MB)\n", size, 4*size/(float)(1024*1024));
                     auto quantize_fn = [&](void) -> float {
                         qfns->to_float(test_q1, test_out, size);
-                        return test_out[0];
+                        return test_out[0];  // 返回
                     };
                     size_t quantized_size = ggml_row_size(type, size);
                     benchmark_function(size, quantized_size, iterations, quantize_fn);
@@ -325,7 +325,7 @@ int main(int argc, char * argv[]) {
                     auto quantize_fn = [&](void) -> float {
                         const auto * vdot = ggml_get_type_traits_cpu(qfns_cpu->vec_dot_type);
                         vdot->from_float(test_data1, test_q1, size);
-                        return test_q1[0];
+                        return test_q1[0];  // 返回
                     };
                     size_t quantized_size = ggml_row_size(type, size);
                     benchmark_function(size, quantized_size, iterations, quantize_fn);
@@ -342,7 +342,7 @@ int main(int argc, char * argv[]) {
                     auto quantize_fn = [&](void) -> float {
                         float result;
                         qfns_cpu->vec_dot(size, &result, 0, test_q1, 0, test_q2, 0, 1);
-                        return result;
+                        return result;  // 返回
                     };
                     size_t quantized_size = ggml_row_size(type, size);
                     benchmark_function(size, quantized_size, iterations, quantize_fn);
@@ -352,5 +352,5 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    return 0;
+    return 0;  // 返回
 }

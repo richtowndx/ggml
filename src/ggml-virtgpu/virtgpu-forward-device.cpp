@@ -1,5 +1,5 @@
-#include "virtgpu-forward-impl.h"
-#include "virtgpu-shm.h"
+#include "virtgpu-forward-impl.h"  // 引入 virtgpu-forward-impl.h 头文件
+#include "virtgpu-shm.h"  // 引入 virtgpu-shm.h 头文件
 
 int apir_device_get_count(virtgpu * gpu) {
     apir_encoder *        encoder;
@@ -14,7 +14,7 @@ int apir_device_get_count(virtgpu * gpu) {
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return dev_count;
+    return dev_count;  // 返回
 }
 
 char * apir_device_get_name(virtgpu * gpu) {
@@ -29,13 +29,13 @@ char * apir_device_get_name(virtgpu * gpu) {
     char *       string      = (char *) apir_decoder_alloc_array(sizeof(char), string_size);
     if (!string) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: Could not allocate the device name buffer\n", __func__);
-        return NULL;
+        return NULL;  // 返回
     }
     apir_decode_char_array(decoder, string, string_size);
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return string;
+    return string;  // 返回
 }
 
 char * apir_device_get_description(virtgpu * gpu) {
@@ -52,19 +52,19 @@ char * apir_device_get_description(virtgpu * gpu) {
     if (!string) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: Could not allocate the device description buffer\n", __func__);
 
-        return NULL;
+        return NULL;  // 返回
     }
     apir_decode_char_array(decoder, string, string_size);
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return string;
+    return string;  // 返回
 }
 
 uint32_t apir_device_get_type(virtgpu * gpu) {
     static uint32_t dev_type = 255;
     if (dev_type != 255) {
-        return dev_type;
+        return dev_type;  // 返回
     }
 
     apir_encoder *        encoder;
@@ -79,7 +79,7 @@ uint32_t apir_device_get_type(virtgpu * gpu) {
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return dev_type;
+    return dev_type;  // 返回
 }
 
 void apir_device_get_memory(virtgpu * gpu, size_t * free, size_t * total) {
@@ -101,7 +101,7 @@ void apir_device_get_memory(virtgpu * gpu, size_t * free, size_t * total) {
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return;
+    return;  // 返回
 }
 
 bool apir_device_supports_op(virtgpu * gpu, const ggml_tensor * op) {
@@ -120,7 +120,7 @@ bool apir_device_supports_op(virtgpu * gpu, const ggml_tensor * op) {
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return supports_op;
+    return supports_op;  // 返回
 }
 
 apir_buffer_type_host_handle_t apir_device_get_buffer_type(virtgpu * gpu) {
@@ -137,7 +137,7 @@ apir_buffer_type_host_handle_t apir_device_get_buffer_type(virtgpu * gpu) {
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return buft_handle;
+    return buft_handle;  // 返回
 }
 
 void apir_device_get_props(virtgpu * gpu,
@@ -160,7 +160,7 @@ void apir_device_get_props(virtgpu * gpu,
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return;
+    return;  // 返回
 }
 
 apir_buffer_context_t apir_device_buffer_from_ptr(virtgpu * gpu, size_t size, size_t max_tensor_size) {
@@ -188,5 +188,5 @@ apir_buffer_context_t apir_device_buffer_from_ptr(virtgpu * gpu, size_t size, si
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return buffer_context;
+    return buffer_context;  // 返回
 }

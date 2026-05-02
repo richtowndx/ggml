@@ -1,16 +1,16 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include <cstdint>
-#include <map>
-#include <openvino/core/node.hpp>
-#include <openvino/frontend/decoder.hpp>
-#include <string>
+#include <cstdint>  // 引入 cstdint 头文件
+#include <map>  // 引入 map 头文件
+#include <openvino/core/node.hpp>  // 引入 openvino/core/node.hpp 头文件
+#include <openvino/frontend/decoder.hpp>  // 引入 openvino/frontend/decoder.hpp 头文件
+#include <string>  // 引入 string 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
 
-class GgmlDecoder : public DecoderBase {
+class GgmlDecoder : public DecoderBase {  // 类定义
 public:
     virtual ov::Any get_attribute(const std::string& name) const = 0;
 
@@ -24,7 +24,7 @@ public:
 
     virtual size_t get_input_size(int node_idx) const = 0;
 
-    virtual void get_input_node(size_t input_port_idx,
+    virtual void get_input_node(size_t input_port_idx,  // 虚函数
                                 std::string& producer_name,
                                 std::string& producer_output_port_name,
                                 size_t& producer_output_port_index) const = 0;

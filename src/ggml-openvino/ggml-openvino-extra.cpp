@@ -1,17 +1,17 @@
-#include "ggml-openvino-extra.h"
+#include "ggml-openvino-extra.h"  // 引入 ggml-openvino-extra.h 头文件
 
-#include "ggml-impl.h"
-#include "ggml.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-#include <cstring>
-#include <openvino/runtime/intel_gpu/ocl/ocl.hpp>
-#include <openvino/runtime/intel_npu/level_zero/level_zero.hpp>
-#include <openvino/runtime/properties.hpp>
-#include <optional>
+#include <cstring>  // 引入 cstring 头文件
+#include <openvino/runtime/intel_gpu/ocl/ocl.hpp>  // 引入 openvino/runtime/intel_gpu/ocl/ocl.hpp 头文件
+#include <openvino/runtime/intel_npu/level_zero/level_zero.hpp>  // 引入 openvino/runtime/intel_npu/level_zero/level_zero.hpp 头文件
+#include <openvino/runtime/properties.hpp>  // 引入 openvino/runtime/properties.hpp 头文件
+#include <optional>  // 引入 optional 头文件
 
 ov::Core & ov_singleton_core() {
     static ov::Core core;
-    return core;
+    return core;  // 返回
 }
 
 // =====================================================
@@ -20,7 +20,7 @@ ov::Core & ov_singleton_core() {
 
 void ggml_openvino_device_config::init() {
     if (initialized) {
-        return;
+        return;  // 返回
     }
     device_name = getenv("GGML_OPENVINO_DEVICE") ? getenv("GGML_OPENVINO_DEVICE") : "CPU";
     auto available_devices = ov_singleton_core().get_available_devices();
@@ -60,27 +60,27 @@ void ggml_openvino_device_config::init() {
         err = clGetPlatformIDs(1, &platform, nullptr);
         if (err != CL_SUCCESS) {
             GGML_LOG_ERROR("Failed to get OpenCL platform: %d\n", err);
-            return;
+            return;  // 返回
         }
 
         cl_device_id cl_device;
         err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &cl_device, nullptr);
         if (err != CL_SUCCESS) {
             GGML_LOG_ERROR("Failed to get OpenCL device: %d\n", err);
-            return;
+            return;  // 返回
         }
 
         cl_context cl_ctx = clCreateContext(nullptr, 1, &cl_device, nullptr, nullptr, &err);
         if (err != CL_SUCCESS) {
             GGML_LOG_ERROR("Failed to create OpenCL context: %d\n", err);
-            return;
+            return;  // 返回
         }
 
         cl_queue = clCreateCommandQueueWithProperties(cl_ctx, cl_device, nullptr, &err);
         if (err != CL_SUCCESS) {
             GGML_LOG_ERROR("Failed to create OpenCL command queue: %d\n", err);
             clReleaseContext(cl_ctx);
-            return;
+            return;  // 返回
         }
 
         // Create OpenVINO remote context with queue sharing
@@ -106,7 +106,7 @@ ggml_openvino_device_config::~ggml_openvino_device_config() {
 // Get the global device config singleton
 ggml_openvino_device_config & ggml_openvino_get_device_config() {
     static ggml_openvino_device_config config;
-    return config;
+    return config;  // 返回
 }
 
 // Initialize device config (call during backend init)
@@ -116,27 +116,27 @@ void ggml_openvino_init_device_config() {
 
 // Get the device name
 const std::string & ggml_openvino_get_device_name() {
-    return ggml_openvino_get_device_config().device_name;
+    return ggml_openvino_get_device_config().device_name;  // ggml_openvino_get_device_config
 }
 
 // Check if running on NPU
 bool ggml_openvino_is_npu() {
-    return ggml_openvino_get_device_config().is_npu;
+    return ggml_openvino_get_device_config().is_npu;  // ggml_openvino_get_device_config
 }
 
 // Get the remote context for the current device (returns empty optional for CPU)
 std::optional<ov::RemoteContext> ggml_openvino_get_remote_context() {
-    return ggml_openvino_get_device_config().remote_context;
+    return ggml_openvino_get_device_config().remote_context;  // ggml_openvino_get_device_config
 }
 
 // Get the compile config for the current device
 const ov::AnyMap & ggml_openvino_get_compile_config() {
-    return ggml_openvino_get_device_config().compile_config;
+    return ggml_openvino_get_device_config().compile_config;  // ggml_openvino_get_device_config
 }
 
 // Get the OpenCL command queue for GPU operations
 cl_command_queue ggml_openvino_get_cl_queue() {
-    return ggml_openvino_get_device_config().cl_queue;
+    return ggml_openvino_get_device_config().cl_queue;  // ggml_openvino_get_device_config
 }
 
 // Get the clEnqueueMemFillINTEL function pointer (lazy load)
@@ -150,7 +150,7 @@ clEnqueueMemFillINTEL_fn ggml_openvino_get_clEnqueueMemFillINTEL() {
             fn = (clEnqueueMemFillINTEL_fn) clGetExtensionFunctionAddressForPlatform(platform, "clEnqueueMemFillINTEL");
         }
     }
-    return fn;
+    return fn;  // 返回
 }
 
 // Get the clEnqueueMemcpyINTEL function pointer (lazy load)
@@ -164,29 +164,29 @@ clEnqueueMemcpyINTEL_fn ggml_openvino_get_clEnqueueMemcpyINTEL() {
             fn = (clEnqueueMemcpyINTEL_fn) clGetExtensionFunctionAddressForPlatform(platform, "clEnqueueMemcpyINTEL");
         }
     }
-    return fn;
+    return fn;  // 返回
 }
 
 // Get requantization type for a tensor type (returns nullopt if no requant needed)
 std::optional<ExtraQuantType> ggml_openvino_get_requant_type(const ggml_tensor * tensor, bool no_requant) {
     if (no_requant) {
-        return std::nullopt;
+        return std::nullopt;  // 返回
     }
     if (strncmp(tensor->name, "token_embd.weight", 17) == 0) {
         return ((ggml_openvino_is_npu() && tensor->type == GGML_TYPE_Q6_K) ? ExtraQuantType::F16 : ExtraQuantType::Q8_0_C);
     }
     if (strncmp(tensor->name, "output.weight", 13) == 0) {
-        return ExtraQuantType::Q8_0_C;
+        return ExtraQuantType::Q8_0_C;  // 返回
     }
     if (ggml_openvino_is_npu()) {
-        return ExtraQuantType::Q4_0_128;
+        return ExtraQuantType::Q4_0_128;  // 返回
     }
     switch (tensor->type) {
     case GGML_TYPE_Q6_K:
     case GGML_TYPE_Q5_K:
-        return ExtraQuantType::Q8_0_C;
+        return ExtraQuantType::Q8_0_C;  // 返回
     default:
-        return std::nullopt;
+        return std::nullopt;  // 返回
     }
 }
 
@@ -199,12 +199,12 @@ ggml_openvino_extracted_layout ggml_openvino_get_extracted_layout(const ggml_ten
     layout.is_symmetric = false;
 
     if (!ggml_is_quantized(tensor->type)) {
-        return layout;
+        return layout;  // 返回
     }
 
     // Only handle 2D weight tensors
     if (tensor->ne[2] != 1 || tensor->ne[3] != 1) {
-        return layout;
+        return layout;  // 返回
     }
 
     int64_t n_elements = ggml_nelements(tensor);
@@ -222,7 +222,7 @@ ggml_openvino_extracted_layout ggml_openvino_get_extracted_layout(const ggml_ten
             layout.total_size = layout.weights_size;
             layout.weights_offset = 0;
             // No scales/zp for F16
-            return layout;
+            return layout;  // 返回
         }
 
         // Requant to different quantized format (e.g., Q4_0_128)
@@ -274,7 +274,7 @@ ggml_openvino_extracted_layout ggml_openvino_get_extracted_layout(const ggml_ten
             layout.zp_offset = layout.scales_offset + ((layout.scales_size + alignment - 1) / alignment) * alignment;
             layout.total_size = layout.zp_offset + layout.zp_size;
             layout.total_size = std::max(layout.total_size, ggml_nbytes(tensor));
-            return layout;
+            return layout;  // 返回
         }
     }
 
@@ -308,7 +308,7 @@ ggml_openvino_extracted_layout ggml_openvino_get_extracted_layout(const ggml_ten
 
     default:
         // Unsupported quantization type
-        return layout;
+        return layout;  // 返回
     }
 
     // Calculate sizes
@@ -332,7 +332,7 @@ ggml_openvino_extracted_layout ggml_openvino_get_extracted_layout(const ggml_ten
     layout.total_size = layout.zp_offset + layout.zp_size;
     layout.total_size = std::max(layout.total_size, ggml_nbytes(tensor));
 
-    return layout;
+    return layout;  // 返回
 }
 
 ggml_openvino_tensor_extra * ggml_openvino_create_tensor_extra(const ggml_tensor * tensor, bool is_remote) {
@@ -360,7 +360,7 @@ ggml_openvino_tensor_extra * ggml_openvino_create_tensor_extra(const ggml_tensor
         break;
     default:
         // GGML_LOG_WARN("%s: unsupported tensor type for ov::Tensor: %s\n", __func__, ggml_type_name(tensor->type));
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     const auto & device_name = ggml_openvino_get_device_name();

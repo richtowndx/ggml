@@ -2,28 +2,28 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
 
-#include <math.h>
-#include <string.h>
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#include "hex-dma.h"
-#include "hvx-utils.h"
-#include "hex-fastdiv.h"
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
+#include "hex-fastdiv.h"  // 引入 hex-fastdiv.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-ops.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
 
 // Redefined the types GGML_ROPE_TYPE_NORMAL & GGML_ROPE_TYPE_NEOX as we can't include ggml.h
-#define HTP_ROPE_TYPE_NORMAL 0
-#define HTP_ROPE_TYPE_NEOX   2
+#define HTP_ROPE_TYPE_NORMAL 0  // 宏定义 HTP_ROPE_TYPE_NORMAL
+#define HTP_ROPE_TYPE_NEOX   2  // 宏定义 HTP_ROPE_TYPE_NEOX
 
-#define HTP_ROPE_SPAD_NROWS  16
-#define HTP_ROPE_SPAD_BLOCK  (HTP_ROPE_SPAD_NROWS/2)
+#define HTP_ROPE_SPAD_NROWS  16  // 宏定义 HTP_ROPE_SPAD_NROWS
+#define HTP_ROPE_SPAD_BLOCK  (HTP_ROPE_SPAD_NROWS/2)  // 宏定义 HTP_ROPE_SPAD_BLOCK
 
 #define htp_rope_preamble              \
     const uint32_t ne00 = src0->ne[0]; \
@@ -46,7 +46,7 @@
     const uint32_t nb2 = dst->nb[2];   \
     const uint32_t nb3 = dst->nb[3];
 
-struct htp_rope_context {
+struct htp_rope_context {  // 结构体定义
     int32_t n_dims;
     int32_t mode;
     int32_t n_ctx_orig;
@@ -119,7 +119,7 @@ static void rope_cache_init(const float    theta_base,
     }
 }
 
-#define M_PI 3.1415926535897932384626433
+#define M_PI 3.1415926535897932384626433  // 宏定义 M_PI
 
 static void rope_corr_dims(int     n_dims,
                            int     n_ctx_orig,
@@ -268,7 +268,7 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
 
     // no work for this thread
     if (src0_start_row >= src0_end_row) {
-        return;
+        return;  // 返回
     }
 
     uint64_t tt = HAP_perf_get_qtimer_count();
@@ -397,7 +397,7 @@ static int execute_op_rope_f32(struct htp_ops_context * octx) {
 
         default:
             FARF(ERROR, "Unsupported Op %u\n", octx->op);
-            return HTP_STATUS_NO_SUPPORT;
+            return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     const uint32_t ne0 = dst->ne[0];
@@ -421,7 +421,7 @@ static int execute_op_rope_f32(struct htp_ops_context * octx) {
     size_t total_vtcm_needed = spad_per_thread * n_threads;
     if (octx->ctx->vtcm_size < total_vtcm_needed) {
         FARF(ERROR, "%s : current VTCM reservation %zu is too small, needed %zu\n", op_type, octx->ctx->vtcm_size, total_vtcm_needed);
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        return HTP_STATUS_VTCM_TOO_SMALL;  // 返回
     }
 
     octx->src0_spad.size_per_thread = src0_spad_per_thread;
@@ -474,7 +474,7 @@ static int execute_op_rope_f32(struct htp_ops_context * octx) {
         worker_pool_run_func(octx->ctx->worker_pool, rope_job_f32, &rctx, n_threads);
     }
 
-    return err;
+    return err;  // 返回
 }
 
 int op_rope(struct htp_ops_context * octx) {
@@ -490,5 +490,5 @@ int op_rope(struct htp_ops_context * octx) {
             break;
     }
 
-    return err;
+    return err;  // 返回
 }

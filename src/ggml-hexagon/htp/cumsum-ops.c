@@ -2,16 +2,16 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "hvx-types.h"
-#include "hvx-utils.h"
-#include "hex-dma.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "hvx-types.h"  // 引入 hvx-types.h 头文件
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
 
 #define htp_cumsum_tensors_preamble                         \
     const struct htp_tensor * restrict src0 = octx->src[0]; \
@@ -37,7 +37,7 @@
     const uint32_t nb2 = dst->nb[2];                 \
     const uint32_t nb3 = dst->nb[3];
 
-struct htp_cumsum_context {
+struct htp_cumsum_context {  // 结构体定义
     struct htp_ops_context * octx;
     size_t          src_row_size;
     size_t          dst_row_size;
@@ -57,15 +57,15 @@ struct htp_cumsum_context {
 // HVX prefix scan helpers
 // ---------------------------------------------------------------------------
 
-#if __HVX_ARCH__ > 75
+#if __HVX_ARCH__ > 75  // 条件编译
 static inline HVX_Vector hvx_cumsum_vadd(HVX_Vector a, HVX_Vector b) {
-    return Q6_Vsf_vadd_VsfVsf(a, b);
+    return Q6_Vsf_vadd_VsfVsf(a, b);  // Q6_Vsf_vadd_VsfVsf
 }
-#else
+#else  // 否则
 static inline HVX_Vector hvx_cumsum_vadd(HVX_Vector a, HVX_Vector b) {
-    return Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b));
+    return Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b));  // Q6_Vsf_equals_Vqf32
 }
-#endif  // __HVX_ARCH__ > 75
+#endif  // __HVX_ARCH__ > 75  // 条件编译结束
 
 static inline HVX_Vector hvx_prefix_scan_f32(HVX_Vector v, HVX_Vector carry_in) {
     const HVX_Vector zero = Q6_V_vsplat_R(0);
@@ -77,11 +77,11 @@ static inline HVX_Vector hvx_prefix_scan_f32(HVX_Vector v, HVX_Vector carry_in) 
     v = hvx_cumsum_vadd(v, Q6_V_vlalign_VVR(v, zero, 64));
     v = hvx_cumsum_vadd(v, carry_in);
 
-    return v;
+    return v;  // 返回
 }
 
 static inline HVX_Vector hvx_splat_last_f32(HVX_Vector v) {
-    return hvx_vec_repl4(Q6_V_vror_VR(v, 124));
+    return hvx_vec_repl4(Q6_V_vror_VR(v, 124));  // hvx_vec_repl4
 }
 
 static inline void hvx_cumsum_row_f32(const float * restrict src, float * restrict dst, uint32_t n) {
@@ -122,7 +122,7 @@ static void cumsum_thread_f32_dma(unsigned int nth, unsigned int ith, void * dat
     const uint32_t ir1 = MIN(ir0 + cctx->rows_per_thread, cctx->total_rows);
 
     if (ir0 >= ir1) {
-        return;
+        return;  // 返回
     }
 
     const size_t src_row_size         = cctx->src_row_size;
@@ -210,7 +210,7 @@ int op_cumsum_f32(struct htp_ops_context * octx) {
     const struct htp_tensor * dst  = octx->dst;
 
     if (octx->flags & HTP_OPFLAGS_SKIP_COMPUTE) {
-        return HTP_STATUS_OK;
+        return HTP_STATUS_OK;  // 返回
     }
 
     const uint32_t total_rows = src0->ne[1] * src0->ne[2] * src0->ne[3];
@@ -233,7 +233,7 @@ int op_cumsum_f32(struct htp_ops_context * octx) {
     octx->src0_spad.data  = octx->ctx->vtcm_base;                        octx->src0_spad.src = NULL;
     octx->dst_spad.data   = octx->src0_spad.data + octx->src0_spad.size; octx->dst_spad.src  = NULL;
 
-    struct htp_cumsum_context cctx = {
+    struct htp_cumsum_context cctx = {  // 结构体定义
         .octx                 = octx,
         .src_row_size         = src_row_size,
         .dst_row_size         = dst_row_size,
@@ -249,7 +249,7 @@ int op_cumsum_f32(struct htp_ops_context * octx) {
         worker_pool_run_func(octx->ctx->worker_pool, cumsum_thread_f32_dma, &cctx, n_threads);
     }
 
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }
 
 int op_cumsum(struct htp_ops_context * octx) {
@@ -266,5 +266,5 @@ int op_cumsum(struct htp_ops_context * octx) {
             break;
     }
 
-    return err;
+    return err;  // 返回
 }

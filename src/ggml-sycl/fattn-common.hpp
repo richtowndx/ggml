@@ -1,24 +1,24 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include <sycl/sycl.hpp>
-#include "dpct/helper.hpp"
-#include "common.hpp"
-#include "convert.hpp"
-#include "vecdotq.hpp"
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
+#include "dpct/helper.hpp"  // 引入 dpct/helper.hpp 头文件
+#include "common.hpp"  // 引入 common.hpp 头文件
+#include "convert.hpp"  // 引入 convert.hpp 头文件
+#include "vecdotq.hpp"  // 引入 vecdotq.hpp 头文件
 
-#include "ggml.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-#include <cstdint>
-#include <cmath>
-#include <float.h>
+#include <cstdint>  // 引入 cstdint 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <float.h>  // 引入 float.h 头文件
 
 
-#define FATTN_KQ_STRIDE       256
-#define HALF_MAX_HALF         sycl::half(65504.0f/2) // Use neg. of this instead of -INFINITY to initialize KQ max vals to avoid NaN upon subtraction.
-#define SOFTMAX_FTZ_THRESHOLD -20.0f                   // Softmax exp. of values smaller than this are flushed to zero to avoid NaNs.
-#define FATTN_KQ_MAX_OFFSET (3.0f*0.6931f)
+#define FATTN_KQ_STRIDE       256  // 宏定义 FATTN_KQ_STRIDE
+#define HALF_MAX_HALF         sycl::half(65504.0f/2) // Use neg. of this instead of -INFINITY to initialize KQ max vals to avoid NaN upon subtraction.  // 宏定义 HALF_MAX_HALF
+#define SOFTMAX_FTZ_THRESHOLD -20.0f                   // Softmax exp. of values smaller than this are flushed to zero to avoid NaNs.  // 宏定义 SOFTMAX_FTZ_THRESHOLD
+#define FATTN_KQ_MAX_OFFSET (3.0f*0.6931f)  // 宏定义 FATTN_KQ_MAX_OFFSET
 
-typedef void (*fattn_kernel_t)(
+typedef void (*fattn_kernel_t)(  // 类型定义
     const char* Q,
     const char* K,
     const char* V,
@@ -57,10 +57,10 @@ typedef void (*fattn_kernel_t)(
     const int32_t nb32,
     const int64_t nb33);
 
-typedef float (*vec_dot_KQ_t)(
+typedef float (*vec_dot_KQ_t)(  // 类型定义
     const char * __restrict__ K_c, const void * __restrict__ Q_v, const int * __restrict__ Q_q8 , const void * __restrict__ Q_ds);
 
-template <int D, int nthreads>
+template <int D, int nthreads>  // 模板
 static __dpct_inline__ float vec_dot_fattn_vec_KQ_f16(const char * __restrict__ K_c,
                                                       const void * __restrict__ Q_v,
                                                       const int * __restrict__ Q_q8,
@@ -82,18 +82,18 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_f16(const char * __restrict__ 
             K_h2 + k_KQ_0 + (sycl::ext::oneapi::this_work_item::get_nd_item<3>().get_local_id(2) % nthreads) * cpy_ne);
 #pragma unroll
         for (int k_KQ_1 = 0; k_KQ_1 < cpy_ne; ++k_KQ_1) {
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
             ggml_sycl_mad(sum,                tmp[k_KQ_1] , ((const sycl::half2 *) Q_v)[k_KQ_0/nthreads + k_KQ_1]);
-#else
+#else  // 否则
             ggml_sycl_mad(sum, __half22float2(tmp[k_KQ_1]), ((const sycl::float2 *) Q_v)[k_KQ_0/nthreads + k_KQ_1]);
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
         }
     }
 
-    return sum;
+    return sum;  // 返回
 }
 
-template <int D, int nthreads, int warp_size>
+template <int D, int nthreads, int warp_size>  // 模板
 static __dpct_inline__ float vec_dot_fattn_vec_KQ_q4_0(const char * __restrict__ K_c,
                                                        const void * __restrict__ Q_v,
                                                        const int * __restrict__ Q_q8,
@@ -125,10 +125,10 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q4_0(const char * __restrict__
         sum += __half2float(K_q4_0[ib].d) * (sumi*Q_ds.x() - (8/QI8_1)*Q_ds.y());
     }
 
-    return sum;
+    return sum;  // 返回
 }
 
-template <int D, int nthreads , int warp_size>
+template <int D, int nthreads , int warp_size>  // 模板
 static __dpct_inline__ float vec_dot_fattn_vec_KQ_q4_1(const char * __restrict__ K_c,
                                                        const void * __restrict__ Q_v,
                                                        const int * __restrict__ Q_q8,
@@ -161,10 +161,10 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q4_1(const char * __restrict__
         sum += K_dm.x()*Q_ds.x()*sumi + K_dm.y()*Q_ds.y()/QI8_1;
     }
 
-    return sum;
+    return sum;  // 返回
 }
 
-template <int D, int nthreads, int warp_size>
+template <int D, int nthreads, int warp_size>  // 模板
 static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_0(const char * __restrict__ K_c,
                                                        const void * __restrict__ Q_v,
                                                        const int * __restrict__ Q_q8,
@@ -209,10 +209,10 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_0(const char * __restrict__
         sum += __half2float(K_q5_0[ib].d) * (sumi*Q_ds.x() - (16/QI8_1)*Q_ds.y());
     }
 
-    return sum;
+    return sum;  // 返回
 }
 
-template <int D, int nthreads, int warp_size>
+template <int D, int nthreads, int warp_size>  // 模板
 static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_1(const char * __restrict__ K_c,
                                                        const void * __restrict__ Q_v,
                                                        const int * __restrict__ Q_q8,
@@ -258,10 +258,10 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_1(const char * __restrict__
         sum += K_dm.x()*Q_ds.x()*sumi + K_dm.y()*Q_ds.y()/QI8_1;
     }
 
-    return sum;
+    return sum;  // 返回
 }
 
-template <int D, int nthreads, int warp_size>
+template <int D, int nthreads, int warp_size>  // 模板
 static __dpct_inline__ float vec_dot_fattn_vec_KQ_q8_0(const char * __restrict__ K_c,
                                                        const void * __restrict__ Q_v,
                                                        const int * __restrict__ Q_q8,
@@ -289,10 +289,10 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q8_0(const char * __restrict__
         sum += vec_dot_q8_0_q8_1_impl<float, 1>(&v, &Q_q8[k_KQ_0/nthreads], K_q8_0[ib].d, Q_d);
     }
 
-    return sum;
+    return sum;  // 返回
 }
 
-template <typename Tds, int ni, int warp_size>
+template <typename Tds, int ni, int warp_size>  // 模板
 static __dpct_inline__ void quantize_q8_1_to_shared(const float * __restrict__ x,
                                                     const float scale,
                                                     int * __restrict__ yq32,
@@ -341,9 +341,9 @@ static __dpct_inline__ void quantize_q8_1_to_shared(const float * __restrict__ x
     }
 }
 
-typedef void (*dequantize_V_t)(const void *, void *, const int64_t);
+typedef void (*dequantize_V_t)(const void *, void *, const int64_t);  // 类型定义
 
-template <typename T, int ne>
+template <typename T, int ne>  // 模板
 static __dpct_inline__ void dequantize_V_f16(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     if constexpr (std::is_same_v<T, sycl::half>) {
         ggml_sycl_memcpy_1<ne * sizeof(sycl::half)>(dst, (const sycl::half *) vx + i0);
@@ -361,7 +361,7 @@ static __dpct_inline__ void dequantize_V_f16(const void * __restrict__ vx, void 
     }
 }
 
-template <typename T, int ne>
+template <typename T, int ne>  // 模板
 static __dpct_inline__ void dequantize_V_q4_0(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_q4_0 * x = (const block_q4_0 *) vx;
 
@@ -378,7 +378,7 @@ static __dpct_inline__ void dequantize_V_q4_0(const void * __restrict__ vx, void
 
     const int8_t * q8 = (const int8_t *) &q;
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     if constexpr (std::is_same_v<T, sycl::half>) {
         const sycl::half2 d = sycl::half2(x[ib].d);
 
@@ -387,7 +387,7 @@ static __dpct_inline__ void dequantize_V_q4_0(const void * __restrict__ vx, void
             ((sycl::half2 *) dst)[l0 / 2] = d * sycl::half2(q8[l0 + 0], q8[l0 + 1]);
         }
     } else
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
     if constexpr (std::is_same_v<T, float>) {
         const float d = x[ib].d;
 
@@ -400,7 +400,7 @@ static __dpct_inline__ void dequantize_V_q4_0(const void * __restrict__ vx, void
     }
 }
 
-template <typename T, int ne>
+template <typename T, int ne>  // 模板
 static __dpct_inline__ void dequantize_V_q4_1(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_q4_1 * x = (const block_q4_1 *) vx;
 
@@ -416,7 +416,7 @@ static __dpct_inline__ void dequantize_V_q4_1(const void * __restrict__ vx, void
 
     const int8_t * q8 = (const int8_t *) &q;
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     if constexpr (std::is_same_v<T, sycl::half>) {
         const sycl::half2 dm = x[ib].dm;
         const sycl::half2 d  = sycl::half2(dm[0]);
@@ -427,7 +427,7 @@ static __dpct_inline__ void dequantize_V_q4_1(const void * __restrict__ vx, void
             ((sycl::half2 *) dst)[l0 / 2] = d * sycl::half2(q8[l0 + 0], q8[l0 + 1]) + m;
         }
     } else
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
     if constexpr (std::is_same_v<T, float>) {
         const sycl::float2 dm = (x[ib].dm).template convert<float, sycl::rounding_mode::automatic>();
 
@@ -440,7 +440,7 @@ static __dpct_inline__ void dequantize_V_q4_1(const void * __restrict__ vx, void
     }
 }
 
-template <typename T, int ne>
+template <typename T, int ne>  // 模板
 static __dpct_inline__ void dequantize_V_q5_0(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_q5_0 * x = (const block_q5_0 *) vx;
 
@@ -468,7 +468,7 @@ static __dpct_inline__ void dequantize_V_q5_0(const void * __restrict__ vx, void
 
     const int8_t * q8 = (const int8_t *) &q;
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     if constexpr (std::is_same_v<T, sycl::half>) {
         const sycl::half2 d = sycl::half2(x[ib].d);
 
@@ -477,7 +477,7 @@ static __dpct_inline__ void dequantize_V_q5_0(const void * __restrict__ vx, void
             ((sycl::half2 *) dst)[l0 / 2] = d * sycl::half2(q8[l0 + 0], q8[l0 + 1]);
         }
     } else
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
     if constexpr (std::is_same_v<T, float>) {
         const float d = x[ib].d;
 
@@ -490,7 +490,7 @@ static __dpct_inline__ void dequantize_V_q5_0(const void * __restrict__ vx, void
     }
 }
 
-template <typename T, int ne>
+template <typename T, int ne>  // 模板
 static __dpct_inline__ void dequantize_V_q5_1(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_q5_1 * x = (const block_q5_1 *) vx;
 
@@ -516,7 +516,7 @@ static __dpct_inline__ void dequantize_V_q5_1(const void * __restrict__ vx, void
 
     const int8_t * q8 = (const int8_t *) &q;
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     if constexpr (std::is_same_v<T, sycl::half>) {
         const sycl::half2 dm = x[ib].dm;
         const sycl::half2 d  = sycl::half2(dm[0]);
@@ -527,7 +527,7 @@ static __dpct_inline__ void dequantize_V_q5_1(const void * __restrict__ vx, void
             ((sycl::half2 *) dst)[l0 / 2] = d * sycl::half2(q8[l0 + 0], q8[l0 + 1]) + m;
         }
     } else
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
     if constexpr (std::is_same_v<T, float>) {
         const sycl::float2 dm = (x[ib].dm).template convert<float, sycl::rounding_mode::automatic>();
 
@@ -540,7 +540,7 @@ static __dpct_inline__ void dequantize_V_q5_1(const void * __restrict__ vx, void
     }
 }
 
-template <typename T, int ne>
+template <typename T, int ne>  // 模板
 static __dpct_inline__ void dequantize_V_q8_0(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_q8_0 * x = (const block_q8_0 *) vx;
 
@@ -551,7 +551,7 @@ static __dpct_inline__ void dequantize_V_q8_0(const void * __restrict__ vx, void
     int8_t qs[ne];
     ggml_sycl_memcpy_1<ne, 2>(qs, x[ib].qs + iqs);
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     if constexpr (std::is_same<T, sycl::half>::value) {
         const sycl::half2 d = sycl::half2(x[ib].d);
 
@@ -560,7 +560,7 @@ static __dpct_inline__ void dequantize_V_q8_0(const void * __restrict__ vx, void
             ((sycl::half2 *) dst)[l0 / 2] = d * make_half2(qs[l0 + 0], qs[l0 + 1]);
         }
     } else
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
     if constexpr (std::is_same<T, float>::value) {
         const float d = x[ib].d;
 
@@ -573,47 +573,47 @@ static __dpct_inline__ void dequantize_V_q8_0(const void * __restrict__ vx, void
     }
 }
 
-template <int type_K, int D, int nthreads, int warp_size>
+template <int type_K, int D, int nthreads, int warp_size>  // 模板
 constexpr vec_dot_KQ_t get_vec_dot_KQ() {
     if constexpr (type_K == GGML_TYPE_F16) {
-        return vec_dot_fattn_vec_KQ_f16<D, nthreads>;
+        return vec_dot_fattn_vec_KQ_f16<D, nthreads>;  // 返回
     } else if constexpr (type_K == GGML_TYPE_Q4_0) {
-        return vec_dot_fattn_vec_KQ_q4_0<D, nthreads, warp_size>;
+        return vec_dot_fattn_vec_KQ_q4_0<D, nthreads, warp_size>;  // 返回
     } else if constexpr (type_K == GGML_TYPE_Q4_1) {
-        return vec_dot_fattn_vec_KQ_q4_1<D, nthreads, warp_size>;
+        return vec_dot_fattn_vec_KQ_q4_1<D, nthreads, warp_size>;  // 返回
     } else if constexpr (type_K == GGML_TYPE_Q5_0) {
-        return vec_dot_fattn_vec_KQ_q5_0<D, nthreads, warp_size>;
+        return vec_dot_fattn_vec_KQ_q5_0<D, nthreads, warp_size>;  // 返回
     } else if constexpr (type_K == GGML_TYPE_Q5_1) {
-        return vec_dot_fattn_vec_KQ_q5_1<D, nthreads, warp_size>;
+        return vec_dot_fattn_vec_KQ_q5_1<D, nthreads, warp_size>;  // 返回
     } else if constexpr (type_K == GGML_TYPE_Q8_0) {
-        return vec_dot_fattn_vec_KQ_q8_0<D, nthreads, warp_size>;
+        return vec_dot_fattn_vec_KQ_q8_0<D, nthreads, warp_size>;  // 返回
     } else {
         static_assert(type_K == -1, "bad type");
-        return nullptr;
+        return nullptr;  // 返回
     }
 }
 
-template <int type_V, typename T, int ne>
+template <int type_V, typename T, int ne>  // 模板
 constexpr dequantize_V_t get_dequantize_V() {
     if constexpr (type_V == GGML_TYPE_F16) {
-        return dequantize_V_f16<T, ne>;
+        return dequantize_V_f16<T, ne>;  // 返回
     } else if constexpr (type_V == GGML_TYPE_Q4_0) {
-        return dequantize_V_q4_0<T, ne>;
+        return dequantize_V_q4_0<T, ne>;  // 返回
     } else if constexpr (type_V == GGML_TYPE_Q4_1) {
-        return dequantize_V_q4_1<T, ne>;
+        return dequantize_V_q4_1<T, ne>;  // 返回
     } else if constexpr (type_V == GGML_TYPE_Q5_0) {
-        return dequantize_V_q5_0<T, ne>;
+        return dequantize_V_q5_0<T, ne>;  // 返回
     } else if constexpr (type_V == GGML_TYPE_Q5_1) {
-        return dequantize_V_q5_1<T, ne>;
+        return dequantize_V_q5_1<T, ne>;  // 返回
     } else if constexpr (type_V == GGML_TYPE_Q8_0) {
-        return dequantize_V_q8_0<T, ne>;
+        return dequantize_V_q8_0<T, ne>;  // 返回
     } else {
         static_assert(type_V == -1, "bad type");
-        return nullptr;
+        return nullptr;  // 返回
     }
 }
 
-template <int ncols1, int warp_size>
+template <int ncols1, int warp_size>  // 模板
 static void flash_attn_mask_to_KV_max(const sycl::half2 * __restrict__ mask,
                                       int * __restrict__ KV_max,
                                       const int ne30,
@@ -664,13 +664,13 @@ static void flash_attn_mask_to_KV_max(const sycl::half2 * __restrict__ mask,
     KV_max_sj += FATTN_KQ_STRIDE;
 
     if (item_ct1.get_local_id(2) != 0) {
-        return;
+        return;  // 返回
     }
 
     KV_max[sequence*ne31 + jt] = KV_max_sj;
 }
 
-template <int D, int ncols1, int ncols2>  // D == head size
+template <int D, int ncols1, int ncols2>  // D == head size  // 模板
 
 static void flash_attn_stream_k_fixup(float * __restrict__ dst,
                                       const sycl::float2 * __restrict__ dst_fixup,
@@ -705,7 +705,7 @@ static void flash_attn_stream_k_fixup(float * __restrict__ dst,
     const bool wrote_beginning_of_tile = kbc0 % iter_k == 0;
     const bool did_not_write_last      = kbc0/iter_k == kbc0_stop/iter_k && kbc0_stop % iter_k != 0;
     if (did_not_have_any_data || wrote_beginning_of_tile || did_not_write_last) {
-        return;
+        return;  // 返回
     }
 
     // z_KV == K/V head index, zt_gqa = Q head start index per K/V head, jt = token position start index
@@ -717,7 +717,7 @@ static void flash_attn_stream_k_fixup(float * __restrict__ dst,
     const int zt_Q = z_KV*gqa_ratio + zt_gqa*ncols2; // Global Q head start index.
 
     if (jt*ncols1 + j >= ne01 || zt_gqa*ncols2 + c >= gqa_ratio) {
-        return;
+        return;  // 返回
     }
 
     dst += sequence*ne02*ne01*D + jt*ne02*(ncols1*D) + zt_Q*D + (j*ne02 + c)*D + tid;
@@ -776,7 +776,7 @@ static void flash_attn_stream_k_fixup(float * __restrict__ dst,
     *dst = dst_val / rowsum;
 }
 
-template <int D>  // D == head size
+template <int D>  // D == head size  // 模板
 
 static void flash_attn_combine_results(const float * __restrict__ VKQ_parts,
                                        const sycl::float2 * __restrict__ VKQ_meta,
@@ -830,7 +830,7 @@ static void flash_attn_combine_results(const float * __restrict__ VKQ_parts,
     dst[tid] = VKQ_numerator / VKQ_denominator;
 }
 
-template <fattn_kernel_t fattn_kernel, int warp_size>
+template <fattn_kernel_t fattn_kernel, int warp_size>  // 模板
 static void lauch_kernel(
     dpct::dim3 group_range,
     dpct::dim3 local_range,
@@ -890,7 +890,7 @@ static void lauch_kernel(
     });
 }
 
-template <int DV, int ncols1, int ncols2, fattn_kernel_t fattn_kernel, int warp_size>
+template <int DV, int ncols1, int ncols2, fattn_kernel_t fattn_kernel, int warp_size>  // 模板
 void launch_fattn(
     ggml_backend_sycl_context & ctx, ggml_tensor * dst, const int nwarps, const size_t nbytes_shared,
     const int nbatch_fa, const bool need_f16_K, const bool need_f16_V, const bool stream_k) {

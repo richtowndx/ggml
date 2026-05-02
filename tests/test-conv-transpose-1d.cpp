@@ -1,24 +1,24 @@
-#include "ggml.h"
-#include "ggml-cpu.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#ifdef GGML_USE_CUDA
-#include "ggml-cuda.h"
-#endif
+#ifdef GGML_USE_CUDA  // 如果定义了 GGML_USE_CUDA 则编译
+#include "ggml-cuda.h"  // 引入 ggml-cuda.h 头文件
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_METAL
-#include "ggml-metal.h"
-#endif
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
+#include "ggml-metal.h"  // 引入 ggml-metal.h 头文件
+#endif  // 条件编译结束
 
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <map>
-#include <string>
-#include <vector>
-#include <cmath>
-#include <iostream>
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <map>  // 引入 map 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <iostream>  // 引入 iostream 头文件
 
 static void ggml_log_callback_default(ggml_log_level level, const char * text, void * user_data) {
     (void) level;
@@ -27,7 +27,7 @@ static void ggml_log_callback_default(ggml_log_level level, const char * text, v
     fflush(stderr);
 }
 
-struct test_model {
+struct test_model {  // 结构体定义
     struct ggml_tensor * a_0;
     struct ggml_tensor * b_0;
 
@@ -93,7 +93,7 @@ void load_model(test_model & model, bool use_gpu = false) {
     printf("%s: backend buffer size = %0.2f MB\n", __func__, (buffer_size/ 1024.f/ 1024.f));
 
     int num_tensors = 10;
-    struct ggml_init_params params {
+    struct ggml_init_params params {  // 结构体定义
             /*.mem_size   =*/ ggml_tensor_overhead() * num_tensors,
             /*.mem_buffer =*/ NULL,
             /*.no_alloc   =*/ true,
@@ -102,7 +102,7 @@ void load_model(test_model & model, bool use_gpu = false) {
     ggml_log_set(ggml_log_callback_default, nullptr);
 
     // initialize the backend
-#ifdef GGML_USE_CUDA
+#ifdef GGML_USE_CUDA  // 如果定义了 GGML_USE_CUDA 则编译
     if (use_gpu) {
         fprintf(stderr, "%s: using CUDA backend\n", __func__);
         model.backend = ggml_backend_cuda_init(0);
@@ -110,9 +110,9 @@ void load_model(test_model & model, bool use_gpu = false) {
             fprintf(stderr, "%s: ggml_backend_cuda_init() failed\n", __func__);
         }
     }
-#endif
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_METAL
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
     if (use_gpu) {
         fprintf(stderr, "%s: using Metal backend\n", __func__);
         model.backend = ggml_backend_metal_init();
@@ -120,7 +120,7 @@ void load_model(test_model & model, bool use_gpu = false) {
             fprintf(stderr, "%s: ggml_backend_metal_init() failed\n", __func__);
         }
     }
-#endif
+#endif  // 条件编译结束
 
     if(!model.backend) {
         // fallback to CPU backend
@@ -211,9 +211,9 @@ void load_model(test_model & model, bool use_gpu = false) {
     ggml_tallocr_alloc(&alloc, model.b_0);
 
     if(ggml_backend_is_cpu(model.backend)
-#ifdef GGML_USE_METAL
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
                 || ggml_backend_is_metal(model.backend)
-#endif
+#endif  // 条件编译结束
     ) {
         memcpy(model.b_0->data, bdata_0, ggml_nbytes(model.b_0));
     } else {
@@ -224,9 +224,9 @@ void load_model(test_model & model, bool use_gpu = false) {
     ggml_tallocr_alloc(&alloc, model.b_1);
 
     if(ggml_backend_is_cpu(model.backend)
-#ifdef GGML_USE_METAL
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
                 || ggml_backend_is_metal(model.backend)
-#endif
+#endif  // 条件编译结束
     ) {
         memcpy(model.b_1->data, bdata_1, ggml_nbytes(model.b_1));
     } else {
@@ -237,9 +237,9 @@ void load_model(test_model & model, bool use_gpu = false) {
     ggml_tallocr_alloc(&alloc, model.b_2);
 
     if(ggml_backend_is_cpu(model.backend)
-#ifdef GGML_USE_METAL
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
                 || ggml_backend_is_metal(model.backend)
-#endif
+#endif  // 条件编译结束
     ) {
         memcpy(model.b_2->data, bdata_2, ggml_nbytes(model.b_2));
     } else {
@@ -250,9 +250,9 @@ void load_model(test_model & model, bool use_gpu = false) {
     ggml_tallocr_alloc(&alloc, model.b_3);
 
     if(ggml_backend_is_cpu(model.backend)
-#ifdef GGML_USE_METAL
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
                 || ggml_backend_is_metal(model.backend)
-#endif
+#endif  // 条件编译结束
     ) {
         memcpy(model.b_3->data, data, ggml_nbytes(model.b_3));
     } else {
@@ -264,9 +264,9 @@ void load_model(test_model & model, bool use_gpu = false) {
     ggml_tallocr_alloc(&alloc, model.b_4);
 
     if(ggml_backend_is_cpu(model.backend)
-#ifdef GGML_USE_METAL
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
                 || ggml_backend_is_metal(model.backend)
-#endif
+#endif  // 条件编译结束
     ) {
         memcpy(model.b_4->data, data, ggml_nbytes(model.b_4));
     } else {
@@ -276,11 +276,11 @@ void load_model(test_model & model, bool use_gpu = false) {
 
 }
 
-struct ggml_cgraph * build_graph(const test_model& model) {
+struct ggml_cgraph * build_graph(const test_model& model) {  // 结构体定义
     static size_t buf_size = ggml_tensor_overhead()*GGML_DEFAULT_GRAPH_SIZE + ggml_graph_overhead();
     static std::vector<uint8_t> buf(buf_size);
 
-    struct ggml_init_params params0 = {
+    struct ggml_init_params params0 = {  // 结构体定义
         /*.mem_size   =*/ buf_size,
         /*.mem_buffer =*/ buf.data(),
         /*.no_alloc   =*/ true, // the tensors will be allocated later by ggml_gallocr_alloc_graph()
@@ -361,10 +361,10 @@ struct ggml_cgraph * build_graph(const test_model& model) {
 
     // delete the temporally context used to build the graph
     ggml_free(ctx0);
-    return gf;
+    return gf;  // 返回
 }
 
-struct ggml_cgraph* compute_graph(const test_model & model, ggml_gallocr_t allocr) {
+struct ggml_cgraph* compute_graph(const test_model & model, ggml_gallocr_t allocr) {  // 结构体定义
     struct ggml_cgraph * gf = build_graph(model);
 
     // allocate tensors
@@ -379,10 +379,10 @@ struct ggml_cgraph* compute_graph(const test_model & model, ggml_gallocr_t alloc
 
     //ggml_graph_print(gf);
 
-    return gf;
+    return gf;  // 返回
 }
 
-int main(void)
+int main(void)  // main
 {
     ggml_time_init();
 
@@ -685,7 +685,7 @@ int main(void)
     ggml_gallocr_free(allocr);
 
     if (passed) {
-        return 0;
+        return 0;  // 返回
     }
-    return 1;
+    return 1;  // 返回
 }

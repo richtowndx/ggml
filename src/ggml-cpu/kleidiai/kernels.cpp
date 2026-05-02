@@ -3,55 +3,55 @@
 //
 
 // KleidiAI micro-kernels
-#include "kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_interface.h"
-#include "kai_matmul_clamp_f32_qai8dxp_qsi8cxp_interface.h"
-#include "kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod.h"
-#include "kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod.h"
-#include "kai_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod.h"
-#include "kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm.h"
-#include "kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot.h"
-#include "kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa.h"
-#include "kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"
-#include "kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot.h"
-#include "kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod.h"
-#include "kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod.h"
-#include "kai_matmul_clamp_f32_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod.h"
-#include "kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm.h"
-#include "kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p8x8_16x8_sve_i8mm.h"
-#include "kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p8x8_1x8_sve_dotprod.h"
-#include "kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa.h"
+#include "kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_interface.h"  // 引入 kai_matmul_clamp_f32_qsi8d32p_qsi4c32p_interface.h 头文件
+#include "kai_matmul_clamp_f32_qai8dxp_qsi8cxp_interface.h"  // 引入 kai_matmul_clamp_f32_qai8dxp_qsi8cxp_interface.h 头文件
+#include "kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod.h"  // 引入 kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p4x8_1x4x32_neon_dotprod.h 头文件
+#include "kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod.h"  // 引入 kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4x4_1x4_neon_dotprod.h 头文件
+#include "kai_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod.h"  // 引入 kai_matmul_clamp_f32_qsi8d32p4x4_qsi4c32p4x4_16x4_neon_dotprod.h 头文件
+#include "kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm.h"  // 引入 kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p4x8_16x4_neon_i8mm.h 头文件
+#include "kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot.h"  // 引入 kai_matmul_clamp_f32_qsi8d32p1x4_qsi4c32p4vlx4_1x4vl_sme2_sdot.h 头文件
+#include "kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa.h"  // 引入 kai_matmul_clamp_f32_bf16p2vlx2_bf16p2vlx2_2vlx2vl_sme2_mopa.h 头文件
+#include "kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h"  // 引入 kai_matmul_clamp_f32_qai8dxp1vlx4_qsi8cxp4vlx4_1vlx4vl_sme2_mopa.h 头文件
+#include "kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot.h"  // 引入 kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4vlx4_1x4vl_sme2_dot.h 头文件
+#include "kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod.h"  // 引入 kai_matmul_clamp_f32_qai8dxp1x8_qsi8cxp4x8_1x4_neon_dotprod.h 头文件
+#include "kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod.h"  // 引入 kai_matmul_clamp_f32_qai8dxp1x4_qsi8cxp4x4_1x4_neon_dotprod.h 头文件
+#include "kai_matmul_clamp_f32_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod.h"  // 引入 kai_matmul_clamp_f32_qai8dxp4x4_qsi8cxp4x4_16x4_neon_dotprod.h 头文件
+#include "kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm.h"  // 引入 kai_matmul_clamp_f32_qai8dxp4x8_qsi8cxp4x8_16x4_neon_i8mm.h 头文件
+#include "kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p8x8_16x8_sve_i8mm.h"  // 引入 kai_matmul_clamp_f32_qsi8d32p4x8_qsi4c32p8x8_16x8_sve_i8mm.h 头文件
+#include "kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p8x8_1x8_sve_dotprod.h"  // 引入 kai_matmul_clamp_f32_qsi8d32p1x8_qsi4c32p8x8_1x8_sve_dotprod.h 头文件
+#include "kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa.h"  // 引入 kai_matmul_clamp_f32_f16p1vlx2_qsi4c32p4vlx2_1vlx4vl_sme2_mopa.h 头文件
 
-#include "kai_lhs_pack_bf16p2vlx2_f32_sme.h"
-#include "kai_lhs_quant_pack_qsi8d32p_f32.h"
-#include "kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon.h"
-#include "kai_lhs_quant_pack_qsi8d32p_f32_neon.h"
-#include "kai_lhs_quant_pack_qai8dxp_f32.h"
+#include "kai_lhs_pack_bf16p2vlx2_f32_sme.h"  // 引入 kai_lhs_pack_bf16p2vlx2_f32_sme.h 头文件
+#include "kai_lhs_quant_pack_qsi8d32p_f32.h"  // 引入 kai_lhs_quant_pack_qsi8d32p_f32.h 头文件
+#include "kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon.h"  // 引入 kai_lhs_quant_pack_qsi8d32p4x8sb_f32_neon.h 头文件
+#include "kai_lhs_quant_pack_qsi8d32p_f32_neon.h"  // 引入 kai_lhs_quant_pack_qsi8d32p_f32_neon.h 头文件
+#include "kai_lhs_quant_pack_qai8dxp_f32.h"  // 引入 kai_lhs_quant_pack_qai8dxp_f32.h 头文件
 
-#include "kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme.h"
-#include "kai_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0.h"
-#include "kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon.h"
-#include "kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"
-#include "kai_lhs_pack_f16pmrx2_f32_neon.h"
+#include "kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme.h"  // 引入 kai_rhs_pack_kxn_bf16p2vlx2b_f32_x32_sme.h 头文件
+#include "kai_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0.h"  // 引入 kai_rhs_pack_nxk_qsi4c32pscalef16_qsu4c32s16s0.h 头文件
+#include "kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon.h"  // 引入 kai_rhs_pack_nxk_qsi4c32ps1s0scalef16_qsu4c32s16s0_neon.h 头文件
+#include "kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h"  // 引入 kai_rhs_pack_nxk_qsi8cxp_qsi8cx_neon.h 头文件
+#include "kai_lhs_pack_f16pmrx2_f32_neon.h"  // 引入 kai_lhs_pack_f16pmrx2_f32_neon.h 头文件
 
-#include "kai_common.h"
+#include "kai_common.h"  // 引入 kai_common.h 头文件
 
-#include "simd-mappings.h"
+#include "simd-mappings.h"  // 引入 simd-mappings.h 头文件
 
-#define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
+#define GGML_COMMON_DECL_CPP  // 宏定义 GGML_COMMON_DECL_CPP
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
 
-#include "kernels.h"
+#include "kernels.h"  // 引入 kernels.h 头文件
 
-#define NELEMS(x) (sizeof(x) / sizeof(*x))
+#define NELEMS(x) (sizeof(x) / sizeof(*x))  // 宏定义 NELEMS
 
 template<size_t(*Fn)(size_t,size_t,size_t)>
 static inline size_t kernel_offs_fn3(size_t a, size_t b, size_t c) {
-    return Fn(a, b, c);
+    return Fn(a, b, c);  // Fn
 }
 
 template<size_t(*Fn)(size_t,size_t)>
 static inline size_t kernel_offs_fn2(size_t a, size_t b, size_t) {
-    return Fn(a, b);
+    return Fn(a, b);  // Fn
 }
 
 template<void(*Fn)(size_t,size_t,size_t,size_t,const void*,const void*,float*,size_t,size_t,float,float)>
@@ -80,22 +80,22 @@ static inline void kernel_run_float_fn10(size_t m, size_t n, size_t k, size_t /*
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t)>
 static inline size_t lhs_ps_fn6(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
-    return Fn(m, k, bl, mr, kr, sr);
+    return Fn(m, k, bl, mr, kr, sr);  // Fn
 }
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t)>
 static inline size_t lhs_ps_fn5(size_t m, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr) {
-    return Fn(m, k, mr, kr, sr);
+    return Fn(m, k, mr, kr, sr);  // Fn
 }
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t)>
 static inline size_t lhs_offs_fn6(size_t m_idx, size_t k, size_t bl, size_t mr, size_t kr, size_t sr) {
-    return Fn(m_idx, k, bl, mr, kr, sr);
+    return Fn(m_idx, k, bl, mr, kr, sr);  // Fn
 }
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t)>
 static inline size_t lhs_offs_fn5(size_t m_idx, size_t k, size_t /*bl*/, size_t mr, size_t kr, size_t sr) {
-    return Fn(m_idx, k, mr, kr, sr);
+    return Fn(m_idx, k, mr, kr, sr);  // Fn
 }
 
 template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const float*,size_t,void*)>
@@ -124,22 +124,22 @@ static inline void lhs_pack_float_fn9_no_bl(size_t m, size_t k, size_t /*bl*/, s
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t,size_t)>
 static inline size_t rhs_ps_fn5(size_t n, size_t k, size_t nr, size_t kr, size_t bl) {
-    return Fn(n, k, nr, kr, bl);
+    return Fn(n, k, nr, kr, bl);  // Fn
 }
 
 template<size_t(*Fn)(size_t,size_t)>
 static inline size_t rhs_ps_fn2(size_t n, size_t k, size_t /*nr*/, size_t /*kr*/, size_t /*bl*/) {
-    return Fn(n, k);
+    return Fn(n, k);  // Fn
 }
 
 template<size_t(*Fn)(size_t,size_t,size_t,size_t)>
 static inline size_t rhs_stride_fn4(size_t k, size_t nr, size_t kr, size_t bl) {
-    return Fn(k, nr, kr, bl);
+    return Fn(k, nr, kr, bl);  // Fn
 }
 
 template<size_t(*Fn)(size_t)>
 static inline size_t rhs_stride_fn1(size_t k, size_t /*nr*/, size_t /*kr*/, size_t /*bl*/) {
-    return Fn(k);
+    return Fn(k);  // Fn
 }
 
 template<void(*Fn)(size_t,size_t,size_t,size_t,size_t,size_t,size_t,const uint8_t*,const float*,void*,size_t,const struct kai_rhs_pack_qs4cxs1s0_param*)>
@@ -297,7 +297,7 @@ static void dequantize_row_qsi8cxp(
         for (size_t i = 0; i < (size_t) k; ++i) {
             out[i] = 0.0f;
         }
-        return;
+        return;  // 返回
     }
 
     for (size_t i = 0; i < (size_t) k; ++i) {
@@ -306,7 +306,7 @@ static void dequantize_row_qsi8cxp(
 }
 
 static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
-#if defined(__ARM_FEATURE_SME)
+#if defined(__ARM_FEATURE_SME)  // 条件编译
     {
         /* SME GEMM */
         /* .kern_info = */ {
@@ -414,9 +414,9 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .rhs_type           = */ GGML_TYPE_F16,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#endif
-#if defined(__APPLE__)
-#if defined(__ARM_FEATURE_DOTPROD)
+#endif  // 条件编译结束
+#if defined(__APPLE__)  // 条件编译
+#if defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     {
         /* DOTPROD GEMM */
         /* .kern_info = */ {
@@ -470,8 +470,8 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .rhs_type           = */ GGML_TYPE_Q4_0,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#endif
-#if defined(__ARM_FEATURE_MATMUL_INT8)
+#endif  // 条件编译结束
+#if defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
     {
         /* i8mm GEMM */
         /* .kern_info = */ {
@@ -525,9 +525,9 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .rhs_type           = */ GGML_TYPE_Q4_0,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#endif
-#else
-#if defined(__ARM_FEATURE_SVE)
+#endif  // 条件编译结束
+#else  // 否则
+#if defined(__ARM_FEATURE_SVE)  // 条件编译
     {
         /* SVE i8mm GEMM */
         /* .kern_info = */ {
@@ -581,8 +581,8 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .rhs_type           = */ GGML_TYPE_Q4_0,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#endif
-#if defined(__ARM_FEATURE_MATMUL_INT8)
+#endif  // 条件编译结束
+#if defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
     {
         /* i8mm GEMM */
         /* .kern_info = */ {
@@ -636,8 +636,8 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .rhs_type           = */ GGML_TYPE_Q4_0,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#endif // __ARM_FEATURE_MATMUL_INT8
-#if defined(__ARM_FEATURE_DOTPROD)
+#endif // __ARM_FEATURE_MATMUL_INT8  // 条件编译结束
+#if defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     {
         /* DOTPROD GEMM */
         /* .kern_info = */ {
@@ -691,13 +691,13 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
         /* .rhs_type           = */ GGML_TYPE_Q4_0,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#endif
-#endif
+#endif  // 条件编译结束
+#endif  // 条件编译结束
     { /* Sentinel */ }
 };
 
 static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
-#if defined(__ARM_FEATURE_SME)
+#if defined(__ARM_FEATURE_SME)  // 条件编译
     {
         /* SME GEMM */
         {
@@ -751,8 +751,8 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
         /* .rhs_type           = */ GGML_TYPE_Q8_0,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#endif
-#if defined(__ARM_FEATURE_MATMUL_INT8)
+#endif  // 条件编译结束
+#if defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
     {
         /* I8MM GEMM */
         {
@@ -806,8 +806,8 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
         /* .rhs_type           = */ GGML_TYPE_Q8_0,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#endif
-#if defined(__ARM_FEATURE_DOTPROD)
+#endif  // 条件编译结束
+#if defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     {
         /* DOTPROD GEMM */
         {
@@ -861,7 +861,7 @@ static ggml_kleidiai_kernels gemm_gemv_kernels_q8[] = {
         /* .rhs_type           = */ GGML_TYPE_Q8_0,
         /* .op_type            = */ GGML_TYPE_F32,
     },
-#endif
+#endif  // 条件编译结束
     { /* Sentinel */ }
 };
 
@@ -880,10 +880,10 @@ ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, c
                     table[i].rhs_type == tensor->src[0]->type &&
                     table[i].op_type  == tensor->type) {
                     kernel = &table[i];
-                    return true;
+                    return true;  // 返回
                 }
             }
-            return false;
+            return false;  // 返回
         };
 
         if (tensor->src[0]->type == GGML_TYPE_Q8_0) {
@@ -891,14 +891,14 @@ ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, c
         } else {
             try_table(gemm_gemv_kernels);
         }
-#else
+#else  // 否则
     GGML_UNUSED(gemm_gemv_kernels);
     GGML_UNUSED(gemm_gemv_kernels_q8);
     GGML_UNUSED(cpu_features);
-#endif
+#endif  // 条件编译结束
     }
 
-    return kernel;
+    return kernel;  // 返回
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_0(cpu_feature features) {
@@ -914,26 +914,26 @@ ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_0(cpu_feature features) 
             break;
         }
     }
-#else
+#else  // 否则
     GGML_UNUSED(features);
-#endif
+#endif  // 条件编译结束
 
-    return kernels;
+    return kernels;  // 返回
 }
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q8_0(cpu_feature features) {
     ggml_kleidiai_kernels * kernels = nullptr;
 
-#if defined(__ARM_FEATURE_SME) || defined(__ARM_FEATURE_DOTPROD) || defined(__ARM_FEATURE_MATMUL_INT8)
+#if defined(__ARM_FEATURE_SME) || defined(__ARM_FEATURE_DOTPROD) || defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
     for (size_t i = 0; i < NELEMS(gemm_gemv_kernels_q8) - 1; ++i) {
         if ((features & gemm_gemv_kernels_q8[i].required_cpu) == gemm_gemv_kernels_q8[i].required_cpu) {
             kernels = &gemm_gemv_kernels_q8[i];
             break;
         }
     }
-#else
+#else  // 否则
     GGML_UNUSED(features);
-#endif
+#endif  // 条件编译结束
 
-    return kernels;
+    return kernels;  // 返回
 }

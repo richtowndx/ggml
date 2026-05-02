@@ -1,15 +1,15 @@
-#ifndef HVX_INVERSE_H
-#define HVX_INVERSE_H
+#ifndef HVX_INVERSE_H  // 如果未定义 HVX_INVERSE_H 则编译
+#define HVX_INVERSE_H  // 宏定义 HVX_INVERSE_H
 
-#include <HAP_farf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
 
-#include <math.h>
-#include <string.h>
-#include <assert.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
+#include <assert.h>  // 引入 assert.h 头文件
+#include <stddef.h>  // 引入 stddef.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
 
-#include "hvx-base.h"
+#include "hvx-base.h"  // 引入 hvx-base.h 头文件
 
 // ====================================================
 // FUNCTION: 1/(x+1)     y(0) = 1,  y(0.5) = 0.6667, y(1) = 0.5
@@ -28,7 +28,7 @@ static inline HVX_Vector hvx_vec_recip_xp1_O3_unsigned(HVX_Vector vx) {
     p = Q6_Vh_vmpa_VhVhVuhPuh_sat(p, vx, 0x2E49406159097A14ull);
     p = Q6_Vh_vmps_VhVhVuhPuh_sat(p, vx, 0x5DF66B7177AB7FC2ull);
     p = Q6_Vh_vmpa_VhVhVuhPuh_sat(p, vx, 0x79E57D427F4E8001ull);
-    return p;  // signed result, 14 fractional bits
+    return p;  // signed result, 14 fractional bits  // 返回
 }
 
 // Find reciprocal of fp16.
@@ -83,7 +83,7 @@ static inline HVX_Vector hvx_vec_inverse_f16(HVX_Vector vals) {
     recip            = Q6_V_vmux_QVV(is_small, Q6_Vh_vsplat_R(0x7bff), recip);
     // add sign back
     recip            = Q6_V_vandor_VQR(recip, is_neg, 0x80008000);
-    return recip;
+    return recip;  // 返回
 }
 
 static inline HVX_Vector hvx_vec_inverse_f32(HVX_Vector v_sf) {
@@ -103,7 +103,7 @@ static inline HVX_Vector hvx_vec_inverse_f32(HVX_Vector v_sf) {
     r_qf = Q6_Vqf32_vmpy_Vqf32Vqf32(
         r_qf, Q6_Vqf32_vsub_VsfVsf(two_sf, Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vqf32(r_qf), v_sf))));
 
-    return Q6_Vsf_equals_Vqf32(r_qf);
+    return Q6_Vsf_equals_Vqf32(r_qf);  // Q6_Vsf_equals_Vqf32
 }
 
 static inline HVX_Vector hvx_vec_inverse_f32_guard(HVX_Vector v_sf, HVX_Vector nan_inf_mask) {
@@ -112,7 +112,7 @@ static inline HVX_Vector hvx_vec_inverse_f32_guard(HVX_Vector v_sf, HVX_Vector n
     HVX_Vector     masked_out = Q6_V_vand_VV(out, nan_inf_mask);
     const HVX_VectorPred pred = Q6_Q_vcmp_eq_VwVw(nan_inf_mask, masked_out);
 
-    return Q6_V_vmux_QVV(pred, Q6_V_vzero(), out);
+    return Q6_V_vmux_QVV(pred, Q6_V_vzero(), out);  // Q6_V_vmux_QVV
 }
 
 #define hvx_inverse_f32_loop_body(dst_type, src_type, vec_store)             \
@@ -143,7 +143,7 @@ static inline HVX_Vector hvx_vec_inverse_f16_guard(HVX_Vector v_sf, HVX_Vector n
     HVX_Vector     masked_out = Q6_V_vand_VV(out, nan_inf_mask);
     const HVX_VectorPred pred = Q6_Q_vcmp_eq_VhVh(nan_inf_mask, masked_out);
 
-    return Q6_V_vmux_QVV(pred, Q6_V_vzero(), out);
+    return Q6_V_vmux_QVV(pred, Q6_V_vzero(), out);  // Q6_V_vmux_QVV
 }
 
 #define hvx_inverse_f16_loop_body(dst_type, src_type, vec_store)             \
@@ -207,4 +207,4 @@ DEFINE_HVX_INV_OP_VARIANTS(hvx_inverse_f16, hvx_inverse_f16_loop_body)
 HVX_INV_DISPATCHER(hvx_inverse_f32)
 HVX_INV_DISPATCHER(hvx_inverse_f16)
 
-#endif // HVX_INVERSE_H
+#endif // HVX_INVERSE_H  // 条件编译结束

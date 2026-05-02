@@ -1,26 +1,26 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#include "../node_context.h"  // 引入 ../node_context.h 头文件
+#include "../op_table.h"  // 引入 ../op_table.h 头文件
+#include "../utils.h"  // 引入 ../utils.h 头文件
 
-#include <climits>
-#include <cstdint>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/softmax.hpp>
-#include <vector>
+#include <climits>  // 引入 climits 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <memory>  // 引入 memory 头文件
+#include <openvino/core/node.hpp>  // 引入 openvino/core/node.hpp 头文件
+#include <openvino/core/node_output.hpp>  // 引入 openvino/core/node_output.hpp 头文件
+#include <openvino/op/add.hpp>  // 引入 openvino/op/add.hpp 头文件
+#include <openvino/op/concat.hpp>  // 引入 openvino/op/concat.hpp 头文件
+#include <openvino/op/constant.hpp>  // 引入 openvino/op/constant.hpp 头文件
+#include <openvino/op/convert.hpp>  // 引入 openvino/op/convert.hpp 头文件
+#include <openvino/op/matmul.hpp>  // 引入 openvino/op/matmul.hpp 头文件
+#include <openvino/op/multiply.hpp>  // 引入 openvino/op/multiply.hpp 头文件
+#include <openvino/op/slice.hpp>  // 引入 openvino/op/slice.hpp 头文件
+#include <openvino/op/softmax.hpp>  // 引入 openvino/op/softmax.hpp 头文件
+#include <vector>  // 引入 vector 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
+namespace op {  // 命名空间
 
 OutputVector translate_soft_max(const NodeContext & context) {
     // TODO code is outdated
@@ -49,7 +49,7 @@ OutputVector translate_soft_max(const NodeContext & context) {
 
     if (context.get_input_size() < 2) {
         res = std::make_shared<ov::op::v8::Softmax>(scaled_input, 2);
-        return rename_outputs_with_suffix({res}, context.get_name());
+        return rename_outputs_with_suffix({res}, context.get_name());  // 返回
     }
 
     ov::Output<ov::Node> mask_node_sliced;
@@ -80,7 +80,7 @@ OutputVector translate_soft_max(const NodeContext & context) {
 
     res = std::make_shared<ov::op::v8::Softmax>(input_slope_mask_node, 2);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    return rename_outputs_with_suffix({res}, context.get_name());  // 返回
 }
 
 }  // namespace op

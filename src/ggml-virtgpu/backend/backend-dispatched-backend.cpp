@@ -1,23 +1,23 @@
-#include "backend-dispatched.h"
-#include "backend-virgl-apir.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "shared/apir_backend.h"
+#include "backend-dispatched.h"  // 引入 backend-dispatched.h 头文件
+#include "backend-virgl-apir.h"  // 引入 backend-virgl-apir.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "shared/apir_backend.h"  // 引入 shared/apir_backend.h 头文件
 
-#include <cstdint>
+#include <cstdint>  // 引入 cstdint 头文件
 
 static uint32_t validate_graph_operation(size_t cgraph_size, uint32_t shmem_res_id, const char * operation) {
     if (cgraph_size == 0) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Zero-size computation graph\n", operation);
-        return 1;
+        return 1;  // 返回
     }
 
     // place-holder: validate that the size of shmem_res_id is <= cgraph_size
     // need to add another method in the Virgl->APIR callback interface
     GGML_UNUSED(shmem_res_id);
 
-    return 0;  // Valid
+    return 0;  // Valid  // 返回
 }
 
 uint32_t backend_backend_graph_compute(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -41,14 +41,14 @@ uint32_t backend_backend_graph_compute(apir_encoder * enc, apir_decoder * dec, v
     if (!shmem_data) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Couldn't get the shmem addr from virgl\n", __func__);
         apir_decoder_set_fatal(dec);
-        return 1;
+        return 1;  // 返回
     }
     size_t cgraph_size;
     apir_decode_size_t(dec, &cgraph_size);
 
     if (validate_graph_operation(cgraph_size, shmem_res_id, __func__) != 0) {
         apir_decoder_set_fatal(dec);
-        return 1;
+        return 1;  // 返回
     }
 
     apir_decoder secondary_dec = apir_new_decoder((const char *) shmem_data, cgraph_size);
@@ -57,17 +57,17 @@ uint32_t backend_backend_graph_compute(apir_encoder * enc, apir_decoder * dec, v
 
     if (!cgraph || apir_decoder_get_fatal(&secondary_dec)) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Failed to deserialize computation graph\n", __func__);
-        return 1;
+        return 1;  // 返回
     }
 
     if (cgraph->n_nodes < 0 || cgraph->n_leafs < 0) {
-        GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid negative node/leaf count: nodes=%d leafs=%d\n", __func__,
+        GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid negative node/leaf count: nodes=%d leafs=%d\n", __func__,  // 打印错误日志
                        cgraph->n_nodes, cgraph->n_leafs);
-        return 1;
+        return 1;  // 返回
     }
 
     ggml_status status;
-#if APIR_BACKEND_CHECK_SUPPORTS_OP == 1
+#if APIR_BACKEND_CHECK_SUPPORTS_OP == 1  // 条件编译
     for (int idx = 0; idx < cgraph->n_nodes; idx++) {
         ggml_tensor * op = ggml_graph_node(cgraph, idx);
         if (dev->iface.supports_op(dev, op)) {
@@ -79,15 +79,15 @@ uint32_t backend_backend_graph_compute(apir_encoder * enc, apir_decoder * dec, v
         status = GGML_STATUS_ABORTED;
         apir_encode_ggml_status(enc, &status);
 
-        return 0;
+        return 0;  // 返回
     }
-#endif
+#endif  // 条件编译结束
 
     // Check if backend is properly initialized
     if (!bck) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Backend not initialized (bck is null)\n", __func__);
 
-        return 1;
+        return 1;  // 返回
     }
 
     status = bck->iface.graph_compute(bck, cgraph);
@@ -98,5 +98,5 @@ uint32_t backend_backend_graph_compute(apir_encoder * enc, apir_decoder * dec, v
 
     apir_encode_ggml_status(enc, &status);
 
-    return 0;
+    return 0;  // 返回
 }

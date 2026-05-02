@@ -1,4 +1,4 @@
-#include "upscale.hpp"
+#include "upscale.hpp"  // 引入 upscale.hpp 头文件
 
 static void upscale_f32(const float * x, float * dst,
         const int nb00, const int nb01, const int nb02, const int nb03,
@@ -7,7 +7,7 @@ static void upscale_f32(const float * x, float * dst,
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
     int  index    = item_ct1.get_local_id(2) + item_ct1.get_group(2) * item_ct1.get_local_range(2);
     if (index >= ne10 * ne11 * ne12 * ne13) {
-        return;
+        return;  // 返回
     }
 
     int i10 = index % ne10;
@@ -36,7 +36,7 @@ static void upscale_f32_bilinear(const float * x, float * dst,
     const int64_t dst_total_elements = ne10_dst * ne11_dst * ne12_dst * ne13_dst;
 
   if (index >= dst_total_elements) {
-    return;
+    return;  // 返回
   }
 
     const int i10_dst = index % ne10_dst;
@@ -122,7 +122,7 @@ static void upscale_f32_bilinear_antialias(const float * src0,
     const int64_t dst_total_elements = ne10_dst * ne11_dst * ne12_dst * ne13_dst;
 
     if (index >= dst_total_elements) {
-        return;
+        return;  // 返回
     }
 
     const int i10_dst = index % ne10_dst;
@@ -182,7 +182,7 @@ static void upscale_f32_bilinear_antialias(const float * src0,
     dst[index] = val;
 }
 
-namespace bicubic_interpolation {
+namespace bicubic_interpolation {  // 命名空间
 static float weight1(float x, const float &a) { return ((a + 2) * x - (a + 3)) * x * x + 1; };
 static float weight2(float x, const float &a) { return ((a * x - 5 * a) * x + 8 * a) * x - 4 * a; };
 
@@ -191,7 +191,7 @@ static float bicubic(float p0, float p1, float p2, float p3, float x, float a) {
     const float w1 = weight1(x + 0, a);
     const float w2 = weight1(1 - x, a);
     const float w3 = weight2(2 - x, a);
-    return p0 * w0 + p1 * w1 + p2 * w2 + p3 * w3;
+    return p0 * w0 + p1 * w1 + p2 * w2 + p3 * w3;  // 返回
 };
 
 }
@@ -204,7 +204,7 @@ static void upscale_f32_bicubic(const float * x, float * dst,
         const float pixel_offset) {
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
     const float a = -0.75f;
-    using bicubic_interpolation::bicubic;
+    using bicubic_interpolation::bicubic;  // using 声明
 
     const int64_t index = item_ct1.get_local_id(2) +
         item_ct1.get_group(2) * item_ct1.get_local_range(2);
@@ -212,7 +212,7 @@ static void upscale_f32_bicubic(const float * x, float * dst,
         ne10_dst * ne11_dst * ne12_dst * ne13_dst;
 
     if (index >= dst_total_elements) {
-        return;
+        return;  // 返回
     }
 
     const int i10_dst = index % ne10_dst;
@@ -405,6 +405,6 @@ void ggml_sycl_op_upscale(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 }
 
 void ggml_sycl_upscale(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_upscale(ctx, dst);
 }

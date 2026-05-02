@@ -1,7 +1,7 @@
-#ifndef HEX_DUMP_H
-#define HEX_DUMP_H
+#ifndef HEX_DUMP_H  // 如果未定义 HEX_DUMP_H 则编译
+#define HEX_DUMP_H  // 宏定义 HEX_DUMP_H
 
-#include <HAP_farf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
 
 static inline void hex_dump_int8_line(char * pref, const int8_t * x, int n) {
     char str[1024], *p = str, *p_end = str + sizeof(str);
@@ -83,4 +83,4 @@ static inline void hex_dump_f16(char * pref, const __fp16 * x, uint32_t n) {
     }
 }
 
-#endif /* HEX_DUMP_H */
+#endif /* HEX_DUMP_H */  // 条件编译结束

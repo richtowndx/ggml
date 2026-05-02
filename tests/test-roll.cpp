@@ -1,24 +1,24 @@
-#include <ggml.h>
-#include <ggml-cpu.h>
-#include <ggml-alloc.h>
-#include <ggml-backend.h>
-#include <ggml-cpp.h>
+#include <ggml.h>  // 引入 ggml.h 头文件
+#include <ggml-cpu.h>  // 引入 ggml-cpu.h 头文件
+#include <ggml-alloc.h>  // 引入 ggml-alloc.h 头文件
+#include <ggml-backend.h>  // 引入 ggml-backend.h 头文件
+#include <ggml-cpp.h>  // 引入 ggml-cpp.h 头文件
 
-#include <cassert>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <array>
-#include <numeric>
-#include <vector>
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <array>  // 引入 array 头文件
+#include <numeric>  // 引入 numeric 头文件
+#include <vector>  // 引入 vector 头文件
 
 int64_t wrap(int64_t i, int64_t ne) {
     if (i < 0) {
-        return i + ne;
+        return i + ne;  // 返回
     } else if (i >= ne) {
-        return i - ne;
+        return i - ne;  // 返回
     }
-    return i;
+    return i;  // 返回
 }
 
 std::vector<float> roll_reference(
@@ -42,27 +42,27 @@ std::vector<float> roll_reference(
             }
         }
     }
-    return dst;
+    return dst;  // 返回
 }
 
 std::vector<float> f32_range(int64_t n) {
     std::vector<float> values(n);
     std::iota(values.begin(), values.end(), 0.f);
-    return values;
+    return values;  // 返回
 }
 
 bool check_equal(const std::vector<float> & result, const std::vector<float> & expected) {
     if (result.size() != expected.size()) {
         printf("result.size() = %d, expected.size() = %d\n", (int)result.size(), (int)expected.size());
-        return false;
+        return false;  // 返回
     }
     for (int i = 0; i < result.size(); i++) {
         if(std::abs(result[i] - expected[i]) > 1e-5) {
             printf("result[%d] %f != %f expected[%d]\n", i, result[i], expected[i], i);
-            return false;
+            return false;  // 返回
         }
     }
-    return true;
+    return true;  // 返回
 }
 
 bool test_roll(std::array<int64_t, 4> ne, std::array<int, 4> shift, bool permute) {
@@ -116,7 +116,7 @@ bool test_roll(std::array<int64_t, 4> ne, std::array<int, 4> shift, bool permute
         int(ne[3]), int(shift[3]),
         permute ? "permuted" : "contiguous",
         passed ? "\033[32mPASSED\033[0m" : "\033[31mFAILED\033[0m");
-    return passed;
+    return passed;  // 返回
 }
 
 int main() {
@@ -124,5 +124,5 @@ int main() {
     passed &= test_roll({3, 7, 4, 2}, {1, 0, -1, 0}, false);
     passed &= test_roll({37, 42, 59, 2}, {-4, 3, -7, 1}, false);
     passed &= test_roll({37, 42, 59, 2}, {-4, 3, -7, 1}, true);
-    return passed ? 0 : 1;
+    return passed ? 0 : 1;  // 返回
 }

@@ -1,22 +1,22 @@
-#ifndef HVX_SQRT_H
-#define HVX_SQRT_H
+#ifndef HVX_SQRT_H  // 如果未定义 HVX_SQRT_H 则编译
+#define HVX_SQRT_H  // 宏定义 HVX_SQRT_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <stdbool.h>  // 引入 stdbool.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
 
-#include "hex-utils.h"
+#include "hex-utils.h"  // 引入 hex-utils.h 头文件
 
-#include "hvx-base.h"
+#include "hvx-base.h"  // 引入 hvx-base.h 头文件
 
-#define RSQRT_CONST        0x5f3759df  // Constant for fast inverse square root calculation
-#define RSQRT_ONE_HALF     0x3f000000  // 0.5
-#define RSQRT_THREE_HALVES 0x3fc00000  // 1.5
+#define RSQRT_CONST        0x5f3759df  // Constant for fast inverse square root calculation  // 宏定义 RSQRT_CONST
+#define RSQRT_ONE_HALF     0x3f000000  // 0.5  // 宏定义 RSQRT_ONE_HALF
+#define RSQRT_THREE_HALVES 0x3fc00000  // 1.5  // 宏定义 RSQRT_THREE_HALVES
 
-#if __HVX_ARCH__ < 79
-#define HVX_OP_MUL(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))
-#else
-#define HVX_OP_MUL(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)
-#endif
+#if __HVX_ARCH__ < 79  // 条件编译
+#define HVX_OP_MUL(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))  // 宏定义 HVX_OP_MUL
+#else  // 否则
+#define HVX_OP_MUL(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)  // 宏定义 HVX_OP_MUL
+#endif  // 条件编译结束
 
 static inline HVX_Vector hvx_vec_rsqrt_f32(HVX_Vector in_vec) {
     //Algorithm :
@@ -60,7 +60,7 @@ static inline HVX_Vector hvx_vec_rsqrt_f32(HVX_Vector in_vec) {
     temp    = Q6_Vqf32_vsub_VsfVsf(threehalfs, Q6_Vsf_equals_Vqf32(temp));
     temp    = Q6_Vqf32_vmpy_Vqf32Vqf32(y, temp);
 
-    return Q6_Vsf_equals_Vqf32(temp);
+    return Q6_Vsf_equals_Vqf32(temp);  // Q6_Vsf_equals_Vqf32
 }
 
 // Compute sqrt(x) as x*inv_sqrt(x)
@@ -123,4 +123,4 @@ static inline void hvx_sqrt_f32(uint8_t * restrict dst, const uint8_t * restrict
     }
 }
 
-#endif /* HVX_SQRT_H */
+#endif /* HVX_SQRT_H */  // 条件编译结束

@@ -1,18 +1,18 @@
 // Unit tests for quantization specific functions - quantize, dequantize and dot product
 
-#include "ggml.h"
-#include "ggml-cpu.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
 
 #undef NDEBUG
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <string>
-#include <vector>
+#include <assert.h>  // 引入 assert.h 头文件
+#include <math.h>  // 引入 math.h 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER)  // 条件编译
 #pragma warning(disable: 4244 4267) // possible loss of data
-#endif
+#endif  // 条件编译结束
 
 constexpr float MAX_QUANTIZATION_REFERENCE_ERROR = 0.0001f;
 constexpr float MAX_QUANTIZATION_TOTAL_ERROR = 0.002f;
@@ -45,7 +45,7 @@ static float array_rmse(const float * a1, const float * a2, size_t n) {
         double diff = a1[i] - a2[i];
         sum += diff * diff;
     }
-    return sqrtf(sum) / n;
+    return sqrtf(sum) / n;  // sqrtf
 }
 
 // Total quantization error on test data
@@ -55,7 +55,7 @@ static float total_quantization_error(const ggml_type_traits * qfns, const ggml_
 
     qfns_cpu->from_float(test_data, tmp_q.data(), test_size);
     qfns->to_float(tmp_q.data(), tmp_out.data(), test_size);
-    return array_rmse(test_data, tmp_out.data(), test_size);
+    return array_rmse(test_data, tmp_out.data(), test_size);  // array_rmse
 }
 
 // Total quantization error on test data
@@ -71,7 +71,7 @@ static float reference_quantization_error(const ggml_type_traits * qfns, const g
     qfns->from_float_ref(test_data, tmp_q.data(), test_size);
     qfns->to_float(tmp_q.data(), tmp_out_ref.data(), test_size);
 
-    return array_rmse(tmp_out.data(), tmp_out_ref.data(), test_size);
+    return array_rmse(tmp_out.data(), tmp_out_ref.data(), test_size);  // array_rmse
 }
 
 static float dot_product(const float * a1, const float * a2, size_t test_size) {
@@ -79,7 +79,7 @@ static float dot_product(const float * a1, const float * a2, size_t test_size) {
     for (size_t i = 0; i < test_size; i++) {
         sum += a1[i] * a2[i];
     }
-    return sum;
+    return sum;  // 返回
 }
 
 // Total dot product error
@@ -99,7 +99,7 @@ static float dot_product_error(const ggml_type_traits * qfns, const ggml_type_tr
 
     const float dot_ref = dot_product(test_data1, test_data2, test_size);
 
-    return fabsf(result - dot_ref) / test_size;
+    return fabsf(result - dot_ref) / test_size;  // fabsf
 }
 
 int main(int argc, char * argv[]) {
@@ -114,7 +114,7 @@ int main(int argc, char * argv[]) {
             verbose = true;
         } else {
             fprintf(stderr, "error: unknown argument: %s\n", arg.c_str());
-            return 1;
+            return 1;  // 返回
         }
     }
 
@@ -192,5 +192,5 @@ int main(int argc, char * argv[]) {
         printf("%d tests failed\n", num_failed);
     }
 
-    return num_failed > 0;
+    return num_failed > 0;  // 返回
 }

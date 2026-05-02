@@ -2,20 +2,20 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
 
-#include <math.h>
-#include <string.h>
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-ops.h"
-#include "hvx-utils.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
 
-struct htp_copy_context {
+struct htp_copy_context {  // 结构体定义
     struct htp_ops_context * octx;
 
     uint32_t          src0_type_size;
@@ -211,18 +211,18 @@ int op_cpy(struct htp_ops_context * octx) {
     case HTP_TYPE_F32: ct.src0_type_size = 4; ct.src0_block_size = 1; ct.src0_blocks_per_row = ne00 / 1; break;
     case HTP_TYPE_F16: ct.src0_type_size = 2; ct.src0_block_size = 1; ct.src0_blocks_per_row = ne00 / 1; break;
     default:
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     switch (dst->type) {
     case HTP_TYPE_F32: ct.dst_type_size = 4; ct.dst_block_size = 1; ct.dst_blocks_per_row = ne0 / 1; break;
     case HTP_TYPE_F16: ct.dst_type_size = 2; ct.dst_block_size = 1; ct.dst_blocks_per_row = ne0 / 1; break;
     default:
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     if (octx->flags & HTP_OPFLAGS_SKIP_COMPUTE) {
-        return HTP_STATUS_OK;
+        return HTP_STATUS_OK;  // 返回
     }
 
     const bool sametype   = (src0->type == dst->type);
@@ -239,14 +239,14 @@ int op_cpy(struct htp_ops_context * octx) {
         else if (dst->type == HTP_TYPE_F32 && src0->type == HTP_TYPE_F16)
             ct.copy = cpy_thread_f32_f16_sameshape;
         else
-            return HTP_STATUS_NO_SUPPORT;
+            return HTP_STATUS_NO_SUPPORT;  // 返回
     } else if (sametype) {
         ct.copy = cpy_thread_sametype_reshape;
     } else {
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     worker_pool_run_func(octx->ctx->worker_pool, cpy_work_func, &ct, n_threads);
 
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }

@@ -1,6 +1,6 @@
-#include "repeat_back.hpp"
+#include "repeat_back.hpp"  // 引入 repeat_back.hpp 头文件
 
-#include "common.hpp"
+#include "common.hpp"  // 引入 common.hpp 头文件
 
 #define GGML_ASSERT_TENSOR_FITS_INT(t) \
     GGML_ASSERT((t)->ne[0] < INT_MAX && (t)->ne[1] < INT_MAX && (t)->ne[2] < INT_MAX && (t)->ne[3] < INT_MAX)
@@ -47,7 +47,7 @@ void ggml_sycl_op_repeat_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst
         [=](sycl::nd_item<1> item_ct1) {
             const size_t i = item_ct1.get_global_linear_id();
             if (i >= total) {
-                return;
+                return;  // 返回
             }
 
             const int i3 = (int) (i * inv_ne_012);

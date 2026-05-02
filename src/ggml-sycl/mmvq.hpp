@@ -10,10 +10,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_MMVQ_HPP
-#define GGML_SYCL_MMVQ_HPP
+#ifndef GGML_SYCL_MMVQ_HPP  // 如果未定义 GGML_SYCL_MMVQ_HPP 则编译
+#define GGML_SYCL_MMVQ_HPP  // 宏定义 GGML_SYCL_MMVQ_HPP
 
-#include "common.hpp"
+#include "common.hpp"  // 引入 common.hpp 头文件
 
 
 void ggml_sycl_op_mul_mat_vec_q(
@@ -40,4 +40,4 @@ bool ggml_sycl_mul_mat_vec_q_id(
     size_t             src1_row_stride,      // 0 = shared src1, else per-expert stride in bytes
     dpct::queue_ptr    stream);
 
-#endif // GGML_SYCL_MMVQ_HPP
+#endif // GGML_SYCL_MMVQ_HPP  // 条件编译结束

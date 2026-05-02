@@ -20,81 +20,81 @@
  * IN THE SOFTWARE.
  */
 
-#include "aclnn_ops.h"
+#include "aclnn_ops.h"  // 引入 aclnn_ops.h 头文件
 
-#include "ggml-impl.h"
-#include "ggml.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
 
 
-#include <aclnnop/aclnn_add.h>
-#include <aclnnop/aclnn_add_rms_norm.h>
-#include <aclnnop/aclnn_addcdiv.h>
-#include <aclnnop/aclnn_argmax.h>
-#include <aclnnop/aclnn_avgpool2d.h>
-#include <aclnnop/aclnn_batch_matmul.h>
-#include <aclnnop/aclnn_cast.h>
-#include <aclnnop/aclnn_clamp.h>
-#include <aclnnop/aclnn_constant_pad_nd.h>
-#include <aclnnop/aclnn_convolution.h>
-#include <aclnnop/aclnn_copy.h>
-#include <aclnnop/aclnn_div.h>
-#include <aclnnop/aclnn_elu.h>
-#include <aclnnop/aclnn_embedding.h>
-#include <aclnnop/aclnn_eq_tensor.h>
-#include <aclnnop/aclnn_exp.h>
-#include <aclnnop/aclnn_fill_scalar.h>
-#include <aclnnop/aclnn_fused_infer_attention_score_v2.h>
-#include <aclnnop/aclnn_ger.h>
-#include <aclnnop/aclnn_group_norm.h>
-#include <aclnnop/aclnn_gather_v2.h>
-#include <aclnnop/aclnn_grouped_matmul_v3.h>
-#include <aclnnop/aclnn_scatter.h>
-#include <aclnnop/aclnn_gt_scalar.h>
-#include <aclnnop/aclnn_im2col.h>
-#include <aclnnop/aclnn_index_copy.h>
-#include <aclnnop/aclnn_index_fill_tensor.h>
-#include <aclnnop/aclnn_index_select.h>
-#include <aclnnop/aclnn_layer_norm.h>
-#include <aclnnop/aclnn_log.h>
-#include <aclnnop/aclnn_matmul.h>
-#include <aclnnop/aclnn_max_pool.h>
-#include <aclnnop/aclnn_mean.h>
-#include <aclnnop/aclnn_mm.h>
-#include <aclnnop/aclnn_mul.h>
-#include <aclnnop/aclnn_mv.h>
-#include <aclnnop/aclnn_permute.h>
-#include <aclnnop/aclnn_pow.h>
-#include <aclnnop/aclnn_pow_tensor_tensor.h>
-#include <aclnnop/aclnn_recurrent_gated_delta_rule.h>
-#include <aclnnop/aclnn_reduce_sum.h>
-#include <aclnnop/aclnn_reflection_pad1d.h>
-#include <aclnnop/aclnn_repeat.h>
-#include <aclnnop/aclnn_repeat_interleave.h>
-#include <aclnnop/aclnn_rms_norm.h>
-#include <aclnnop/aclnn_roll.h>
-#include <aclnnop/aclnn_softmax.h>
-#include <aclnnop/aclnn_softmax_cross_entropy_with_logits.h>
-#include <aclnnop/aclnn_sub.h>
-#include <aclnnop/aclnn_sum.h>
-#include <aclnnop/aclnn_threshold.h>
-#include <aclnnop/aclnn_tril.h>
-#include <aclnnop/aclnn_triangular_solve.h>
-#include <aclnnop/aclnn_triu.h>
-#include <aclnnop/aclnn_logical_not.h>
-#include <aclnnop/aclnn_masked_fill_scalar.h>
-#include <aclnnop/aclnn_upsample_nearest_2d.h>
-#include <aclnnop/aclnn_weight_quant_batch_matmul_v2.h>
-#include <aclnnop/aclnn_zero.h>
-#include <float.h>
+#include <aclnnop/aclnn_add.h>  // 引入 aclnnop/aclnn_add.h 头文件
+#include <aclnnop/aclnn_add_rms_norm.h>  // 引入 aclnnop/aclnn_add_rms_norm.h 头文件
+#include <aclnnop/aclnn_addcdiv.h>  // 引入 aclnnop/aclnn_addcdiv.h 头文件
+#include <aclnnop/aclnn_argmax.h>  // 引入 aclnnop/aclnn_argmax.h 头文件
+#include <aclnnop/aclnn_avgpool2d.h>  // 引入 aclnnop/aclnn_avgpool2d.h 头文件
+#include <aclnnop/aclnn_batch_matmul.h>  // 引入 aclnnop/aclnn_batch_matmul.h 头文件
+#include <aclnnop/aclnn_cast.h>  // 引入 aclnnop/aclnn_cast.h 头文件
+#include <aclnnop/aclnn_clamp.h>  // 引入 aclnnop/aclnn_clamp.h 头文件
+#include <aclnnop/aclnn_constant_pad_nd.h>  // 引入 aclnnop/aclnn_constant_pad_nd.h 头文件
+#include <aclnnop/aclnn_convolution.h>  // 引入 aclnnop/aclnn_convolution.h 头文件
+#include <aclnnop/aclnn_copy.h>  // 引入 aclnnop/aclnn_copy.h 头文件
+#include <aclnnop/aclnn_div.h>  // 引入 aclnnop/aclnn_div.h 头文件
+#include <aclnnop/aclnn_elu.h>  // 引入 aclnnop/aclnn_elu.h 头文件
+#include <aclnnop/aclnn_embedding.h>  // 引入 aclnnop/aclnn_embedding.h 头文件
+#include <aclnnop/aclnn_eq_tensor.h>  // 引入 aclnnop/aclnn_eq_tensor.h 头文件
+#include <aclnnop/aclnn_exp.h>  // 引入 aclnnop/aclnn_exp.h 头文件
+#include <aclnnop/aclnn_fill_scalar.h>  // 引入 aclnnop/aclnn_fill_scalar.h 头文件
+#include <aclnnop/aclnn_fused_infer_attention_score_v2.h>  // 引入 aclnnop/aclnn_fused_infer_attention_score_v2.h 头文件
+#include <aclnnop/aclnn_ger.h>  // 引入 aclnnop/aclnn_ger.h 头文件
+#include <aclnnop/aclnn_group_norm.h>  // 引入 aclnnop/aclnn_group_norm.h 头文件
+#include <aclnnop/aclnn_gather_v2.h>  // 引入 aclnnop/aclnn_gather_v2.h 头文件
+#include <aclnnop/aclnn_grouped_matmul_v3.h>  // 引入 aclnnop/aclnn_grouped_matmul_v3.h 头文件
+#include <aclnnop/aclnn_scatter.h>  // 引入 aclnnop/aclnn_scatter.h 头文件
+#include <aclnnop/aclnn_gt_scalar.h>  // 引入 aclnnop/aclnn_gt_scalar.h 头文件
+#include <aclnnop/aclnn_im2col.h>  // 引入 aclnnop/aclnn_im2col.h 头文件
+#include <aclnnop/aclnn_index_copy.h>  // 引入 aclnnop/aclnn_index_copy.h 头文件
+#include <aclnnop/aclnn_index_fill_tensor.h>  // 引入 aclnnop/aclnn_index_fill_tensor.h 头文件
+#include <aclnnop/aclnn_index_select.h>  // 引入 aclnnop/aclnn_index_select.h 头文件
+#include <aclnnop/aclnn_layer_norm.h>  // 引入 aclnnop/aclnn_layer_norm.h 头文件
+#include <aclnnop/aclnn_log.h>  // 引入 aclnnop/aclnn_log.h 头文件
+#include <aclnnop/aclnn_matmul.h>  // 引入 aclnnop/aclnn_matmul.h 头文件
+#include <aclnnop/aclnn_max_pool.h>  // 引入 aclnnop/aclnn_max_pool.h 头文件
+#include <aclnnop/aclnn_mean.h>  // 引入 aclnnop/aclnn_mean.h 头文件
+#include <aclnnop/aclnn_mm.h>  // 引入 aclnnop/aclnn_mm.h 头文件
+#include <aclnnop/aclnn_mul.h>  // 引入 aclnnop/aclnn_mul.h 头文件
+#include <aclnnop/aclnn_mv.h>  // 引入 aclnnop/aclnn_mv.h 头文件
+#include <aclnnop/aclnn_permute.h>  // 引入 aclnnop/aclnn_permute.h 头文件
+#include <aclnnop/aclnn_pow.h>  // 引入 aclnnop/aclnn_pow.h 头文件
+#include <aclnnop/aclnn_pow_tensor_tensor.h>  // 引入 aclnnop/aclnn_pow_tensor_tensor.h 头文件
+#include <aclnnop/aclnn_recurrent_gated_delta_rule.h>  // 引入 aclnnop/aclnn_recurrent_gated_delta_rule.h 头文件
+#include <aclnnop/aclnn_reduce_sum.h>  // 引入 aclnnop/aclnn_reduce_sum.h 头文件
+#include <aclnnop/aclnn_reflection_pad1d.h>  // 引入 aclnnop/aclnn_reflection_pad1d.h 头文件
+#include <aclnnop/aclnn_repeat.h>  // 引入 aclnnop/aclnn_repeat.h 头文件
+#include <aclnnop/aclnn_repeat_interleave.h>  // 引入 aclnnop/aclnn_repeat_interleave.h 头文件
+#include <aclnnop/aclnn_rms_norm.h>  // 引入 aclnnop/aclnn_rms_norm.h 头文件
+#include <aclnnop/aclnn_roll.h>  // 引入 aclnnop/aclnn_roll.h 头文件
+#include <aclnnop/aclnn_softmax.h>  // 引入 aclnnop/aclnn_softmax.h 头文件
+#include <aclnnop/aclnn_softmax_cross_entropy_with_logits.h>  // 引入 aclnnop/aclnn_softmax_cross_entropy_with_logits.h 头文件
+#include <aclnnop/aclnn_sub.h>  // 引入 aclnnop/aclnn_sub.h 头文件
+#include <aclnnop/aclnn_sum.h>  // 引入 aclnnop/aclnn_sum.h 头文件
+#include <aclnnop/aclnn_threshold.h>  // 引入 aclnnop/aclnn_threshold.h 头文件
+#include <aclnnop/aclnn_tril.h>  // 引入 aclnnop/aclnn_tril.h 头文件
+#include <aclnnop/aclnn_triangular_solve.h>  // 引入 aclnnop/aclnn_triangular_solve.h 头文件
+#include <aclnnop/aclnn_triu.h>  // 引入 aclnnop/aclnn_triu.h 头文件
+#include <aclnnop/aclnn_logical_not.h>  // 引入 aclnnop/aclnn_logical_not.h 头文件
+#include <aclnnop/aclnn_masked_fill_scalar.h>  // 引入 aclnnop/aclnn_masked_fill_scalar.h 头文件
+#include <aclnnop/aclnn_upsample_nearest_2d.h>  // 引入 aclnnop/aclnn_upsample_nearest_2d.h 头文件
+#include <aclnnop/aclnn_weight_quant_batch_matmul_v2.h>  // 引入 aclnnop/aclnn_weight_quant_batch_matmul_v2.h 头文件
+#include <aclnnop/aclnn_zero.h>  // 引入 aclnnop/aclnn_zero.h 头文件
+#include <float.h>  // 引入 float.h 头文件
 
-#include <cmath>
-#include <cstring>
-#include <exception>
-#include <vector>
+#include <cmath>  // 引入 cmath 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <exception>  // 引入 exception 头文件
+#include <vector>  // 引入 vector 头文件
 
-#define GGML_COMMON_DECL_C
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
 
-#include "../ggml-common.h"
+#include "../ggml-common.h"  // 引入 ../ggml-common.h 头文件
 
 void bcast_shape(ggml_tensor *    src0,
                  ggml_tensor *    src1,
@@ -116,7 +116,7 @@ void bcast_shape(ggml_tensor *    src0,
     }
 }
 
-void ggml_cann_op_unary(std::function<void(ggml_backend_cann_context &, aclTensor *, aclTensor *)> unary_op,
+void ggml_cann_op_unary(std::function<void(ggml_backend_cann_context &, aclTensor *, aclTensor *)> unary_op,  // ggml_cann_op_unary
                         ggml_backend_cann_context &                                                ctx,
                         ggml_tensor *                                                              dst) {
     ggml_tensor * src = dst->src[0];
@@ -127,7 +127,7 @@ void ggml_cann_op_unary(std::function<void(ggml_backend_cann_context &, aclTenso
     unary_op(ctx, acl_src.get(), acl_dst.get());
 }
 
-void ggml_cann_op_unary_gated(std::function<void(ggml_backend_cann_context &, aclTensor *, aclTensor *)> unary_op,
+void ggml_cann_op_unary_gated(std::function<void(ggml_backend_cann_context &, aclTensor *, aclTensor *)> unary_op,  // ggml_cann_op_unary_gated
                               ggml_backend_cann_context &                                                ctx,
                               ggml_tensor *                                                              dst) {
     ggml_tensor * src0 = dst->src[0];
@@ -178,13 +178,13 @@ void ggml_cann_swiglu(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     const int32_t swapped = ggml_get_op_params_i32(dst, 1);
     if (dst->src[1] != nullptr || swapped != 0) {
         ggml_cann_op_unary_gated(silu_fn, ctx, dst);
-        return;
+        return;  // 返回
     }
 
     // aclnnSwiGlu requires the split dim (src->ne[0]) to be even; fall back otherwise.
     if (dst->src[0]->ne[0] % 2 != 0) {
         ggml_cann_op_unary_gated(silu_fn, ctx, dst);
-        return;
+        return;  // 返回
     }
 
     ggml_tensor * src0 = dst->src[0];
@@ -227,13 +227,13 @@ void ggml_cann_geglu(ggml_backend_cann_context & ctx, ggml_tensor * dst, int64_t
     const int32_t swapped = ggml_get_op_params_i32(dst, 1);
     if (dst->src[1] != nullptr || swapped != 0) {
         ggml_cann_op_unary_gated(gelu_fn, ctx, dst);
-        return;
+        return;  // 返回
     }
 
     // aclnnGeGluV3 requires the split dim (src->ne[0]) to be even; fall back otherwise.
     if (dst->src[0]->ne[0] % 2 != 0) {
         ggml_cann_op_unary_gated(gelu_fn, ctx, dst);
-        return;
+        return;  // 返回
     }
 
     ggml_tensor * src0 = dst->src[0];
@@ -250,7 +250,7 @@ void ggml_cann_geglu(ggml_backend_cann_context & ctx, ggml_tensor * dst, int64_t
         nb[i] = nb[i - 1] * ne[i - 1];
     }
     size_t gelu_out_size = nb[GGML_MAX_DIMS - 1] * ne[GGML_MAX_DIMS - 1];
-    ggml_cann_pool_alloc gelu_out_alloc(ctx.pool(), gelu_out_size);
+    ggml_cann_pool_alloc gelu_out_alloc(ctx.pool(), gelu_out_size);  // gelu_out_alloc
 
     acl_tensor_ptr acl_gelu_out = ggml_cann_create_tensor(
         gelu_out_alloc.get(), ggml_cann_type_mapping(dst->type), elem_size, ne, nb, GGML_MAX_DIMS);
@@ -516,7 +516,7 @@ void ggml_cann_argsort(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 
     acl_tensor_ptr       acl_src = ggml_cann_create_tensor(src);
     acl_tensor_ptr       acl_dst = ggml_cann_create_tensor(dst);
-    ggml_cann_pool_alloc temp_buffer_allocator(ctx.pool(), ggml_nelements(dst) * sizeof(int64_t));
+    ggml_cann_pool_alloc temp_buffer_allocator(ctx.pool(), ggml_nelements(dst) * sizeof(int64_t));  // temp_buffer_allocator
     void *               buffer = temp_buffer_allocator.get();
     acl_tensor_ptr       tmp_tensor =
         ggml_cann_create_tensor(buffer, ACL_INT64, ggml_type_size(dst->type), dst->ne, dst->nb, GGML_MAX_DIMS);
@@ -551,7 +551,7 @@ void ggml_cann_l2_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 
     size_t               type_size = ggml_type_size(src->type);
     int64_t              n_bytes   = src->ne[3] * src->ne[2] * src->ne[1] * type_size;
-    ggml_cann_pool_alloc temp_buffer_allocator(ctx.pool(), n_bytes);
+    ggml_cann_pool_alloc temp_buffer_allocator(ctx.pool(), n_bytes);  // temp_buffer_allocator
     void *               buffer = temp_buffer_allocator.get();
 
     int64_t norm_ne[] = { 1, src->ne[1], src->ne[2], src->ne[3] };
@@ -569,7 +569,7 @@ void ggml_cann_l2_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     acl_scalar_ptr p_scalar = ggml_cann_create_scalar(&p_value, aclDataType::ACL_FLOAT);
     GGML_CANN_CALL_ACLNN_OP(ctx, Norm, acl_src.get(), p_scalar.get(), dims_array.get(), true, acl_norm.get());
 
-    ggml_cann_pool_alloc clamp_buffer_allocator(ctx.pool());
+    ggml_cann_pool_alloc clamp_buffer_allocator(ctx.pool());  // clamp_buffer_allocator
     acl_tensor_ptr       acl_clamped;
 
     if (eps > 0.0f) {
@@ -604,7 +604,7 @@ void ggml_cann_cross_entropy_loss(ggml_backend_cann_context & ctx, ggml_tensor *
 
     size_t               loss_per_sample_type_size = sizeof(float);
     int64_t              loss_per_sample_n_bytes   = nr * loss_per_sample_type_size;
-    ggml_cann_pool_alloc loss_per_sample_allocator(ctx.pool(), loss_per_sample_n_bytes);
+    ggml_cann_pool_alloc loss_per_sample_allocator(ctx.pool(), loss_per_sample_n_bytes);  // loss_per_sample_allocator
     void *               loss_per_sample_buffer = loss_per_sample_allocator.get();
 
     int64_t loss_per_sample_ne[] = { nr };
@@ -614,7 +614,7 @@ void ggml_cann_cross_entropy_loss(ggml_backend_cann_context & ctx, ggml_tensor *
         loss_per_sample_buffer, ACL_FLOAT, loss_per_sample_type_size, loss_per_sample_ne, loss_per_sample_nb, 1);
 
     size_t               backprop_n_bytes = nr * nc * sizeof(float);
-    ggml_cann_pool_alloc backprop_allocator(ctx.pool(), backprop_n_bytes);
+    ggml_cann_pool_alloc backprop_allocator(ctx.pool(), backprop_n_bytes);  // backprop_allocator
     void *               backprop_buffer = backprop_allocator.get();
     acl_tensor_ptr acl_backprop = ggml_cann_create_tensor(backprop_buffer, ACL_FLOAT, sizeof(float), logits_ne, logits_nb, 2);
 
@@ -623,7 +623,7 @@ void ggml_cann_cross_entropy_loss(ggml_backend_cann_context & ctx, ggml_tensor *
 
     size_t               total_sum_type_size = sizeof(float);
     int64_t              total_sum_n_bytes   = 1 * total_sum_type_size;
-    ggml_cann_pool_alloc total_sum_allocator(ctx.pool(), total_sum_n_bytes);
+    ggml_cann_pool_alloc total_sum_allocator(ctx.pool(), total_sum_n_bytes);  // total_sum_allocator
     void *               total_sum_buffer = total_sum_allocator.get();
 
     int64_t total_sum_ne[] = { 1 };
@@ -668,7 +668,7 @@ void ggml_cann_group_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     size_t  nb[]      = { type_size, type_size * n_groups };
     size_t  n_bytes   = N * n_groups;
 
-    ggml_cann_pool_alloc temp_buffer_allocator(ctx.pool(), n_bytes * 2);
+    ggml_cann_pool_alloc temp_buffer_allocator(ctx.pool(), n_bytes * 2);  // temp_buffer_allocator
     void *               buffer       = temp_buffer_allocator.get();
     acl_tensor_ptr       acl_mean_out = ggml_cann_create_tensor(buffer, ACL_FLOAT, type_size, ne, nb, ACL_FORMAT_ND);
     acl_tensor_ptr       acl_rstd_out =
@@ -789,7 +789,7 @@ void ggml_cann_solve_tri(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 
     // mOut: triangular copy of A (required output), same shape as A.
     const size_t a_bytes = ggml_nbytes(src0);
-    ggml_cann_pool_alloc m_alloc(ctx.pool(), a_bytes);
+    ggml_cann_pool_alloc m_alloc(ctx.pool(), a_bytes);  // m_alloc
     acl_tensor_ptr acl_m = ggml_cann_create_tensor(
         m_alloc.get(), ggml_cann_type_mapping(src0->type),
         ggml_type_size(src0->type), src0->ne, src0->nb, GGML_MAX_DIMS);
@@ -973,9 +973,9 @@ static void ggml_cann_avg_pool2d(ggml_backend_cann_context & ctx, ggml_tensor * 
     bool    count_include_pad = true;
     int64_t divisor_override  = 0;
     int8_t  cube_math_type    = 0;
-#ifdef ASCEND_310P
+#ifdef ASCEND_310P  // 如果定义了 ASCEND_310P 则编译
     cube_math_type = 1;
-#endif
+#endif  // 条件编译结束
 
     GGML_CANN_CALL_ACLNN_OP(ctx, AvgPool2d, acl_src.get(), kernel_size.get(), strides.get(), paddings_avg.get(),
                             ceil_mode, count_include_pad, divisor_override, cube_math_type, acl_dst.get());
@@ -1017,7 +1017,7 @@ static void ggml_cann_max_pool2d(ggml_backend_cann_context & ctx, ggml_tensor * 
         temp_nb[i] = temp_nb[i - 1] * temp_ne[i - 1];
     }
 
-    ggml_cann_pool_alloc temp_buffer_allocator(ctx.pool(), ggml_nbytes(src) + p0 * 2 + p1 * 2 * src->nb[1]);
+    ggml_cann_pool_alloc temp_buffer_allocator(ctx.pool(), ggml_nbytes(src) + p0 * 2 + p1 * 2 * src->nb[1]);  // temp_buffer_allocator
     void *               buffer = temp_buffer_allocator.get();
     acl_tensor_ptr tmp_tensor   = ggml_cann_create_tensor(buffer, ACL_FLOAT, ggml_element_size(src), temp_ne, temp_nb,
                                                           GGML_MAX_DIMS, ACL_FORMAT_NCHW);
@@ -1153,7 +1153,7 @@ static acl_tensor_ptr aclnn_zero(ggml_backend_cann_context & ctx,
 
     acl_tensor_ptr zero = ggml_cann_create_tensor(buffer, type, type_size, ne, nb, dims);
     GGML_CANN_CALL_ACLNN_OP(ctx, InplaceZero, zero.get());
-    return zero;
+    return zero;  // 返回
     GGML_UNUSED(n_bytes);
 }
 
@@ -1188,7 +1188,7 @@ static acl_tensor_ptr aclnn_values(ggml_backend_cann_context & ctx,
     acl_scalar_ptr alpha      = ggml_cann_create_scalar(&alpha_host, aclDataType::ACL_FLOAT);
     acl_scalar_ptr other      = ggml_cann_create_scalar(&value, aclDataType::ACL_FLOAT);
     GGML_CANN_CALL_ACLNN_OP(ctx, InplaceAdds, acl_tensor.get(), other.get(), alpha.get());
-    return acl_tensor;
+    return acl_tensor;  // 返回
 }
 
 /**
@@ -1261,7 +1261,7 @@ static acl_tensor_ptr get_cache_acl_tensor(ggml_backend_cann_context & ctx,
         aclnn_fill_scalar(ctx, value, acl_value.get());
     }
 
-    return ggml_cann_create_tensor(*buffer, ggml_cann_type_mapping(dtype), ggml_type_size(dtype), ne, nb, dims);
+    return ggml_cann_create_tensor(*buffer, ggml_cann_type_mapping(dtype), ggml_type_size(dtype), ne, nb, dims);  // ggml_cann_create_tensor
 }
 
 void ggml_cann_rms_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
@@ -1312,7 +1312,7 @@ void ggml_cann_diag_mask(ggml_backend_cann_context & ctx, ggml_tensor * dst, flo
 
     const int n_past = ((int32_t *) dst->op_params)[0];
 
-    ggml_cann_pool_alloc one_tensor_allocator(ctx.pool(), ggml_nbytes(src));
+    ggml_cann_pool_alloc one_tensor_allocator(ctx.pool(), ggml_nbytes(src));  // one_tensor_allocator
     void *               buffer = one_tensor_allocator.get();
 
     acl_tensor_ptr mask_tensor = ggml_cann_create_tensor(buffer, ggml_cann_type_mapping(src->type),
@@ -1391,7 +1391,7 @@ static void ggml_cann_im2col_1d_post_process(ggml_backend_cann_context &  ctx,
 
     // Permute: [N, IC * KH * KW, OW * OH] ->
     // [N, OW * OH * n_bytes_factor, IC * KH * KW]
-    ggml_cann_pool_alloc tmp_permute_allocator(ctx.pool());
+    ggml_cann_pool_alloc tmp_permute_allocator(ctx.pool());  // tmp_permute_allocator
     tmp_permute_allocator.alloc(ggml_nbytes(dst) * n_bytes_factor);
     void * tmp_permute_buffer = tmp_permute_allocator.get();
 
@@ -1482,7 +1482,7 @@ void ggml_cann_im2col(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     // Calculate im2col.
     // If dst is f16, tmp_buffer is f32, we need alloc src.typesize *
     // dst.elemcount.
-    ggml_cann_pool_alloc im2col_allocator(ctx.pool(), ggml_nelements(dst) * ggml_element_size(src1) * n_bytes_factor);
+    ggml_cann_pool_alloc im2col_allocator(ctx.pool(), ggml_nelements(dst) * ggml_element_size(src1) * n_bytes_factor);  // im2col_allocator
     void *               tmp_im2col_buffer = im2col_allocator.get();
 
     acl_tensor_ptr tmp_im2col_tensor =
@@ -1502,7 +1502,7 @@ void ggml_cann_im2col(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 
     // Cast if dst is f16.
     acl_tensor_ptr       tmp_cast_tensor;
-    ggml_cann_pool_alloc tmp_cast_allocator(ctx.pool());
+    ggml_cann_pool_alloc tmp_cast_allocator(ctx.pool());  // tmp_cast_allocator
     void *               tmp_cast_buffer = nullptr;
     if (src1->type != dst->type) {
         tmp_cast_allocator.alloc(ggml_nbytes(dst) * n_bytes_factor);
@@ -1582,7 +1582,7 @@ void ggml_cann_timestep_embedding(ggml_backend_cann_context & ctx, ggml_tensor *
     int64_t tmp_arange_ne[]   = { half };
     size_t  tmp_arange_nb[]   = { sizeof(dst->type) };
 
-    ggml_cann_pool_alloc arange_allocator(ctx.pool(), half * sizeof(dst->type));
+    ggml_cann_pool_alloc arange_allocator(ctx.pool(), half * sizeof(dst->type));  // arange_allocator
     void *               tmp_arange_buffer = arange_allocator.get();
     acl_tensor_ptr       tmp_arange_tensor =
         ggml_cann_create_tensor(tmp_arange_buffer, ggml_cann_type_mapping(dst->type), ggml_type_size(dst->type),
@@ -1604,7 +1604,7 @@ void ggml_cann_timestep_embedding(ggml_backend_cann_context & ctx, ggml_tensor *
         tmp_permute_nb[i] = tmp_permute_nb[i - 1] * tmp_permute_ne[i - 1];
     }
 
-    ggml_cann_pool_alloc permute_allocator(ctx.pool(), ggml_nbytes(src));
+    ggml_cann_pool_alloc permute_allocator(ctx.pool(), ggml_nbytes(src));  // permute_allocator
     void *               tmp_permute_buffer = permute_allocator.get();
     acl_tensor_ptr       tmp_permute_tensor =
         ggml_cann_create_tensor(tmp_permute_buffer, ggml_cann_type_mapping(src->type), ggml_type_size(src->type),
@@ -1623,7 +1623,7 @@ void ggml_cann_timestep_embedding(ggml_backend_cann_context & ctx, ggml_tensor *
 
     int mul_nelements = src->ne[1] * half * src->ne[0] * src->ne[2] * src->ne[3];
 
-    ggml_cann_pool_alloc mul_allocator(ctx.pool(), mul_nelements * ggml_type_size(src->type));
+    ggml_cann_pool_alloc mul_allocator(ctx.pool(), mul_nelements * ggml_type_size(src->type));  // mul_allocator
     void *               tmp_mul_buffer = mul_allocator.get();
     acl_tensor_ptr       tmp_mul_tensor =
         ggml_cann_create_tensor(tmp_mul_buffer, ggml_cann_type_mapping(src->type), ggml_type_size(src->type),
@@ -1631,7 +1631,7 @@ void ggml_cann_timestep_embedding(ggml_backend_cann_context & ctx, ggml_tensor *
     aclnn_mul(ctx, tmp_permute_tensor.get(), tmp_arange_tensor.get(), tmp_mul_tensor.get());
 
     // cos
-    ggml_cann_pool_alloc cos_allocator(ctx.pool(), mul_nelements * ggml_type_size(src->type));
+    ggml_cann_pool_alloc cos_allocator(ctx.pool(), mul_nelements * ggml_type_size(src->type));  // cos_allocator
     void *               tmp_cos_buffer = cos_allocator.get();
     acl_tensor_ptr       tmp_cos_tensor =
         ggml_cann_create_tensor(tmp_cos_buffer, ggml_cann_type_mapping(dst->type), ggml_type_size(dst->type),
@@ -1640,7 +1640,7 @@ void ggml_cann_timestep_embedding(ggml_backend_cann_context & ctx, ggml_tensor *
     aclnn_cos(ctx, tmp_mul_tensor.get(), tmp_cos_tensor.get());
 
     // sin
-    ggml_cann_pool_alloc sin_allocator(ctx.pool(), mul_nelements * ggml_type_size(src->type));
+    ggml_cann_pool_alloc sin_allocator(ctx.pool(), mul_nelements * ggml_type_size(src->type));  // sin_allocator
     void *               tmp_sin_buffer = sin_allocator.get();
     acl_tensor_ptr       tmp_sin_tensor =
         ggml_cann_create_tensor(tmp_sin_buffer, ggml_cann_type_mapping(dst->type), ggml_type_size(dst->type),
@@ -1710,7 +1710,7 @@ static void aclnn_get_slope_inner(ggml_backend_cann_context & ctx,
     int64_t ne[] = { size };
     size_t  nb[] = { type_size };
 
-    ggml_cann_pool_alloc arange_allocator(ctx.pool(), size * type_size);
+    ggml_cann_pool_alloc arange_allocator(ctx.pool(), size * type_size);  // arange_allocator
     void *               arange_buffer = arange_allocator.get();
 
     acl_tensor_ptr arange_tensor = ggml_cann_create_tensor(arange_buffer, acl_type, type_size, ne, nb, 1);
@@ -1813,9 +1813,9 @@ static void aclnn_add_alibi(ggml_backend_cann_context & ctx,
 
     if (max_bias > 0.0f) {
         int64_t              n_heads = dst->ne[2];
-        ggml_cann_pool_alloc slope_allocator(ctx.pool(), n_heads * sizeof(float));
+        ggml_cann_pool_alloc slope_allocator(ctx.pool(), n_heads * sizeof(float));  // slope_allocator
         slope_buffer = slope_allocator.get();
-        ggml_cann_pool_alloc bias_allocator(ctx.pool(), ggml_nelements(dst) * ggml_element_size(dst));
+        ggml_cann_pool_alloc bias_allocator(ctx.pool(), ggml_nelements(dst) * ggml_element_size(dst));  // bias_allocator
         bias_buffer = bias_allocator.get();
         aclnn_get_slope(ctx, n_heads, slope_buffer, max_bias, GGML_TYPE_F32);
     }
@@ -1903,7 +1903,7 @@ void ggml_cann_softmax(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 
     // input mul scale
     acl_scalar_ptr       acl_scale = ggml_cann_create_scalar(&scale, aclDataType::ACL_FLOAT);
-    ggml_cann_pool_alloc src_tensor_allocator(ctx.pool(), ggml_nbytes(src0));
+    ggml_cann_pool_alloc src_tensor_allocator(ctx.pool(), ggml_nbytes(src0));  // src_tensor_allocator
     void *               src_tensor_buffer = src_tensor_allocator.get();
     acl_tensor_ptr       softmax_tensor = ggml_cann_create_tensor(src_tensor_buffer, ggml_cann_type_mapping(src0->type),
                                                                   ggml_element_size(src0), src0->ne, src0->nb, GGML_MAX_DIMS);
@@ -1923,7 +1923,7 @@ void ggml_cann_get_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     ggml_tensor * src0 = dst->src[0];  // weight
     ggml_tensor * src1 = dst->src[1];  // index
 
-    GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16
+    GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16  // 断言检查
                 || dst->type == GGML_TYPE_BF16);
 
     // n_idx: number of row indices per (i2, i3) batch slice.
@@ -1971,7 +1971,7 @@ void ggml_cann_get_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
                                src0->nb);
             } else {
                 // Cast src0 to dst type, then gather.
-                ggml_cann_pool_alloc src_cast_allocator(ctx.pool(),
+                ggml_cann_pool_alloc src_cast_allocator(ctx.pool(),  // src_cast_allocator
                                                         ggml_nelements(src0) * ggml_element_size(dst));
                 size_t src_cast_nb[GGML_MAX_DIMS];
                 src_cast_nb[0] = ggml_type_size(dst->type);
@@ -2016,7 +2016,7 @@ void ggml_cann_get_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
                     dequant_nb[i] = dequant_nb[i - 1] * dequant_ne[i - 1];
                 }
                 const int64_t scale_offset = ggml_nelements(src0) * sizeof(int8_t);
-                ggml_cann_pool_alloc dequant_allocator(ctx.pool(),
+                ggml_cann_pool_alloc dequant_allocator(ctx.pool(),  // dequant_allocator
                                                        ggml_nelements(src0) * ggml_type_size(dst->type));
                 acl_tensor_ptr acl_weight = ggml_cann_create_tensor(src0->data, ACL_INT8, sizeof(int8_t),
                                                                      weight_ne, weight_nb, GGML_MAX_DIMS + 1);
@@ -2094,7 +2094,7 @@ void ggml_cann_set_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         case GGML_TYPE_BF16:
             {
                 // Cast src0 (F32) to dst type first.
-                ggml_cann_pool_alloc src_cast_allocator(ctx.pool(),
+                ggml_cann_pool_alloc src_cast_allocator(ctx.pool(),  // src_cast_allocator
                                                         ggml_nelements(src0) * ggml_type_size(dst->type));
                 size_t src_cast_nb[GGML_MAX_DIMS];
                 src_cast_nb[0] = ggml_type_size(dst->type);
@@ -2247,7 +2247,7 @@ static void ggml_cann_mul_mat_quant(ggml_backend_cann_context & ctx, ggml_tensor
     int64_t              input_ne[]      = { src1->ne[0], src1->ne[1] };
     size_t               input_nb[]      = { input_elem_size, input_ne[0] * input_elem_size };
     size_t               input_stride    = input_ne[0] * input_ne[1] * input_elem_size;
-    ggml_cann_pool_alloc input_alloctor(ctx.pool());
+    ggml_cann_pool_alloc input_alloctor(ctx.pool());  // input_alloctor
     void *               input_buffer = src1->data;
 
     // case in
@@ -2270,14 +2270,14 @@ static void ggml_cann_mul_mat_quant(ggml_backend_cann_context & ctx, ggml_tensor
     // output
     size_t               output_elem_size = sizeof(uint16_t);
     size_t               output_nb[]      = { output_elem_size, dst->ne[0] * output_elem_size };
-    ggml_cann_pool_alloc output_allocator(ctx.pool());
+    ggml_cann_pool_alloc output_allocator(ctx.pool());  // output_allocator
     void *               output_buffer = output_allocator.alloc(ggml_nelements(dst) * output_elem_size);
     size_t               output_stride = dst->ne[0] * dst->ne[1] * output_elem_size;
 
     // aclnn
     int64_t              max_elem_size = 65535;
     int64_t              split_size    = (src0->ne[1] / max_elem_size) + 1;
-    ggml_cann_pool_alloc workspace_allocator(ctx.pool());
+    ggml_cann_pool_alloc workspace_allocator(ctx.pool());  // workspace_allocator
     for (int64_t n1 = 0; n1 < src1->ne[3]; n1++) {
         for (int64_t c1 = 0; c1 < src1->ne[2]; c1++) {
             int64_t n0 = n1 / (src1->ne[3] / src0->ne[3]);
@@ -2361,9 +2361,9 @@ void ggml_cann_mul_mat(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     switch (type) {
         case GGML_TYPE_F32:
         case GGML_TYPE_F16:
-#ifndef ASCEND_310P
+#ifndef ASCEND_310P  // 如果未定义 ASCEND_310P 则编译
         case GGML_TYPE_BF16:
-#endif
+#endif  // 条件编译结束
             ggml_cann_mat_mul_fp(ctx, dst);
             break;
         case GGML_TYPE_Q4_0:
@@ -2484,13 +2484,13 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
         ctx.rope_cache.equal(theta_scale_length, position_length, ext_factor, theta_scale, freq_scale, attn_factor,
                              is_neox, indep_sects, mrope_used, is_imrope, sections)) {
         // use cache.
-        return;
+        return;  // 返回
     }
 
     // Step0: calculate tensor shape.
     int64_t theta_scale_ne[] = { theta_scale_length, 1, 1, 1 };
     size_t  theta_scale_nb[] = { sizeof(float), theta_scale_length * sizeof(float), theta_scale_length * sizeof(float),
-                                 theta_scale_length * sizeof(float) };
+                                 theta_scale_length * sizeof(float) };  // sizeof
 
     GGML_ASSERT(src1->type == GGML_TYPE_I32);
     int64_t position_ne[] = { 1, 1, position_length, 1 };
@@ -2681,7 +2681,7 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
     }
 
     // Step2: divide by freq_factors
-    ggml_cann_pool_alloc freq_fac_res_allocator(ctx.pool());
+    ggml_cann_pool_alloc freq_fac_res_allocator(ctx.pool());  // freq_fac_res_allocator
     if (src2) {
         freq_fac_res_allocator.alloc(theta_scale_length * sizeof(float));
         void *         freq_fac_res_ptr = freq_fac_res_allocator.get();
@@ -2696,7 +2696,7 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
 
     // Step3: prepare position_tensor
     acl_tensor_ptr       acl_position_tensor;
-    ggml_cann_pool_alloc mrope_position_acllocator(ctx.pool());
+    ggml_cann_pool_alloc mrope_position_acllocator(ctx.pool());  // mrope_position_acllocator
     if (mrope_used) {
         // Step3.1: select current position;
         // position :
@@ -2765,7 +2765,7 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
 
     // Step4: multiply by the position
     int64_t              theta_length = theta_scale_length * position_length;
-    ggml_cann_pool_alloc theta_allocator(ctx.pool(), theta_length * sizeof(float));
+    ggml_cann_pool_alloc theta_allocator(ctx.pool(), theta_length * sizeof(float));  // theta_allocator
     void *               theta_buffer = theta_allocator.get();
 
     acl_tensor_ptr acl_theta_tensor =
@@ -2790,13 +2790,13 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
     }
 
     // sin/cos
-    ggml_cann_pool_alloc sin_allocator(ctx.pool(), theta_length * sizeof(float));
+    ggml_cann_pool_alloc sin_allocator(ctx.pool(), theta_length * sizeof(float));  // sin_allocator
     void *               sin_buffer = sin_allocator.get();
     acl_tensor_ptr       acl_sin_tensor =
         ggml_cann_create_tensor(sin_buffer, ACL_FLOAT, sizeof(float), cache_ne, cache_nb, GGML_MAX_DIMS, ACL_FORMAT_ND);
     aclnn_sin(ctx, acl_theta_tensor.get(), acl_sin_tensor.get());
 
-    ggml_cann_pool_alloc cos_allocator(ctx.pool(), theta_length * sizeof(float));
+    ggml_cann_pool_alloc cos_allocator(ctx.pool(), theta_length * sizeof(float));  // cos_allocator
     void *               cos_buffer = cos_allocator.get();
     acl_tensor_ptr       acl_cos_tensor =
         ggml_cann_create_tensor(cos_buffer, ACL_FLOAT, sizeof(float), cache_ne, cache_nb, GGML_MAX_DIMS, ACL_FORMAT_ND);
@@ -2844,9 +2844,9 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
                        indep_sects, mrope_used, is_imrope, sections);
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 aclnnStatus aclnnRotaryPositionEmbeddingGetWorkspaceSize(const aclTensor * x,
                                                          const aclTensor * cos,
                                                          const aclTensor * sin,
@@ -2858,9 +2858,9 @@ aclnnStatus aclnnRotaryPositionEmbedding(void *          workspace,
                                          uint64_t        workspaceSize,
                                          aclOpExecutor * executor,
                                          aclrtStream     stream);
-#ifdef __cplusplus
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     ggml_tensor * src0 = dst->src[0];  // input
@@ -2942,15 +2942,15 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 
     acl_tensor_ptr acl_src = ggml_cann_create_tensor(src0);
     acl_tensor_ptr acl_dst = ggml_cann_create_tensor(dst);
-#ifdef ASCEND_310P
+#ifdef ASCEND_310P  // 如果定义了 ASCEND_310P 则编译
     // Special ROPE operation for 310P
 
     // roll input
     void *               input_roll_buffer;
     acl_tensor_ptr       acl_minus_one_tensor;
     void *               minus_one_scale_buffer = nullptr;
-    ggml_cann_pool_alloc roll_allocator(ctx.pool(), ggml_nbytes(src0));
-    ggml_cann_pool_alloc minus_one_scale_allocator(ctx.pool(), sizeof(float) * src0->ne[0]);
+    ggml_cann_pool_alloc roll_allocator(ctx.pool(), ggml_nbytes(src0));  // roll_allocator
+    ggml_cann_pool_alloc minus_one_scale_allocator(ctx.pool(), sizeof(float) * src0->ne[0]);  // minus_one_scale_allocator
     if (!is_neox) {
         // roll input: [q0,q1,q2,q3,...] -> [q1,q0,q3,q2,...]
         input_roll_buffer        = roll_allocator.get();
@@ -3031,7 +3031,7 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(n_dims == src0->ne[0]);
 
     // input * scale
-    ggml_cann_pool_alloc roll_mul_scale_allocator(ctx.pool(), ggml_nbytes(src0));
+    ggml_cann_pool_alloc roll_mul_scale_allocator(ctx.pool(), ggml_nbytes(src0));  // roll_mul_scale_allocator
     void *               input_roll_mul_scale_buffer = roll_mul_scale_allocator.get();
     size_t               input_nb[GGML_MAX_DIMS];
     input_nb[0] = ggml_type_size(src0->type);
@@ -3061,16 +3061,16 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         for (int i = 1; i < GGML_MAX_DIMS; i++) {
             input_fp32_nb[i] = input_fp32_nb[i - 1] * dst->ne[i - 1];
         }
-        ggml_cann_pool_alloc fp32_allocator1(ctx.pool(), ggml_nelements(dst) * sizeof(float));
+        ggml_cann_pool_alloc fp32_allocator1(ctx.pool(), ggml_nelements(dst) * sizeof(float));  // fp32_allocator1
         void *               input_fp32_buffer1 = fp32_allocator1.get();
         acl_tensor_ptr       input_fp32_tensor1 = ggml_cann_create_tensor(input_fp32_buffer1, ACL_FLOAT, sizeof(float),
                                                                           dst->ne, input_fp32_nb, GGML_MAX_DIMS);
-        ggml_cann_pool_alloc fp32_allocator2(ctx.pool(), ggml_nelements(dst) * sizeof(float));
+        ggml_cann_pool_alloc fp32_allocator2(ctx.pool(), ggml_nelements(dst) * sizeof(float));  // fp32_allocator2
         void *               input_fp32_buffer2 = fp32_allocator2.get();
         acl_tensor_ptr       input_fp32_tensor2 = ggml_cann_create_tensor(input_fp32_buffer2, ACL_FLOAT, sizeof(float),
                                                                           dst->ne, input_fp32_nb, GGML_MAX_DIMS);
 
-        ggml_cann_pool_alloc fp32_allocator(ctx.pool(), ggml_nelements(dst) * sizeof(float));
+        ggml_cann_pool_alloc fp32_allocator(ctx.pool(), ggml_nelements(dst) * sizeof(float));  // fp32_allocator
         output_fp32_buffer                = fp32_allocator.get();
         acl_tensor_ptr output_fp32_tensor = ggml_cann_create_tensor(output_fp32_buffer, ACL_FLOAT, sizeof(float),
                                                                     dst->ne, input_fp32_nb, GGML_MAX_DIMS);
@@ -3079,8 +3079,8 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         aclnn_add(ctx, input_fp32_tensor1.get(), input_fp32_tensor2.get(), output_fp32_tensor.get());
         aclnn_cast(ctx, output_fp32_tensor.get(), acl_dst.get(), ACL_FLOAT16);
     }
-    return;
-#endif
+    return;  // 返回
+#endif  // 条件编译结束
     int64_t acl_mode = is_neox ? 0 : 1;
 
     // Pre-define head and tail dimensions for reuse
@@ -3089,8 +3089,8 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 
     // Step 1: Prepare trans tensors for F16 type conversion to F32 if needed
     bool                 src_dst_need_trans = false;
-    ggml_cann_pool_alloc src_trans_allocator(ctx.pool());
-    ggml_cann_pool_alloc dst_trans_allocator(ctx.pool());
+    ggml_cann_pool_alloc src_trans_allocator(ctx.pool());  // src_trans_allocator
+    ggml_cann_pool_alloc dst_trans_allocator(ctx.pool());  // dst_trans_allocator
     acl_tensor_ptr       acl_src_trans_tensor;
     acl_tensor_ptr       acl_dst_trans_tensor;
     void *               src_trans_buffer = nullptr;
@@ -3129,7 +3129,7 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         }
 
         int64_t              head_elements = rope_dims * ne01 * ne02 * ne03;
-        ggml_cann_pool_alloc dst_head_contiguous_allocator(ctx.pool(), head_elements * sizeof(float));
+        ggml_cann_pool_alloc dst_head_contiguous_allocator(ctx.pool(), head_elements * sizeof(float));  // dst_head_contiguous_allocator
         void *               dst_head_contiguous_buffer = dst_head_contiguous_allocator.get();
 
         size_t head_contiguous_nb[GGML_MAX_DIMS];
@@ -3170,8 +3170,8 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
             contiguous_nb[i] = contiguous_nb[i - 1] * src0->ne[i - 1];
         }
         int64_t              total_elements = ggml_nelements(src0);
-        ggml_cann_pool_alloc inplace_src_alloc(ctx.pool(), total_elements * sizeof(float));
-        ggml_cann_pool_alloc inplace_dst_alloc(ctx.pool(), total_elements * sizeof(float));
+        ggml_cann_pool_alloc inplace_src_alloc(ctx.pool(), total_elements * sizeof(float));  // inplace_src_alloc
+        ggml_cann_pool_alloc inplace_dst_alloc(ctx.pool(), total_elements * sizeof(float));  // inplace_dst_alloc
 
         acl_tensor_ptr acl_src_contig = ggml_cann_create_tensor(inplace_src_alloc.get(), ACL_FLOAT, sizeof(float),
                                                                 src0->ne, contiguous_nb, GGML_MAX_DIMS);
@@ -3318,9 +3318,9 @@ void ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * 
     int64_t           groups        = 1;
     int8_t            cubeMathType  = 0;
 
-#ifdef ASCEND_310P
+#ifdef ASCEND_310P  // 如果定义了 ASCEND_310P 则编译
     cubeMathType = 1;
-#endif
+#endif  // 条件编译结束
 
     auto weight_type = ggml_cann_type_mapping(src0->type);
     auto dst_type    = ggml_cann_type_mapping(dst->type);
@@ -3494,7 +3494,7 @@ void ggml_cann_count_equal(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     // Write element-wise equality (0 or 1) into a temporary buffer to avoid
     // modifying src0 in-place.  Use the same type as src0 so ReduceSum can
     // consume it directly without a type cast.
-    ggml_cann_pool_alloc eq_alloc(ctx.pool(), ggml_nelements(src0) * ggml_element_size(src0));
+    ggml_cann_pool_alloc eq_alloc(ctx.pool(), ggml_nelements(src0) * ggml_element_size(src0));  // eq_alloc
     size_t eq_nb[GGML_MAX_DIMS];
     eq_nb[0] = ggml_element_size(src0);
     for (int i = 1; i < GGML_MAX_DIMS; i++) {
@@ -3581,7 +3581,7 @@ static void ggml_cann_mul_mat_id_fp(ggml_backend_cann_context & ctx, ggml_tensor
     int64_t batch = src1->ne[2];
     GGML_ASSERT(batch == ids->ne[1]);
 
-    ggml_cann_pool_alloc export_allocator(ctx.pool(), src0->ne[0] * src0->ne[1] * ids->ne[0] * ggml_element_size(src0));
+    ggml_cann_pool_alloc export_allocator(ctx.pool(), src0->ne[0] * src0->ne[1] * ids->ne[0] * ggml_element_size(src0));  // export_allocator
     void *               export_ptr = export_allocator.get();
     for (int64_t i = 0; i < batch; i++) {
         acl_tensor_ptr select_index  = ggml_cann_create_tensor(ids, ids->ne, ids->nb, 1, ACL_FORMAT_ND, i * ids->nb[1]);
@@ -3679,11 +3679,11 @@ static void ggml_cann_mul_mat_id_quant(ggml_backend_cann_context & ctx, ggml_ten
 
     // Allocate buffers for selected expert weights and scales
     const size_t         selected_weight_size = src0->ne[0] * src0->ne[1] * n_select_experts * weight_elem_size;
-    ggml_cann_pool_alloc selected_weight_alloc(ctx.pool(), selected_weight_size);
+    ggml_cann_pool_alloc selected_weight_alloc(ctx.pool(), selected_weight_size);  // selected_weight_alloc
     void *               selected_weight_buffer = selected_weight_alloc.get();
 
     const size_t selected_scale_size = (src0->ne[0] / group_size) * src0->ne[1] * n_select_experts * scale_elem_size;
-    ggml_cann_pool_alloc selected_scale_alloc(ctx.pool(), selected_scale_size);
+    ggml_cann_pool_alloc selected_scale_alloc(ctx.pool(), selected_scale_size);  // selected_scale_alloc
     void *               selected_scale_buffer = selected_scale_alloc.get();
 
     // Helper lambda to allocate and cast tensor to F16 if needed
@@ -3691,7 +3691,7 @@ static void ggml_cann_mul_mat_id_quant(ggml_backend_cann_context & ctx, ggml_ten
     auto             prepare_f16_buffer = [&](ggml_tensor * tensor, ggml_cann_pool_alloc & allocator,
                                   bool need_cast = false) -> void * {
         if (tensor->type == GGML_TYPE_F16) {
-            return tensor->data;
+            return tensor->data;  // 返回
         }
 
         size_t total_size = f16_elem_size;
@@ -3701,7 +3701,7 @@ static void ggml_cann_mul_mat_id_quant(ggml_backend_cann_context & ctx, ggml_ten
         void * buffer = allocator.alloc(total_size);
 
         if (need_cast == false) {
-            return buffer;
+            return buffer;  // 返回
         }
 
         int64_t ne[GGML_MAX_DIMS];
@@ -3717,14 +3717,14 @@ static void ggml_cann_mul_mat_id_quant(ggml_backend_cann_context & ctx, ggml_ten
         acl_tensor_ptr f16_tensor = ggml_cann_create_tensor(buffer, ACL_FLOAT16, f16_elem_size, ne, nb, GGML_MAX_DIMS);
         aclnn_cast(ctx, src_tensor.get(), f16_tensor.get(), ACL_FLOAT16);
 
-        return buffer;
+        return buffer;  // 返回
     };
 
     // Prepare input and output buffers
-    ggml_cann_pool_alloc input_alloc(ctx.pool());
+    ggml_cann_pool_alloc input_alloc(ctx.pool());  // input_alloc
     void *               input_buffer = prepare_f16_buffer(src1, input_alloc, true);
 
-    ggml_cann_pool_alloc output_alloc(ctx.pool());
+    ggml_cann_pool_alloc output_alloc(ctx.pool());  // output_alloc
     void *               output_buffer = prepare_f16_buffer(dst, output_alloc, false);
 
     // Process each batch
@@ -3904,7 +3904,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
         acl_tensor_ptr acl_v_tensor = nullptr;
 
         // Step 1: cast the src0 (Query) to fp16 if needed
-        ggml_cann_pool_alloc src0_f16_allocator(ctx.pool());
+        ggml_cann_pool_alloc src0_f16_allocator(ctx.pool());  // src0_f16_allocator
         void *               src0_f16_buffer = nullptr;
 
         if (ggml_cann_type_mapping(src0->type) != faDataType) {
@@ -3938,9 +3938,9 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
         const int64_t D_padded  = GGML_PAD(D, 16);
         const bool needs_padding = (D != D_padded);
 
-        ggml_cann_pool_alloc q_pad_allocator(ctx.pool());
-        ggml_cann_pool_alloc k_pad_allocator(ctx.pool());
-        ggml_cann_pool_alloc v_pad_allocator(ctx.pool());
+        ggml_cann_pool_alloc q_pad_allocator(ctx.pool());  // q_pad_allocator
+        ggml_cann_pool_alloc k_pad_allocator(ctx.pool());  // k_pad_allocator
+        ggml_cann_pool_alloc v_pad_allocator(ctx.pool());  // v_pad_allocator
 
         if (needs_padding) {
             int64_t paddings[] = { 0, D_padded - D, 0, 0, 0, 0, 0, 0 };
@@ -3973,7 +3973,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
         // Step 3: create the PSEShift tensor if needed
         //         this tensor is considered as mask (f16) in the llama.cpp
         acl_tensor_ptr       bcast_pse_tensor;
-        ggml_cann_pool_alloc bcast_pse_allocator(ctx.pool());
+        ggml_cann_pool_alloc bcast_pse_allocator(ctx.pool());  // bcast_pse_allocator
         if (src3 != nullptr) {
             // Construct the truncated pse tensor (common for prefill/decode)
             int64_t trunc_pse_ne[GGML_MAX_DIMS] = {
@@ -4022,7 +4022,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
                 // alibi
                 // Compute the slope if needed. Derived from ggml_cann_softmax().
                 const int64_t        n_heads = src0->ne[2];
-                ggml_cann_pool_alloc slope_allocator(ctx.pool(), n_heads * sizeof(uint16_t));
+                ggml_cann_pool_alloc slope_allocator(ctx.pool(), n_heads * sizeof(uint16_t));  // slope_allocator
                 void *               slope_buffer = slope_allocator.get();
                 aclnn_get_slope(ctx, n_heads, slope_buffer, maxBias, GGML_TYPE_F16);
 
@@ -4059,7 +4059,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
 
         GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16);
         acl_tensor_ptr       fa_dst_tensor;
-        ggml_cann_pool_alloc out_f16_allocator(ctx.pool());
+        ggml_cann_pool_alloc out_f16_allocator(ctx.pool());  // out_f16_allocator
         if (dst->type == GGML_TYPE_F32 || needs_padding) {
             int64_t * out_f16_ne = src0_bsnd_ne;
             size_t    out_f16_nb[GGML_MAX_DIMS];
@@ -4102,7 +4102,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
 
         // Step 6: post-processing — slice padded output and/or cast to f32
         if (needs_padding) {
-            ggml_cann_pool_alloc sliced_f16_allocator(ctx.pool());
+            ggml_cann_pool_alloc sliced_f16_allocator(ctx.pool());  // sliced_f16_allocator
 
             if (dst->type == GGML_TYPE_F32) {
                 int64_t sliced_ne[GGML_MAX_DIMS] = { D, src0_bsnd_ne[1], src0_bsnd_ne[2], src0_bsnd_ne[3] };
@@ -4232,9 +4232,9 @@ void ggml_cann_ssm_conv(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 
     const int64_t n_t = dst->ne[1];    // tokens per sequence
 
-    GGML_ASSERT(dst->ne[0] == nr);     // dst: {d_inner, n_t, n_s}
-    GGML_ASSERT(src1->ne[1] == nr);    // weight: {d_conv, d_inner}
-    GGML_ASSERT(ncs == nc - 1 + n_t);  // conv_x: {d_conv - 1 + n_t, d_inner, n_s}
+    GGML_ASSERT(dst->ne[0] == nr);     // dst: {d_inner, n_t, n_s}  // 断言检查
+    GGML_ASSERT(src1->ne[1] == nr);    // weight: {d_conv, d_inner}  // 断言检查
+    GGML_ASSERT(ncs == nc - 1 + n_t);  // conv_x: {d_conv - 1 + n_t, d_inner, n_s}  // 断言检查
     GGML_ASSERT(src0->nb[0] == sizeof(float));
     GGML_ASSERT(src1->nb[0] == sizeof(float));
 
@@ -4299,9 +4299,9 @@ void ggml_cann_ssm_conv(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     const int64_t groups       = nr;  // depthwise: one group per inner dim
     int8_t        cubeMathType = 0;
 
-#ifdef ASCEND_310P
+#ifdef ASCEND_310P  // 如果定义了 ASCEND_310P 则编译
     cubeMathType = 1;
-#endif
+#endif  // 条件编译结束
 
     GGML_CANN_CALL_ACLNN_OP(ctx, Convolution,
                             acl_x.get(),    // input:  N, C, L_in = ncs
@@ -4419,7 +4419,7 @@ void ggml_cann_gated_linear_attn(ggml_backend_cann_context & ctx, ggml_tensor * 
                 acl_tensor_ptr       acl_o = ggml_cann_create_tensor(dst, ne_q, nb_q, 1, ACL_FORMAT_ND, qkvgo_offset);
                 // k ⊗ v
                 size_t               buf_size = D * D * nb_base;
-                ggml_cann_pool_alloc buffer_allocator(ctx.pool(), buf_size);
+                ggml_cann_pool_alloc buffer_allocator(ctx.pool(), buf_size);  // buffer_allocator
                 acl_tensor_ptr       tmp_tensor = ggml_cann_create_tensor(
                     buffer_allocator.get(), ggml_cann_type_mapping(k->type), nb_base, ne_s, nb_s, 2);
                 aclnn_mul(ctx, acl_k.get(), acl_v.get(), tmp_tensor.get());

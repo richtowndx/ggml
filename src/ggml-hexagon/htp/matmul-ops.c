@@ -3,28 +3,28 @@
 #pragma clang diagnostic ignored "-Wunused-variable"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
 
-#include <math.h>
-#include <string.h>
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#include "hex-dma.h"
-#include "hvx-utils.h"
-#include "hvx-dump.h"
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
+#include "hvx-dump.h"  // 引入 hvx-dump.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-ops.h"
-#include "hmx-ops.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "hmx-ops.h"  // 引入 hmx-ops.h 头文件
 
-#define MM_SPAD_SRC0_NROWS 16
-#define MM_SPAD_SRC1_NROWS 16
-#define MM_SPAD_DST_NROWS  2
+#define MM_SPAD_SRC0_NROWS 16  // 宏定义 MM_SPAD_SRC0_NROWS
+#define MM_SPAD_SRC1_NROWS 16  // 宏定义 MM_SPAD_SRC1_NROWS
+#define MM_SPAD_DST_NROWS  2  // 宏定义 MM_SPAD_DST_NROWS
 
-struct htp_matmul_context {
+struct htp_matmul_context {  // 结构体定义
     const char * type;
     struct htp_ops_context * octx;
 
@@ -109,7 +109,7 @@ static inline HVX_Vector_x8 hvx_vec_load_iq4nlx4x8_full(const uint8_t * restrict
     v7 = Q6_Vb_vlut32_VbVbI(v7, lut, 0);
 
     HVX_Vector_x8 r = { v0, v1, v2, v3, v4, v5, v6, v7 };
-    return r;
+    return r;  // 返回
 }
 
 static inline HVX_Vector_x8 hvx_vec_load_iq4nlx4x8_partial(const uint8_t * restrict ptr, uint32_t n) {
@@ -143,7 +143,7 @@ static inline HVX_Vector_x8 hvx_vec_load_iq4nlx4x8_partial(const uint8_t * restr
         r.v[i * 2 + 1]        = Q6_Vb_vlut32_VbVbI(Q6_V_hi_W(v0_1_p), lut, 0);
     }
 
-    return r;
+    return r;  // 返回
 }
 
 // q4x4x2 and q8x4x2 are the flat q4/8_0 formats where all quants are stored first followed by all scales
@@ -152,7 +152,7 @@ static inline size_t q8x4x2_row_size(uint32_t ne) {
     // ensures perfect alignment of quants and full row
     const uint32_t qk = QK_Q8_0x4x2;
     const uint32_t nb = (ne + qk - 1) / qk;
-    return hex_round_up(ne + nb * 8 * sizeof(__fp16), 128);
+    return hex_round_up(ne + nb * 8 * sizeof(__fp16), 128);  // hex_round_up
 }
 
 static inline HVX_Vector_x8 hvx_vec_load_q4x4x8_full(const uint8_t * restrict ptr) {
@@ -186,7 +186,7 @@ static inline HVX_Vector_x8 hvx_vec_load_q4x4x8_full(const uint8_t * restrict pt
     v7 = Q6_Vb_vsub_VbVb(v7, i8);
 
     HVX_Vector_x8 r = { v0, v1, v2, v3, v4, v5, v6, v7 };
-    return r;
+    return r;  // 返回
 }
 
 static HVX_Vector_x8 hvx_vec_load_q4x4x8_partial(const uint8_t * restrict ptr, uint32_t n) {
@@ -220,7 +220,7 @@ static HVX_Vector_x8 hvx_vec_load_q4x4x8_partial(const uint8_t * restrict ptr, u
         r.v[i*2+1] = Q6_Vb_vsub_VbVb(Q6_V_hi_W(v0_1_p), i8);
     }
 
-    return r;
+    return r;  // 返回
 }
 
 static inline HVX_Vector_x8 hvx_vec_load_mxfp4x4x8_full(const uint8_t * restrict ptr) {
@@ -253,7 +253,7 @@ static inline HVX_Vector_x8 hvx_vec_load_mxfp4x4x8_full(const uint8_t * restrict
     v7 = Q6_Vb_vlut32_VbVbI(v7, lut, 0);
 
     HVX_Vector_x8 r = { v0, v1, v2, v3, v4, v5, v6, v7 };
-    return r;
+    return r;  // 返回
 }
 
 static inline HVX_Vector_x8 hvx_vec_load_mxfp4x4x8_partial(const uint8_t * restrict ptr, uint32_t n) {
@@ -287,7 +287,7 @@ static inline HVX_Vector_x8 hvx_vec_load_mxfp4x4x8_partial(const uint8_t * restr
         r.v[i*2+1] = Q6_Vb_vlut32_VbVbI(Q6_V_hi_W(v0_1_p), lut, 0);
     }
 
-    return r;
+    return r;  // 返回
 }
 
 static inline HVX_Vector_x8 hvx_vec_load_q8x4x8_full(const uint8_t * restrict ptr) {
@@ -303,11 +303,11 @@ static inline HVX_Vector_x8 hvx_vec_load_q8x4x8_full(const uint8_t * restrict pt
     HVX_Vector v7 = vptr[7];  // ...
 
     HVX_Vector_x8 r = { v0, v1, v2, v3, v4, v5, v6, v7 };
-    return r;
+    return r;  // 返回
 }
 
 static inline HVX_Vector_x8 hvx_vec_load_q8x4x8_partial(const uint8_t * restrict ptr, uint32_t nloe) {
-    return hvx_vec_load_q8x4x8_full(ptr);
+    return hvx_vec_load_q8x4x8_full(ptr);  // hvx_vec_load_q8x4x8_full
 }
 
 // Reduce multiply 1024 x 1024 int8 elements (32x q4/8 blocks in 8x HVX vectors).
@@ -359,7 +359,7 @@ static inline HVX_Vector hvx_vec_rmpy_x8_n(HVX_Vector_x8 x, HVX_Vector_x8 y, uns
     if (n >=  128) { p0 = Q6_W_vdeal_VVR(r1, r0, -4); }
     if (n >=  128) { r0 = Q6_Vw_vadd_VwVw(Q6_V_lo_W(p0), Q6_V_hi_W(p0)); }
 
-    return r0;
+    return r0;  // 返回
 }
 
 static inline HVX_Vector hvx_vec_rmpy_x8_full(HVX_Vector_x8 x, HVX_Vector_x8 y) {
@@ -391,14 +391,14 @@ static inline HVX_Vector hvx_vec_rmpy_x8_full(HVX_Vector_x8 x, HVX_Vector_x8 y) 
     p0 = Q6_W_vdeal_VVR(r1, r0, -4);
     r0 = Q6_Vw_vadd_VwVw(Q6_V_lo_W(p0), Q6_V_hi_W(p0));
 
-    return r0;
+    return r0;  // 返回
 }
 
 static inline HVX_Vector hvx_vec_rmpy_x8_partial(HVX_Vector_x8 x, HVX_Vector_x8 y, unsigned int n) {
     if (n >= 512)
-        return hvx_vec_rmpy_x8_full(x, y);
+        return hvx_vec_rmpy_x8_full(x, y);  // hvx_vec_rmpy_x8_full
 
-    return hvx_vec_rmpy_x8_partial(x, y, 512);
+    return hvx_vec_rmpy_x8_partial(x, y, 512);  // hvx_vec_rmpy_x8_partial
 }
 
 static void vec_dot_q4x4x2_q8x4x2_1x1(const int n, float * restrict s0, const void * restrict vx0, const void * restrict vy0) {
@@ -1987,7 +1987,7 @@ static void matmul_4d(unsigned int nth, unsigned int ith, void * data) {
 
     // no work for this thread
     if (ir0_start >= ir0_end || ir1_start >= ir1_end) {
-        return;
+        return;  // 返回
     }
 
     // block-tiling attempt
@@ -2043,7 +2043,7 @@ static void matmul_2d(unsigned int nth, unsigned int ith, void * data) {
 
     // no work for this thread
     if (src0_start_row >= src0_end_row) {
-        return;
+        return;  // 返回
     }
 
     const size_t dst_row_size  = nb1;
@@ -2142,7 +2142,7 @@ static void matvec_2d(unsigned int nth, unsigned int ith, void * data) {
 
     // no work for this thread
     if (src0_start_row >= src0_end_row) {
-        return;
+        return;  // 返回
     }
 
     const size_t dst_row_size  = nb1;
@@ -2213,9 +2213,9 @@ static void matvec_2d(unsigned int nth, unsigned int ith, void * data) {
          (unsigned) HAP_perf_qtimer_count_to_us(t2 - t1));
 }
 
-#define MMID_MATRIX_ROW(row_id, i1) matrix_rows[(row_id) * ids->ne[0] * ids->ne[1] + (i1)]
+#define MMID_MATRIX_ROW(row_id, i1) matrix_rows[(row_id) * ids->ne[0] * ids->ne[1] + (i1)]  // 宏定义 MMID_MATRIX_ROW
 
-struct mmid_row_mapping {
+struct mmid_row_mapping {  // 结构体定义
     uint32_t i1;
     uint32_t i2;
 };
@@ -2239,7 +2239,7 @@ static void matmul_id(unsigned int nth, unsigned int ith, void * data) {
 
     // no work for this thread
     if (src0_start_row >= src0_end_row) {
-        return;
+        return;  // 返回
     }
 
     const uint32_t n_ids = ids->ne[0];  // n_expert_used
@@ -2357,7 +2357,7 @@ static void matvec_id(unsigned int nth, unsigned int ith, void * data) {
 
     // no work for this thread
     if (src0_start_row >= src0_end_row) {
-        return;
+        return;  // 返回
     }
 
     assert(ne13 % ne03 == 0);
@@ -2591,18 +2591,18 @@ static void quantize_row_f32_q8x4x2(float * restrict x, uint8_t * restrict y, ui
     uint8_t * restrict t_d = (uint8_t *) x;
 
     for (uint32_t i = 0; i < nb; i++) {
-#if FP32_QUANTIZE_GROUP_SIZE == 32
+#if FP32_QUANTIZE_GROUP_SIZE == 32  // 条件编译
         quantize_block_f32_q8x1(x + (i*2 + 0) * qk/2, y_q + (i*2 + 0) * qblk_size/2, t_d + (i*2 + 0) * dblk_size/2);
         quantize_block_f32_q8x1(x + (i*2 + 1) * qk/2, y_q + (i*2 + 1) * qblk_size/2, t_d + (i*2 + 1) * dblk_size/2);
-#elif FP32_QUANTIZE_GROUP_SIZE == 64
+#elif FP32_QUANTIZE_GROUP_SIZE == 64  // 否则如果
         quantize_block_f32_q8x2(x + (i*2 + 0) * qk/2, y_q + (i*2 + 0) * qblk_size/2, t_d + (i*2 + 0) * dblk_size/2);
         quantize_block_f32_q8x2(x + (i*2 + 1) * qk/2, y_q + (i*2 + 1) * qblk_size/2, t_d + (i*2 + 1) * dblk_size/2);
-#elif FP32_QUANTIZE_GROUP_SIZE == 128
+#elif FP32_QUANTIZE_GROUP_SIZE == 128  // 否则如果
         quantize_block_f32_q8x4(x + (i*2 + 0) * qk/2, y_q + (i*2 + 0) * qblk_size/2, t_d + (i*2 + 0) * dblk_size/2);
         quantize_block_f32_q8x4(x + (i*2 + 1) * qk/2, y_q + (i*2 + 1) * qblk_size/2, t_d + (i*2 + 1) * dblk_size/2);
-#else
+#else  // 否则
 #error "FP32_QUANTIZE_GROUP_SIZE must be 32, 64, or 128"
-#endif
+#endif  // 条件编译结束
     }
 
     // now copy the scales into final location
@@ -2741,7 +2741,7 @@ static void quantize_f16_f16(unsigned int nth, unsigned int ith, void * data) {
 
 
 static inline bool htp_is_permuted(const struct htp_tensor * t) {
-    return t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];
+    return t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];  // 返回
 }
 
 static int htp_mminit_vec_dot(struct htp_matmul_context * mmctx, enum htp_data_type type) {
@@ -2751,27 +2751,27 @@ static int htp_mminit_vec_dot(struct htp_matmul_context * mmctx, enum htp_data_t
             mmctx->vec_dot_1x1 = vec_dot_q4x4x2_q8x4x2_1x1;
             mmctx->vec_dot_2x1 = vec_dot_q4x4x2_q8x4x2_2x1;
             mmctx->vec_dot_2x2 = vec_dot_q4x4x2_q8x4x2_2x2;
-            return 0;
+            return 0;  // 返回
         case HTP_TYPE_Q8_0:
             mmctx->type        = "q8x4x2-f32";
             mmctx->vec_dot_1x1 = vec_dot_q8x4x2_q8x4x2_1x1;
             mmctx->vec_dot_2x1 = vec_dot_q8x4x2_q8x4x2_2x1;
             mmctx->vec_dot_2x2 = vec_dot_q8x4x2_q8x4x2_2x2;
-            return 0;
+            return 0;  // 返回
         case HTP_TYPE_IQ4_NL:
             mmctx->type        = "iq4nlx4x2-f32";
             mmctx->vec_dot_1x1 = vec_dot_iq4nlx4x2_q8x4x2_1x1;
             mmctx->vec_dot_2x1 = vec_dot_iq4nlx4x2_q8x4x2_2x1;
             mmctx->vec_dot_2x2 = vec_dot_iq4nlx4x2_q8x4x2_2x2;
-            return 0;
+            return 0;  // 返回
         case HTP_TYPE_MXFP4:
             mmctx->type        = "mxfp4x4x2-f32";
             mmctx->vec_dot_1x1 = vec_dot_mxfp4x4x2_q8x4x2_1x1;
             mmctx->vec_dot_2x1 = vec_dot_mxfp4x4x2_q8x4x2_2x1;
             mmctx->vec_dot_2x2 = vec_dot_mxfp4x4x2_q8x4x2_2x2;
-            return 0;
+            return 0;  // 返回
         default:
-            return -1;
+            return -1;  // 返回
     }
 }
 
@@ -2804,7 +2804,7 @@ static void htp_mminit_spad(struct htp_ops_context * octx,
 static int op_matmul_hvx(struct htp_ops_context * octx) {
     htp_matmul_tensors_preamble;
 
-    struct htp_matmul_context mmctx_struct = {0};
+    struct htp_matmul_context mmctx_struct = {0};  // 结构体定义
     struct htp_matmul_context * mmctx = &mmctx_struct;
     mmctx->octx = octx;
 
@@ -2891,7 +2891,7 @@ static int op_matmul_hvx(struct htp_ops_context * octx) {
         }
     } else {
         if (htp_mminit_vec_dot(mmctx, src0->type) != 0) {
-            return HTP_STATUS_NO_SUPPORT;
+            return HTP_STATUS_NO_SUPPORT;  // 返回
         }
 
         quant_job_func = quantize_f32_q8x4x2;
@@ -2913,7 +2913,7 @@ static int op_matmul_hvx(struct htp_ops_context * octx) {
     if (octx->ctx->vtcm_size < spad_size) {
         FARF(ERROR, "matmul-%s : current VTCM reservation %zu is too small, needed %zu\n", mmctx->type,
              octx->ctx->vtcm_size, spad_size);
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        return HTP_STATUS_VTCM_TOO_SMALL;  // 返回
     }
 
     // Place src1 spad first. We use it for dyn.quant and may reuse between ops
@@ -2929,7 +2929,7 @@ static int op_matmul_hvx(struct htp_ops_context * octx) {
     octx->src1_spad.stride = src1_row_size;
 
     if (octx->flags & HTP_OPFLAGS_SKIP_COMPUTE)
-        return HTP_STATUS_OK;
+        return HTP_STATUS_OK;  // 返回
 
     if (need_quant && !octx->src1_spad.src) {
         const uint32_t n_quant_jobs  = MIN(src1_nrows, octx->n_threads);
@@ -2941,39 +2941,39 @@ static int op_matmul_hvx(struct htp_ops_context * octx) {
     const uint32_t n_matmul_jobs = octx->n_threads;
     worker_pool_run_func(octx->ctx->worker_pool, matmul_job_func, mmctx, n_matmul_jobs);
 
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }
 
 int op_matmul(struct htp_ops_context * octx) {
     htp_matmul_tensors_preamble;
 
-#ifndef HTP_HAS_HMX
-    return op_matmul_hvx(octx);
-#else
+#ifndef HTP_HAS_HMX  // 如果未定义 HTP_HAS_HMX 则编译
+    return op_matmul_hvx(octx);  // op_matmul_hvx
+#else  // 否则
     if (!octx->ctx->hmx_enabled) {
-        return op_matmul_hvx(octx);
+        return op_matmul_hvx(octx);  // op_matmul_hvx
     }
 
     // HMX weight tile requires N to be 32-aligned.
     if (src0->ne[1] % 32 != 0) {
-        return op_matmul_hvx(octx);
+        return op_matmul_hvx(octx);  // op_matmul_hvx
     }
 
     // HMX supports F16, Q4_0, Q8_0, IQ4_NL, MXFP4 weights.
     // Other types fall back to HVX.
     uint32_t wtype = src0->type;
     if (wtype != HTP_TYPE_F16 && wtype != HTP_TYPE_Q4_0 && wtype != HTP_TYPE_Q8_0 && wtype != HTP_TYPE_IQ4_NL && wtype != HTP_TYPE_MXFP4) {
-        return op_matmul_hvx(octx);
+        return op_matmul_hvx(octx);  // op_matmul_hvx
     }
 
     // Quantised HMX path requires K aligned to 256 (x4x2 super-block).
     // F16 HMX path requires K aligned to 32 (tile width).
     if (wtype != HTP_TYPE_F16 && src0->ne[0] % 256 != 0) {
-        return op_matmul_hvx(octx);
+        return op_matmul_hvx(octx);  // op_matmul_hvx
     }
 
     if (wtype == HTP_TYPE_F16 && src0->ne[0] % 32 != 0) {
-        return op_matmul_hvx(octx);
+        return op_matmul_hvx(octx);  // op_matmul_hvx
     }
 
     const bool is_batched = (src0->ne[2] * src0->ne[3] > 1 || src1->ne[2] * src1->ne[3] > 1);
@@ -2982,13 +2982,13 @@ int op_matmul(struct htp_ops_context * octx) {
     // batched quantised, but guard here too).  F16 batched matmul is handled
     // by the dedicated wrapper in hmx-matmul-ops.c.
     if (is_batched && src0->type != HTP_TYPE_F16) {
-        return op_matmul_hvx(octx);
+        return op_matmul_hvx(octx);  // op_matmul_hvx
     }
 
     // HMX assumes contiguous row-major layout.  Fall back for permuted
     // tensors where strides are non-monotonic (e.g. transposed KV cache).
     if (src0->nb[0] > src0->nb[1] || src1->nb[0] > src1->nb[1]) {
-        return op_matmul_hvx(octx);
+        return op_matmul_hvx(octx);  // op_matmul_hvx
     }
 
     // M alignment: when M > 32 but not 32-aligned, we split into
@@ -2999,7 +2999,7 @@ int op_matmul(struct htp_ops_context * octx) {
     const int m_hmx   = m_total - m_tail;
 
     if (m_hmx == 0) {
-        return op_matmul_hvx(octx);
+        return op_matmul_hvx(octx);  // op_matmul_hvx
     }
 
     // Always re-quantize src1 since HMX kernel overwrites vtcm/spad,
@@ -3018,7 +3018,7 @@ int op_matmul(struct htp_ops_context * octx) {
     const int wgt_stride = (int)(src0->nb[1] / sizeof(__fp16));
 
     if (octx->flags & HTP_OPFLAGS_SKIP_COMPUTE) {
-        return HTP_STATUS_OK;
+        return HTP_STATUS_OK;  // 返回
     }
 
     if (src0->type == HTP_TYPE_F16) {
@@ -3058,7 +3058,7 @@ int op_matmul(struct htp_ops_context * octx) {
 
     if (ret != 0) {
         FARF(HIGH, "HMX matmul failed (ret=%d), falling back to HVX", ret);
-        return op_matmul(octx);
+        return op_matmul(octx);  // op_matmul
     }
 
     // --- Phase 2: HVX on the remaining m_tail rows ---
@@ -3079,17 +3079,17 @@ int op_matmul(struct htp_ops_context * octx) {
         octx->dst    = &dst_tail;
 
         FARF(HIGH, "hmx-matmul: HVX tail m_tail %d src1 %p dst %p", m_tail, (void *) src1_tail.data, (void *) dst_tail.data);
-        return op_matmul_hvx(octx);
+        return op_matmul_hvx(octx);  // op_matmul_hvx
     }
 
-    return 0;
-#endif // HTP_HAS_HMX
+    return 0;  // 返回
+#endif // HTP_HAS_HMX  // 条件编译结束
 }
 
 int op_matmul_id(struct htp_ops_context * octx) {
     htp_matmul_tensors_preamble;
 
-    struct htp_matmul_context mmctx_struct = {0};
+    struct htp_matmul_context mmctx_struct = {0};  // 结构体定义
     struct htp_matmul_context * mmctx = &mmctx_struct;
     mmctx->octx = octx;
 
@@ -3121,7 +3121,7 @@ int op_matmul_id(struct htp_ops_context * octx) {
     size_t matrix_row_map_size    = n_as * ids->ne[0] * ids->ne[1] * sizeof(struct mmid_row_mapping);
 
     if (htp_mminit_vec_dot(mmctx, src0->type) != 0) {
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     quant_job_func = quantize_f32_q8x4x2;
@@ -3143,7 +3143,7 @@ int op_matmul_id(struct htp_ops_context * octx) {
     // Make sure the reserved vtcm size is sufficient
     if (octx->ctx->vtcm_size < spad_size) {
         FARF(ERROR, "matmul-id-%s : current VTCM reservation %zu is too small, needed %zu\n", mmctx->type, octx->ctx->vtcm_size, spad_size);
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        return HTP_STATUS_VTCM_TOO_SMALL;  // 返回
     }
 
     // Place src1 spad first. We use it for dyn.quant and may reuse in subseq ops.
@@ -3181,7 +3181,7 @@ int op_matmul_id(struct htp_ops_context * octx) {
     }
 
     if (octx->flags & HTP_OPFLAGS_SKIP_COMPUTE)
-        return HTP_STATUS_OK;
+        return HTP_STATUS_OK;  // 返回
 
     if (octx->src1_spad.src != src1) {
         const uint32_t n_quant_jobs = MIN(src1_nrows, octx->n_threads);
@@ -3193,5 +3193,5 @@ int op_matmul_id(struct htp_ops_context * octx) {
     const uint32_t n_matmul_jobs = octx->n_threads;
     worker_pool_run_func(octx->ctx->worker_pool, matmul_id_job_func, mmctx, n_matmul_jobs);
 
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }

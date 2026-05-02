@@ -1,11 +1,11 @@
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#define STB_IMAGE_IMPLEMENTATION  // 宏定义 STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"  // 引入 stb_image.h 头文件
+#define STB_IMAGE_WRITE_IMPLEMENTATION  // 宏定义 STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"  // 引入 stb_image_write.h 头文件
 
-#include "yolo-image.h"
+#include "yolo-image.h"  // 引入 yolo-image.h 头文件
 
-static void draw_box(yolo_image & a, int x1, int y1, int x2, int y2, float r, float g, float b)
+static void draw_box(yolo_image & a, int x1, int y1, int x2, int y2, float r, float g, float b)  // draw_box
 {
     if (x1 < 0) x1 = 0;
     if (x1 >= a.w) x1 = a.w-1;
@@ -39,14 +39,14 @@ static void draw_box(yolo_image & a, int x1, int y1, int x2, int y2, float r, fl
     }
 }
 
-void draw_box_width(yolo_image & a, int x1, int y1, int x2, int y2, int w, float r, float g, float b)
+void draw_box_width(yolo_image & a, int x1, int y1, int x2, int y2, int w, float r, float g, float b)  // draw_box_width
 {
     for (int i = 0; i < w; ++i) {
         draw_box(a, x1+i, y1+i, x2-i, y2-i, r, g, b);
     }
 }
 
-bool save_image(const yolo_image & im, const char *name, int quality)
+bool save_image(const yolo_image & im, const char *name, int quality)  // save_image
 {
     uint8_t *data = (uint8_t*)calloc(im.w*im.h*im.c, sizeof(uint8_t));
     for (int k = 0; k < im.c; ++k) {
@@ -58,17 +58,17 @@ bool save_image(const yolo_image & im, const char *name, int quality)
     free(data);
     if (!success) {
         fprintf(stderr, "Failed to write image %s\n", name);
-        return false;
+        return false;  // 返回
     }
-    return true;
+    return true;  // 返回
 }
 
-bool load_image(const char *fname, yolo_image & img)
+bool load_image(const char *fname, yolo_image & img)  // load_image
 {
     int w, h, c;
     uint8_t * data = stbi_load(fname, &w, &h, &c, 3);
     if (!data) {
-        return false;
+        return false;  // 返回
     }
     c = 3;
     img.w = w;
@@ -85,13 +85,13 @@ bool load_image(const char *fname, yolo_image & img)
         }
     }
     stbi_image_free(data);
-    return true;
+    return true;  // 返回
 }
 
-static yolo_image resize_image(const yolo_image & im, int w, int h)
+static yolo_image resize_image(const yolo_image & im, int w, int h)  // resize_image
 {
-    yolo_image resized(w, h, im.c);
-    yolo_image part(w, im.h, im.c);
+    yolo_image resized(w, h, im.c);  // resized
+    yolo_image part(w, im.h, im.c);  // part
     float w_scale = (float)(im.w - 1) / (w - 1);
     float h_scale = (float)(im.h - 1) / (h - 1);
     for (int k = 0; k < im.c; ++k){
@@ -126,10 +126,10 @@ static yolo_image resize_image(const yolo_image & im, int w, int h)
             }
         }
     }
-    return resized;
+    return resized;  // 返回
 }
 
-static void embed_image(const yolo_image & source, yolo_image & dest, int dx, int dy)
+static void embed_image(const yolo_image & source, yolo_image & dest, int dx, int dy)  // embed_image
 {
     for (int k = 0; k < source.c; ++k) {
         for (int y = 0; y < source.h; ++y) {
@@ -141,7 +141,7 @@ static void embed_image(const yolo_image & source, yolo_image & dest, int dx, in
     }
 }
 
-yolo_image letterbox_image(const yolo_image & im, int w, int h)
+yolo_image letterbox_image(const yolo_image & im, int w, int h)  // letterbox_image
 {
     int new_w = im.w;
     int new_h = im.h;
@@ -153,46 +153,46 @@ yolo_image letterbox_image(const yolo_image & im, int w, int h)
         new_w = (im.w * h)/im.h;
     }
     yolo_image resized = resize_image(im, new_w, new_h);
-    yolo_image boxed(w, h, im.c);
+    yolo_image boxed(w, h, im.c);  // boxed
     boxed.fill(0.5);
     embed_image(resized, boxed, (w-new_w)/2, (h-new_h)/2);
-    return boxed;
+    return boxed;  // 返回
 }
 
-static yolo_image tile_images(const yolo_image & a, const yolo_image & b, int dx)
+static yolo_image tile_images(const yolo_image & a, const yolo_image & b, int dx)  // tile_images
 {
     if (a.w == 0) {
-        return b;
+        return b;  // 返回
     }
-    yolo_image c(a.w + b.w + dx, (a.h > b.h) ? a.h : b.h, a.c);
+    yolo_image c(a.w + b.w + dx, (a.h > b.h) ? a.h : b.h, a.c);  // c
     c.fill(1.0f);
     embed_image(a, c, 0, 0);
     embed_image(b, c, a.w + dx, 0);
-    return c;
+    return c;  // 返回
 }
 
-static yolo_image border_image(const yolo_image & a, int border)
+static yolo_image border_image(const yolo_image & a, int border)  // border_image
 {
-    yolo_image b(a.w + 2*border, a.h + 2*border, a.c);
+    yolo_image b(a.w + 2*border, a.h + 2*border, a.c);  // b
     b.fill(1.0f);
     embed_image(a, b, border, border);
-    return b;
+    return b;  // 返回
 }
 
-yolo_image get_label(const std::vector<yolo_image> & alphabet, const std::string & label, int size)
+yolo_image get_label(const std::vector<yolo_image> & alphabet, const std::string & label, int size)  // get_label
 {
     size = size/10;
     size = std::min(size, 7);
-    yolo_image result(0,0,0);
+    yolo_image result(0,0,0);  // result
     for (int i = 0; i < (int)label.size(); ++i) {
         int ch = label[i];
         yolo_image img = alphabet[size*128 + ch];
         result = tile_images(result, img, -size - 1 + (size+1)/2);
     }
-    return border_image(result, (int)(result.h*.25));
+    return border_image(result, (int)(result.h*.25));  // border_image
 }
 
-void draw_label(yolo_image & im, int row, int col, const yolo_image & label, const float * rgb)
+void draw_label(yolo_image & im, int row, int col, const yolo_image & label, const float * rgb)  // draw_label
 {
     int w = label.w;
     int h = label.h;

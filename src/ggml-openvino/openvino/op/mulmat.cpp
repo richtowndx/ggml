@@ -1,28 +1,28 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#include "../node_context.h"  // 引入 ../node_context.h 头文件
+#include "../op_table.h"  // 引入 ../op_table.h 头文件
+#include "../utils.h"  // 引入 ../utils.h 头文件
 
-#include <climits>
-#include <cstdint>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/transpose.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <openvino/op/util/op_types.hpp>
-#include <vector>
+#include <climits>  // 引入 climits 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <memory>  // 引入 memory 头文件
+#include <openvino/core/node.hpp>  // 引入 openvino/core/node.hpp 头文件
+#include <openvino/core/node_output.hpp>  // 引入 openvino/core/node_output.hpp 头文件
+#include <openvino/op/broadcast.hpp>  // 引入 openvino/op/broadcast.hpp 头文件
+#include <openvino/op/concat.hpp>  // 引入 openvino/op/concat.hpp 头文件
+#include <openvino/op/constant.hpp>  // 引入 openvino/op/constant.hpp 头文件
+#include <openvino/op/convert.hpp>  // 引入 openvino/op/convert.hpp 头文件
+#include <openvino/op/matmul.hpp>  // 引入 openvino/op/matmul.hpp 头文件
+#include <openvino/op/reshape.hpp>  // 引入 openvino/op/reshape.hpp 头文件
+#include <openvino/op/slice.hpp>  // 引入 openvino/op/slice.hpp 头文件
+#include <openvino/op/transpose.hpp>  // 引入 openvino/op/transpose.hpp 头文件
+#include <openvino/op/unsqueeze.hpp>  // 引入 openvino/op/unsqueeze.hpp 头文件
+#include <openvino/op/util/op_types.hpp>  // 引入 openvino/op/util/op_types.hpp 头文件
+#include <vector>  // 引入 vector 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
+namespace op {  // 命名空间
 
 OutputVector translate_mulmat(const NodeContext & context) {
     num_inputs_check(context, 2, 2);
@@ -81,7 +81,7 @@ OutputVector translate_mulmat(const NodeContext & context) {
 
     res = std::make_shared<ov::op::v0::MatMul>(A, B, false, transpose_b);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    return rename_outputs_with_suffix({res}, context.get_name());  // 返回
 }
 
 }  // namespace op

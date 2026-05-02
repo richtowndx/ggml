@@ -1,12 +1,12 @@
-#include "backend/shared/apir_cs_rpc.h"
-#include "ggml-backend-impl.h"
-#include "ggml-impl.h"
-#include "ggml-remoting.h"
+#include "backend/shared/apir_cs_rpc.h"  // 引入 backend/shared/apir_cs_rpc.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-remoting.h"  // 引入 ggml-remoting.h 头文件
 
-#include <cinttypes>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#include <cinttypes>  // 引入 cinttypes 头文件
+#include <unordered_map>  // 引入 unordered_map 头文件
+#include <unordered_set>  // 引入 unordered_set 头文件
+#include <vector>  // 引入 vector 头文件
 
 apir_rpc_tensor apir_serialize_tensor(const ggml_tensor * tensor) {
     apir_rpc_tensor result;
@@ -42,17 +42,17 @@ apir_rpc_tensor apir_serialize_tensor(const ggml_tensor * tensor) {
         result.data -= reinterpret_cast<uint64_t>(BUFFER_TO_GGML_CONTEXT(tensor->buffer)->base);
     }
     snprintf(result.name, GGML_MAX_NAME, "%s", tensor->name);
-    return result;
+    return result;  // 返回
 }
 
 void apir_add_tensor(ggml_tensor *                       tensor,
                      std::vector<apir_rpc_tensor> &      tensors,
                      std::unordered_set<ggml_tensor *> & visited) {
     if (tensor == nullptr) {
-        return;
+        return;  // 返回
     }
     if (visited.find(tensor) != visited.end()) {
-        return;
+        return;  // 返回
     }
     visited.insert(tensor);
     for (int i = 0; i < GGML_MAX_SRC; i++) {

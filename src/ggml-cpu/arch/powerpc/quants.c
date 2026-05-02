@@ -1,42 +1,42 @@
-#define GGML_COMMON_IMPL_C
-#include "ggml-common.h"
-#include "ggml-quants.h"
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "simd-mappings.h"
+#define GGML_COMMON_IMPL_C  // 宏定义 GGML_COMMON_IMPL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "simd-mappings.h"  // 引入 simd-mappings.h 头文件
 
-#include "../../quants.h"
-#include "../../ggml-cpu-impl.h"
+#include "../../quants.h"  // 引入 ../../quants.h 头文件
+#include "../../ggml-cpu-impl.h"  // 引入 ../../ggml-cpu-impl.h 头文件
 
-#include <math.h>
-#include <string.h>
-#include <assert.h>
-#include <float.h>
-#include <stdlib.h> // for qsort
-#include <stdio.h>  // for GGML_ASSERT
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
+#include <assert.h>  // 引入 assert.h 头文件
+#include <float.h>  // 引入 float.h 头文件
+#include <stdlib.h> // for qsort  // 引入 stdlib.h 头文件
+#include <stdio.h>  // for GGML_ASSERT  // 引入 stdio.h 头文件
 
-#define GROUP_MAX_EPS 1e-15f
-#define GROUP_MAX_EPS_IQ3_XXS 1e-8f
-#define GROUP_MAX_EPS_IQ2_S 1e-8f
-#define GROUP_MAX_EPS_IQ1_M 1e-7f
-#define GROUP_MAX_EPS_IQ1_S 1e-12f
+#define GROUP_MAX_EPS 1e-15f  // 宏定义 GROUP_MAX_EPS
+#define GROUP_MAX_EPS_IQ3_XXS 1e-8f  // 宏定义 GROUP_MAX_EPS_IQ3_XXS
+#define GROUP_MAX_EPS_IQ2_S 1e-8f  // 宏定义 GROUP_MAX_EPS_IQ2_S
+#define GROUP_MAX_EPS_IQ1_M 1e-7f  // 宏定义 GROUP_MAX_EPS_IQ1_M
+#define GROUP_MAX_EPS_IQ1_S 1e-12f  // 宏定义 GROUP_MAX_EPS_IQ1_S
 
-#define UNUSED GGML_UNUSED
+#define UNUSED GGML_UNUSED  // 宏定义 UNUSED
 
-#if defined(__POWER9_VECTOR__)
-#define B1(c,s,n)  0x ## n ## c ,  0x ## n ## s
-#define B2(c,s,n) B1(c,s,n ## c), B1(c,s,n ## s)
-#define B3(c,s,n) B2(c,s,n ## c), B2(c,s,n ## s)
-#define B4(c,s,n) B3(c,s,n ## c), B3(c,s,n ## s)
-#define B5(c,s,n) B4(c,s,n ## c), B4(c,s,n ## s)
-#define B6(c,s,n) B5(c,s,n ## c), B5(c,s,n ## s)
-#define B7(c,s,n) B6(c,s,n ## c), B6(c,s,n ## s)
-#define B8(c,s  ) B7(c,s,     c), B7(c,s,     s)
+#if defined(__POWER9_VECTOR__)  // 条件编译
+#define B1(c,s,n)  0x ## n ## c ,  0x ## n ## s  // 宏定义 B1
+#define B2(c,s,n) B1(c,s,n ## c), B1(c,s,n ## s)  // 宏定义 B2
+#define B3(c,s,n) B2(c,s,n ## c), B2(c,s,n ## s)  // 宏定义 B3
+#define B4(c,s,n) B3(c,s,n ## c), B3(c,s,n ## s)  // 宏定义 B4
+#define B5(c,s,n) B4(c,s,n ## c), B4(c,s,n ## s)  // 宏定义 B5
+#define B6(c,s,n) B5(c,s,n ## c), B5(c,s,n ## s)  // 宏定义 B6
+#define B7(c,s,n) B6(c,s,n ## c), B6(c,s,n ## s)  // 宏定义 B7
+#define B8(c,s  ) B7(c,s,     c), B7(c,s,     s)  // 宏定义 B8
 
 // precomputed tables for expanding 8bits to 8 bytes:
 static const uint64_t table_b2b_0[1 << 8] = { B8(00, 10) }; // ( b) << 4
 static const uint64_t table_b2b_1[1 << 8] = { B8(10, 00) }; // (!b) << 4
-#endif
+#endif  // 条件编译结束
 
 void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
@@ -45,7 +45,7 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
     block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     for (int i = 0; i < nb; i++) {
         vector float srcv [8];
         vector float asrcv[8];
@@ -77,11 +77,11 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         vec_xst(vec_pack(vec_pack(vi[0], vi[1]), vec_pack(vi[2], vi[3])),  0, &y[i].qs[0]);
         vec_xst(vec_pack(vec_pack(vi[4], vi[5]), vec_pack(vi[6], vi[7])), 16, &y[i].qs[0]);
     }
-#else
+#else  // 否则
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_0_ref(x, y, k);
-#endif
+#endif  // 条件编译结束
 }
 
 void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
@@ -90,7 +90,7 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
     block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     for (int i = 0; i < nb; i++) {
         vector float srcv [8];
         vector float asrcv[8];
@@ -131,11 +131,11 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         y[i].s = GGML_CPU_FP32_TO_FP16(d * vec_extract(accv, 0));
     }
 
-#else
+#else  // 否则
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_1_ref(x, y, k);
-#endif
+#endif  // 条件编译结束
 }
 
 
@@ -158,7 +158,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     int ib = 0;
     float sumf = 0;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector signed int v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
@@ -202,13 +202,13 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = vec_extract(vsumf0, 0);
 
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(ib);
     UNUSED(sumf);
     ggml_vec_dot_q4_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -228,7 +228,7 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     int ib = 0;
     float sumf = 0;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector signed int v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
@@ -269,13 +269,13 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = vec_extract(vsumf0, 0);
 
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(ib);
     UNUSED(sumf);
     ggml_vec_dot_q4_1_q8_1_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -295,7 +295,7 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     int ib = 0;
     float sumf = 0;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector unsigned char vshift4 = vec_splats((unsigned char)4);
     vector float vsumf0 = vec_splats(0.0f);
@@ -335,13 +335,13 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     vsumf0 = vec_add(vsumf0, vec_sld(vsumf0, vsumf0, 8));
     sumf = vec_extract(vsumf0, 0);
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(ib);
     UNUSED(sumf);
     ggml_vec_dot_mxfp4_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -362,7 +362,7 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector unsigned char v4 = vec_splats((unsigned char)4);
 
@@ -407,13 +407,13 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = vec_extract(vsumf0, 0);
 
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(ib);
     UNUSED(sumf);
     UNUSED(x);
     UNUSED(y);
     ggml_vec_dot_q5_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -434,7 +434,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_1 * GGML_RESTRICT x = vx;
     const block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector signed int v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
@@ -482,14 +482,14 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = vec_extract(vsumf0, 0);
 
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
     UNUSED(x);
     UNUSED(y);
     ggml_vec_dot_q5_1_q8_1_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -509,7 +509,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     int ib = 0;
     float sumf = 0;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector signed int v0 = vec_splats((int32_t)0);
     vector float vsumf0 = vec_splats(0.0f);
 
@@ -551,14 +551,14 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = vec_extract(vsumf0, 0);
 
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
     UNUSED(ib);
     UNUSED(sumf);
     ggml_vec_dot_q8_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -573,7 +573,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     const int nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector signed char lowMask = vec_splats((signed char)0x3);
     const vector signed char lowScaleMask = vec_splats((signed char)0xF);
     const vector int v0 = vec_splats((int32_t)0);
@@ -706,12 +706,12 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_q2_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -730,7 +730,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     const int nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector signed char lowMask = vec_splats((signed char)0x3);
     const vector signed char lowMask1 = vec_splats((int8_t)0xf);
     const vector signed char lowMask2 = vec_splats((int8_t)0x30);
@@ -883,14 +883,14 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#else  // 否则
     UNUSED(kmask1);
     UNUSED(kmask2);
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_q3_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -912,7 +912,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector signed char lowMask1 = vec_splats((int8_t)0x3f);
     const vector signed char lowMask2 = vec_splats((int8_t)0x30);
@@ -1049,7 +1049,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1058,7 +1058,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     UNUSED(kmask3);
     UNUSED(utmp);
     ggml_vec_dot_q4_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, int nrc) {
@@ -1080,7 +1080,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector signed char lowMask1 = vec_splats((int8_t)0x3f);
     const vector signed char lowMask2 = vec_splats((int8_t)0x30);
@@ -1214,7 +1214,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1223,7 +1223,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     UNUSED(kmask3);
     UNUSED(utmp);
     ggml_vec_dot_q5_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1239,7 +1239,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     const int nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector int v0 = vec_splats((int32_t)0);
     const vector unsigned char v2 = vec_splats((unsigned char)0x2);
@@ -1376,15 +1376,15 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_q6_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined (__POWER9_VECTOR__)
+#if defined (__POWER9_VECTOR__)  // 条件编译
 static const int8_t keven_signs_q2xs[1024] = {
      1,  1,  1,  1,  1,  1,  1,  1, -1,  1,  1,  1,  1,  1,  1, -1,  1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1,  1,  1,
      1,  1, -1,  1,  1,  1,  1, -1, -1,  1, -1,  1,  1,  1,  1,  1,  1, -1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1, -1,
@@ -1419,7 +1419,7 @@ static const int8_t keven_signs_q2xs[1024] = {
      1,  1,  1, -1, -1, -1, -1,  1, -1,  1,  1, -1, -1, -1, -1, -1,  1, -1,  1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1,  1,
      1,  1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1,  1,  1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(n % QK_K == 0);
@@ -1434,7 +1434,7 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     const int nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector int v0 = vec_splats((int32_t)0);
     vector float vsumf0 = vec_splats(0.0f);
     vector float vsumf1 = vec_splats(0.0f);
@@ -1520,12 +1520,12 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     *s = 0.125f * vec_extract(vsumf0, 0);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq2_xxs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1541,7 +1541,7 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     const int nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector int v0 = vec_splats((int32_t)0);
     vector float vsumf0 = vec_splats(0.0f);
     vector float vsumf1 = vec_splats(0.0f);
@@ -1628,12 +1628,12 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     *s = 0.125f * vec_extract(vsumf0, 0);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq2_xs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1649,7 +1649,7 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     const int nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     static const uint8_t k_mask1[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                                         0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03
     };
@@ -1757,12 +1757,12 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = 0.125f * vec_extract(vsumf0, 0);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq2_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1778,7 +1778,7 @@ void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     const int nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
 
     const vector int v0 = vec_splats((int32_t)0);
@@ -1863,12 +1863,12 @@ void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     *s = 0.25f * vec_extract(vsumf0, 0);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq3_xxs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1884,7 +1884,7 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     const int nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     static const uint8_t k_mask1[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                                         0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03
     };
@@ -1992,12 +1992,12 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq3_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -2013,7 +2013,7 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     const int nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector unsigned char v0 = vec_splats((unsigned char)0x0);
     const vector unsigned short vsign = vec_splats((unsigned short)0x8000);
 
@@ -2108,12 +2108,12 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq1_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -2133,7 +2133,7 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     int ib = 0;
     float sumf = 0;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector signed int v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
@@ -2184,14 +2184,14 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     sumf = vec_extract(vsumf0, 0);
 
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
     ggml_vec_dot_iq4_nl_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -2207,7 +2207,7 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     const int nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#if defined(__POWER9_VECTOR__)  // 条件编译
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector int v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
@@ -2295,10 +2295,10 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq4_xs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }

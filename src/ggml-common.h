@@ -1,195 +1,195 @@
-#ifndef GGML_COMMON_DECL
+#ifndef GGML_COMMON_DECL  // 如果未定义 GGML_COMMON_DECL 则编译
 
-#if defined(GGML_COMMON_DECL_C)
-#include <stdint.h>
+#if defined(GGML_COMMON_DECL_C)  // 条件编译
+#include <stdint.h>  // 引入 stdint.h 头文件
 
-typedef uint16_t ggml_half;
-typedef uint32_t ggml_half2;
+typedef uint16_t ggml_half;  // 类型定义
+typedef uint32_t ggml_half2;  // 类型定义
 
-#define GGML_COMMON_AGGR_U
-#define GGML_COMMON_AGGR_S
+#define GGML_COMMON_AGGR_U  // 宏定义 GGML_COMMON_AGGR_U
+#define GGML_COMMON_AGGR_S  // 宏定义 GGML_COMMON_AGGR_S
 
-#define GGML_COMMON_DECL
-#elif defined(GGML_COMMON_DECL_CPP)
-#include <cstdint>
+#define GGML_COMMON_DECL  // 宏定义 GGML_COMMON_DECL
+#elif defined(GGML_COMMON_DECL_CPP)  // 否则如果
+#include <cstdint>  // 引入 cstdint 头文件
 
-typedef uint16_t ggml_half;
-typedef uint32_t ggml_half2;
+typedef uint16_t ggml_half;  // 类型定义
+typedef uint32_t ggml_half2;  // 类型定义
 
 // std-c++ allow anonymous unions but some compiler warn on it
-#define GGML_COMMON_AGGR_U data
+#define GGML_COMMON_AGGR_U data  // 宏定义 GGML_COMMON_AGGR_U
 // std-c++ do not allow it.
-#define GGML_COMMON_AGGR_S data
+#define GGML_COMMON_AGGR_S data  // 宏定义 GGML_COMMON_AGGR_S
 
-#define GGML_COMMON_DECL
-#elif defined(GGML_COMMON_DECL_METAL)
-#include <metal_stdlib>
+#define GGML_COMMON_DECL  // 宏定义 GGML_COMMON_DECL
+#elif defined(GGML_COMMON_DECL_METAL)  // 否则如果
+#include <metal_stdlib>  // 引入 metal_stdlib 头文件
 
-typedef half  ggml_half;
-typedef half2 ggml_half2;
+typedef half  ggml_half;  // 类型定义
+typedef half2 ggml_half2;  // 类型定义
 
-#define GGML_COMMON_AGGR_U
-#define GGML_COMMON_AGGR_S
+#define GGML_COMMON_AGGR_U  // 宏定义 GGML_COMMON_AGGR_U
+#define GGML_COMMON_AGGR_S  // 宏定义 GGML_COMMON_AGGR_S
 
-#define GGML_COMMON_DECL
-#elif defined(GGML_COMMON_DECL_CUDA)
-#if defined(GGML_COMMON_DECL_MUSA)
-#include <musa_fp16.h>
-#else
-#include <cuda_fp16.h>
-#endif
-#include <cstdint>
+#define GGML_COMMON_DECL  // 宏定义 GGML_COMMON_DECL
+#elif defined(GGML_COMMON_DECL_CUDA)  // 否则如果
+#if defined(GGML_COMMON_DECL_MUSA)  // 条件编译
+#include <musa_fp16.h>  // 引入 musa_fp16.h 头文件
+#else  // 否则
+#include <cuda_fp16.h>  // 引入 cuda_fp16.h 头文件
+#endif  // 条件编译结束
+#include <cstdint>  // 引入 cstdint 头文件
 
-typedef half  ggml_half;
-typedef half2 ggml_half2;
+typedef half  ggml_half;  // 类型定义
+typedef half2 ggml_half2;  // 类型定义
 
-#define GGML_COMMON_AGGR_U
-#define GGML_COMMON_AGGR_S data
+#define GGML_COMMON_AGGR_U  // 宏定义 GGML_COMMON_AGGR_U
+#define GGML_COMMON_AGGR_S data  // 宏定义 GGML_COMMON_AGGR_S
 
-#define GGML_COMMON_DECL
-#elif defined(GGML_COMMON_DECL_HIP)
-#include <hip/hip_fp16.h>
-#include <cstdint>
+#define GGML_COMMON_DECL  // 宏定义 GGML_COMMON_DECL
+#elif defined(GGML_COMMON_DECL_HIP)  // 否则如果
+#include <hip/hip_fp16.h>  // 引入 hip/hip_fp16.h 头文件
+#include <cstdint>  // 引入 cstdint 头文件
 
-typedef half  ggml_half;
-typedef half2 ggml_half2;
+typedef half  ggml_half;  // 类型定义
+typedef half2 ggml_half2;  // 类型定义
 
-#define GGML_COMMON_AGGR_U
-#define GGML_COMMON_AGGR_S data
+#define GGML_COMMON_AGGR_U  // 宏定义 GGML_COMMON_AGGR_U
+#define GGML_COMMON_AGGR_S data  // 宏定义 GGML_COMMON_AGGR_S
 
-#define GGML_COMMON_DECL
-#elif defined(GGML_COMMON_DECL_SYCL)
-#include <sycl/half_type.hpp>
-#include <cstdint>
+#define GGML_COMMON_DECL  // 宏定义 GGML_COMMON_DECL
+#elif defined(GGML_COMMON_DECL_SYCL)  // 否则如果
+#include <sycl/half_type.hpp>  // 引入 sycl/half_type.hpp 头文件
+#include <cstdint>  // 引入 cstdint 头文件
 
-typedef sycl::half  ggml_half;
-typedef sycl::half2 ggml_half2;
+typedef sycl::half  ggml_half;  // 类型定义
+typedef sycl::half2 ggml_half2;  // 类型定义
 
-#define GGML_COMMON_AGGR_U
-#define GGML_COMMON_AGGR_S data
+#define GGML_COMMON_AGGR_U  // 宏定义 GGML_COMMON_AGGR_U
+#define GGML_COMMON_AGGR_S data  // 宏定义 GGML_COMMON_AGGR_S
 
-#define GGML_COMMON_DECL
-#endif
+#define GGML_COMMON_DECL  // 宏定义 GGML_COMMON_DECL
+#endif  // 条件编译结束
 
-#if defined(GGML_COMMON_DECL)
+#if defined(GGML_COMMON_DECL)  // 条件编译
 
-#ifndef __cplusplus
-#ifndef static_assert
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
-#define static_assert(cond, msg) _Static_assert(cond, msg)
-#else
-#define static_assert(cond, msg) struct global_scope_noop_trick
-#endif
-#endif
-#endif // __cplusplus
+#ifndef __cplusplus  // 如果未定义 __cplusplus 则编译
+#ifndef static_assert  // 如果未定义 static_assert 则编译
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)  // 条件编译
+#define static_assert(cond, msg) _Static_assert(cond, msg)  // 宏定义 static_assert
+#else  // 否则
+#define static_assert(cond, msg) struct global_scope_noop_trick  // 宏定义 static_assert
+#endif  // 条件编译结束
+#endif  // 条件编译结束
+#endif // __cplusplus  // 条件编译结束
 
 // QK = number of values after dequantization
 // QK_K = super-block size
 
-#define QK_K 256
-#define K_SCALE_SIZE 12
+#define QK_K 256  // 宏定义 QK_K
+#define K_SCALE_SIZE 12  // 宏定义 K_SCALE_SIZE
 
-#if defined(GGML_COMMON_DECL_CUDA) || defined(GGML_COMMON_DECL_HIP) || defined(GGML_COMMON_DECL_SYCL)
+#if defined(GGML_COMMON_DECL_CUDA) || defined(GGML_COMMON_DECL_HIP) || defined(GGML_COMMON_DECL_SYCL)  // 条件编译
 // QR = QK / number of values before dequantization
 // QI = number of 32 bit integers before dequantization
 
-#define QI1_0 (QK1_0 / 32)
-#define QR1_0 1
+#define QI1_0 (QK1_0 / 32)  // 宏定义 QI1_0
+#define QR1_0 1  // 宏定义 QR1_0
 
 
-#define QI4_0 (QK4_0 / (4 * QR4_0))
-#define QR4_0 2
+#define QI4_0 (QK4_0 / (4 * QR4_0))  // 宏定义 QI4_0
+#define QR4_0 2  // 宏定义 QR4_0
 
-#define QI4_1 (QK4_1 / (4 * QR4_1))
-#define QR4_1 2
+#define QI4_1 (QK4_1 / (4 * QR4_1))  // 宏定义 QI4_1
+#define QR4_1 2  // 宏定义 QR4_1
 
-#define QI_MXFP4 (QK_MXFP4 / (4 * QR_MXFP4))
-#define QR_MXFP4 2
+#define QI_MXFP4 (QK_MXFP4 / (4 * QR_MXFP4))  // 宏定义 QI_MXFP4
+#define QR_MXFP4 2  // 宏定义 QR_MXFP4
 
-#define QI_NVFP4 (QK_NVFP4 / (4 * QR_NVFP4))
-#define QR_NVFP4 2
+#define QI_NVFP4 (QK_NVFP4 / (4 * QR_NVFP4))  // 宏定义 QI_NVFP4
+#define QR_NVFP4 2  // 宏定义 QR_NVFP4
 
-#define QI5_0 (QK5_0 / (4 * QR5_0))
-#define QR5_0 2
+#define QI5_0 (QK5_0 / (4 * QR5_0))  // 宏定义 QI5_0
+#define QR5_0 2  // 宏定义 QR5_0
 
-#define QI5_1 (QK5_1 / (4 * QR5_1))
-#define QR5_1 2
+#define QI5_1 (QK5_1 / (4 * QR5_1))  // 宏定义 QI5_1
+#define QR5_1 2  // 宏定义 QR5_1
 
-#define QI8_0 (QK8_0 / (4 * QR8_0))
-#define QR8_0 1
+#define QI8_0 (QK8_0 / (4 * QR8_0))  // 宏定义 QI8_0
+#define QR8_0 1  // 宏定义 QR8_0
 
-#define QI8_1 (QK8_1 / (4 * QR8_1))
-#define QR8_1 1
+#define QI8_1 (QK8_1 / (4 * QR8_1))  // 宏定义 QI8_1
+#define QR8_1 1  // 宏定义 QR8_1
 
-#define QI2_K (QK_K / (4*QR2_K))
-#define QR2_K 4
+#define QI2_K (QK_K / (4*QR2_K))  // 宏定义 QI2_K
+#define QR2_K 4  // 宏定义 QR2_K
 
-#define QI3_K (QK_K / (4*QR3_K))
-#define QR3_K 4
+#define QI3_K (QK_K / (4*QR3_K))  // 宏定义 QI3_K
+#define QR3_K 4  // 宏定义 QR3_K
 
-#define QI4_K (QK_K / (4*QR4_K))
-#define QR4_K 2
+#define QI4_K (QK_K / (4*QR4_K))  // 宏定义 QI4_K
+#define QR4_K 2  // 宏定义 QR4_K
 
-#define QI5_K (QK_K / (4*QR5_K))
-#define QR5_K 2
+#define QI5_K (QK_K / (4*QR5_K))  // 宏定义 QI5_K
+#define QR5_K 2  // 宏定义 QR5_K
 
-#define QI6_K (QK_K / (4*QR6_K))
-#define QR6_K 2
+#define QI6_K (QK_K / (4*QR6_K))  // 宏定义 QI6_K
+#define QR6_K 2  // 宏定义 QR6_K
 
-#define QI2_XXS (QK_K / (4*QR2_XXS))
-#define QR2_XXS 4
+#define QI2_XXS (QK_K / (4*QR2_XXS))  // 宏定义 QI2_XXS
+#define QR2_XXS 4  // 宏定义 QR2_XXS
 
-#define QI2_XS (QK_K / (4*QR2_XS))
-#define QR2_XS 4
+#define QI2_XS (QK_K / (4*QR2_XS))  // 宏定义 QI2_XS
+#define QR2_XS 4  // 宏定义 QR2_XS
 
-#define QI2_S (QK_K / (4*QR2_S))
-#define QR2_S 4
+#define QI2_S (QK_K / (4*QR2_S))  // 宏定义 QI2_S
+#define QR2_S 4  // 宏定义 QR2_S
 
-#define QI3_XXS (QK_K / (4*QR3_XXS))
-#define QR3_XXS 4
+#define QI3_XXS (QK_K / (4*QR3_XXS))  // 宏定义 QI3_XXS
+#define QR3_XXS 4  // 宏定义 QR3_XXS
 
-#define QI3_XS (QK_K / (4*QR3_XS))
-#define QR3_XS 4
+#define QI3_XS (QK_K / (4*QR3_XS))  // 宏定义 QI3_XS
+#define QR3_XS 4  // 宏定义 QR3_XS
 
-#define QI1_S (QK_K / (4*QR1_S))
-#define QR1_S 8
+#define QI1_S (QK_K / (4*QR1_S))  // 宏定义 QI1_S
+#define QR1_S 8  // 宏定义 QR1_S
 
-#define QI1_M (QK_K / (4*QR1_M))
-#define QR1_M 8
+#define QI1_M (QK_K / (4*QR1_M))  // 宏定义 QI1_M
+#define QR1_M 8  // 宏定义 QR1_M
 
-#define QI4_NL (QK4_NL / (4*QR4_NL))
-#define QR4_NL 2
+#define QI4_NL (QK4_NL / (4*QR4_NL))  // 宏定义 QI4_NL
+#define QR4_NL 2  // 宏定义 QR4_NL
 
-#define QI4_XS (QK_K / (4*QR4_XS))
-#define QR4_XS 2
+#define QI4_XS (QK_K / (4*QR4_XS))  // 宏定义 QI4_XS
+#define QR4_XS 2  // 宏定义 QR4_XS
 
-#define QI3_S (QK_K / (4*QR3_S))
-#define QR3_S 4
+#define QI3_S (QK_K / (4*QR3_S))  // 宏定义 QI3_S
+#define QR3_S 4  // 宏定义 QR3_S
 
-#endif // GGML_COMMON_DECL_CUDA || GGML_COMMON_DECL_HIP
+#endif // GGML_COMMON_DECL_CUDA || GGML_COMMON_DECL_HIP  // 条件编译结束
 
-#ifdef _MSC_VER
-#define GGML_EXTENSION
-#else // _MSC_VER
-#define GGML_EXTENSION __extension__
-#endif // _MSC_VER
+#ifdef _MSC_VER  // 如果定义了 _MSC_VER 则编译
+#define GGML_EXTENSION  // 宏定义 GGML_EXTENSION
+#else // _MSC_VER  // 否则
+#define GGML_EXTENSION __extension__  // 宏定义 GGML_EXTENSION
+#endif // _MSC_VER  // 条件编译结束
 
-#define QK1_0 128
-typedef struct {
+#define QK1_0 128  // 宏定义 QK1_0
+typedef struct {  // 类型定义
     ggml_half d;           // delta
     uint8_t qs[QK1_0 / 8]; // bits / quants
 } block_q1_0;
 static_assert(sizeof(block_q1_0) == sizeof(ggml_half) + QK1_0 / 8, "wrong q1_0 block size/padding");
 
-#define QK4_0 32
-typedef struct {
+#define QK4_0 32  // 宏定义 QK4_0
+typedef struct {  // 类型定义
     ggml_half d;           // delta
     uint8_t qs[QK4_0 / 2]; // nibbles / quants
 } block_q4_0;
 static_assert(sizeof(block_q4_0) == sizeof(ggml_half) + QK4_0 / 2, "wrong q4_0 block size/padding");
 
-#define QK4_1 32
-typedef struct {
+#define QK4_1 32  // 宏定义 QK4_1
+typedef struct {  // 类型定义
     GGML_EXTENSION union {
         struct {
             ggml_half d; // delta
@@ -201,31 +201,31 @@ typedef struct {
 } block_q4_1;
 static_assert(sizeof(block_q4_1) == 2 * sizeof(ggml_half) + QK4_1 / 2, "wrong q4_1 block size/padding");
 
-#define QK_MXFP4 32
-typedef struct {
+#define QK_MXFP4 32  // 宏定义 QK_MXFP4
+typedef struct {  // 类型定义
     uint8_t e; // E8M0
     uint8_t qs[QK_MXFP4/2];
 } block_mxfp4;
 static_assert(sizeof(block_mxfp4) == sizeof(uint8_t) + QK_MXFP4/2, "wrong mxfp4 block size/padding");
 
-#define QK_NVFP4 64
-#define QK_NVFP4_SUB 16  // sub-block size for per-group scales
-typedef struct {
+#define QK_NVFP4 64  // 宏定义 QK_NVFP4
+#define QK_NVFP4_SUB 16  // sub-block size for per-group scales  // 宏定义 QK_NVFP4_SUB
+typedef struct {  // 类型定义
     uint8_t d[QK_NVFP4/QK_NVFP4_SUB]; // UE4M3 scales (4 bytes, one per 16-element sub-block)
     uint8_t qs[QK_NVFP4/2];           // packed 4-bit E2M1 values (32 bytes)
 } block_nvfp4;
 static_assert(sizeof(block_nvfp4) == sizeof(uint8_t)*(QK_NVFP4/QK_NVFP4_SUB) + QK_NVFP4/2, "wrong nvfp4 block size/padding");
 
-#define QK5_0 32
-typedef struct {
+#define QK5_0 32  // 宏定义 QK5_0
+typedef struct {  // 类型定义
     ggml_half d;           // delta
     uint8_t qh[4];         // 5-th bit of quants
     uint8_t qs[QK5_0 / 2]; // nibbles / quants
 } block_q5_0;
 static_assert(sizeof(block_q5_0) == sizeof(ggml_half) + sizeof(uint32_t) + QK5_0 / 2, "wrong q5_0 block size/padding");
 
-#define QK5_1 32
-typedef struct {
+#define QK5_1 32  // 宏定义 QK5_1
+typedef struct {  // 类型定义
     GGML_EXTENSION union {
         struct {
             ggml_half d; // delta
@@ -238,15 +238,15 @@ typedef struct {
 } block_q5_1;
 static_assert(sizeof(block_q5_1) == 2 * sizeof(ggml_half) + sizeof(uint32_t) + QK5_1 / 2, "wrong q5_1 block size/padding");
 
-#define QK8_0 32
-typedef struct {
+#define QK8_0 32  // 宏定义 QK8_0
+typedef struct {  // 类型定义
     ggml_half d;       // delta
     int8_t  qs[QK8_0]; // quants
 } block_q8_0;
 static_assert(sizeof(block_q8_0) == sizeof(ggml_half) + QK8_0, "wrong q8_0 block size/padding");
 
-#define QK8_1 32
-typedef struct {
+#define QK8_1 32  // 宏定义 QK8_1
+typedef struct {  // 类型定义
     GGML_EXTENSION union {
         struct {
             ggml_half d; // delta
@@ -263,7 +263,7 @@ static_assert(sizeof(block_q8_1) == 2*sizeof(ggml_half) + QK8_1, "wrong q8_1 blo
 //
 
 // 1.6875 bpw
-typedef struct {
+typedef struct {  // 类型定义
     uint8_t qs[(QK_K - 4 * QK_K / 64) / 5]; // 5 elements per byte (3^5 = 243 < 256)
     uint8_t qh[QK_K/64]; // 4 elements per byte
     ggml_half d;
@@ -271,7 +271,7 @@ typedef struct {
 static_assert(sizeof(block_tq1_0) == sizeof(ggml_half) + QK_K / 64 + (QK_K - 4 * QK_K / 64) / 5, "wrong tq1_0 block size/padding");
 
 // 2.0625 bpw
-typedef struct {
+typedef struct {  // 类型定义
     uint8_t qs[QK_K/4]; // 2 bits per element
     ggml_half d;
 } block_tq2_0;
@@ -285,7 +285,7 @@ static_assert(sizeof(block_tq2_0) == sizeof(ggml_half) + QK_K / 4, "wrong tq2_0 
 // weight is represented as x = a * q + b
 // 16 blocks of 16 elements each
 // Effectively 2.625 bits per weight
-typedef struct {
+typedef struct {  // 类型定义
     uint8_t scales[QK_K/16]; // scales and mins, quantized with 4 bits
     uint8_t qs[QK_K/4];      // quants
     GGML_EXTENSION union {
@@ -302,7 +302,7 @@ static_assert(sizeof(block_q2_K) == 2*sizeof(ggml_half) + QK_K/16 + QK_K/4, "wro
 // weight is represented as x = a * q
 // 16 blocks of 16 elements each
 // Effectively 3.4375 bits per weight
-typedef struct {
+typedef struct {  // 类型定义
     uint8_t hmask[QK_K/8]; // quants - high bit
     uint8_t qs[QK_K/4];    // quants - low 2 bits
     uint8_t scales[12];    // scales, quantized with 6 bits
@@ -314,7 +314,7 @@ static_assert(sizeof(block_q3_K) == sizeof(ggml_half) + QK_K / 4 + QK_K / 8 + 12
 // 8 blocks of 32 elements each
 // weight is represented as x = a * q + b
 // Effectively 4.5 bits per weight
-typedef struct {
+typedef struct {  // 类型定义
     GGML_EXTENSION union {
         struct {
             ggml_half d;    // super-block scale for quantized scales
@@ -331,7 +331,7 @@ static_assert(sizeof(block_q4_K) == 2*sizeof(ggml_half) + K_SCALE_SIZE + QK_K/2,
 // 8 blocks of 32 elements each
 // weight is represented as x = a * q + b
 // Effectively 5.5 bits per weight
-typedef struct {
+typedef struct {  // 类型定义
     GGML_EXTENSION union {
         struct {
             ggml_half d;    // super-block scale for quantized scales
@@ -349,7 +349,7 @@ static_assert(sizeof(block_q5_K) == 2*sizeof(ggml_half) + K_SCALE_SIZE + QK_K/2 
 // weight is represented as x = a * q
 // 16 blocks of 16 elements each
 // Effectively 6.5625 bits per weight
-typedef struct {
+typedef struct {  // 类型定义
     uint8_t ql[QK_K/2];      // quants, lower 4 bits
     uint8_t qh[QK_K/4];      // quants, upper 2 bits
     int8_t  scales[QK_K/16]; // scales, quantized with 8 bits
@@ -358,7 +358,7 @@ typedef struct {
 static_assert(sizeof(block_q6_K) == sizeof(ggml_half) + QK_K / 16 + 3*QK_K/4, "wrong q6_K block size/padding");
 
 // This is only used for intermediate quantization and dot products
-typedef struct {
+typedef struct {  // 类型定义
     float   d;              // delta
     int8_t  qs[QK_K];       // quants
     int16_t bsums[QK_K/16]; // sum of quants in groups of 16
@@ -368,14 +368,14 @@ static_assert(sizeof(block_q8_K) == sizeof(float) + QK_K + QK_K/16*sizeof(int16_
 // (Almost) "true" 2-bit quantization.
 // Due to the need to use blocks as per ggml design, it ends up using
 // 2.0625 bpw because of the 16-bit scale for each block of 256.
-typedef struct {
+typedef struct {  // 类型定义
     ggml_half d;
     uint16_t qs[QK_K/8];
 } block_iq2_xxs;
 static_assert(sizeof(block_iq2_xxs) == sizeof(ggml_half) + QK_K/8*sizeof(uint16_t), "wrong iq2_xxs block size/padding");
 
 // 2.3125 bpw quants
-typedef struct {
+typedef struct {  // 类型定义
     ggml_half d;
     uint16_t qs[QK_K/8];
     uint8_t  scales[QK_K/32];
@@ -383,7 +383,7 @@ typedef struct {
 static_assert(sizeof(block_iq2_xs) == sizeof(ggml_half) + QK_K/8*sizeof(uint16_t) + QK_K/32, "wrong iq2_xs block size/padding");
 
 // 2.5625 bpw quants
-typedef struct {
+typedef struct {  // 类型定义
     ggml_half d;
     uint8_t qs[QK_K/4];
     uint8_t qh[QK_K/32];
@@ -394,15 +394,15 @@ static_assert(sizeof(block_iq2_s) == sizeof(ggml_half) + QK_K/4 + QK_K/16, "wron
 // (Almost) "true" 3-bit quantization.
 // Due to the need to use blocks as per ggml design, it ends up using
 // 3.0625 bpw because of the 16-bit scale for each block of 256.
-typedef struct {
+typedef struct {  // 类型定义
     ggml_half d;
     uint8_t qs[3*QK_K/8];
 } block_iq3_xxs;
 static_assert(sizeof(block_iq3_xxs) == sizeof(ggml_half) + 3*(QK_K/8), "wrong iq3_xxs block size/padding");
 
 // 3.4375 bpw
-#define IQ3S_N_SCALE QK_K/64
-typedef struct {
+#define IQ3S_N_SCALE QK_K/64  // 宏定义 IQ3S_N_SCALE
+typedef struct {  // 类型定义
     ggml_half d;
     uint8_t qs[QK_K/4];
     uint8_t qh[QK_K/32];
@@ -412,7 +412,7 @@ typedef struct {
 static_assert(sizeof(block_iq3_s) == sizeof(ggml_half) + 13*(QK_K/32) + IQ3S_N_SCALE, "wrong iq3_s block size/padding");
 
 // 1.5625 bpw
-typedef struct {
+typedef struct {  // 类型定义
     ggml_half d;
     uint8_t  qs[QK_K/8];
     uint16_t qh[QK_K/32];
@@ -420,7 +420,7 @@ typedef struct {
 static_assert(sizeof(block_iq1_s) == sizeof(ggml_half) + QK_K/8 + QK_K/16, "wrong iq1_s block size/padding");
 
 // 1.75 bpw
-typedef struct {
+typedef struct {  // 类型定义
     uint8_t  qs[QK_K/8];      // grid index, low 8 bits
     uint8_t  qh[QK_K/16];     // grid index, high 3 bits + grid shift bit (for two groups of 8)
     uint8_t  scales[QK_K/32]; // 3-bit block scales (4-bit if QK_K == 64)
@@ -428,20 +428,20 @@ typedef struct {
 static_assert(sizeof(block_iq1_m) == QK_K/8 + QK_K/16 + QK_K/32, "wrong iq1_m block size/padding");
 
 // Used by IQ1_M quants
-typedef union {
+typedef union {  // 类型定义
     ggml_half f16;
     uint16_t  u16;
 } iq1m_scale_t;
 
 // Non-linear quants
-#define QK4_NL 32
-typedef struct {
+#define QK4_NL 32  // 宏定义 QK4_NL
+typedef struct {  // 类型定义
     ggml_half d;
     uint8_t qs[QK4_NL/2];
 } block_iq4_nl;
 static_assert(sizeof(block_iq4_nl) == sizeof(ggml_half) + QK4_NL/2, "wrong iq4_nl block size/padding");
 
-typedef struct {
+typedef struct {  // 类型定义
     ggml_half d;
     uint16_t scales_h;
     uint8_t  scales_l[QK_K/64];
@@ -449,52 +449,52 @@ typedef struct {
 } block_iq4_xs;
 static_assert(sizeof(block_iq4_xs) == sizeof(ggml_half) + sizeof(uint16_t) + QK_K/64 + QK_K/2, "wrong iq4_xs block size/padding");
 
-#endif // GGML_COMMON_DECL
-#endif // GGML_COMMON_DECL
+#endif // GGML_COMMON_DECL  // 条件编译结束
+#endif // GGML_COMMON_DECL  // 条件编译结束
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GGML_COMMON_IMPL
+#ifndef GGML_COMMON_IMPL  // 如果未定义 GGML_COMMON_IMPL 则编译
 
-#if defined(GGML_COMMON_IMPL_C)
-#include <stdint.h>
+#if defined(GGML_COMMON_IMPL_C)  // 条件编译
+#include <stdint.h>  // 引入 stdint.h 头文件
 
-#define GGML_TABLE_BEGIN(type, name, size) static const type name[size] = {
-#define GGML_TABLE_END() };
+#define GGML_TABLE_BEGIN(type, name, size) static const type name[size] = {  // 宏定义 GGML_TABLE_BEGIN
+#define GGML_TABLE_END() };  // 宏定义 GGML_TABLE_END
 
-#define GGML_COMMON_IMPL
-#elif defined(GGML_COMMON_IMPL_CPP)
-#include <cstdint>
+#define GGML_COMMON_IMPL  // 宏定义 GGML_COMMON_IMPL
+#elif defined(GGML_COMMON_IMPL_CPP)  // 否则如果
+#include <cstdint>  // 引入 cstdint 头文件
 
-#define GGML_TABLE_BEGIN(type, name, size) static const type name[size] = {
-#define GGML_TABLE_END() };
+#define GGML_TABLE_BEGIN(type, name, size) static const type name[size] = {  // 宏定义 GGML_TABLE_BEGIN
+#define GGML_TABLE_END() };  // 宏定义 GGML_TABLE_END
 
-#define GGML_COMMON_IMPL
-#elif defined(GGML_COMMON_IMPL_METAL)
-#include <metal_stdlib>
+#define GGML_COMMON_IMPL  // 宏定义 GGML_COMMON_IMPL
+#elif defined(GGML_COMMON_IMPL_METAL)  // 否则如果
+#include <metal_stdlib>  // 引入 metal_stdlib 头文件
 
-#define GGML_TABLE_BEGIN(type, name, size) static const constant type name[size] = {
-#define GGML_TABLE_END() };
+#define GGML_TABLE_BEGIN(type, name, size) static const constant type name[size] = {  // 宏定义 GGML_TABLE_BEGIN
+#define GGML_TABLE_END() };  // 宏定义 GGML_TABLE_END
 
-#define GGML_COMMON_IMPL
-#elif defined(GGML_COMMON_IMPL_CUDA) || defined(GGML_COMMON_IMPL_HIP) || defined(GGML_COMMON_IMPL_MUSA)
-#include <cstdint>
+#define GGML_COMMON_IMPL  // 宏定义 GGML_COMMON_IMPL
+#elif defined(GGML_COMMON_IMPL_CUDA) || defined(GGML_COMMON_IMPL_HIP) || defined(GGML_COMMON_IMPL_MUSA)  // 否则如果
+#include <cstdint>  // 引入 cstdint 头文件
 
-#define GGML_TABLE_BEGIN(type, name, size) static const __device__ type name[size] = {
-#define GGML_TABLE_END() };
+#define GGML_TABLE_BEGIN(type, name, size) static const __device__ type name[size] = {  // 宏定义 GGML_TABLE_BEGIN
+#define GGML_TABLE_END() };  // 宏定义 GGML_TABLE_END
 
-#define GGML_COMMON_IMPL
-#elif defined(GGML_COMMON_IMPL_SYCL)
+#define GGML_COMMON_IMPL  // 宏定义 GGML_COMMON_IMPL
+#elif defined(GGML_COMMON_IMPL_SYCL)  // 否则如果
 
-#include <cstdint>
+#include <cstdint>  // 引入 cstdint 头文件
 
-#define GGML_TABLE_BEGIN(type, name, size) static const type name[size] = {
-#define GGML_TABLE_END() };
+#define GGML_TABLE_BEGIN(type, name, size) static const type name[size] = {  // 宏定义 GGML_TABLE_BEGIN
+#define GGML_TABLE_END() };  // 宏定义 GGML_TABLE_END
 
-#define GGML_COMMON_IMPL
-#endif
+#define GGML_COMMON_IMPL  // 宏定义 GGML_COMMON_IMPL
+#endif  // 条件编译结束
 
-#if defined(GGML_COMMON_IMPL)
+#if defined(GGML_COMMON_IMPL)  // 条件编译
 
 GGML_TABLE_BEGIN(uint8_t, kmask_iq2xs, 8)
     1, 2, 4, 8, 16, 32, 64, 128
@@ -1117,10 +1117,10 @@ GGML_TABLE_BEGIN(int8_t, kvalues_mxfp4, 16)
     0, 1, 2, 3, 4, 6, 8, 12, 0, -1, -2, -3, -4, -6, -8, -12,
 GGML_TABLE_END()
 
-#define NGRID_IQ1S 2048
-#define IQ1S_DELTA 0.125f
-#define IQ1M_DELTA 0.125f
-#if defined(GGML_COMMON_IMPL_C)
+#define NGRID_IQ1S 2048  // 宏定义 NGRID_IQ1S
+#define IQ1S_DELTA 0.125f  // 宏定义 IQ1S_DELTA
+#define IQ1M_DELTA 0.125f  // 宏定义 IQ1M_DELTA
+#if defined(GGML_COMMON_IMPL_C)  // 条件编译
 GGML_TABLE_BEGIN(uint64_t, iq1s_grid, NGRID_IQ1S)
     0xffffffffffffffff, 0xffffffffffffff01, 0xffffffffffff0000, 0xffffffffffff01ff,
     0xffffffffffff0101, 0xffffffffff00ff00, 0xffffffffff000000, 0xffffffffff01ffff,
@@ -1635,7 +1635,7 @@ GGML_TABLE_BEGIN(uint64_t, iq1s_grid, NGRID_IQ1S)
     0x0101010101ffff01, 0x0101010101ff01ff, 0x0101010101ff0101, 0x0101010101000000,
     0x010101010101ffff, 0x010101010101ff01, 0x01010101010101ff, 0x0101010101010101,
 GGML_TABLE_END()
-#else
+#else  // 否则
 GGML_TABLE_BEGIN(uint32_t, iq1s_grid_gpu, NGRID_IQ1S)
     0x00000000, 0x00000002, 0x00000101, 0x00000200, 0x00000202, 0x00010001, 0x00010101, 0x00020000,
     0x00020002, 0x00020200, 0x00020202, 0x01000101, 0x01010001, 0x01010100, 0x01010102, 0x01020101,
@@ -1894,7 +1894,7 @@ GGML_TABLE_BEGIN(uint32_t, iq1s_grid_gpu, NGRID_IQ1S)
     0x20222020, 0x20222022, 0x20222220, 0x20222222, 0x21212021, 0x21212120, 0x21212122, 0x22202020,
     0x22202022, 0x22202220, 0x22202222, 0x22212121, 0x22222020, 0x22222022, 0x22222220, 0x22222222,
 GGML_TABLE_END()
-#endif
+#endif  // 条件编译结束
 
-#endif // GGML_COMMON_IMPL
-#endif // GGML_COMMON_IMPL
+#endif // GGML_COMMON_IMPL  // 条件编译结束
+#endif // GGML_COMMON_IMPL  // 条件编译结束

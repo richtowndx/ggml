@@ -2,15 +2,15 @@
                                   no warranty implied; use at your own risk
 
    Do this:
-      #define STB_IMAGE_IMPLEMENTATION
+      #define STB_IMAGE_IMPLEMENTATION  // 宏定义 STB_IMAGE_IMPLEMENTATION
    before you include this file in *one* C or C++ file to create the implementation.
 
    // i.e. it should look like this:
    #include ...
    #include ...
    #include ...
-   #define STB_IMAGE_IMPLEMENTATION
-   #include "stb_image.h"
+   #define STB_IMAGE_IMPLEMENTATION  // 宏定义 STB_IMAGE_IMPLEMENTATION
+   #include "stb_image.h"  // 引入 stb_image.h 头文件
 
    You can #define STBI_ASSERT(x) before the #include to avoid using assert.h.
    And #define STBI_MALLOC, STBI_REALLOC, and STBI_FREE to avoid using malloc,realloc,free
@@ -78,17 +78,17 @@ RECENT REVISION HISTORY:
  ============================    Contributors    =========================
 
  Image formats                          Extensions, features
-    Sean Barrett (jpeg, png, bmp)          Jetro Lauha (stbi_info)
-    Nicolas Schulz (hdr, psd)              Martin "SpartanJ" Golini (stbi_info)
-    Jonathan Dummer (tga)                  James "moose2000" Brown (iPhone PNG)
+    Sean Barrett (jpeg, png, bmp)          Jetro Lauha (stbi_info)  // Barrett
+    Nicolas Schulz (hdr, psd)              Martin "SpartanJ" Golini (stbi_info)  // Schulz
+    Jonathan Dummer (tga)                  James "moose2000" Brown (iPhone PNG)  // Dummer
     Jean-Marc Lienher (gif)                Ben "Disch" Wenger (io callbacks)
-    Tom Seddon (pic)                       Omar Cornut (1/2/4-bit PNG)
-    Thatcher Ulrich (psd)                  Nicolas Guillemot (vertical flip)
-    Ken Miller (pgm, ppm)                  Richard Mitton (16-bit PSD)
+    Tom Seddon (pic)                       Omar Cornut (1/2/4-bit PNG)  // Seddon
+    Thatcher Ulrich (psd)                  Nicolas Guillemot (vertical flip)  // Ulrich
+    Ken Miller (pgm, ppm)                  Richard Mitton (16-bit PSD)  // Miller
     github:urraka (animated gif)           Junggon Kim (PNM comments)
-    Christopher Forseth (animated gif)     Daniel Gibson (16-bit TGA)
+    Christopher Forseth (animated gif)     Daniel Gibson (16-bit TGA)  // Forseth
                                            socks-the-fox (16-bit PNG)
-                                           Jeremy Sawicki (handle all ImageNet JPGs)
+                                           Jeremy Sawicki (handle all ImageNet JPGs)  // Sawicki
  Optimizations & bugfixes                  Mikhail Morozov (1-bit BMP)
     Fabian "ryg" Giesen                    Anael Seghezzi (is-16-bit query)
     Arseny Kapoulkine                      Simon Breuss (16-bit PNM)
@@ -124,8 +124,8 @@ RECENT REVISION HISTORY:
   of the credits.
 */
 
-#ifndef STBI_INCLUDE_STB_IMAGE_H
-#define STBI_INCLUDE_STB_IMAGE_H
+#ifndef STBI_INCLUDE_STB_IMAGE_H  // 如果未定义 STBI_INCLUDE_STB_IMAGE_H 则编译
+#define STBI_INCLUDE_STB_IMAGE_H  // 宏定义 STBI_INCLUDE_STB_IMAGE_H
 
 // DOCUMENTATION
 //
@@ -365,11 +365,11 @@ RECENT REVISION HISTORY:
 //    default this is set to (1 << 24), which is 16777216, but that's still
 //    very big.
 
-#ifndef STBI_NO_STDIO
-#include <stdio.h>
-#endif // STBI_NO_STDIO
+#ifndef STBI_NO_STDIO  // 如果未定义 STBI_NO_STDIO 则编译
+#include <stdio.h>  // 引入 stdio.h 头文件
+#endif // STBI_NO_STDIO  // 条件编译结束
 
-#define STBI_VERSION 1
+#define STBI_VERSION 1  // 宏定义 STBI_VERSION
 
 enum
 {
@@ -381,21 +381,21 @@ enum
    STBI_rgb_alpha  = 4
 };
 
-#include <stdlib.h>
-typedef unsigned char stbi_uc;
-typedef unsigned short stbi_us;
+#include <stdlib.h>  // 引入 stdlib.h 头文件
+typedef unsigned char stbi_uc;  // 类型定义
+typedef unsigned short stbi_us;  // 类型定义
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
-#ifndef STBIDEF
-#ifdef STB_IMAGE_STATIC
-#define STBIDEF static
-#else
-#define STBIDEF extern
-#endif
-#endif
+#ifndef STBIDEF  // 如果未定义 STBIDEF 则编译
+#ifdef STB_IMAGE_STATIC  // 如果定义了 STB_IMAGE_STATIC 则编译
+#define STBIDEF static  // 宏定义 STBIDEF
+#else  // 否则
+#define STBIDEF extern  // 宏定义 STBIDEF
+#endif  // 条件编译结束
+#endif  // 条件编译结束
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -406,7 +406,7 @@ extern "C" {
 // load image by filename, open file, or memory buffer
 //
 
-typedef struct
+typedef struct  // 类型定义
 {
    int      (*read)  (void *user,char *data,int size);   // fill 'data' with 'size' bytes.  return number of bytes actually read
    void     (*skip)  (void *user,int n);                 // skip the next 'n' bytes, or 'unget' the last -n bytes if negative
@@ -421,19 +421,19 @@ typedef struct
 STBIDEF stbi_uc *stbi_load_from_memory   (stbi_uc           const *buffer, int len   , int *x, int *y, int *channels_in_file, int desired_channels);
 STBIDEF stbi_uc *stbi_load_from_callbacks(stbi_io_callbacks const *clbk  , void *user, int *x, int *y, int *channels_in_file, int desired_channels);
 
-#ifndef STBI_NO_STDIO
+#ifndef STBI_NO_STDIO  // 如果未定义 STBI_NO_STDIO 则编译
 STBIDEF stbi_uc *stbi_load            (char const *filename, int *x, int *y, int *channels_in_file, int desired_channels);
 STBIDEF stbi_uc *stbi_load_from_file  (FILE *f, int *x, int *y, int *channels_in_file, int desired_channels);
 // for stbi_load_from_file, file pointer is left pointing immediately after image
-#endif
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_GIF
+#ifndef STBI_NO_GIF  // 如果未定义 STBI_NO_GIF 则编译
 STBIDEF stbi_uc *stbi_load_gif_from_memory(stbi_uc const *buffer, int len, int **delays, int *x, int *y, int *z, int *comp, int req_comp);
-#endif
+#endif  // 条件编译结束
 
-#ifdef STBI_WINDOWS_UTF8
+#ifdef STBI_WINDOWS_UTF8  // 如果定义了 STBI_WINDOWS_UTF8 则编译
 STBIDEF int stbi_convert_wchar_to_utf8(char *buffer, size_t bufferlen, const wchar_t* input);
-#endif
+#endif  // 条件编译结束
 
 ////////////////////////////////////
 //
@@ -443,42 +443,42 @@ STBIDEF int stbi_convert_wchar_to_utf8(char *buffer, size_t bufferlen, const wch
 STBIDEF stbi_us *stbi_load_16_from_memory   (stbi_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels);
 STBIDEF stbi_us *stbi_load_16_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *channels_in_file, int desired_channels);
 
-#ifndef STBI_NO_STDIO
+#ifndef STBI_NO_STDIO  // 如果未定义 STBI_NO_STDIO 则编译
 STBIDEF stbi_us *stbi_load_16          (char const *filename, int *x, int *y, int *channels_in_file, int desired_channels);
 STBIDEF stbi_us *stbi_load_from_file_16(FILE *f, int *x, int *y, int *channels_in_file, int desired_channels);
-#endif
+#endif  // 条件编译结束
 
 ////////////////////////////////////
 //
 // float-per-channel interface
 //
-#ifndef STBI_NO_LINEAR
+#ifndef STBI_NO_LINEAR  // 如果未定义 STBI_NO_LINEAR 则编译
    STBIDEF float *stbi_loadf_from_memory     (stbi_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels);
    STBIDEF float *stbi_loadf_from_callbacks  (stbi_io_callbacks const *clbk, void *user, int *x, int *y,  int *channels_in_file, int desired_channels);
 
-   #ifndef STBI_NO_STDIO
+   #ifndef STBI_NO_STDIO  // 如果未定义 STBI_NO_STDIO 则编译
    STBIDEF float *stbi_loadf            (char const *filename, int *x, int *y, int *channels_in_file, int desired_channels);
    STBIDEF float *stbi_loadf_from_file  (FILE *f, int *x, int *y, int *channels_in_file, int desired_channels);
-   #endif
-#endif
+   #endif  // 条件编译结束
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_HDR
+#ifndef STBI_NO_HDR  // 如果未定义 STBI_NO_HDR 则编译
    STBIDEF void   stbi_hdr_to_ldr_gamma(float gamma);
    STBIDEF void   stbi_hdr_to_ldr_scale(float scale);
-#endif // STBI_NO_HDR
+#endif // STBI_NO_HDR  // 条件编译结束
 
-#ifndef STBI_NO_LINEAR
+#ifndef STBI_NO_LINEAR  // 如果未定义 STBI_NO_LINEAR 则编译
    STBIDEF void   stbi_ldr_to_hdr_gamma(float gamma);
    STBIDEF void   stbi_ldr_to_hdr_scale(float scale);
-#endif // STBI_NO_LINEAR
+#endif // STBI_NO_LINEAR  // 条件编译结束
 
 // stbi_is_hdr is always defined, but always returns false if STBI_NO_HDR
 STBIDEF int    stbi_is_hdr_from_callbacks(stbi_io_callbacks const *clbk, void *user);
 STBIDEF int    stbi_is_hdr_from_memory(stbi_uc const *buffer, int len);
-#ifndef STBI_NO_STDIO
+#ifndef STBI_NO_STDIO  // 如果未定义 STBI_NO_STDIO 则编译
 STBIDEF int      stbi_is_hdr          (char const *filename);
 STBIDEF int      stbi_is_hdr_from_file(FILE *f);
-#endif // STBI_NO_STDIO
+#endif // STBI_NO_STDIO  // 条件编译结束
 
 
 // get a VERY brief reason for failure
@@ -494,12 +494,12 @@ STBIDEF int      stbi_info_from_callbacks(stbi_io_callbacks const *clbk, void *u
 STBIDEF int      stbi_is_16_bit_from_memory(stbi_uc const *buffer, int len);
 STBIDEF int      stbi_is_16_bit_from_callbacks(stbi_io_callbacks const *clbk, void *user);
 
-#ifndef STBI_NO_STDIO
+#ifndef STBI_NO_STDIO  // 如果未定义 STBI_NO_STDIO 则编译
 STBIDEF int      stbi_info               (char const *filename,     int *x, int *y, int *comp);
 STBIDEF int      stbi_info_from_file     (FILE *f,                  int *x, int *y, int *comp);
 STBIDEF int      stbi_is_16_bit          (char const *filename);
 STBIDEF int      stbi_is_16_bit_from_file(FILE *f);
-#endif
+#endif  // 条件编译结束
 
 
 
@@ -533,167 +533,167 @@ STBIDEF char *stbi_zlib_decode_noheader_malloc(const char *buffer, int len, int 
 STBIDEF int   stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const char *ibuffer, int ilen);
 
 
-#ifdef __cplusplus
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束
 
 //
 //
 ////   end header file   /////////////////////////////////////////////////////
-#endif // STBI_INCLUDE_STB_IMAGE_H
+#endif // STBI_INCLUDE_STB_IMAGE_H  // 条件编译结束
 
-#ifdef STB_IMAGE_IMPLEMENTATION
+#ifdef STB_IMAGE_IMPLEMENTATION  // 如果定义了 STB_IMAGE_IMPLEMENTATION 则编译
 
 #if defined(STBI_ONLY_JPEG) || defined(STBI_ONLY_PNG) || defined(STBI_ONLY_BMP) \
   || defined(STBI_ONLY_TGA) || defined(STBI_ONLY_GIF) || defined(STBI_ONLY_PSD) \
   || defined(STBI_ONLY_HDR) || defined(STBI_ONLY_PIC) || defined(STBI_ONLY_PNM) \
   || defined(STBI_ONLY_ZLIB)
-   #ifndef STBI_ONLY_JPEG
-   #define STBI_NO_JPEG
-   #endif
-   #ifndef STBI_ONLY_PNG
-   #define STBI_NO_PNG
-   #endif
-   #ifndef STBI_ONLY_BMP
-   #define STBI_NO_BMP
-   #endif
-   #ifndef STBI_ONLY_PSD
-   #define STBI_NO_PSD
-   #endif
-   #ifndef STBI_ONLY_TGA
-   #define STBI_NO_TGA
-   #endif
-   #ifndef STBI_ONLY_GIF
-   #define STBI_NO_GIF
-   #endif
-   #ifndef STBI_ONLY_HDR
-   #define STBI_NO_HDR
-   #endif
-   #ifndef STBI_ONLY_PIC
-   #define STBI_NO_PIC
-   #endif
-   #ifndef STBI_ONLY_PNM
-   #define STBI_NO_PNM
-   #endif
-#endif
+   #ifndef STBI_ONLY_JPEG  // 如果未定义 STBI_ONLY_JPEG 则编译
+   #define STBI_NO_JPEG  // 宏定义 STBI_NO_JPEG
+   #endif  // 条件编译结束
+   #ifndef STBI_ONLY_PNG  // 如果未定义 STBI_ONLY_PNG 则编译
+   #define STBI_NO_PNG  // 宏定义 STBI_NO_PNG
+   #endif  // 条件编译结束
+   #ifndef STBI_ONLY_BMP  // 如果未定义 STBI_ONLY_BMP 则编译
+   #define STBI_NO_BMP  // 宏定义 STBI_NO_BMP
+   #endif  // 条件编译结束
+   #ifndef STBI_ONLY_PSD  // 如果未定义 STBI_ONLY_PSD 则编译
+   #define STBI_NO_PSD  // 宏定义 STBI_NO_PSD
+   #endif  // 条件编译结束
+   #ifndef STBI_ONLY_TGA  // 如果未定义 STBI_ONLY_TGA 则编译
+   #define STBI_NO_TGA  // 宏定义 STBI_NO_TGA
+   #endif  // 条件编译结束
+   #ifndef STBI_ONLY_GIF  // 如果未定义 STBI_ONLY_GIF 则编译
+   #define STBI_NO_GIF  // 宏定义 STBI_NO_GIF
+   #endif  // 条件编译结束
+   #ifndef STBI_ONLY_HDR  // 如果未定义 STBI_ONLY_HDR 则编译
+   #define STBI_NO_HDR  // 宏定义 STBI_NO_HDR
+   #endif  // 条件编译结束
+   #ifndef STBI_ONLY_PIC  // 如果未定义 STBI_ONLY_PIC 则编译
+   #define STBI_NO_PIC  // 宏定义 STBI_NO_PIC
+   #endif  // 条件编译结束
+   #ifndef STBI_ONLY_PNM  // 如果未定义 STBI_ONLY_PNM 则编译
+   #define STBI_NO_PNM  // 宏定义 STBI_NO_PNM
+   #endif  // 条件编译结束
+#endif  // 条件编译结束
 
-#if defined(STBI_NO_PNG) && !defined(STBI_SUPPORT_ZLIB) && !defined(STBI_NO_ZLIB)
-#define STBI_NO_ZLIB
-#endif
-
-
-#include <stdarg.h>
-#include <stddef.h> // ptrdiff_t on osx
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
-
-#if !defined(STBI_NO_LINEAR) || !defined(STBI_NO_HDR)
-#include <math.h>  // ldexp, pow
-#endif
-
-#ifndef STBI_NO_STDIO
-#include <stdio.h>
-#endif
-
-#ifndef STBI_ASSERT
-#include <assert.h>
-#define STBI_ASSERT(x) assert(x)
-#endif
-
-#ifdef __cplusplus
-#define STBI_EXTERN extern "C"
-#else
-#define STBI_EXTERN extern
-#endif
+#if defined(STBI_NO_PNG) && !defined(STBI_SUPPORT_ZLIB) && !defined(STBI_NO_ZLIB)  // 条件编译
+#define STBI_NO_ZLIB  // 宏定义 STBI_NO_ZLIB
+#endif  // 条件编译结束
 
 
-#ifndef _MSC_VER
-   #ifdef __cplusplus
-   #define stbi_inline inline
-   #else
-   #define stbi_inline
-   #endif
-#else
-   #define stbi_inline __forceinline
-#endif
+#include <stdarg.h>  // 引入 stdarg.h 头文件
+#include <stddef.h> // ptrdiff_t on osx  // 引入 stddef.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
+#include <string.h>  // 引入 string.h 头文件
+#include <limits.h>  // 引入 limits.h 头文件
 
-#ifndef STBI_NO_THREAD_LOCALS
-   #if defined(__cplusplus) &&  __cplusplus >= 201103L
-      #define STBI_THREAD_LOCAL       thread_local
-   #elif defined(__GNUC__) && __GNUC__ < 5
-      #define STBI_THREAD_LOCAL       __thread
-   #elif defined(_MSC_VER)
-      #define STBI_THREAD_LOCAL       __declspec(thread)
-   #elif defined (__STDC_VERSION__) && __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_THREADS__)
-      #define STBI_THREAD_LOCAL       _Thread_local
-   #endif
+#if !defined(STBI_NO_LINEAR) || !defined(STBI_NO_HDR)  // 条件编译
+#include <math.h>  // ldexp, pow  // 引入 math.h 头文件
+#endif  // 条件编译结束
 
-   #ifndef STBI_THREAD_LOCAL
-      #if defined(__GNUC__)
-        #define STBI_THREAD_LOCAL       __thread
-      #endif
-   #endif
-#endif
+#ifndef STBI_NO_STDIO  // 如果未定义 STBI_NO_STDIO 则编译
+#include <stdio.h>  // 引入 stdio.h 头文件
+#endif  // 条件编译结束
 
-#if defined(_MSC_VER) || defined(__SYMBIAN32__)
-typedef unsigned short stbi__uint16;
-typedef   signed short stbi__int16;
-typedef unsigned int   stbi__uint32;
-typedef   signed int   stbi__int32;
-#else
-#include <stdint.h>
-typedef uint16_t stbi__uint16;
-typedef int16_t  stbi__int16;
-typedef uint32_t stbi__uint32;
-typedef int32_t  stbi__int32;
-#endif
+#ifndef STBI_ASSERT  // 如果未定义 STBI_ASSERT 则编译
+#include <assert.h>  // 引入 assert.h 头文件
+#define STBI_ASSERT(x) assert(x)  // 宏定义 STBI_ASSERT
+#endif  // 条件编译结束
+
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+#define STBI_EXTERN extern "C"  // 宏定义 STBI_EXTERN
+#else  // 否则
+#define STBI_EXTERN extern  // 宏定义 STBI_EXTERN
+#endif  // 条件编译结束
+
+
+#ifndef _MSC_VER  // 如果未定义 _MSC_VER 则编译
+   #ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+   #define stbi_inline inline  // 宏定义 stbi_inline
+   #else  // 否则
+   #define stbi_inline  // 宏定义 stbi_inline
+   #endif  // 条件编译结束
+#else  // 否则
+   #define stbi_inline __forceinline  // 宏定义 stbi_inline
+#endif  // 条件编译结束
+
+#ifndef STBI_NO_THREAD_LOCALS  // 如果未定义 STBI_NO_THREAD_LOCALS 则编译
+   #if defined(__cplusplus) &&  __cplusplus >= 201103L  // 条件编译
+      #define STBI_THREAD_LOCAL       thread_local  // 宏定义 STBI_THREAD_LOCAL
+   #elif defined(__GNUC__) && __GNUC__ < 5  // 否则如果
+      #define STBI_THREAD_LOCAL       __thread  // 宏定义 STBI_THREAD_LOCAL
+   #elif defined(_MSC_VER)  // 否则如果
+      #define STBI_THREAD_LOCAL       __declspec(thread)  // 宏定义 STBI_THREAD_LOCAL
+   #elif defined (__STDC_VERSION__) && __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_THREADS__)  // 否则如果
+      #define STBI_THREAD_LOCAL       _Thread_local  // 宏定义 STBI_THREAD_LOCAL
+   #endif  // 条件编译结束
+
+   #ifndef STBI_THREAD_LOCAL  // 如果未定义 STBI_THREAD_LOCAL 则编译
+      #if defined(__GNUC__)  // 条件编译
+        #define STBI_THREAD_LOCAL       __thread  // 宏定义 STBI_THREAD_LOCAL
+      #endif  // 条件编译结束
+   #endif  // 条件编译结束
+#endif  // 条件编译结束
+
+#if defined(_MSC_VER) || defined(__SYMBIAN32__)  // 条件编译
+typedef unsigned short stbi__uint16;  // 类型定义
+typedef   signed short stbi__int16;  // 类型定义
+typedef unsigned int   stbi__uint32;  // 类型定义
+typedef   signed int   stbi__int32;  // 类型定义
+#else  // 否则
+#include <stdint.h>  // 引入 stdint.h 头文件
+typedef uint16_t stbi__uint16;  // 类型定义
+typedef int16_t  stbi__int16;  // 类型定义
+typedef uint32_t stbi__uint32;  // 类型定义
+typedef int32_t  stbi__int32;  // 类型定义
+#endif  // 条件编译结束
 
 // should produce compiler error if size is wrong
-typedef unsigned char validate_uint32[sizeof(stbi__uint32)==4 ? 1 : -1];
+typedef unsigned char validate_uint32[sizeof(stbi__uint32)==4 ? 1 : -1];  // 类型定义
 
-#ifdef _MSC_VER
-#define STBI_NOTUSED(v)  (void)(v)
-#else
-#define STBI_NOTUSED(v)  (void)sizeof(v)
-#endif
+#ifdef _MSC_VER  // 如果定义了 _MSC_VER 则编译
+#define STBI_NOTUSED(v)  (void)(v)  // 宏定义 STBI_NOTUSED
+#else  // 否则
+#define STBI_NOTUSED(v)  (void)sizeof(v)  // 宏定义 STBI_NOTUSED
+#endif  // 条件编译结束
 
-#ifdef _MSC_VER
-#define STBI_HAS_LROTL
-#endif
+#ifdef _MSC_VER  // 如果定义了 _MSC_VER 则编译
+#define STBI_HAS_LROTL  // 宏定义 STBI_HAS_LROTL
+#endif  // 条件编译结束
 
-#ifdef STBI_HAS_LROTL
-   #define stbi_lrot(x,y)  _lrotl(x,y)
-#else
-   #define stbi_lrot(x,y)  (((x) << (y)) | ((x) >> (-(y) & 31)))
-#endif
+#ifdef STBI_HAS_LROTL  // 如果定义了 STBI_HAS_LROTL 则编译
+   #define stbi_lrot(x,y)  _lrotl(x,y)  // 宏定义 stbi_lrot
+#else  // 否则
+   #define stbi_lrot(x,y)  (((x) << (y)) | ((x) >> (-(y) & 31)))  // 宏定义 stbi_lrot
+#endif  // 条件编译结束
 
-#if defined(STBI_MALLOC) && defined(STBI_FREE) && (defined(STBI_REALLOC) || defined(STBI_REALLOC_SIZED))
+#if defined(STBI_MALLOC) && defined(STBI_FREE) && (defined(STBI_REALLOC) || defined(STBI_REALLOC_SIZED))  // 条件编译
 // ok
-#elif !defined(STBI_MALLOC) && !defined(STBI_FREE) && !defined(STBI_REALLOC) && !defined(STBI_REALLOC_SIZED)
+#elif !defined(STBI_MALLOC) && !defined(STBI_FREE) && !defined(STBI_REALLOC) && !defined(STBI_REALLOC_SIZED)  // 否则如果
 // ok
-#else
+#else  // 否则
 #error "Must define all or none of STBI_MALLOC, STBI_FREE, and STBI_REALLOC (or STBI_REALLOC_SIZED)."
-#endif
+#endif  // 条件编译结束
 
-#ifndef STBI_MALLOC
-#define STBI_MALLOC(sz)           malloc(sz)
-#define STBI_REALLOC(p,newsz)     realloc(p,newsz)
-#define STBI_FREE(p)              free(p)
-#endif
+#ifndef STBI_MALLOC  // 如果未定义 STBI_MALLOC 则编译
+#define STBI_MALLOC(sz)           malloc(sz)  // 宏定义 STBI_MALLOC
+#define STBI_REALLOC(p,newsz)     realloc(p,newsz)  // 宏定义 STBI_REALLOC
+#define STBI_FREE(p)              free(p)  // 宏定义 STBI_FREE
+#endif  // 条件编译结束
 
-#ifndef STBI_REALLOC_SIZED
-#define STBI_REALLOC_SIZED(p,oldsz,newsz) STBI_REALLOC(p,newsz)
-#endif
+#ifndef STBI_REALLOC_SIZED  // 如果未定义 STBI_REALLOC_SIZED 则编译
+#define STBI_REALLOC_SIZED(p,oldsz,newsz) STBI_REALLOC(p,newsz)  // 宏定义 STBI_REALLOC_SIZED
+#endif  // 条件编译结束
 
 // x86/x64 detection
-#if defined(__x86_64__) || defined(_M_X64)
-#define STBI__X64_TARGET
-#elif defined(__i386) || defined(_M_IX86)
-#define STBI__X86_TARGET
-#endif
+#if defined(__x86_64__) || defined(_M_X64)  // 条件编译
+#define STBI__X64_TARGET  // 宏定义 STBI__X64_TARGET
+#elif defined(__i386) || defined(_M_IX86)  // 否则如果
+#define STBI__X86_TARGET  // 宏定义 STBI__X86_TARGET
+#endif  // 条件编译结束
 
-#if defined(__GNUC__) && defined(STBI__X86_TARGET) && !defined(__SSE2__) && !defined(STBI_NO_SIMD)
+#if defined(__GNUC__) && defined(STBI__X86_TARGET) && !defined(__SSE2__) && !defined(STBI_NO_SIMD)  // 条件编译
 // gcc doesn't support sse2 intrinsics unless you compile with -msse2,
 // which in turn means it gets to use SSE2 everywhere. This is unfortunate,
 // but previous attempts to provide the SSE2 functions with runtime
@@ -701,10 +701,10 @@ typedef unsigned char validate_uint32[sizeof(stbi__uint32)==4 ? 1 : -1];
 // exposed in GCC/Clang is, sadly, not really suited for one-file libs.
 // New behavior: if compiled with -msse2, we use SSE2 without any
 // detection; if not, we don't use it at all.
-#define STBI_NO_SIMD
-#endif
+#define STBI_NO_SIMD  // 宏定义 STBI_NO_SIMD
+#endif  // 条件编译结束
 
-#if defined(__MINGW32__) && defined(STBI__X86_TARGET) && !defined(STBI_MINGW_ENABLE_SSE2) && !defined(STBI_NO_SIMD)
+#if defined(__MINGW32__) && defined(STBI__X86_TARGET) && !defined(STBI_MINGW_ENABLE_SSE2) && !defined(STBI_NO_SIMD)  // 条件编译
 // Note that __MINGW32__ doesn't actually mean 32-bit, so we have to avoid STBI__X64_TARGET
 //
 // 32-bit MinGW wants ESP to be 16-byte aligned, but this is not in the
@@ -716,25 +716,25 @@ typedef unsigned char validate_uint32[sizeof(stbi__uint32)==4 ? 1 : -1];
 //
 // So default to no SSE2 on 32-bit MinGW. If you've read this far and added
 // -mstackrealign to your build settings, feel free to #define STBI_MINGW_ENABLE_SSE2.
-#define STBI_NO_SIMD
-#endif
+#define STBI_NO_SIMD  // 宏定义 STBI_NO_SIMD
+#endif  // 条件编译结束
 
-#if !defined(STBI_NO_SIMD) && (defined(STBI__X86_TARGET) || defined(STBI__X64_TARGET))
-#define STBI_SSE2
-#include <emmintrin.h>
+#if !defined(STBI_NO_SIMD) && (defined(STBI__X86_TARGET) || defined(STBI__X64_TARGET))  // 条件编译
+#define STBI_SSE2  // 宏定义 STBI_SSE2
+#include <emmintrin.h>  // 引入 emmintrin.h 头文件
 
-#ifdef _MSC_VER
+#ifdef _MSC_VER  // 如果定义了 _MSC_VER 则编译
 
-#if _MSC_VER >= 1400  // not VC6
-#include <intrin.h> // __cpuid
-static int stbi__cpuid3(void)
+#if _MSC_VER >= 1400  // not VC6  // 条件编译
+#include <intrin.h> // __cpuid  // 引入 intrin.h 头文件
+static int stbi__cpuid3(void)  // stbi__cpuid3
 {
    int info[4];
    __cpuid(info,1);
-   return info[3];
+   return info[3];  // 返回
 }
-#else
-static int stbi__cpuid3(void)
+#else  // 否则
+static int stbi__cpuid3(void)  // stbi__cpuid3
 {
    int res;
    __asm {
@@ -742,57 +742,57 @@ static int stbi__cpuid3(void)
       cpuid
       mov  res,edx
    }
-   return res;
+   return res;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-#define STBI_SIMD_ALIGN(type, name) __declspec(align(16)) type name
+#define STBI_SIMD_ALIGN(type, name) __declspec(align(16)) type name  // 宏定义 STBI_SIMD_ALIGN
 
-#if !defined(STBI_NO_JPEG) && defined(STBI_SSE2)
-static int stbi__sse2_available(void)
+#if !defined(STBI_NO_JPEG) && defined(STBI_SSE2)  // 条件编译
+static int stbi__sse2_available(void)  // stbi__sse2_available
 {
    int info3 = stbi__cpuid3();
    return ((info3 >> 26) & 1) != 0;
 }
-#endif
+#endif  // 条件编译结束
 
-#else // assume GCC-style if not VC++
-#define STBI_SIMD_ALIGN(type, name) type name __attribute__((aligned(16)))
+#else // assume GCC-style if not VC++  // 否则
+#define STBI_SIMD_ALIGN(type, name) type name __attribute__((aligned(16)))  // 宏定义 STBI_SIMD_ALIGN
 
-#if !defined(STBI_NO_JPEG) && defined(STBI_SSE2)
-static int stbi__sse2_available(void)
+#if !defined(STBI_NO_JPEG) && defined(STBI_SSE2)  // 条件编译
+static int stbi__sse2_available(void)  // stbi__sse2_available
 {
    // If we're even attempting to compile this on GCC/Clang, that means
    // -msse2 is on, which means the compiler is allowed to use SSE2
    // instructions at will, and so are we.
-   return 1;
+   return 1;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-#endif
-#endif
+#endif  // 条件编译结束
+#endif  // 条件编译结束
 
 // ARM NEON
-#if defined(STBI_NO_SIMD) && defined(STBI_NEON)
+#if defined(STBI_NO_SIMD) && defined(STBI_NEON)  // 条件编译
 #undef STBI_NEON
-#endif
+#endif  // 条件编译结束
 
-#ifdef STBI_NEON
-#include <arm_neon.h>
-#ifdef _MSC_VER
-#define STBI_SIMD_ALIGN(type, name) __declspec(align(16)) type name
-#else
-#define STBI_SIMD_ALIGN(type, name) type name __attribute__((aligned(16)))
-#endif
-#endif
+#ifdef STBI_NEON  // 如果定义了 STBI_NEON 则编译
+#include <arm_neon.h>  // 引入 arm_neon.h 头文件
+#ifdef _MSC_VER  // 如果定义了 _MSC_VER 则编译
+#define STBI_SIMD_ALIGN(type, name) __declspec(align(16)) type name  // 宏定义 STBI_SIMD_ALIGN
+#else  // 否则
+#define STBI_SIMD_ALIGN(type, name) type name __attribute__((aligned(16)))  // 宏定义 STBI_SIMD_ALIGN
+#endif  // 条件编译结束
+#endif  // 条件编译结束
 
-#ifndef STBI_SIMD_ALIGN
-#define STBI_SIMD_ALIGN(type, name) type name
-#endif
+#ifndef STBI_SIMD_ALIGN  // 如果未定义 STBI_SIMD_ALIGN 则编译
+#define STBI_SIMD_ALIGN(type, name) type name  // 宏定义 STBI_SIMD_ALIGN
+#endif  // 条件编译结束
 
-#ifndef STBI_MAX_DIMENSIONS
-#define STBI_MAX_DIMENSIONS (1 << 24)
-#endif
+#ifndef STBI_MAX_DIMENSIONS  // 如果未定义 STBI_MAX_DIMENSIONS 则编译
+#define STBI_MAX_DIMENSIONS (1 << 24)  // 宏定义 STBI_MAX_DIMENSIONS
+#endif  // 条件编译结束
 
 ///////////////////////////////////////////////
 //
@@ -800,7 +800,7 @@ static int stbi__sse2_available(void)
 
 // stbi__context structure is our basic context used by all images, so it
 // contains all the IO context, plus some basic image information
-typedef struct
+typedef struct  // 类型定义
 {
    stbi__uint32 img_x, img_y;
    int img_n, img_out_n;
@@ -818,10 +818,10 @@ typedef struct
 } stbi__context;
 
 
-static void stbi__refill_buffer(stbi__context *s);
+static void stbi__refill_buffer(stbi__context *s);  // stbi__refill_buffer
 
 // initialize a memory-decode context
-static void stbi__start_mem(stbi__context *s, stbi_uc const *buffer, int len)
+static void stbi__start_mem(stbi__context *s, stbi_uc const *buffer, int len)  // stbi__start_mem
 {
    s->io.read = NULL;
    s->read_from_callbacks = 0;
@@ -831,7 +831,7 @@ static void stbi__start_mem(stbi__context *s, stbi_uc const *buffer, int len)
 }
 
 // initialize a callback-based context
-static void stbi__start_callbacks(stbi__context *s, stbi_io_callbacks *c, void *user)
+static void stbi__start_callbacks(stbi__context *s, stbi_io_callbacks *c, void *user)  // stbi__start_callbacks
 {
    s->io = *c;
    s->io_user_data = user;
@@ -843,14 +843,14 @@ static void stbi__start_callbacks(stbi__context *s, stbi_io_callbacks *c, void *
    s->img_buffer_original_end = s->img_buffer_end;
 }
 
-#ifndef STBI_NO_STDIO
+#ifndef STBI_NO_STDIO  // 如果未定义 STBI_NO_STDIO 则编译
 
-static int stbi__stdio_read(void *user, char *data, int size)
+static int stbi__stdio_read(void *user, char *data, int size)  // stbi__stdio_read
 {
    return (int) fread(data,1,size,(FILE*) user);
 }
 
-static void stbi__stdio_skip(void *user, int n)
+static void stbi__stdio_skip(void *user, int n)  // stbi__stdio_skip
 {
    int ch;
    fseek((FILE*) user, n, SEEK_CUR);
@@ -860,9 +860,9 @@ static void stbi__stdio_skip(void *user, int n)
    }
 }
 
-static int stbi__stdio_eof(void *user)
+static int stbi__stdio_eof(void *user)  // stbi__stdio_eof
 {
-   return feof((FILE*) user) || ferror((FILE *) user);
+   return feof((FILE*) user) || ferror((FILE *) user);  // feof
 }
 
 static stbi_io_callbacks stbi__stdio_callbacks =
@@ -872,16 +872,16 @@ static stbi_io_callbacks stbi__stdio_callbacks =
    stbi__stdio_eof,
 };
 
-static void stbi__start_file(stbi__context *s, FILE *f)
+static void stbi__start_file(stbi__context *s, FILE *f)  // stbi__start_file
 {
    stbi__start_callbacks(s, &stbi__stdio_callbacks, (void *) f);
 }
 
 //static void stop_file(stbi__context *s) { }
 
-#endif // !STBI_NO_STDIO
+#endif // !STBI_NO_STDIO  // 条件编译结束
 
-static void stbi__rewind(stbi__context *s)
+static void stbi__rewind(stbi__context *s)  // stbi__rewind
 {
    // conceptually rewind SHOULD rewind to the beginning of the stream,
    // but we just rewind to the beginning of the initial buffer, because
@@ -896,93 +896,93 @@ enum
    STBI_ORDER_BGR
 };
 
-typedef struct
+typedef struct  // 类型定义
 {
    int bits_per_channel;
    int num_channels;
    int channel_order;
 } stbi__result_info;
 
-#ifndef STBI_NO_JPEG
-static int      stbi__jpeg_test(stbi__context *s);
-static void    *stbi__jpeg_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);
-static int      stbi__jpeg_info(stbi__context *s, int *x, int *y, int *comp);
-#endif
+#ifndef STBI_NO_JPEG  // 如果未定义 STBI_NO_JPEG 则编译
+static int      stbi__jpeg_test(stbi__context *s);  // stbi__jpeg_test
+static void    *stbi__jpeg_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);  // stbi__jpeg_load
+static int      stbi__jpeg_info(stbi__context *s, int *x, int *y, int *comp);  // stbi__jpeg_info
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_PNG
-static int      stbi__png_test(stbi__context *s);
-static void    *stbi__png_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);
-static int      stbi__png_info(stbi__context *s, int *x, int *y, int *comp);
-static int      stbi__png_is16(stbi__context *s);
-#endif
+#ifndef STBI_NO_PNG  // 如果未定义 STBI_NO_PNG 则编译
+static int      stbi__png_test(stbi__context *s);  // stbi__png_test
+static void    *stbi__png_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);  // stbi__png_load
+static int      stbi__png_info(stbi__context *s, int *x, int *y, int *comp);  // stbi__png_info
+static int      stbi__png_is16(stbi__context *s);  // stbi__png_is16
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_BMP
-static int      stbi__bmp_test(stbi__context *s);
-static void    *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);
-static int      stbi__bmp_info(stbi__context *s, int *x, int *y, int *comp);
-#endif
+#ifndef STBI_NO_BMP  // 如果未定义 STBI_NO_BMP 则编译
+static int      stbi__bmp_test(stbi__context *s);  // stbi__bmp_test
+static void    *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);  // stbi__bmp_load
+static int      stbi__bmp_info(stbi__context *s, int *x, int *y, int *comp);  // stbi__bmp_info
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_TGA
-static int      stbi__tga_test(stbi__context *s);
-static void    *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);
-static int      stbi__tga_info(stbi__context *s, int *x, int *y, int *comp);
-#endif
+#ifndef STBI_NO_TGA  // 如果未定义 STBI_NO_TGA 则编译
+static int      stbi__tga_test(stbi__context *s);  // stbi__tga_test
+static void    *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);  // stbi__tga_load
+static int      stbi__tga_info(stbi__context *s, int *x, int *y, int *comp);  // stbi__tga_info
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_PSD
-static int      stbi__psd_test(stbi__context *s);
-static void    *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri, int bpc);
-static int      stbi__psd_info(stbi__context *s, int *x, int *y, int *comp);
-static int      stbi__psd_is16(stbi__context *s);
-#endif
+#ifndef STBI_NO_PSD  // 如果未定义 STBI_NO_PSD 则编译
+static int      stbi__psd_test(stbi__context *s);  // stbi__psd_test
+static void    *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri, int bpc);  // stbi__psd_load
+static int      stbi__psd_info(stbi__context *s, int *x, int *y, int *comp);  // stbi__psd_info
+static int      stbi__psd_is16(stbi__context *s);  // stbi__psd_is16
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_HDR
-static int      stbi__hdr_test(stbi__context *s);
-static float   *stbi__hdr_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);
-static int      stbi__hdr_info(stbi__context *s, int *x, int *y, int *comp);
-#endif
+#ifndef STBI_NO_HDR  // 如果未定义 STBI_NO_HDR 则编译
+static int      stbi__hdr_test(stbi__context *s);  // stbi__hdr_test
+static float   *stbi__hdr_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);  // stbi__hdr_load
+static int      stbi__hdr_info(stbi__context *s, int *x, int *y, int *comp);  // stbi__hdr_info
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_PIC
-static int      stbi__pic_test(stbi__context *s);
-static void    *stbi__pic_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);
-static int      stbi__pic_info(stbi__context *s, int *x, int *y, int *comp);
-#endif
+#ifndef STBI_NO_PIC  // 如果未定义 STBI_NO_PIC 则编译
+static int      stbi__pic_test(stbi__context *s);  // stbi__pic_test
+static void    *stbi__pic_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);  // stbi__pic_load
+static int      stbi__pic_info(stbi__context *s, int *x, int *y, int *comp);  // stbi__pic_info
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_GIF
-static int      stbi__gif_test(stbi__context *s);
-static void    *stbi__gif_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);
-static void    *stbi__load_gif_main(stbi__context *s, int **delays, int *x, int *y, int *z, int *comp, int req_comp);
-static int      stbi__gif_info(stbi__context *s, int *x, int *y, int *comp);
-#endif
+#ifndef STBI_NO_GIF  // 如果未定义 STBI_NO_GIF 则编译
+static int      stbi__gif_test(stbi__context *s);  // stbi__gif_test
+static void    *stbi__gif_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);  // stbi__gif_load
+static void    *stbi__load_gif_main(stbi__context *s, int **delays, int *x, int *y, int *z, int *comp, int req_comp);  // stbi__load_gif_main
+static int      stbi__gif_info(stbi__context *s, int *x, int *y, int *comp);  // stbi__gif_info
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_PNM
-static int      stbi__pnm_test(stbi__context *s);
-static void    *stbi__pnm_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);
-static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp);
-static int      stbi__pnm_is16(stbi__context *s);
-#endif
+#ifndef STBI_NO_PNM  // 如果未定义 STBI_NO_PNM 则编译
+static int      stbi__pnm_test(stbi__context *s);  // stbi__pnm_test
+static void    *stbi__pnm_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);  // stbi__pnm_load
+static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp);  // stbi__pnm_info
+static int      stbi__pnm_is16(stbi__context *s);  // stbi__pnm_is16
+#endif  // 条件编译结束
 
 static
-#ifdef STBI_THREAD_LOCAL
+#ifdef STBI_THREAD_LOCAL  // 如果定义了 STBI_THREAD_LOCAL 则编译
 STBI_THREAD_LOCAL
-#endif
+#endif  // 条件编译结束
 const char *stbi__g_failure_reason;
 
 STBIDEF const char *stbi_failure_reason(void)
 {
-   return stbi__g_failure_reason;
+   return stbi__g_failure_reason;  // 返回
 }
 
-#ifndef STBI_NO_FAILURE_STRINGS
-static int stbi__err(const char *str)
+#ifndef STBI_NO_FAILURE_STRINGS  // 如果未定义 STBI_NO_FAILURE_STRINGS 则编译
+static int stbi__err(const char *str)  // stbi__err
 {
    stbi__g_failure_reason = str;
-   return 0;
+   return 0;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-static void *stbi__malloc(size_t size)
+static void *stbi__malloc(size_t size)  // stbi__malloc
 {
-    return STBI_MALLOC(size);
+    return STBI_MALLOC(size);  // STBI_MALLOC
 }
 
 // stb_image uses ints pervasively, including for offset calculations.
@@ -997,117 +997,117 @@ static void *stbi__malloc(size_t size)
 
 // return 1 if the sum is valid, 0 on overflow.
 // negative terms are considered invalid.
-static int stbi__addsizes_valid(int a, int b)
+static int stbi__addsizes_valid(int a, int b)  // stbi__addsizes_valid
 {
    if (b < 0) return 0;
    // now 0 <= b <= INT_MAX, hence also
    // 0 <= INT_MAX - b <= INTMAX.
    // And "a + b <= INT_MAX" (which might overflow) is the
    // same as a <= INT_MAX - b (no overflow)
-   return a <= INT_MAX - b;
+   return a <= INT_MAX - b;  // 返回
 }
 
 // returns 1 if the product is valid, 0 on overflow.
 // negative factors are considered invalid.
-static int stbi__mul2sizes_valid(int a, int b)
+static int stbi__mul2sizes_valid(int a, int b)  // stbi__mul2sizes_valid
 {
    if (a < 0 || b < 0) return 0;
    if (b == 0) return 1; // mul-by-0 is always safe
    // portable way to check for no overflows in a*b
-   return a <= INT_MAX/b;
+   return a <= INT_MAX/b;  // 返回
 }
 
-#if !defined(STBI_NO_JPEG) || !defined(STBI_NO_PNG) || !defined(STBI_NO_TGA) || !defined(STBI_NO_HDR)
+#if !defined(STBI_NO_JPEG) || !defined(STBI_NO_PNG) || !defined(STBI_NO_TGA) || !defined(STBI_NO_HDR)  // 条件编译
 // returns 1 if "a*b + add" has no negative terms/factors and doesn't overflow
-static int stbi__mad2sizes_valid(int a, int b, int add)
+static int stbi__mad2sizes_valid(int a, int b, int add)  // stbi__mad2sizes_valid
 {
-   return stbi__mul2sizes_valid(a, b) && stbi__addsizes_valid(a*b, add);
+   return stbi__mul2sizes_valid(a, b) && stbi__addsizes_valid(a*b, add);  // stbi__mul2sizes_valid
 }
-#endif
+#endif  // 条件编译结束
 
 // returns 1 if "a*b*c + add" has no negative terms/factors and doesn't overflow
-static int stbi__mad3sizes_valid(int a, int b, int c, int add)
+static int stbi__mad3sizes_valid(int a, int b, int c, int add)  // stbi__mad3sizes_valid
 {
-   return stbi__mul2sizes_valid(a, b) && stbi__mul2sizes_valid(a*b, c) &&
+   return stbi__mul2sizes_valid(a, b) && stbi__mul2sizes_valid(a*b, c) &&  // stbi__mul2sizes_valid
       stbi__addsizes_valid(a*b*c, add);
 }
 
 // returns 1 if "a*b*c*d + add" has no negative terms/factors and doesn't overflow
-#if !defined(STBI_NO_LINEAR) || !defined(STBI_NO_HDR) || !defined(STBI_NO_PNM)
-static int stbi__mad4sizes_valid(int a, int b, int c, int d, int add)
+#if !defined(STBI_NO_LINEAR) || !defined(STBI_NO_HDR) || !defined(STBI_NO_PNM)  // 条件编译
+static int stbi__mad4sizes_valid(int a, int b, int c, int d, int add)  // stbi__mad4sizes_valid
 {
-   return stbi__mul2sizes_valid(a, b) && stbi__mul2sizes_valid(a*b, c) &&
+   return stbi__mul2sizes_valid(a, b) && stbi__mul2sizes_valid(a*b, c) &&  // stbi__mul2sizes_valid
       stbi__mul2sizes_valid(a*b*c, d) && stbi__addsizes_valid(a*b*c*d, add);
 }
-#endif
+#endif  // 条件编译结束
 
-#if !defined(STBI_NO_JPEG) || !defined(STBI_NO_PNG) || !defined(STBI_NO_TGA) || !defined(STBI_NO_HDR)
+#if !defined(STBI_NO_JPEG) || !defined(STBI_NO_PNG) || !defined(STBI_NO_TGA) || !defined(STBI_NO_HDR)  // 条件编译
 // mallocs with size overflow checking
-static void *stbi__malloc_mad2(int a, int b, int add)
+static void *stbi__malloc_mad2(int a, int b, int add)  // stbi__malloc_mad2
 {
    if (!stbi__mad2sizes_valid(a, b, add)) return NULL;
-   return stbi__malloc(a*b + add);
+   return stbi__malloc(a*b + add);  // stbi__malloc
 }
-#endif
+#endif  // 条件编译结束
 
-static void *stbi__malloc_mad3(int a, int b, int c, int add)
+static void *stbi__malloc_mad3(int a, int b, int c, int add)  // stbi__malloc_mad3
 {
    if (!stbi__mad3sizes_valid(a, b, c, add)) return NULL;
-   return stbi__malloc(a*b*c + add);
+   return stbi__malloc(a*b*c + add);  // stbi__malloc
 }
 
-#if !defined(STBI_NO_LINEAR) || !defined(STBI_NO_HDR) || !defined(STBI_NO_PNM)
-static void *stbi__malloc_mad4(int a, int b, int c, int d, int add)
+#if !defined(STBI_NO_LINEAR) || !defined(STBI_NO_HDR) || !defined(STBI_NO_PNM)  // 条件编译
+static void *stbi__malloc_mad4(int a, int b, int c, int d, int add)  // stbi__malloc_mad4
 {
    if (!stbi__mad4sizes_valid(a, b, c, d, add)) return NULL;
-   return stbi__malloc(a*b*c*d + add);
+   return stbi__malloc(a*b*c*d + add);  // stbi__malloc
 }
-#endif
+#endif  // 条件编译结束
 
 // returns 1 if the sum of two signed ints is valid (between -2^31 and 2^31-1 inclusive), 0 on overflow.
-static int stbi__addints_valid(int a, int b)
+static int stbi__addints_valid(int a, int b)  // stbi__addints_valid
 {
    if ((a >= 0) != (b >= 0)) return 1; // a and b have different signs, so no overflow
    if (a < 0 && b < 0) return a >= INT_MIN - b; // same as a + b >= INT_MIN; INT_MIN - b cannot overflow since b < 0.
-   return a <= INT_MAX - b;
+   return a <= INT_MAX - b;  // 返回
 }
 
 // returns 1 if the product of two signed shorts is valid, 0 on overflow.
-static int stbi__mul2shorts_valid(short a, short b)
+static int stbi__mul2shorts_valid(short a, short b)  // stbi__mul2shorts_valid
 {
    if (b == 0 || b == -1) return 1; // multiplication by 0 is always 0; check for -1 so SHRT_MIN/b doesn't overflow
    if ((a >= 0) == (b >= 0)) return a <= SHRT_MAX/b; // product is positive, so similar to mul2sizes_valid
    if (b < 0) return a <= SHRT_MIN / b; // same as a * b >= SHRT_MIN
-   return a >= SHRT_MIN / b;
+   return a >= SHRT_MIN / b;  // 返回
 }
 
 // stbi__err - error
 // stbi__errpf - error returning pointer to float
 // stbi__errpuc - error returning pointer to unsigned char
 
-#ifdef STBI_NO_FAILURE_STRINGS
-   #define stbi__err(x,y)  0
-#elif defined(STBI_FAILURE_USERMSG)
-   #define stbi__err(x,y)  stbi__err(y)
-#else
-   #define stbi__err(x,y)  stbi__err(x)
-#endif
+#ifdef STBI_NO_FAILURE_STRINGS  // 如果定义了 STBI_NO_FAILURE_STRINGS 则编译
+   #define stbi__err(x,y)  0  // 宏定义 stbi__err
+#elif defined(STBI_FAILURE_USERMSG)  // 否则如果
+   #define stbi__err(x,y)  stbi__err(y)  // 宏定义 stbi__err
+#else  // 否则
+   #define stbi__err(x,y)  stbi__err(x)  // 宏定义 stbi__err
+#endif  // 条件编译结束
 
-#define stbi__errpf(x,y)   ((float *)(size_t) (stbi__err(x,y)?NULL:NULL))
-#define stbi__errpuc(x,y)  ((unsigned char *)(size_t) (stbi__err(x,y)?NULL:NULL))
+#define stbi__errpf(x,y)   ((float *)(size_t) (stbi__err(x,y)?NULL:NULL))  // 宏定义 stbi__errpf
+#define stbi__errpuc(x,y)  ((unsigned char *)(size_t) (stbi__err(x,y)?NULL:NULL))  // 宏定义 stbi__errpuc
 
 STBIDEF void stbi_image_free(void *retval_from_stbi_load)
 {
    STBI_FREE(retval_from_stbi_load);
 }
 
-#ifndef STBI_NO_LINEAR
-static float   *stbi__ldr_to_hdr(stbi_uc *data, int x, int y, int comp);
-#endif
+#ifndef STBI_NO_LINEAR  // 如果未定义 STBI_NO_LINEAR 则编译
+static float   *stbi__ldr_to_hdr(stbi_uc *data, int x, int y, int comp);  // stbi__ldr_to_hdr
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_HDR
-static stbi_uc *stbi__hdr_to_ldr(float   *data, int x, int y, int comp);
-#endif
+#ifndef STBI_NO_HDR  // 如果未定义 STBI_NO_HDR 则编译
+static stbi_uc *stbi__hdr_to_ldr(float   *data, int x, int y, int comp);  // stbi__hdr_to_ldr
+#endif  // 条件编译结束
 
 static int stbi__vertically_flip_on_load_global = 0;
 
@@ -1116,9 +1116,9 @@ STBIDEF void stbi_set_flip_vertically_on_load(int flag_true_if_should_flip)
    stbi__vertically_flip_on_load_global = flag_true_if_should_flip;
 }
 
-#ifndef STBI_THREAD_LOCAL
-#define stbi__vertically_flip_on_load  stbi__vertically_flip_on_load_global
-#else
+#ifndef STBI_THREAD_LOCAL  // 如果未定义 STBI_THREAD_LOCAL 则编译
+#define stbi__vertically_flip_on_load  stbi__vertically_flip_on_load_global  // 宏定义 stbi__vertically_flip_on_load
+#else  // 否则
 static STBI_THREAD_LOCAL int stbi__vertically_flip_on_load_local, stbi__vertically_flip_on_load_set;
 
 STBIDEF void stbi_set_flip_vertically_on_load_thread(int flag_true_if_should_flip)
@@ -1130,9 +1130,9 @@ STBIDEF void stbi_set_flip_vertically_on_load_thread(int flag_true_if_should_fli
 #define stbi__vertically_flip_on_load  (stbi__vertically_flip_on_load_set       \
                                          ? stbi__vertically_flip_on_load_local  \
                                          : stbi__vertically_flip_on_load_global)
-#endif // STBI_THREAD_LOCAL
+#endif // STBI_THREAD_LOCAL  // 条件编译结束
 
-static void *stbi__load_main(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri, int bpc)
+static void *stbi__load_main(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri, int bpc)  // stbi__load_main
 {
    memset(ri, 0, sizeof(*ri)); // make sure it's initialized if we add new fields
    ri->bits_per_channel = 8; // default is 8 so most paths don't have to be changed
@@ -1141,51 +1141,51 @@ static void *stbi__load_main(stbi__context *s, int *x, int *y, int *comp, int re
 
    // test the formats with a very explicit header first (at least a FOURCC
    // or distinctive magic number first)
-   #ifndef STBI_NO_PNG
+   #ifndef STBI_NO_PNG  // 如果未定义 STBI_NO_PNG 则编译
    if (stbi__png_test(s))  return stbi__png_load(s,x,y,comp,req_comp, ri);
-   #endif
-   #ifndef STBI_NO_BMP
+   #endif  // 条件编译结束
+   #ifndef STBI_NO_BMP  // 如果未定义 STBI_NO_BMP 则编译
    if (stbi__bmp_test(s))  return stbi__bmp_load(s,x,y,comp,req_comp, ri);
-   #endif
-   #ifndef STBI_NO_GIF
+   #endif  // 条件编译结束
+   #ifndef STBI_NO_GIF  // 如果未定义 STBI_NO_GIF 则编译
    if (stbi__gif_test(s))  return stbi__gif_load(s,x,y,comp,req_comp, ri);
-   #endif
-   #ifndef STBI_NO_PSD
+   #endif  // 条件编译结束
+   #ifndef STBI_NO_PSD  // 如果未定义 STBI_NO_PSD 则编译
    if (stbi__psd_test(s))  return stbi__psd_load(s,x,y,comp,req_comp, ri, bpc);
-   #else
+   #else  // 否则
    STBI_NOTUSED(bpc);
-   #endif
-   #ifndef STBI_NO_PIC
+   #endif  // 条件编译结束
+   #ifndef STBI_NO_PIC  // 如果未定义 STBI_NO_PIC 则编译
    if (stbi__pic_test(s))  return stbi__pic_load(s,x,y,comp,req_comp, ri);
-   #endif
+   #endif  // 条件编译结束
 
    // then the formats that can end up attempting to load with just 1 or 2
    // bytes matching expectations; these are prone to false positives, so
    // try them later
-   #ifndef STBI_NO_JPEG
+   #ifndef STBI_NO_JPEG  // 如果未定义 STBI_NO_JPEG 则编译
    if (stbi__jpeg_test(s)) return stbi__jpeg_load(s,x,y,comp,req_comp, ri);
-   #endif
-   #ifndef STBI_NO_PNM
+   #endif  // 条件编译结束
+   #ifndef STBI_NO_PNM  // 如果未定义 STBI_NO_PNM 则编译
    if (stbi__pnm_test(s))  return stbi__pnm_load(s,x,y,comp,req_comp, ri);
-   #endif
+   #endif  // 条件编译结束
 
-   #ifndef STBI_NO_HDR
+   #ifndef STBI_NO_HDR  // 如果未定义 STBI_NO_HDR 则编译
    if (stbi__hdr_test(s)) {
       float *hdr = stbi__hdr_load(s, x,y,comp,req_comp, ri);
-      return stbi__hdr_to_ldr(hdr, *x, *y, req_comp ? req_comp : *comp);
+      return stbi__hdr_to_ldr(hdr, *x, *y, req_comp ? req_comp : *comp);  // stbi__hdr_to_ldr
    }
-   #endif
+   #endif  // 条件编译结束
 
-   #ifndef STBI_NO_TGA
+   #ifndef STBI_NO_TGA  // 如果未定义 STBI_NO_TGA 则编译
    // test tga last because it's a crappy test!
    if (stbi__tga_test(s))
-      return stbi__tga_load(s,x,y,comp,req_comp, ri);
-   #endif
+      return stbi__tga_load(s,x,y,comp,req_comp, ri);  // stbi__tga_load
+   #endif  // 条件编译结束
 
-   return stbi__errpuc("unknown image type", "Image not of any known type, or corrupt");
+   return stbi__errpuc("unknown image type", "Image not of any known type, or corrupt");  // stbi__errpuc
 }
 
-static stbi_uc *stbi__convert_16_to_8(stbi__uint16 *orig, int w, int h, int channels)
+static stbi_uc *stbi__convert_16_to_8(stbi__uint16 *orig, int w, int h, int channels)  // stbi__convert_16_to_8
 {
    int i;
    int img_len = w * h * channels;
@@ -1198,10 +1198,10 @@ static stbi_uc *stbi__convert_16_to_8(stbi__uint16 *orig, int w, int h, int chan
       reduced[i] = (stbi_uc)((orig[i] >> 8) & 0xFF); // top half of each byte is sufficient approx of 16->8 bit scaling
 
    STBI_FREE(orig);
-   return reduced;
+   return reduced;  // 返回
 }
 
-static stbi__uint16 *stbi__convert_8_to_16(stbi_uc *orig, int w, int h, int channels)
+static stbi__uint16 *stbi__convert_8_to_16(stbi_uc *orig, int w, int h, int channels)  // stbi__convert_8_to_16
 {
    int i;
    int img_len = w * h * channels;
@@ -1214,10 +1214,10 @@ static stbi__uint16 *stbi__convert_8_to_16(stbi_uc *orig, int w, int h, int chan
       enlarged[i] = (stbi__uint16)((orig[i] << 8) + orig[i]); // replicate to high and low byte, maps 0->0, 255->0xffff
 
    STBI_FREE(orig);
-   return enlarged;
+   return enlarged;  // 返回
 }
 
-static void stbi__vertical_flip(void *image, int w, int h, int bytes_per_pixel)
+static void stbi__vertical_flip(void *image, int w, int h, int bytes_per_pixel)  // stbi__vertical_flip
 {
    int row;
    size_t bytes_per_row = (size_t)w * bytes_per_pixel;
@@ -1241,8 +1241,8 @@ static void stbi__vertical_flip(void *image, int w, int h, int bytes_per_pixel)
    }
 }
 
-#ifndef STBI_NO_GIF
-static void stbi__vertical_flip_slices(void *image, int w, int h, int z, int bytes_per_pixel)
+#ifndef STBI_NO_GIF  // 如果未定义 STBI_NO_GIF 则编译
+static void stbi__vertical_flip_slices(void *image, int w, int h, int z, int bytes_per_pixel)  // stbi__vertical_flip_slices
 {
    int slice;
    int slice_size = w * h * bytes_per_pixel;
@@ -1253,15 +1253,15 @@ static void stbi__vertical_flip_slices(void *image, int w, int h, int z, int byt
       bytes += slice_size;
    }
 }
-#endif
+#endif  // 条件编译结束
 
-static unsigned char *stbi__load_and_postprocess_8bit(stbi__context *s, int *x, int *y, int *comp, int req_comp)
+static unsigned char *stbi__load_and_postprocess_8bit(stbi__context *s, int *x, int *y, int *comp, int req_comp)  // stbi__load_and_postprocess_8bit
 {
    stbi__result_info ri;
    void *result = stbi__load_main(s, x, y, comp, req_comp, &ri, 8);
 
    if (result == NULL)
-      return NULL;
+      return NULL;  // 返回
 
    // it is the responsibility of the loaders to make sure we get either 8 or 16 bit.
    STBI_ASSERT(ri.bits_per_channel == 8 || ri.bits_per_channel == 16);
@@ -1281,13 +1281,13 @@ static unsigned char *stbi__load_and_postprocess_8bit(stbi__context *s, int *x, 
    return (unsigned char *) result;
 }
 
-static stbi__uint16 *stbi__load_and_postprocess_16bit(stbi__context *s, int *x, int *y, int *comp, int req_comp)
+static stbi__uint16 *stbi__load_and_postprocess_16bit(stbi__context *s, int *x, int *y, int *comp, int req_comp)  // stbi__load_and_postprocess_16bit
 {
    stbi__result_info ri;
    void *result = stbi__load_main(s, x, y, comp, req_comp, &ri, 16);
 
    if (result == NULL)
-      return NULL;
+      return NULL;  // 返回
 
    // it is the responsibility of the loaders to make sure we get either 8 or 16 bit.
    STBI_ASSERT(ri.bits_per_channel == 8 || ri.bits_per_channel == 16);
@@ -1308,56 +1308,56 @@ static stbi__uint16 *stbi__load_and_postprocess_16bit(stbi__context *s, int *x, 
    return (stbi__uint16 *) result;
 }
 
-#if !defined(STBI_NO_HDR) && !defined(STBI_NO_LINEAR)
-static void stbi__float_postprocess(float *result, int *x, int *y, int *comp, int req_comp)
+#if !defined(STBI_NO_HDR) && !defined(STBI_NO_LINEAR)  // 条件编译
+static void stbi__float_postprocess(float *result, int *x, int *y, int *comp, int req_comp)  // stbi__float_postprocess
 {
    if (stbi__vertically_flip_on_load && result != NULL) {
       int channels = req_comp ? req_comp : *comp;
       stbi__vertical_flip(result, *x, *y, channels * sizeof(float));
    }
 }
-#endif
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_STDIO
+#ifndef STBI_NO_STDIO  // 如果未定义 STBI_NO_STDIO 则编译
 
-#if defined(_WIN32) && defined(STBI_WINDOWS_UTF8)
-STBI_EXTERN __declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int cp, unsigned long flags, const char *str, int cbmb, wchar_t *widestr, int cchwide);
-STBI_EXTERN __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, const wchar_t *widestr, int cchwide, char *str, int cbmb, const char *defchar, int *used_default);
-#endif
+#if defined(_WIN32) && defined(STBI_WINDOWS_UTF8)  // 条件编译
+STBI_EXTERN __declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int cp, unsigned long flags, const char *str, int cbmb, wchar_t *widestr, int cchwide);  // __declspec
+STBI_EXTERN __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, const wchar_t *widestr, int cchwide, char *str, int cbmb, const char *defchar, int *used_default);  // __declspec
+#endif  // 条件编译结束
 
-#if defined(_WIN32) && defined(STBI_WINDOWS_UTF8)
+#if defined(_WIN32) && defined(STBI_WINDOWS_UTF8)  // 条件编译
 STBIDEF int stbi_convert_wchar_to_utf8(char *buffer, size_t bufferlen, const wchar_t* input)
 {
-	return WideCharToMultiByte(65001 /* UTF8 */, 0, input, -1, buffer, (int) bufferlen, NULL, NULL);
+	return WideCharToMultiByte(65001 /* UTF8 */, 0, input, -1, buffer, (int) bufferlen, NULL, NULL);  // WideCharToMultiByte
 }
-#endif
+#endif  // 条件编译结束
 
-static FILE *stbi__fopen(char const *filename, char const *mode)
+static FILE *stbi__fopen(char const *filename, char const *mode)  // stbi__fopen
 {
    FILE *f;
-#if defined(_WIN32) && defined(STBI_WINDOWS_UTF8)
+#if defined(_WIN32) && defined(STBI_WINDOWS_UTF8)  // 条件编译
    wchar_t wMode[64];
    wchar_t wFilename[1024];
 	if (0 == MultiByteToWideChar(65001 /* UTF8 */, 0, filename, -1, wFilename, sizeof(wFilename)/sizeof(*wFilename)))
-      return 0;
+      return 0;  // 返回
 
 	if (0 == MultiByteToWideChar(65001 /* UTF8 */, 0, mode, -1, wMode, sizeof(wMode)/sizeof(*wMode)))
-      return 0;
+      return 0;  // 返回
 
-#if defined(_MSC_VER) && _MSC_VER >= 1400
+#if defined(_MSC_VER) && _MSC_VER >= 1400  // 条件编译
 	if (0 != _wfopen_s(&f, wFilename, wMode))
 		f = 0;
-#else
+#else  // 否则
    f = _wfopen(wFilename, wMode);
-#endif
+#endif  // 条件编译结束
 
-#elif defined(_MSC_VER) && _MSC_VER >= 1400
+#elif defined(_MSC_VER) && _MSC_VER >= 1400  // 否则如果
    if (0 != fopen_s(&f, filename, mode))
       f=0;
-#else
+#else  // 否则
    f = fopen(filename, mode);
-#endif
-   return f;
+#endif  // 条件编译结束
+   return f;  // 返回
 }
 
 
@@ -1368,7 +1368,7 @@ STBIDEF stbi_uc *stbi_load(char const *filename, int *x, int *y, int *comp, int 
    if (!f) return stbi__errpuc("can't fopen", "Unable to open file");
    result = stbi_load_from_file(f,x,y,comp,req_comp);
    fclose(f);
-   return result;
+   return result;  // 返回
 }
 
 STBIDEF stbi_uc *stbi_load_from_file(FILE *f, int *x, int *y, int *comp, int req_comp)
@@ -1381,7 +1381,7 @@ STBIDEF stbi_uc *stbi_load_from_file(FILE *f, int *x, int *y, int *comp, int req
       // need to 'unget' all the characters in the IO buffer
       fseek(f, - (int) (s.img_buffer_end - s.img_buffer), SEEK_CUR);
    }
-   return result;
+   return result;  // 返回
 }
 
 STBIDEF stbi__uint16 *stbi_load_from_file_16(FILE *f, int *x, int *y, int *comp, int req_comp)
@@ -1394,7 +1394,7 @@ STBIDEF stbi__uint16 *stbi_load_from_file_16(FILE *f, int *x, int *y, int *comp,
       // need to 'unget' all the characters in the IO buffer
       fseek(f, - (int) (s.img_buffer_end - s.img_buffer), SEEK_CUR);
    }
-   return result;
+   return result;  // 返回
 }
 
 STBIDEF stbi_us *stbi_load_16(char const *filename, int *x, int *y, int *comp, int req_comp)
@@ -1404,41 +1404,41 @@ STBIDEF stbi_us *stbi_load_16(char const *filename, int *x, int *y, int *comp, i
    if (!f) return (stbi_us *) stbi__errpuc("can't fopen", "Unable to open file");
    result = stbi_load_from_file_16(f,x,y,comp,req_comp);
    fclose(f);
-   return result;
+   return result;  // 返回
 }
 
 
-#endif //!STBI_NO_STDIO
+#endif //!STBI_NO_STDIO  // 条件编译结束
 
 STBIDEF stbi_us *stbi_load_16_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    stbi__context s;
    stbi__start_mem(&s,buffer,len);
-   return stbi__load_and_postprocess_16bit(&s,x,y,channels_in_file,desired_channels);
+   return stbi__load_and_postprocess_16bit(&s,x,y,channels_in_file,desired_channels);  // stbi__load_and_postprocess_16bit
 }
 
 STBIDEF stbi_us *stbi_load_16_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *channels_in_file, int desired_channels)
 {
    stbi__context s;
    stbi__start_callbacks(&s, (stbi_io_callbacks *)clbk, user);
-   return stbi__load_and_postprocess_16bit(&s,x,y,channels_in_file,desired_channels);
+   return stbi__load_and_postprocess_16bit(&s,x,y,channels_in_file,desired_channels);  // stbi__load_and_postprocess_16bit
 }
 
 STBIDEF stbi_uc *stbi_load_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp, int req_comp)
 {
    stbi__context s;
    stbi__start_mem(&s,buffer,len);
-   return stbi__load_and_postprocess_8bit(&s,x,y,comp,req_comp);
+   return stbi__load_and_postprocess_8bit(&s,x,y,comp,req_comp);  // stbi__load_and_postprocess_8bit
 }
 
 STBIDEF stbi_uc *stbi_load_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *comp, int req_comp)
 {
    stbi__context s;
    stbi__start_callbacks(&s, (stbi_io_callbacks *) clbk, user);
-   return stbi__load_and_postprocess_8bit(&s,x,y,comp,req_comp);
+   return stbi__load_and_postprocess_8bit(&s,x,y,comp,req_comp);  // stbi__load_and_postprocess_8bit
 }
 
-#ifndef STBI_NO_GIF
+#ifndef STBI_NO_GIF  // 如果未定义 STBI_NO_GIF 则编译
 STBIDEF stbi_uc *stbi_load_gif_from_memory(stbi_uc const *buffer, int len, int **delays, int *x, int *y, int *z, int *comp, int req_comp)
 {
    unsigned char *result;
@@ -1450,44 +1450,44 @@ STBIDEF stbi_uc *stbi_load_gif_from_memory(stbi_uc const *buffer, int len, int *
       stbi__vertical_flip_slices( result, *x, *y, *z, *comp );
    }
 
-   return result;
+   return result;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_LINEAR
-static float *stbi__loadf_main(stbi__context *s, int *x, int *y, int *comp, int req_comp)
+#ifndef STBI_NO_LINEAR  // 如果未定义 STBI_NO_LINEAR 则编译
+static float *stbi__loadf_main(stbi__context *s, int *x, int *y, int *comp, int req_comp)  // stbi__loadf_main
 {
    unsigned char *data;
-   #ifndef STBI_NO_HDR
+   #ifndef STBI_NO_HDR  // 如果未定义 STBI_NO_HDR 则编译
    if (stbi__hdr_test(s)) {
       stbi__result_info ri;
       float *hdr_data = stbi__hdr_load(s,x,y,comp,req_comp, &ri);
       if (hdr_data)
          stbi__float_postprocess(hdr_data,x,y,comp,req_comp);
-      return hdr_data;
+      return hdr_data;  // 返回
    }
-   #endif
+   #endif  // 条件编译结束
    data = stbi__load_and_postprocess_8bit(s, x, y, comp, req_comp);
    if (data)
-      return stbi__ldr_to_hdr(data, *x, *y, req_comp ? req_comp : *comp);
-   return stbi__errpf("unknown image type", "Image not of any known type, or corrupt");
+      return stbi__ldr_to_hdr(data, *x, *y, req_comp ? req_comp : *comp);  // stbi__ldr_to_hdr
+   return stbi__errpf("unknown image type", "Image not of any known type, or corrupt");  // stbi__errpf
 }
 
 STBIDEF float *stbi_loadf_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp, int req_comp)
 {
    stbi__context s;
    stbi__start_mem(&s,buffer,len);
-   return stbi__loadf_main(&s,x,y,comp,req_comp);
+   return stbi__loadf_main(&s,x,y,comp,req_comp);  // stbi__loadf_main
 }
 
 STBIDEF float *stbi_loadf_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *comp, int req_comp)
 {
    stbi__context s;
    stbi__start_callbacks(&s, (stbi_io_callbacks *) clbk, user);
-   return stbi__loadf_main(&s,x,y,comp,req_comp);
+   return stbi__loadf_main(&s,x,y,comp,req_comp);  // stbi__loadf_main
 }
 
-#ifndef STBI_NO_STDIO
+#ifndef STBI_NO_STDIO  // 如果未定义 STBI_NO_STDIO 则编译
 STBIDEF float *stbi_loadf(char const *filename, int *x, int *y, int *comp, int req_comp)
 {
    float *result;
@@ -1495,18 +1495,18 @@ STBIDEF float *stbi_loadf(char const *filename, int *x, int *y, int *comp, int r
    if (!f) return stbi__errpf("can't fopen", "Unable to open file");
    result = stbi_loadf_from_file(f,x,y,comp,req_comp);
    fclose(f);
-   return result;
+   return result;  // 返回
 }
 
 STBIDEF float *stbi_loadf_from_file(FILE *f, int *x, int *y, int *comp, int req_comp)
 {
    stbi__context s;
    stbi__start_file(&s,f);
-   return stbi__loadf_main(&s,x,y,comp,req_comp);
+   return stbi__loadf_main(&s,x,y,comp,req_comp);  // stbi__loadf_main
 }
-#endif // !STBI_NO_STDIO
+#endif // !STBI_NO_STDIO  // 条件编译结束
 
-#endif // !STBI_NO_LINEAR
+#endif // !STBI_NO_LINEAR  // 条件编译结束
 
 // these is-hdr-or-not is defined independent of whether STBI_NO_LINEAR is
 // defined, for API simplicity; if STBI_NO_LINEAR is defined, it always
@@ -1514,18 +1514,18 @@ STBIDEF float *stbi_loadf_from_file(FILE *f, int *x, int *y, int *comp, int req_
 
 STBIDEF int stbi_is_hdr_from_memory(stbi_uc const *buffer, int len)
 {
-   #ifndef STBI_NO_HDR
+   #ifndef STBI_NO_HDR  // 如果未定义 STBI_NO_HDR 则编译
    stbi__context s;
    stbi__start_mem(&s,buffer,len);
-   return stbi__hdr_test(&s);
-   #else
+   return stbi__hdr_test(&s);  // stbi__hdr_test
+   #else  // 否则
    STBI_NOTUSED(buffer);
    STBI_NOTUSED(len);
-   return 0;
-   #endif
+   return 0;  // 返回
+   #endif  // 条件编译结束
 }
 
-#ifndef STBI_NO_STDIO
+#ifndef STBI_NO_STDIO  // 如果未定义 STBI_NO_STDIO 则编译
 STBIDEF int      stbi_is_hdr          (char const *filename)
 {
    FILE *f = stbi__fopen(filename, "rb");
@@ -1534,45 +1534,45 @@ STBIDEF int      stbi_is_hdr          (char const *filename)
       result = stbi_is_hdr_from_file(f);
       fclose(f);
    }
-   return result;
+   return result;  // 返回
 }
 
 STBIDEF int stbi_is_hdr_from_file(FILE *f)
 {
-   #ifndef STBI_NO_HDR
+   #ifndef STBI_NO_HDR  // 如果未定义 STBI_NO_HDR 则编译
    long pos = ftell(f);
    int res;
    stbi__context s;
    stbi__start_file(&s,f);
    res = stbi__hdr_test(&s);
    fseek(f, pos, SEEK_SET);
-   return res;
-   #else
+   return res;  // 返回
+   #else  // 否则
    STBI_NOTUSED(f);
-   return 0;
-   #endif
+   return 0;  // 返回
+   #endif  // 条件编译结束
 }
-#endif // !STBI_NO_STDIO
+#endif // !STBI_NO_STDIO  // 条件编译结束
 
 STBIDEF int      stbi_is_hdr_from_callbacks(stbi_io_callbacks const *clbk, void *user)
 {
-   #ifndef STBI_NO_HDR
+   #ifndef STBI_NO_HDR  // 如果未定义 STBI_NO_HDR 则编译
    stbi__context s;
    stbi__start_callbacks(&s, (stbi_io_callbacks *) clbk, user);
-   return stbi__hdr_test(&s);
-   #else
+   return stbi__hdr_test(&s);  // stbi__hdr_test
+   #else  // 否则
    STBI_NOTUSED(clbk);
    STBI_NOTUSED(user);
-   return 0;
-   #endif
+   return 0;  // 返回
+   #endif  // 条件编译结束
 }
 
-#ifndef STBI_NO_LINEAR
+#ifndef STBI_NO_LINEAR  // 如果未定义 STBI_NO_LINEAR 则编译
 static float stbi__l2h_gamma=2.2f, stbi__l2h_scale=1.0f;
 
 STBIDEF void   stbi_ldr_to_hdr_gamma(float gamma) { stbi__l2h_gamma = gamma; }
 STBIDEF void   stbi_ldr_to_hdr_scale(float scale) { stbi__l2h_scale = scale; }
-#endif
+#endif  // 条件编译结束
 
 static float stbi__h2l_gamma_i=1.0f/2.2f, stbi__h2l_scale_i=1.0f;
 
@@ -1592,7 +1592,7 @@ enum
    STBI__SCAN_header
 };
 
-static void stbi__refill_buffer(stbi__context *s)
+static void stbi__refill_buffer(stbi__context *s)  // stbi__refill_buffer
 {
    int n = (s->io.read)(s->io_user_data,(char*)s->buffer_start,s->buflen);
    s->callback_already_read += (int) (s->img_buffer - s->img_buffer_original);
@@ -1612,17 +1612,17 @@ static void stbi__refill_buffer(stbi__context *s)
 stbi_inline static stbi_uc stbi__get8(stbi__context *s)
 {
    if (s->img_buffer < s->img_buffer_end)
-      return *s->img_buffer++;
+      return *s->img_buffer++;  // 返回
    if (s->read_from_callbacks) {
       stbi__refill_buffer(s);
-      return *s->img_buffer++;
+      return *s->img_buffer++;  // 返回
    }
-   return 0;
+   return 0;  // 返回
 }
 
-#if defined(STBI_NO_JPEG) && defined(STBI_NO_HDR) && defined(STBI_NO_PIC) && defined(STBI_NO_PNM)
+#if defined(STBI_NO_JPEG) && defined(STBI_NO_HDR) && defined(STBI_NO_PIC) && defined(STBI_NO_PNM)  // 条件编译
 // nothing
-#else
+#else  // 否则
 stbi_inline static int stbi__at_eof(stbi__context *s)
 {
    if (s->io.read) {
@@ -1632,36 +1632,36 @@ stbi_inline static int stbi__at_eof(stbi__context *s)
       if (s->read_from_callbacks == 0) return 1;
    }
 
-   return s->img_buffer >= s->img_buffer_end;
+   return s->img_buffer >= s->img_buffer_end;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(STBI_NO_JPEG) && defined(STBI_NO_PNG) && defined(STBI_NO_BMP) && defined(STBI_NO_PSD) && defined(STBI_NO_TGA) && defined(STBI_NO_GIF) && defined(STBI_NO_PIC)
+#if defined(STBI_NO_JPEG) && defined(STBI_NO_PNG) && defined(STBI_NO_BMP) && defined(STBI_NO_PSD) && defined(STBI_NO_TGA) && defined(STBI_NO_GIF) && defined(STBI_NO_PIC)  // 条件编译
 // nothing
-#else
-static void stbi__skip(stbi__context *s, int n)
+#else  // 否则
+static void stbi__skip(stbi__context *s, int n)  // stbi__skip
 {
    if (n == 0) return;  // already there!
    if (n < 0) {
       s->img_buffer = s->img_buffer_end;
-      return;
+      return;  // 返回
    }
    if (s->io.read) {
       int blen = (int) (s->img_buffer_end - s->img_buffer);
       if (blen < n) {
          s->img_buffer = s->img_buffer_end;
          (s->io.skip)(s->io_user_data, n - blen);
-         return;
+         return;  // 返回
       }
    }
    s->img_buffer += n;
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(STBI_NO_PNG) && defined(STBI_NO_TGA) && defined(STBI_NO_HDR) && defined(STBI_NO_PNM)
+#if defined(STBI_NO_PNG) && defined(STBI_NO_TGA) && defined(STBI_NO_HDR) && defined(STBI_NO_PNM)  // 条件编译
 // nothing
-#else
-static int stbi__getn(stbi__context *s, stbi_uc *buffer, int n)
+#else  // 否则
+static int stbi__getn(stbi__context *s, stbi_uc *buffer, int n)  // stbi__getn
 {
    if (s->io.read) {
       int blen = (int) (s->img_buffer_end - s->img_buffer);
@@ -1673,63 +1673,63 @@ static int stbi__getn(stbi__context *s, stbi_uc *buffer, int n)
          count = (s->io.read)(s->io_user_data, (char*) buffer + blen, n - blen);
          res = (count == (n-blen));
          s->img_buffer = s->img_buffer_end;
-         return res;
+         return res;  // 返回
       }
    }
 
    if (s->img_buffer+n <= s->img_buffer_end) {
       memcpy(buffer, s->img_buffer, n);
       s->img_buffer += n;
-      return 1;
+      return 1;  // 返回
    } else
-      return 0;
+      return 0;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(STBI_NO_JPEG) && defined(STBI_NO_PNG) && defined(STBI_NO_PSD) && defined(STBI_NO_PIC)
+#if defined(STBI_NO_JPEG) && defined(STBI_NO_PNG) && defined(STBI_NO_PSD) && defined(STBI_NO_PIC)  // 条件编译
 // nothing
-#else
-static int stbi__get16be(stbi__context *s)
+#else  // 否则
+static int stbi__get16be(stbi__context *s)  // stbi__get16be
 {
    int z = stbi__get8(s);
    return (z << 8) + stbi__get8(s);
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(STBI_NO_PNG) && defined(STBI_NO_PSD) && defined(STBI_NO_PIC)
+#if defined(STBI_NO_PNG) && defined(STBI_NO_PSD) && defined(STBI_NO_PIC)  // 条件编译
 // nothing
-#else
-static stbi__uint32 stbi__get32be(stbi__context *s)
+#else  // 否则
+static stbi__uint32 stbi__get32be(stbi__context *s)  // stbi__get32be
 {
    stbi__uint32 z = stbi__get16be(s);
    return (z << 16) + stbi__get16be(s);
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(STBI_NO_BMP) && defined(STBI_NO_TGA) && defined(STBI_NO_GIF)
+#if defined(STBI_NO_BMP) && defined(STBI_NO_TGA) && defined(STBI_NO_GIF)  // 条件编译
 // nothing
-#else
-static int stbi__get16le(stbi__context *s)
+#else  // 否则
+static int stbi__get16le(stbi__context *s)  // stbi__get16le
 {
    int z = stbi__get8(s);
    return z + (stbi__get8(s) << 8);
 }
-#endif
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_BMP
-static stbi__uint32 stbi__get32le(stbi__context *s)
+#ifndef STBI_NO_BMP  // 如果未定义 STBI_NO_BMP 则编译
+static stbi__uint32 stbi__get32le(stbi__context *s)  // stbi__get32le
 {
    stbi__uint32 z = stbi__get16le(s);
    z += (stbi__uint32)stbi__get16le(s) << 16;
-   return z;
+   return z;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-#define STBI__BYTECAST(x)  ((stbi_uc) ((x) & 255))  // truncate int to byte without warnings
+#define STBI__BYTECAST(x)  ((stbi_uc) ((x) & 255))  // truncate int to byte without warnings  // 宏定义 STBI__BYTECAST
 
-#if defined(STBI_NO_JPEG) && defined(STBI_NO_PNG) && defined(STBI_NO_BMP) && defined(STBI_NO_PSD) && defined(STBI_NO_TGA) && defined(STBI_NO_GIF) && defined(STBI_NO_PIC) && defined(STBI_NO_PNM)
+#if defined(STBI_NO_JPEG) && defined(STBI_NO_PNG) && defined(STBI_NO_BMP) && defined(STBI_NO_PSD) && defined(STBI_NO_TGA) && defined(STBI_NO_GIF) && defined(STBI_NO_PIC) && defined(STBI_NO_PNM)  // 条件编译
 // nothing
-#else
+#else  // 否则
 //////////////////////////////////////////////////////////////////////////////
 //
 //  generic converter from built-in img_n to req_comp
@@ -1741,16 +1741,16 @@ static stbi__uint32 stbi__get32le(stbi__context *s)
 //  assume data buffer is malloced, so malloc a new one and free that one
 //  only failure mode is malloc failing
 
-static stbi_uc stbi__compute_y(int r, int g, int b)
+static stbi_uc stbi__compute_y(int r, int g, int b)  // stbi__compute_y
 {
    return (stbi_uc) (((r*77) + (g*150) +  (29*b)) >> 8);
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(STBI_NO_PNG) && defined(STBI_NO_BMP) && defined(STBI_NO_PSD) && defined(STBI_NO_TGA) && defined(STBI_NO_GIF) && defined(STBI_NO_PIC) && defined(STBI_NO_PNM)
+#if defined(STBI_NO_PNG) && defined(STBI_NO_BMP) && defined(STBI_NO_PSD) && defined(STBI_NO_TGA) && defined(STBI_NO_GIF) && defined(STBI_NO_PIC) && defined(STBI_NO_PNM)  // 条件编译
 // nothing
-#else
-static unsigned char *stbi__convert_format(unsigned char *data, int img_n, int req_comp, unsigned int x, unsigned int y)
+#else  // 否则
+static unsigned char *stbi__convert_format(unsigned char *data, int img_n, int req_comp, unsigned int x, unsigned int y)  // stbi__convert_format
 {
    int i,j;
    unsigned char *good;
@@ -1761,15 +1761,15 @@ static unsigned char *stbi__convert_format(unsigned char *data, int img_n, int r
    good = (unsigned char *) stbi__malloc_mad3(req_comp, x, y, 0);
    if (good == NULL) {
       STBI_FREE(data);
-      return stbi__errpuc("outofmem", "Out of memory");
+      return stbi__errpuc("outofmem", "Out of memory");  // stbi__errpuc
    }
 
    for (j=0; j < (int) y; ++j) {
       unsigned char *src  = data + j * x * img_n   ;
       unsigned char *dest = good + j * x * req_comp;
 
-      #define STBI__COMBO(a,b)  ((a)*8+(b))
-      #define STBI__CASE(a,b)   case STBI__COMBO(a,b): for(i=x-1; i >= 0; --i, src += a, dest += b)
+      #define STBI__COMBO(a,b)  ((a)*8+(b))  // 宏定义 STBI__COMBO
+      #define STBI__CASE(a,b)   case STBI__COMBO(a,b): for(i=x-1; i >= 0; --i, src += a, dest += b)  // 宏定义 STBI__CASE
       // convert source image with img_n components to one with req_comp components;
       // avoid switch per pixel, so use switch per scanline and massive macros
       switch (STBI__COMBO(img_n, req_comp)) {
@@ -1791,23 +1791,23 @@ static unsigned char *stbi__convert_format(unsigned char *data, int img_n, int r
    }
 
    STBI_FREE(data);
-   return good;
+   return good;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(STBI_NO_PNG) && defined(STBI_NO_PSD)
+#if defined(STBI_NO_PNG) && defined(STBI_NO_PSD)  // 条件编译
 // nothing
-#else
-static stbi__uint16 stbi__compute_y_16(int r, int g, int b)
+#else  // 否则
+static stbi__uint16 stbi__compute_y_16(int r, int g, int b)  // stbi__compute_y_16
 {
    return (stbi__uint16) (((r*77) + (g*150) +  (29*b)) >> 8);
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(STBI_NO_PNG) && defined(STBI_NO_PSD)
+#if defined(STBI_NO_PNG) && defined(STBI_NO_PSD)  // 条件编译
 // nothing
-#else
-static stbi__uint16 *stbi__convert_format16(stbi__uint16 *data, int img_n, int req_comp, unsigned int x, unsigned int y)
+#else  // 否则
+static stbi__uint16 *stbi__convert_format16(stbi__uint16 *data, int img_n, int req_comp, unsigned int x, unsigned int y)  // stbi__convert_format16
 {
    int i,j;
    stbi__uint16 *good;
@@ -1825,8 +1825,8 @@ static stbi__uint16 *stbi__convert_format16(stbi__uint16 *data, int img_n, int r
       stbi__uint16 *src  = data + j * x * img_n   ;
       stbi__uint16 *dest = good + j * x * req_comp;
 
-      #define STBI__COMBO(a,b)  ((a)*8+(b))
-      #define STBI__CASE(a,b)   case STBI__COMBO(a,b): for(i=x-1; i >= 0; --i, src += a, dest += b)
+      #define STBI__COMBO(a,b)  ((a)*8+(b))  // 宏定义 STBI__COMBO
+      #define STBI__CASE(a,b)   case STBI__COMBO(a,b): for(i=x-1; i >= 0; --i, src += a, dest += b)  // 宏定义 STBI__CASE
       // convert source image with img_n components to one with req_comp components;
       // avoid switch per pixel, so use switch per scanline and massive macros
       switch (STBI__COMBO(img_n, req_comp)) {
@@ -1848,12 +1848,12 @@ static stbi__uint16 *stbi__convert_format16(stbi__uint16 *data, int img_n, int r
    }
 
    STBI_FREE(data);
-   return good;
+   return good;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_LINEAR
-static float   *stbi__ldr_to_hdr(stbi_uc *data, int x, int y, int comp)
+#ifndef STBI_NO_LINEAR  // 如果未定义 STBI_NO_LINEAR 则编译
+static float   *stbi__ldr_to_hdr(stbi_uc *data, int x, int y, int comp)  // stbi__ldr_to_hdr
 {
    int i,k,n;
    float *output;
@@ -1873,13 +1873,13 @@ static float   *stbi__ldr_to_hdr(stbi_uc *data, int x, int y, int comp)
       }
    }
    STBI_FREE(data);
-   return output;
+   return output;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_HDR
-#define stbi__float2int(x)   ((int) (x))
-static stbi_uc *stbi__hdr_to_ldr(float   *data, int x, int y, int comp)
+#ifndef STBI_NO_HDR  // 如果未定义 STBI_NO_HDR 则编译
+#define stbi__float2int(x)   ((int) (x))  // 宏定义 stbi__float2int
+static stbi_uc *stbi__hdr_to_ldr(float   *data, int x, int y, int comp)  // stbi__hdr_to_ldr
 {
    int i,k,n;
    stbi_uc *output;
@@ -1903,9 +1903,9 @@ static stbi_uc *stbi__hdr_to_ldr(float   *data, int x, int y, int comp)
       }
    }
    STBI_FREE(data);
-   return output;
+   return output;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -1928,12 +1928,12 @@ static stbi_uc *stbi__hdr_to_ldr(float   *data, int x, int y, int comp)
 //      - some SIMD kernels for common paths on targets with SSE2/NEON
 //      - uses a lot of intermediate memory, could cache poorly
 
-#ifndef STBI_NO_JPEG
+#ifndef STBI_NO_JPEG  // 如果未定义 STBI_NO_JPEG 则编译
 
 // huffman decoding acceleration
-#define FAST_BITS   9  // larger handles more cases; smaller stomps less cache
+#define FAST_BITS   9  // larger handles more cases; smaller stomps less cache  // 宏定义 FAST_BITS
 
-typedef struct
+typedef struct  // 类型定义
 {
    stbi_uc  fast[1 << FAST_BITS];
    // weirdly, repacking this into AoS is a 10% speed loss, instead of a win
@@ -1944,7 +1944,7 @@ typedef struct
    int    delta[17];   // old 'firstsymbol' - old 'firstcode'
 } stbi__huffman;
 
-typedef struct
+typedef struct  // 类型定义
 {
    stbi__context *s;
    stbi__huffman huff_dc[4];
@@ -1998,7 +1998,7 @@ typedef struct
    stbi_uc *(*resample_row_hv_2_kernel)(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs);
 } stbi__jpeg;
 
-static int stbi__build_huffman(stbi__huffman *h, int *count)
+static int stbi__build_huffman(stbi__huffman *h, int *count)  // stbi__build_huffman
 {
    int i,j,k=0;
    unsigned int code;
@@ -2040,12 +2040,12 @@ static int stbi__build_huffman(stbi__huffman *h, int *count)
          }
       }
    }
-   return 1;
+   return 1;  // 返回
 }
 
 // build a table that decodes both magnitude and value of small ACs in
 // one go.
-static void stbi__build_fast_ac(stbi__int16 *fast_ac, stbi__huffman *h)
+static void stbi__build_fast_ac(stbi__int16 *fast_ac, stbi__huffman *h)  // stbi__build_fast_ac
 {
    int i;
    for (i=0; i < (1 << FAST_BITS); ++i) {
@@ -2070,7 +2070,7 @@ static void stbi__build_fast_ac(stbi__int16 *fast_ac, stbi__huffman *h)
    }
 }
 
-static void stbi__grow_buffer_unsafe(stbi__jpeg *j)
+static void stbi__grow_buffer_unsafe(stbi__jpeg *j)  // stbi__grow_buffer_unsafe
 {
    do {
       unsigned int b = j->nomore ? 0 : stbi__get8(j->s);
@@ -2080,7 +2080,7 @@ static void stbi__grow_buffer_unsafe(stbi__jpeg *j)
          if (c != 0) {
             j->marker = (unsigned char) c;
             j->nomore = 1;
-            return;
+            return;  // 返回
          }
       }
       j->code_buffer |= b << (24 - j->code_bits);
@@ -2106,10 +2106,10 @@ stbi_inline static int stbi__jpeg_huff_decode(stbi__jpeg *j, stbi__huffman *h)
    if (k < 255) {
       int s = h->size[k];
       if (s > j->code_bits)
-         return -1;
+         return -1;  // 返回
       j->code_buffer <<= s;
       j->code_bits -= s;
-      return h->values[k];
+      return h->values[k];  // 返回
    }
 
    // naive test is to shift the code_buffer down so k bits are
@@ -2125,22 +2125,22 @@ stbi_inline static int stbi__jpeg_huff_decode(stbi__jpeg *j, stbi__huffman *h)
    if (k == 17) {
       // error! code not found
       j->code_bits -= 16;
-      return -1;
+      return -1;  // 返回
    }
 
    if (k > j->code_bits)
-      return -1;
+      return -1;  // 返回
 
    // convert the huffman code to the symbol id
    c = ((j->code_buffer >> (32 - k)) & stbi__bmask[k]) + h->delta[k];
    if(c < 0 || c >= 256) // symbol id out of bounds!
-       return -1;
+       return -1;  // 返回
    STBI_ASSERT((((j->code_buffer) >> (32 - h->size[c])) & stbi__bmask[h->size[c]]) == h->code[c]);
 
    // convert the id to a symbol
    j->code_bits -= k;
    j->code_buffer <<= k;
-   return h->values[c];
+   return h->values[c];  // 返回
 }
 
 // bias[n] = (-1<<n) + 1
@@ -2173,7 +2173,7 @@ stbi_inline static int stbi__jpeg_get_bits(stbi__jpeg *j, int n)
    j->code_buffer = k & ~stbi__bmask[n];
    k &= stbi__bmask[n];
    j->code_bits -= n;
-   return k;
+   return k;  // 返回
 }
 
 stbi_inline static int stbi__jpeg_get_bit(stbi__jpeg *j)
@@ -2184,7 +2184,7 @@ stbi_inline static int stbi__jpeg_get_bit(stbi__jpeg *j)
    k = j->code_buffer;
    j->code_buffer <<= 1;
    --j->code_bits;
-   return k & 0x80000000;
+   return k & 0x80000000;  // 返回
 }
 
 // given a value that's at position X in the zigzag stream,
@@ -2205,7 +2205,7 @@ static const stbi_uc stbi__jpeg_dezigzag[64+15] =
 };
 
 // decode one 64-entry block--
-static int stbi__jpeg_decode_block(stbi__jpeg *j, short data[64], stbi__huffman *hdc, stbi__huffman *hac, stbi__int16 *fac, int b, stbi__uint16 *dequant)
+static int stbi__jpeg_decode_block(stbi__jpeg *j, short data[64], stbi__huffman *hdc, stbi__huffman *hac, stbi__int16 *fac, int b, stbi__uint16 *dequant)  // stbi__jpeg_decode_block
 {
    int diff,dc,k;
    int t;
@@ -2257,10 +2257,10 @@ static int stbi__jpeg_decode_block(stbi__jpeg *j, short data[64], stbi__huffman 
          }
       }
    } while (k < 64);
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__jpeg_decode_block_prog_dc(stbi__jpeg *j, short data[64], stbi__huffman *hdc, int b)
+static int stbi__jpeg_decode_block_prog_dc(stbi__jpeg *j, short data[64], stbi__huffman *hdc, int b)  // stbi__jpeg_decode_block_prog_dc
 {
    int diff,dc;
    int t;
@@ -2285,12 +2285,12 @@ static int stbi__jpeg_decode_block_prog_dc(stbi__jpeg *j, short data[64], stbi__
       if (stbi__jpeg_get_bit(j))
          data[0] += (short) (1 << j->succ_low);
    }
-   return 1;
+   return 1;  // 返回
 }
 
 // @OPTIMIZE: store non-zigzagged during the decode passes,
 // and only de-zigzag when dequantizing
-static int stbi__jpeg_decode_block_prog_ac(stbi__jpeg *j, short data[64], stbi__huffman *hac, stbi__int16 *fac)
+static int stbi__jpeg_decode_block_prog_ac(stbi__jpeg *j, short data[64], stbi__huffman *hac, stbi__int16 *fac)  // stbi__jpeg_decode_block_prog_ac
 {
    int k;
    if (j->spec_start == 0) return stbi__err("can't merge dc and ac", "Corrupt JPEG");
@@ -2300,7 +2300,7 @@ static int stbi__jpeg_decode_block_prog_ac(stbi__jpeg *j, short data[64], stbi__
 
       if (j->eob_run) {
          --j->eob_run;
-         return 1;
+         return 1;  // 返回
       }
 
       k = j->spec_start;
@@ -2407,7 +2407,7 @@ static int stbi__jpeg_decode_block_prog_ac(stbi__jpeg *j, short data[64], stbi__
          } while (k <= j->spec_end);
       }
    }
-   return 1;
+   return 1;  // 返回
 }
 
 // take a -128..127 value and stbi__clamp it and convert to 0..255
@@ -2421,8 +2421,8 @@ stbi_inline static stbi_uc stbi__clamp(int x)
    return (stbi_uc) x;
 }
 
-#define stbi__f2f(x)  ((int) (((x) * 4096 + 0.5)))
-#define stbi__fsh(x)  ((x) * 4096)
+#define stbi__f2f(x)  ((int) (((x) * 4096 + 0.5)))  // 宏定义 stbi__f2f
+#define stbi__fsh(x)  ((x) * 4096)  // 宏定义 stbi__fsh
 
 // derived from jidctint -- DCT_ISLOW
 #define STBI__IDCT_1D(s0,s1,s2,s3,s4,s5,s6,s7) \
@@ -2462,7 +2462,7 @@ stbi_inline static stbi_uc stbi__clamp(int x)
    t1 += p2+p4;                                \
    t0 += p1+p3;
 
-static void stbi__idct_block(stbi_uc *out, int out_stride, short data[64])
+static void stbi__idct_block(stbi_uc *out, int out_stride, short data[64])  // stbi__idct_block
 {
    int i,val[64],*v=val;
    stbi_uc *o;
@@ -2521,18 +2521,18 @@ static void stbi__idct_block(stbi_uc *out, int out_stride, short data[64])
    }
 }
 
-#ifdef STBI_SSE2
+#ifdef STBI_SSE2  // 如果定义了 STBI_SSE2 则编译
 // sse2 integer IDCT. not the fastest possible implementation but it
 // produces bit-identical results to the generic C version so it's
 // fully "transparent".
-static void stbi__idct_simd(stbi_uc *out, int out_stride, short data[64])
+static void stbi__idct_simd(stbi_uc *out, int out_stride, short data[64])  // stbi__idct_simd
 {
    // This is constructed to match our regular (generic) integer IDCT exactly.
    __m128i row0, row1, row2, row3, row4, row5, row6, row7;
    __m128i tmp;
 
    // dot product constant: even elems=x, odd elems=y
-   #define dct_const(x,y)  _mm_setr_epi16((x),(y),(x),(y),(x),(y),(x),(y))
+   #define dct_const(x,y)  _mm_setr_epi16((x),(y),(x),(y),(x),(y),(x),(y))  // 宏定义 dct_const
 
    // out(0) = c0[even]*x + c0[odd]*y   (c0, x, y 16-bit, out 32-bit)
    // out(1) = c1[even]*x + c1[odd]*y
@@ -2700,13 +2700,13 @@ static void stbi__idct_simd(stbi_uc *out, int out_stride, short data[64])
 #undef dct_pass
 }
 
-#endif // STBI_SSE2
+#endif // STBI_SSE2  // 条件编译结束
 
-#ifdef STBI_NEON
+#ifdef STBI_NEON  // 如果定义了 STBI_NEON 则编译
 
 // NEON integer IDCT. should produce bit-identical
 // results to the generic C version.
-static void stbi__idct_simd(stbi_uc *out, int out_stride, short data[64])
+static void stbi__idct_simd(stbi_uc *out, int out_stride, short data[64])  // stbi__idct_simd
 {
    int16x8_t row0, row1, row2, row3, row4, row5, row6, row7;
 
@@ -2814,9 +2814,9 @@ static void stbi__idct_simd(stbi_uc *out, int out_stride, short data[64])
    {
 // these three map to a single VTRN.16, VTRN.32, and VSWP, respectively.
 // whether compilers actually get this is another story, sadly.
-#define dct_trn16(x, y) { int16x8x2_t t = vtrnq_s16(x, y); x = t.val[0]; y = t.val[1]; }
-#define dct_trn32(x, y) { int32x4x2_t t = vtrnq_s32(vreinterpretq_s32_s16(x), vreinterpretq_s32_s16(y)); x = vreinterpretq_s16_s32(t.val[0]); y = vreinterpretq_s16_s32(t.val[1]); }
-#define dct_trn64(x, y) { int16x8_t x0 = x; int16x8_t y0 = y; x = vcombine_s16(vget_low_s16(x0), vget_low_s16(y0)); y = vcombine_s16(vget_high_s16(x0), vget_high_s16(y0)); }
+#define dct_trn16(x, y) { int16x8x2_t t = vtrnq_s16(x, y); x = t.val[0]; y = t.val[1]; }  // 宏定义 dct_trn16
+#define dct_trn32(x, y) { int32x4x2_t t = vtrnq_s32(vreinterpretq_s32_s16(x), vreinterpretq_s32_s16(y)); x = vreinterpretq_s16_s32(t.val[0]); y = vreinterpretq_s16_s32(t.val[1]); }  // 宏定义 dct_trn32
+#define dct_trn64(x, y) { int16x8_t x0 = x; int16x8_t y0 = y; x = vcombine_s16(vget_low_s16(x0), vget_low_s16(y0)); y = vcombine_s16(vget_high_s16(x0), vget_high_s16(y0)); }  // 宏定义 dct_trn64
 
       // pass 1
       dct_trn16(row0, row1); // a0b0a2b2a4b4a6b6
@@ -2859,9 +2859,9 @@ static void stbi__idct_simd(stbi_uc *out, int out_stride, short data[64])
       uint8x8_t p7 = vqrshrun_n_s16(row7, 1);
 
       // again, these can translate into one instruction, but often don't.
-#define dct_trn8_8(x, y) { uint8x8x2_t t = vtrn_u8(x, y); x = t.val[0]; y = t.val[1]; }
-#define dct_trn8_16(x, y) { uint16x4x2_t t = vtrn_u16(vreinterpret_u16_u8(x), vreinterpret_u16_u8(y)); x = vreinterpret_u8_u16(t.val[0]); y = vreinterpret_u8_u16(t.val[1]); }
-#define dct_trn8_32(x, y) { uint32x2x2_t t = vtrn_u32(vreinterpret_u32_u8(x), vreinterpret_u32_u8(y)); x = vreinterpret_u8_u32(t.val[0]); y = vreinterpret_u8_u32(t.val[1]); }
+#define dct_trn8_8(x, y) { uint8x8x2_t t = vtrn_u8(x, y); x = t.val[0]; y = t.val[1]; }  // 宏定义 dct_trn8_8
+#define dct_trn8_16(x, y) { uint16x4x2_t t = vtrn_u16(vreinterpret_u16_u8(x), vreinterpret_u16_u8(y)); x = vreinterpret_u8_u16(t.val[0]); y = vreinterpret_u8_u16(t.val[1]); }  // 宏定义 dct_trn8_16
+#define dct_trn8_32(x, y) { uint32x2x2_t t = vtrn_u32(vreinterpret_u32_u8(x), vreinterpret_u32_u8(y)); x = vreinterpret_u8_u32(t.val[0]); y = vreinterpret_u8_u32(t.val[1]); }  // 宏定义 dct_trn8_32
 
       // sadly can't use interleaved stores here since we only write
       // 8 bytes to each scan line!
@@ -2908,13 +2908,13 @@ static void stbi__idct_simd(stbi_uc *out, int out_stride, short data[64])
 #undef dct_pass
 }
 
-#endif // STBI_NEON
+#endif // STBI_NEON  // 条件编译结束
 
-#define STBI__MARKER_none  0xff
+#define STBI__MARKER_none  0xff  // 宏定义 STBI__MARKER_none
 // if there's a pending marker from the entropy stream, return that
 // otherwise, fetch from the stream and get a marker. if there's no
 // marker, return 0xff, which is never a valid marker value
-static stbi_uc stbi__get_marker(stbi__jpeg *j)
+static stbi_uc stbi__get_marker(stbi__jpeg *j)  // stbi__get_marker
 {
    stbi_uc x;
    if (j->marker != STBI__MARKER_none) { x = j->marker; j->marker = STBI__MARKER_none; return x; }
@@ -2922,16 +2922,16 @@ static stbi_uc stbi__get_marker(stbi__jpeg *j)
    if (x != 0xff) return STBI__MARKER_none;
    while (x == 0xff)
       x = stbi__get8(j->s); // consume repeated 0xff fill bytes
-   return x;
+   return x;  // 返回
 }
 
 // in each scan, we'll have scan_n components, and the order
 // of the components is specified by order[]
-#define STBI__RESTART(x)     ((x) >= 0xd0 && (x) <= 0xd7)
+#define STBI__RESTART(x)     ((x) >= 0xd0 && (x) <= 0xd7)  // 宏定义 STBI__RESTART
 
 // after a restart interval, stbi__jpeg_reset the entropy decoder and
 // the dc prediction
-static void stbi__jpeg_reset(stbi__jpeg *j)
+static void stbi__jpeg_reset(stbi__jpeg *j)  // stbi__jpeg_reset
 {
    j->code_bits = 0;
    j->code_buffer = 0;
@@ -2944,7 +2944,7 @@ static void stbi__jpeg_reset(stbi__jpeg *j)
    // since we don't even allow 1<<30 pixels
 }
 
-static int stbi__parse_entropy_coded_data(stbi__jpeg *z)
+static int stbi__parse_entropy_coded_data(stbi__jpeg *z)  // stbi__parse_entropy_coded_data
 {
    stbi__jpeg_reset(z);
    if (!z->progressive) {
@@ -2973,7 +2973,7 @@ static int stbi__parse_entropy_coded_data(stbi__jpeg *z)
                }
             }
          }
-         return 1;
+         return 1;  // 返回
       } else { // interleaved
          int i,j,k,x,y;
          STBI_SIMD_ALIGN(short, data[64]);
@@ -3003,7 +3003,7 @@ static int stbi__parse_entropy_coded_data(stbi__jpeg *z)
                }
             }
          }
-         return 1;
+         return 1;  // 返回
       }
    } else {
       if (z->scan_n == 1) {
@@ -3020,11 +3020,11 @@ static int stbi__parse_entropy_coded_data(stbi__jpeg *z)
                short *data = z->img_comp[n].coeff + 64 * (i + j * z->img_comp[n].coeff_w);
                if (z->spec_start == 0) {
                   if (!stbi__jpeg_decode_block_prog_dc(z, data, &z->huff_dc[z->img_comp[n].hd], n))
-                     return 0;
+                     return 0;  // 返回
                } else {
                   int ha = z->img_comp[n].ha;
                   if (!stbi__jpeg_decode_block_prog_ac(z, data, &z->huff_ac[ha], z->fast_ac[ha]))
-                     return 0;
+                     return 0;  // 返回
                }
                // every data block is an MCU, so countdown the restart interval
                if (--z->todo <= 0) {
@@ -3034,7 +3034,7 @@ static int stbi__parse_entropy_coded_data(stbi__jpeg *z)
                }
             }
          }
-         return 1;
+         return 1;  // 返回
       } else { // interleaved
          int i,j,k,x,y;
          for (j=0; j < z->img_mcu_y; ++j) {
@@ -3050,7 +3050,7 @@ static int stbi__parse_entropy_coded_data(stbi__jpeg *z)
                         int y2 = (j*z->img_comp[n].v + y);
                         short *data = z->img_comp[n].coeff + 64 * (x2 + y2 * z->img_comp[n].coeff_w);
                         if (!stbi__jpeg_decode_block_prog_dc(z, data, &z->huff_dc[z->img_comp[n].hd], n))
-                           return 0;
+                           return 0;  // 返回
                      }
                   }
                }
@@ -3063,19 +3063,19 @@ static int stbi__parse_entropy_coded_data(stbi__jpeg *z)
                }
             }
          }
-         return 1;
+         return 1;  // 返回
       }
    }
 }
 
-static void stbi__jpeg_dequantize(short *data, stbi__uint16 *dequant)
+static void stbi__jpeg_dequantize(short *data, stbi__uint16 *dequant)  // stbi__jpeg_dequantize
 {
    int i;
    for (i=0; i < 64; ++i)
       data[i] *= dequant[i];
 }
 
-static void stbi__jpeg_finish(stbi__jpeg *z)
+static void stbi__jpeg_finish(stbi__jpeg *z)  // stbi__jpeg_finish
 {
    if (z->progressive) {
       // dequantize and idct the data
@@ -3094,17 +3094,17 @@ static void stbi__jpeg_finish(stbi__jpeg *z)
    }
 }
 
-static int stbi__process_marker(stbi__jpeg *z, int m)
+static int stbi__process_marker(stbi__jpeg *z, int m)  // stbi__process_marker
 {
    int L;
    switch (m) {
       case STBI__MARKER_none: // no marker found
-         return stbi__err("expected marker","Corrupt JPEG");
+         return stbi__err("expected marker","Corrupt JPEG");  // stbi__err
 
       case 0xDD: // DRI - specify restart interval
          if (stbi__get16be(z->s) != 4) return stbi__err("bad DRI len","Corrupt JPEG");
          z->restart_interval = stbi__get16be(z->s);
-         return 1;
+         return 1;  // 返回
 
       case 0xDB: // DQT - define quantization table
          L = stbi__get16be(z->s)-2;
@@ -3119,7 +3119,7 @@ static int stbi__process_marker(stbi__jpeg *z, int m)
                z->dequant[t][stbi__jpeg_dezigzag[i]] = (stbi__uint16)(sixteen ? stbi__get16be(z->s) : stbi__get8(z->s));
             L -= (sixteen ? 129 : 65);
          }
-         return L==0;
+         return L==0;  // 返回
 
       case 0xC4: // DHT - define huffman table
          L = stbi__get16be(z->s)-2;
@@ -3149,7 +3149,7 @@ static int stbi__process_marker(stbi__jpeg *z, int m)
                stbi__build_fast_ac(z->fast_ac[th], z->huff_ac + th);
             L -= n;
          }
-         return L==0;
+         return L==0;  // 返回
    }
 
    // check for comment block or APP blocks
@@ -3157,9 +3157,9 @@ static int stbi__process_marker(stbi__jpeg *z, int m)
       L = stbi__get16be(z->s);
       if (L < 2) {
          if (m == 0xFE)
-            return stbi__err("bad COM len","Corrupt JPEG");
+            return stbi__err("bad COM len","Corrupt JPEG");  // stbi__err
          else
-            return stbi__err("bad APP len","Corrupt JPEG");
+            return stbi__err("bad APP len","Corrupt JPEG");  // stbi__err
       }
       L -= 2;
 
@@ -3191,14 +3191,14 @@ static int stbi__process_marker(stbi__jpeg *z, int m)
       }
 
       stbi__skip(z->s, L);
-      return 1;
+      return 1;  // 返回
    }
 
-   return stbi__err("unknown marker","Corrupt JPEG");
+   return stbi__err("unknown marker","Corrupt JPEG");  // stbi__err
 }
 
 // after we see SOS
-static int stbi__process_scan_header(stbi__jpeg *z)
+static int stbi__process_scan_header(stbi__jpeg *z)  // stbi__process_scan_header
 {
    int i;
    int Ls = stbi__get16be(z->s);
@@ -3226,7 +3226,7 @@ static int stbi__process_scan_header(stbi__jpeg *z)
       z->succ_low  = (aa & 15);
       if (z->progressive) {
          if (z->spec_start > 63 || z->spec_end > 63  || z->spec_start > z->spec_end || z->succ_high > 13 || z->succ_low > 13)
-            return stbi__err("bad SOS", "Corrupt JPEG");
+            return stbi__err("bad SOS", "Corrupt JPEG");  // stbi__err
       } else {
          if (z->spec_start != 0) return stbi__err("bad SOS","Corrupt JPEG");
          if (z->succ_high != 0 || z->succ_low != 0) return stbi__err("bad SOS","Corrupt JPEG");
@@ -3234,10 +3234,10 @@ static int stbi__process_scan_header(stbi__jpeg *z)
       }
    }
 
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__free_jpeg_components(stbi__jpeg *z, int ncomp, int why)
+static int stbi__free_jpeg_components(stbi__jpeg *z, int ncomp, int why)  // stbi__free_jpeg_components
 {
    int i;
    for (i=0; i < ncomp; ++i) {
@@ -3256,10 +3256,10 @@ static int stbi__free_jpeg_components(stbi__jpeg *z, int ncomp, int why)
          z->img_comp[i].linebuf = NULL;
       }
    }
-   return why;
+   return why;  // 返回
 }
 
-static int stbi__process_frame_header(stbi__jpeg *z, int scan)
+static int stbi__process_frame_header(stbi__jpeg *z, int scan)  // stbi__process_frame_header
 {
    stbi__context *s = z->s;
    int Lf,p,i,q, h_max=1,v_max=1,c;
@@ -3334,7 +3334,7 @@ static int stbi__process_frame_header(stbi__jpeg *z, int scan)
       z->img_comp[i].linebuf = NULL;
       z->img_comp[i].raw_data = stbi__malloc_mad2(z->img_comp[i].w2, z->img_comp[i].h2, 15);
       if (z->img_comp[i].raw_data == NULL)
-         return stbi__free_jpeg_components(z, i+1, stbi__err("outofmem", "Out of memory"));
+         return stbi__free_jpeg_components(z, i+1, stbi__err("outofmem", "Out of memory"));  // stbi__free_jpeg_components
       // align blocks for idct using mmx/sse
       z->img_comp[i].data = (stbi_uc*) (((size_t) z->img_comp[i].raw_data + 15) & ~15);
       if (z->progressive) {
@@ -3343,24 +3343,24 @@ static int stbi__process_frame_header(stbi__jpeg *z, int scan)
          z->img_comp[i].coeff_h = z->img_comp[i].h2 / 8;
          z->img_comp[i].raw_coeff = stbi__malloc_mad3(z->img_comp[i].w2, z->img_comp[i].h2, sizeof(short), 15);
          if (z->img_comp[i].raw_coeff == NULL)
-            return stbi__free_jpeg_components(z, i+1, stbi__err("outofmem", "Out of memory"));
+            return stbi__free_jpeg_components(z, i+1, stbi__err("outofmem", "Out of memory"));  // stbi__free_jpeg_components
          z->img_comp[i].coeff = (short*) (((size_t) z->img_comp[i].raw_coeff + 15) & ~15);
       }
    }
 
-   return 1;
+   return 1;  // 返回
 }
 
 // use comparisons since in some cases we handle more than one case (e.g. SOF)
-#define stbi__DNL(x)         ((x) == 0xdc)
-#define stbi__SOI(x)         ((x) == 0xd8)
-#define stbi__EOI(x)         ((x) == 0xd9)
-#define stbi__SOF(x)         ((x) == 0xc0 || (x) == 0xc1 || (x) == 0xc2)
-#define stbi__SOS(x)         ((x) == 0xda)
+#define stbi__DNL(x)         ((x) == 0xdc)  // 宏定义 stbi__DNL
+#define stbi__SOI(x)         ((x) == 0xd8)  // 宏定义 stbi__SOI
+#define stbi__EOI(x)         ((x) == 0xd9)  // 宏定义 stbi__EOI
+#define stbi__SOF(x)         ((x) == 0xc0 || (x) == 0xc1 || (x) == 0xc2)  // 宏定义 stbi__SOF
+#define stbi__SOS(x)         ((x) == 0xda)  // 宏定义 stbi__SOS
 
-#define stbi__SOF_progressive(x)   ((x) == 0xc2)
+#define stbi__SOF_progressive(x)   ((x) == 0xc2)  // 宏定义 stbi__SOF_progressive
 
-static int stbi__decode_jpeg_header(stbi__jpeg *z, int scan)
+static int stbi__decode_jpeg_header(stbi__jpeg *z, int scan)  // stbi__decode_jpeg_header
 {
    int m;
    z->jfif = 0;
@@ -3381,10 +3381,10 @@ static int stbi__decode_jpeg_header(stbi__jpeg *z, int scan)
    }
    z->progressive = stbi__SOF_progressive(m);
    if (!stbi__process_frame_header(z, scan)) return 0;
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__skip_jpeg_junk_at_end(stbi__jpeg *j)
+static int stbi__skip_jpeg_junk_at_end(stbi__jpeg *j)  // stbi__skip_jpeg_junk_at_end
 {
    // some JPEGs have junk at end, skip over it but if we find what looks
    // like a valid marker, resume there
@@ -3396,18 +3396,18 @@ static int stbi__skip_jpeg_junk_at_end(stbi__jpeg *j)
          if (x != 0x00 && x != 0xff) {
             // not a stuffed zero or lead-in to another marker, looks
             // like an actual marker, return it
-            return x;
+            return x;  // 返回
          }
          // stuffed zero has x=0 now which ends the loop, meaning we go
          // back to regular scan loop.
          // repeated 0xff keeps trying to read the next byte of the marker.
       }
    }
-   return STBI__MARKER_none;
+   return STBI__MARKER_none;  // 返回
 }
 
 // decode image to YCbCr format
-static int stbi__decode_jpeg_image(stbi__jpeg *j)
+static int stbi__decode_jpeg_image(stbi__jpeg *j)  // stbi__decode_jpeg_image
 {
    int m;
    for (m = 0; m < 4; m++) {
@@ -3441,36 +3441,36 @@ static int stbi__decode_jpeg_image(stbi__jpeg *j)
    }
    if (j->progressive)
       stbi__jpeg_finish(j);
-   return 1;
+   return 1;  // 返回
 }
 
 // static jfif-centered resampling (across block boundaries)
 
-typedef stbi_uc *(*resample_row_func)(stbi_uc *out, stbi_uc *in0, stbi_uc *in1,
+typedef stbi_uc *(*resample_row_func)(stbi_uc *out, stbi_uc *in0, stbi_uc *in1,  // 类型定义
                                     int w, int hs);
 
-#define stbi__div4(x) ((stbi_uc) ((x) >> 2))
+#define stbi__div4(x) ((stbi_uc) ((x) >> 2))  // 宏定义 stbi__div4
 
-static stbi_uc *resample_row_1(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)
+static stbi_uc *resample_row_1(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)  // resample_row_1
 {
    STBI_NOTUSED(out);
    STBI_NOTUSED(in_far);
    STBI_NOTUSED(w);
    STBI_NOTUSED(hs);
-   return in_near;
+   return in_near;  // 返回
 }
 
-static stbi_uc* stbi__resample_row_v_2(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)
+static stbi_uc* stbi__resample_row_v_2(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)  // stbi__resample_row_v_2
 {
    // need to generate two samples vertically for every one in input
    int i;
    STBI_NOTUSED(hs);
    for (i=0; i < w; ++i)
       out[i] = stbi__div4(3*in_near[i] + in_far[i] + 2);
-   return out;
+   return out;  // 返回
 }
 
-static stbi_uc*  stbi__resample_row_h_2(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)
+static stbi_uc*  stbi__resample_row_h_2(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)  // stbi__resample_row_h_2
 {
    // need to generate two samples horizontally for every one in input
    int i;
@@ -3479,7 +3479,7 @@ static stbi_uc*  stbi__resample_row_h_2(stbi_uc *out, stbi_uc *in_near, stbi_uc 
    if (w == 1) {
       // if only one sample, can't do any interpolation
       out[0] = out[1] = input[0];
-      return out;
+      return out;  // 返回
    }
 
    out[0] = input[0];
@@ -3495,18 +3495,18 @@ static stbi_uc*  stbi__resample_row_h_2(stbi_uc *out, stbi_uc *in_near, stbi_uc 
    STBI_NOTUSED(in_far);
    STBI_NOTUSED(hs);
 
-   return out;
+   return out;  // 返回
 }
 
-#define stbi__div16(x) ((stbi_uc) ((x) >> 4))
+#define stbi__div16(x) ((stbi_uc) ((x) >> 4))  // 宏定义 stbi__div16
 
-static stbi_uc *stbi__resample_row_hv_2(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)
+static stbi_uc *stbi__resample_row_hv_2(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)  // stbi__resample_row_hv_2
 {
    // need to generate 2x2 samples for every one in input
    int i,t0,t1;
    if (w == 1) {
       out[0] = out[1] = stbi__div4(3*in_near[0] + in_far[0] + 2);
-      return out;
+      return out;  // 返回
    }
 
    t1 = 3*in_near[0] + in_far[0];
@@ -3521,18 +3521,18 @@ static stbi_uc *stbi__resample_row_hv_2(stbi_uc *out, stbi_uc *in_near, stbi_uc 
 
    STBI_NOTUSED(hs);
 
-   return out;
+   return out;  // 返回
 }
 
-#if defined(STBI_SSE2) || defined(STBI_NEON)
-static stbi_uc *stbi__resample_row_hv_2_simd(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)
+#if defined(STBI_SSE2) || defined(STBI_NEON)  // 条件编译
+static stbi_uc *stbi__resample_row_hv_2_simd(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)  // stbi__resample_row_hv_2_simd
 {
    // need to generate 2x2 samples for every one in input
    int i=0,t0,t1;
 
    if (w == 1) {
       out[0] = out[1] = stbi__div4(3*in_near[0] + in_far[0] + 2);
-      return out;
+      return out;  // 返回
    }
 
    t1 = 3*in_near[0] + in_far[0];
@@ -3540,7 +3540,7 @@ static stbi_uc *stbi__resample_row_hv_2_simd(stbi_uc *out, stbi_uc *in_near, stb
    // note we can't handle the last pixel in a row in this loop
    // because we need to handle the filter boundary conditions.
    for (; i < ((w-1) & ~7); i += 8) {
-#if defined(STBI_SSE2)
+#if defined(STBI_SSE2)  // 条件编译
       // load and perform the vertical filtering pass
       // this uses 3*x + y = 4*x + (y - x)
       __m128i zero  = _mm_setzero_si128();
@@ -3583,7 +3583,7 @@ static stbi_uc *stbi__resample_row_hv_2_simd(stbi_uc *out, stbi_uc *in_near, stb
       // pack and write output
       __m128i outv = _mm_packus_epi16(de0, de1);
       _mm_storeu_si128((__m128i *) (out + i*2), outv);
-#elif defined(STBI_NEON)
+#elif defined(STBI_NEON)  // 否则如果
       // load and perform the vertical filtering pass
       // this uses 3*x + y = 4*x + (y - x)
       uint8x8_t farb  = vld1_u8(in_far + i);
@@ -3617,7 +3617,7 @@ static stbi_uc *stbi__resample_row_hv_2_simd(stbi_uc *out, stbi_uc *in_near, stb
       o.val[0] = vqrshrun_n_s16(even, 4);
       o.val[1] = vqrshrun_n_s16(odd,  4);
       vst2_u8(out + i*2, o);
-#endif
+#endif  // 条件编译结束
 
       // "previous" value for next iter
       t1 = 3*in_near[i+7] + in_far[i+7];
@@ -3637,11 +3637,11 @@ static stbi_uc *stbi__resample_row_hv_2_simd(stbi_uc *out, stbi_uc *in_near, stb
 
    STBI_NOTUSED(hs);
 
-   return out;
+   return out;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-static stbi_uc *stbi__resample_row_generic(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)
+static stbi_uc *stbi__resample_row_generic(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)  // stbi__resample_row_generic
 {
    // resample with nearest-neighbor
    int i,j;
@@ -3649,13 +3649,13 @@ static stbi_uc *stbi__resample_row_generic(stbi_uc *out, stbi_uc *in_near, stbi_
    for (i=0; i < w; ++i)
       for (j=0; j < hs; ++j)
          out[i*hs+j] = in_near[i];
-   return out;
+   return out;  // 返回
 }
 
 // this is a reduced-precision calculation of YCbCr-to-RGB introduced
 // to make sure the code produces the same results in both SIMD and scalar
-#define stbi__float2fixed(x)  (((int) ((x) * 4096.0f + 0.5f)) << 8)
-static void stbi__YCbCr_to_RGB_row(stbi_uc *out, const stbi_uc *y, const stbi_uc *pcb, const stbi_uc *pcr, int count, int step)
+#define stbi__float2fixed(x)  (((int) ((x) * 4096.0f + 0.5f)) << 8)  // 宏定义 stbi__float2fixed
+static void stbi__YCbCr_to_RGB_row(stbi_uc *out, const stbi_uc *y, const stbi_uc *pcb, const stbi_uc *pcr, int count, int step)  // stbi__YCbCr_to_RGB_row
 {
    int i;
    for (i=0; i < count; ++i) {
@@ -3680,12 +3680,12 @@ static void stbi__YCbCr_to_RGB_row(stbi_uc *out, const stbi_uc *y, const stbi_uc
    }
 }
 
-#if defined(STBI_SSE2) || defined(STBI_NEON)
-static void stbi__YCbCr_to_RGB_simd(stbi_uc *out, stbi_uc const *y, stbi_uc const *pcb, stbi_uc const *pcr, int count, int step)
+#if defined(STBI_SSE2) || defined(STBI_NEON)  // 条件编译
+static void stbi__YCbCr_to_RGB_simd(stbi_uc *out, stbi_uc const *y, stbi_uc const *pcb, stbi_uc const *pcr, int count, int step)  // stbi__YCbCr_to_RGB_simd
 {
    int i = 0;
 
-#ifdef STBI_SSE2
+#ifdef STBI_SSE2  // 如果定义了 STBI_SSE2 则编译
    // step == 3 is pretty ugly on the final interleave, and i'm not convinced
    // it's useful in practice (you wouldn't use it for textures, for example).
    // so just accelerate step == 4 case.
@@ -3744,9 +3744,9 @@ static void stbi__YCbCr_to_RGB_simd(stbi_uc *out, stbi_uc const *y, stbi_uc cons
          out += 32;
       }
    }
-#endif
+#endif  // 条件编译结束
 
-#ifdef STBI_NEON
+#ifdef STBI_NEON  // 如果定义了 STBI_NEON 则编译
    // in this version, step=3 support would be easy to add. but is there demand?
    if (step == 4) {
       // this is a fairly straightforward implementation and not super-optimized.
@@ -3790,7 +3790,7 @@ static void stbi__YCbCr_to_RGB_simd(stbi_uc *out, stbi_uc const *y, stbi_uc cons
          out += 8*4;
       }
    }
-#endif
+#endif  // 条件编译结束
 
    for (; i < count; ++i) {
       int y_fixed = (y[i] << 20) + (1<<19); // rounding
@@ -3813,37 +3813,37 @@ static void stbi__YCbCr_to_RGB_simd(stbi_uc *out, stbi_uc const *y, stbi_uc cons
       out += step;
    }
 }
-#endif
+#endif  // 条件编译结束
 
 // set up the kernels
-static void stbi__setup_jpeg(stbi__jpeg *j)
+static void stbi__setup_jpeg(stbi__jpeg *j)  // stbi__setup_jpeg
 {
    j->idct_block_kernel = stbi__idct_block;
    j->YCbCr_to_RGB_kernel = stbi__YCbCr_to_RGB_row;
    j->resample_row_hv_2_kernel = stbi__resample_row_hv_2;
 
-#ifdef STBI_SSE2
+#ifdef STBI_SSE2  // 如果定义了 STBI_SSE2 则编译
    if (stbi__sse2_available()) {
       j->idct_block_kernel = stbi__idct_simd;
       j->YCbCr_to_RGB_kernel = stbi__YCbCr_to_RGB_simd;
       j->resample_row_hv_2_kernel = stbi__resample_row_hv_2_simd;
    }
-#endif
+#endif  // 条件编译结束
 
-#ifdef STBI_NEON
+#ifdef STBI_NEON  // 如果定义了 STBI_NEON 则编译
    j->idct_block_kernel = stbi__idct_simd;
    j->YCbCr_to_RGB_kernel = stbi__YCbCr_to_RGB_simd;
    j->resample_row_hv_2_kernel = stbi__resample_row_hv_2_simd;
-#endif
+#endif  // 条件编译结束
 }
 
 // clean up the temporary component buffers
-static void stbi__cleanup_jpeg(stbi__jpeg *j)
+static void stbi__cleanup_jpeg(stbi__jpeg *j)  // stbi__cleanup_jpeg
 {
    stbi__free_jpeg_components(j, j->s->img_n, 0);
 }
 
-typedef struct
+typedef struct  // 类型定义
 {
    resample_row_func resample;
    stbi_uc *line0,*line1;
@@ -3854,13 +3854,13 @@ typedef struct
 } stbi__resample;
 
 // fast 0..255 * 0..255 => 0..255 rounded multiplication
-static stbi_uc stbi__blinn_8x8(stbi_uc x, stbi_uc y)
+static stbi_uc stbi__blinn_8x8(stbi_uc x, stbi_uc y)  // stbi__blinn_8x8
 {
    unsigned int t = x*y + 128;
    return (stbi_uc) ((t + (t >>8)) >> 8);
 }
 
-static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp, int req_comp)
+static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp, int req_comp)  // load_jpeg_image
 {
    int n, decode_n, is_rgb;
    z->s->img_n = 0; // make stbi__cleanup_jpeg safe
@@ -4019,11 +4019,11 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
       *out_x = z->s->img_x;
       *out_y = z->s->img_y;
       if (comp) *comp = z->s->img_n >= 3 ? 3 : 1; // report original components, not output
-      return output;
+      return output;  // 返回
    }
 }
 
-static void *stbi__jpeg_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)
+static void *stbi__jpeg_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)  // stbi__jpeg_load
 {
    unsigned char* result;
    stbi__jpeg* j = (stbi__jpeg*) stbi__malloc(sizeof(stbi__jpeg));
@@ -4034,10 +4034,10 @@ static void *stbi__jpeg_load(stbi__context *s, int *x, int *y, int *comp, int re
    stbi__setup_jpeg(j);
    result = load_jpeg_image(j, x,y,comp,req_comp);
    STBI_FREE(j);
-   return result;
+   return result;  // 返回
 }
 
-static int stbi__jpeg_test(stbi__context *s)
+static int stbi__jpeg_test(stbi__context *s)  // stbi__jpeg_test
 {
    int r;
    stbi__jpeg* j = (stbi__jpeg*)stbi__malloc(sizeof(stbi__jpeg));
@@ -4048,22 +4048,22 @@ static int stbi__jpeg_test(stbi__context *s)
    r = stbi__decode_jpeg_header(j, STBI__SCAN_type);
    stbi__rewind(s);
    STBI_FREE(j);
-   return r;
+   return r;  // 返回
 }
 
-static int stbi__jpeg_info_raw(stbi__jpeg *j, int *x, int *y, int *comp)
+static int stbi__jpeg_info_raw(stbi__jpeg *j, int *x, int *y, int *comp)  // stbi__jpeg_info_raw
 {
    if (!stbi__decode_jpeg_header(j, STBI__SCAN_header)) {
       stbi__rewind( j->s );
-      return 0;
+      return 0;  // 返回
    }
    if (x) *x = j->s->img_x;
    if (y) *y = j->s->img_y;
    if (comp) *comp = j->s->img_n >= 3 ? 3 : 1;
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__jpeg_info(stbi__context *s, int *x, int *y, int *comp)
+static int stbi__jpeg_info(stbi__context *s, int *x, int *y, int *comp)  // stbi__jpeg_info
 {
    int result;
    stbi__jpeg* j = (stbi__jpeg*) (stbi__malloc(sizeof(stbi__jpeg)));
@@ -4072,9 +4072,9 @@ static int stbi__jpeg_info(stbi__context *s, int *x, int *y, int *comp)
    j->s = s;
    result = stbi__jpeg_info_raw(j, x, y, comp);
    STBI_FREE(j);
-   return result;
+   return result;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 // public domain zlib decode    v0.2  Sean Barrett 2006-11-18
 //    simple implementation
@@ -4083,16 +4083,16 @@ static int stbi__jpeg_info(stbi__context *s, int *x, int *y, int *comp)
 //    performance
 //      - fast huffman
 
-#ifndef STBI_NO_ZLIB
+#ifndef STBI_NO_ZLIB  // 如果未定义 STBI_NO_ZLIB 则编译
 
 // fast-way is faster to check than jpeg huffman, but slow way is slower
-#define STBI__ZFAST_BITS  9 // accelerate all cases in default tables
-#define STBI__ZFAST_MASK  ((1 << STBI__ZFAST_BITS) - 1)
-#define STBI__ZNSYMS 288 // number of symbols in literal/length alphabet
+#define STBI__ZFAST_BITS  9 // accelerate all cases in default tables  // 宏定义 STBI__ZFAST_BITS
+#define STBI__ZFAST_MASK  ((1 << STBI__ZFAST_BITS) - 1)  // 宏定义 STBI__ZFAST_MASK
+#define STBI__ZNSYMS 288 // number of symbols in literal/length alphabet  // 宏定义 STBI__ZNSYMS
 
 // zlib-style huffman encoding
 // (jpegs packs from left, zlib from right, so can't share code)
-typedef struct
+typedef struct  // 类型定义
 {
    stbi__uint16 fast[1 << STBI__ZFAST_BITS];
    stbi__uint16 firstcode[16];
@@ -4108,7 +4108,7 @@ stbi_inline static int stbi__bitreverse16(int n)
   n = ((n & 0xCCCC) >>  2) | ((n & 0x3333) << 2);
   n = ((n & 0xF0F0) >>  4) | ((n & 0x0F0F) << 4);
   n = ((n & 0xFF00) >>  8) | ((n & 0x00FF) << 8);
-  return n;
+  return n;  // 返回
 }
 
 stbi_inline static int stbi__bit_reverse(int v, int bits)
@@ -4116,10 +4116,10 @@ stbi_inline static int stbi__bit_reverse(int v, int bits)
    STBI_ASSERT(bits <= 16);
    // to bit reverse n bits, reverse 16 and shift
    // e.g. 11 bits, bit reverse and shift away 5
-   return stbi__bitreverse16(v) >> (16-bits);
+   return stbi__bitreverse16(v) >> (16-bits);  // stbi__bitreverse16
 }
 
-static int stbi__zbuild_huffman(stbi__zhuffman *z, const stbi_uc *sizelist, int num)
+static int stbi__zbuild_huffman(stbi__zhuffman *z, const stbi_uc *sizelist, int num)  // stbi__zbuild_huffman
 {
    int i,k=0;
    int code, next_code[16], sizes[17];
@@ -4132,7 +4132,7 @@ static int stbi__zbuild_huffman(stbi__zhuffman *z, const stbi_uc *sizelist, int 
    sizes[0] = 0;
    for (i=1; i < 16; ++i)
       if (sizes[i] > (1 << i))
-         return stbi__err("bad sizes", "Corrupt PNG");
+         return stbi__err("bad sizes", "Corrupt PNG");  // stbi__err
    code = 0;
    for (i=1; i < 16; ++i) {
       next_code[i] = code;
@@ -4163,7 +4163,7 @@ static int stbi__zbuild_huffman(stbi__zhuffman *z, const stbi_uc *sizelist, int 
          ++next_code[s];
       }
    }
-   return 1;
+   return 1;  // 返回
 }
 
 // zlib-from-memory implementation for PNG reading
@@ -4172,7 +4172,7 @@ static int stbi__zbuild_huffman(stbi__zhuffman *z, const stbi_uc *sizelist, int 
 //    we require PNG read all the IDATs and combine them into a single
 //    memory buffer
 
-typedef struct
+typedef struct  // 类型定义
 {
    stbi_uc *zbuffer, *zbuffer_end;
    int num_bits;
@@ -4193,15 +4193,15 @@ stbi_inline static int stbi__zeof(stbi__zbuf *z)
 
 stbi_inline static stbi_uc stbi__zget8(stbi__zbuf *z)
 {
-   return stbi__zeof(z) ? 0 : *z->zbuffer++;
+   return stbi__zeof(z) ? 0 : *z->zbuffer++;  // stbi__zeof
 }
 
-static void stbi__fill_bits(stbi__zbuf *z)
+static void stbi__fill_bits(stbi__zbuf *z)  // stbi__fill_bits
 {
    do {
       if (z->code_buffer >= (1U << z->num_bits)) {
         z->zbuffer = z->zbuffer_end;  /* treat this as EOF so we fail. */
-        return;
+        return;  // 返回
       }
       z->code_buffer |= (unsigned int) stbi__zget8(z) << z->num_bits;
       z->num_bits += 8;
@@ -4215,10 +4215,10 @@ stbi_inline static unsigned int stbi__zreceive(stbi__zbuf *z, int n)
    k = z->code_buffer & ((1 << n) - 1);
    z->code_buffer >>= n;
    z->num_bits -= n;
-   return k;
+   return k;  // 返回
 }
 
-static int stbi__zhuffman_decode_slowpath(stbi__zbuf *a, stbi__zhuffman *z)
+static int stbi__zhuffman_decode_slowpath(stbi__zbuf *a, stbi__zhuffman *z)  // stbi__zhuffman_decode_slowpath
 {
    int b,s,k;
    // not resolved by fast table, so compute it the slow way
@@ -4234,7 +4234,7 @@ static int stbi__zhuffman_decode_slowpath(stbi__zbuf *a, stbi__zhuffman *z)
    if (z->size[b] != s) return -1;  // was originally an assert, but report failure instead.
    a->code_buffer >>= s;
    a->num_bits -= s;
-   return z->value[b];
+   return z->value[b];  // 返回
 }
 
 stbi_inline static int stbi__zhuffman_decode(stbi__zbuf *a, stbi__zhuffman *z)
@@ -4242,7 +4242,7 @@ stbi_inline static int stbi__zhuffman_decode(stbi__zbuf *a, stbi__zhuffman *z)
    int b,s;
    if (a->num_bits < 16) {
       if (stbi__zeof(a)) {
-         return -1;   /* report error for unexpected end of data. */
+         return -1;   /* report error for unexpected end of data. */  // 返回
       }
       stbi__fill_bits(a);
    }
@@ -4251,12 +4251,12 @@ stbi_inline static int stbi__zhuffman_decode(stbi__zbuf *a, stbi__zhuffman *z)
       s = b >> 9;
       a->code_buffer >>= s;
       a->num_bits -= s;
-      return b & 511;
+      return b & 511;  // 返回
    }
-   return stbi__zhuffman_decode_slowpath(a, z);
+   return stbi__zhuffman_decode_slowpath(a, z);  // stbi__zhuffman_decode_slowpath
 }
 
-static int stbi__zexpand(stbi__zbuf *z, char *zout, int n)  // need to make room for n bytes
+static int stbi__zexpand(stbi__zbuf *z, char *zout, int n)  // need to make room for n bytes  // stbi__zexpand
 {
    char *q;
    unsigned int cur, limit, old_limit;
@@ -4275,7 +4275,7 @@ static int stbi__zexpand(stbi__zbuf *z, char *zout, int n)  // need to make room
    z->zout_start = q;
    z->zout       = q + cur;
    z->zout_end   = q + limit;
-   return 1;
+   return 1;  // 返回
 }
 
 static const int stbi__zlength_base[31] = {
@@ -4292,7 +4292,7 @@ static const int stbi__zdist_base[32] = { 1,2,3,4,5,7,9,13,17,25,33,49,65,97,129
 static const int stbi__zdist_extra[32] =
 { 0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13};
 
-static int stbi__parse_huffman_block(stbi__zbuf *a)
+static int stbi__parse_huffman_block(stbi__zbuf *a)  // stbi__parse_huffman_block
 {
    char *zout = a->zout;
    for(;;) {
@@ -4309,7 +4309,7 @@ static int stbi__parse_huffman_block(stbi__zbuf *a)
          int len,dist;
          if (z == 256) {
             a->zout = zout;
-            return 1;
+            return 1;  // 返回
          }
          if (z >= 286) return stbi__err("bad huffman code","Corrupt PNG"); // per DEFLATE, length codes 286 and 287 must not appear in compressed data
          z -= 257;
@@ -4335,7 +4335,7 @@ static int stbi__parse_huffman_block(stbi__zbuf *a)
    }
 }
 
-static int stbi__compute_huffman_codes(stbi__zbuf *a)
+static int stbi__compute_huffman_codes(stbi__zbuf *a)  // stbi__compute_huffman_codes
 {
    static const stbi_uc length_dezigzag[19] = { 16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15 };
    stbi__zhuffman z_codelength;
@@ -4372,7 +4372,7 @@ static int stbi__compute_huffman_codes(stbi__zbuf *a)
          } else if (c == 18) {
             c = stbi__zreceive(a,7)+11;
          } else {
-            return stbi__err("bad codelengths", "Corrupt PNG");
+            return stbi__err("bad codelengths", "Corrupt PNG");  // stbi__err
          }
          if (ntot - n < c) return stbi__err("bad codelengths", "Corrupt PNG");
          memset(lencodes+n, fill, c);
@@ -4382,10 +4382,10 @@ static int stbi__compute_huffman_codes(stbi__zbuf *a)
    if (n != ntot) return stbi__err("bad codelengths","Corrupt PNG");
    if (!stbi__zbuild_huffman(&a->z_length, lencodes, hlit)) return 0;
    if (!stbi__zbuild_huffman(&a->z_distance, lencodes+hlit, hdist)) return 0;
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__parse_uncompressed_block(stbi__zbuf *a)
+static int stbi__parse_uncompressed_block(stbi__zbuf *a)  // stbi__parse_uncompressed_block
 {
    stbi_uc header[4];
    int len,nlen,k;
@@ -4411,10 +4411,10 @@ static int stbi__parse_uncompressed_block(stbi__zbuf *a)
    memcpy(a->zout, a->zbuffer, len);
    a->zbuffer += len;
    a->zout += len;
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__parse_zlib_header(stbi__zbuf *a)
+static int stbi__parse_zlib_header(stbi__zbuf *a)  // stbi__parse_zlib_header
 {
    int cmf   = stbi__zget8(a);
    int cm    = cmf & 15;
@@ -4425,7 +4425,7 @@ static int stbi__parse_zlib_header(stbi__zbuf *a)
    if (flg & 32) return stbi__err("no preset dict","Corrupt PNG"); // preset dictionary not allowed in png
    if (cm != 8) return stbi__err("bad compression","Corrupt PNG"); // DEFLATE required for png
    // window = 1 << (8 + cinfo)... but who cares, we fully buffer output
-   return 1;
+   return 1;  // 返回
 }
 
 static const stbi_uc stbi__zdefault_length[STBI__ZNSYMS] =
@@ -4457,7 +4457,7 @@ Init algorithm:
 }
 */
 
-static int stbi__parse_zlib(stbi__zbuf *a, int parse_header)
+static int stbi__parse_zlib(stbi__zbuf *a, int parse_header)  // stbi__parse_zlib
 {
    int final, type;
    if (parse_header)
@@ -4470,7 +4470,7 @@ static int stbi__parse_zlib(stbi__zbuf *a, int parse_header)
       if (type == 0) {
          if (!stbi__parse_uncompressed_block(a)) return 0;
       } else if (type == 3) {
-         return 0;
+         return 0;  // 返回
       } else {
          if (type == 1) {
             // use fixed code lengths
@@ -4482,17 +4482,17 @@ static int stbi__parse_zlib(stbi__zbuf *a, int parse_header)
          if (!stbi__parse_huffman_block(a)) return 0;
       }
    } while (!final);
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__do_zlib(stbi__zbuf *a, char *obuf, int olen, int exp, int parse_header)
+static int stbi__do_zlib(stbi__zbuf *a, char *obuf, int olen, int exp, int parse_header)  // stbi__do_zlib
 {
    a->zout_start = obuf;
    a->zout       = obuf;
    a->zout_end   = obuf + olen;
    a->z_expandable = exp;
 
-   return stbi__parse_zlib(a, parse_header);
+   return stbi__parse_zlib(a, parse_header);  // stbi__parse_zlib
 }
 
 STBIDEF char *stbi_zlib_decode_malloc_guesssize(const char *buffer, int len, int initial_size, int *outlen)
@@ -4504,16 +4504,16 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize(const char *buffer, int len, int
    a.zbuffer_end = (stbi_uc *) buffer + len;
    if (stbi__do_zlib(&a, p, initial_size, 1, 1)) {
       if (outlen) *outlen = (int) (a.zout - a.zout_start);
-      return a.zout_start;
+      return a.zout_start;  // 返回
    } else {
       STBI_FREE(a.zout_start);
-      return NULL;
+      return NULL;  // 返回
    }
 }
 
 STBIDEF char *stbi_zlib_decode_malloc(char const *buffer, int len, int *outlen)
 {
-   return stbi_zlib_decode_malloc_guesssize(buffer, len, 16384, outlen);
+   return stbi_zlib_decode_malloc_guesssize(buffer, len, 16384, outlen);  // stbi_zlib_decode_malloc_guesssize
 }
 
 STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, int len, int initial_size, int *outlen, int parse_header)
@@ -4525,10 +4525,10 @@ STBIDEF char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, i
    a.zbuffer_end = (stbi_uc *) buffer + len;
    if (stbi__do_zlib(&a, p, initial_size, 1, parse_header)) {
       if (outlen) *outlen = (int) (a.zout - a.zout_start);
-      return a.zout_start;
+      return a.zout_start;  // 返回
    } else {
       STBI_FREE(a.zout_start);
-      return NULL;
+      return NULL;  // 返回
    }
 }
 
@@ -4540,7 +4540,7 @@ STBIDEF int stbi_zlib_decode_buffer(char *obuffer, int olen, char const *ibuffer
    if (stbi__do_zlib(&a, obuffer, olen, 0, 1))
       return (int) (a.zout - a.zout_start);
    else
-      return -1;
+      return -1;  // 返回
 }
 
 STBIDEF char *stbi_zlib_decode_noheader_malloc(char const *buffer, int len, int *outlen)
@@ -4552,10 +4552,10 @@ STBIDEF char *stbi_zlib_decode_noheader_malloc(char const *buffer, int len, int 
    a.zbuffer_end = (stbi_uc *) buffer+len;
    if (stbi__do_zlib(&a, p, 16384, 1, 0)) {
       if (outlen) *outlen = (int) (a.zout - a.zout_start);
-      return a.zout_start;
+      return a.zout_start;  // 返回
    } else {
       STBI_FREE(a.zout_start);
-      return NULL;
+      return NULL;  // 返回
    }
 }
 
@@ -4567,9 +4567,9 @@ STBIDEF int stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const char
    if (stbi__do_zlib(&a, obuffer, olen, 0, 0))
       return (int) (a.zout - a.zout_start);
    else
-      return -1;
+      return -1;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 // public domain "baseline" PNG decoder   v0.10  Sean Barrett 2006-11-18
 //    simple implementation
@@ -4581,31 +4581,31 @@ STBIDEF int stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const char
 //    performance
 //      - uses stb_zlib, a PD zlib implementation with fast huffman decoding
 
-#ifndef STBI_NO_PNG
-typedef struct
+#ifndef STBI_NO_PNG  // 如果未定义 STBI_NO_PNG 则编译
+typedef struct  // 类型定义
 {
    stbi__uint32 length;
    stbi__uint32 type;
 } stbi__pngchunk;
 
-static stbi__pngchunk stbi__get_chunk_header(stbi__context *s)
+static stbi__pngchunk stbi__get_chunk_header(stbi__context *s)  // stbi__get_chunk_header
 {
    stbi__pngchunk c;
    c.length = stbi__get32be(s);
    c.type   = stbi__get32be(s);
-   return c;
+   return c;  // 返回
 }
 
-static int stbi__check_png_header(stbi__context *s)
+static int stbi__check_png_header(stbi__context *s)  // stbi__check_png_header
 {
    static const stbi_uc png_sig[8] = { 137,80,78,71,13,10,26,10 };
    int i;
    for (i=0; i < 8; ++i)
       if (stbi__get8(s) != png_sig[i]) return stbi__err("bad png sig","Not a PNG");
-   return 1;
+   return 1;  // 返回
 }
 
-typedef struct
+typedef struct  // 类型定义
 {
    stbi__context *s;
    stbi_uc *idata, *expanded, *out;
@@ -4613,7 +4613,7 @@ typedef struct
 } stbi__png;
 
 
-enum {
+enum {  // 枚举定义
    STBI__F_none=0,
    STBI__F_sub=1,
    STBI__F_up=2,
@@ -4633,7 +4633,7 @@ static stbi_uc first_row_filter[5] =
    STBI__F_paeth_first
 };
 
-static int stbi__paeth(int a, int b, int c)
+static int stbi__paeth(int a, int b, int c)  // stbi__paeth
 {
    int p = a + b - c;
    int pa = abs(p-a);
@@ -4641,13 +4641,13 @@ static int stbi__paeth(int a, int b, int c)
    int pc = abs(p-c);
    if (pa <= pb && pa <= pc) return a;
    if (pb <= pc) return b;
-   return c;
+   return c;  // 返回
 }
 
 static const stbi_uc stbi__depth_scale_table[9] = { 0, 0xff, 0x55, 0, 0x11, 0,0,0, 0x01 };
 
 // create the png data from post-deflated data
-static int stbi__create_png_image_raw(stbi__png *a, stbi_uc *raw, stbi__uint32 raw_len, int out_n, stbi__uint32 x, stbi__uint32 y, int depth, int color)
+static int stbi__create_png_image_raw(stbi__png *a, stbi_uc *raw, stbi__uint32 raw_len, int out_n, stbi__uint32 x, stbi__uint32 y, int depth, int color)  // stbi__create_png_image_raw
 {
    int bytes = (depth == 16? 2 : 1);
    stbi__context *s = a->s;
@@ -4679,7 +4679,7 @@ static int stbi__create_png_image_raw(stbi__png *a, stbi_uc *raw, stbi__uint32 r
       int filter = *raw++;
 
       if (filter > 4)
-         return stbi__err("invalid filter","Corrupt PNG");
+         return stbi__err("invalid filter","Corrupt PNG");  // stbi__err
 
       if (depth < 8) {
          if (img_width_bytes > x) return stbi__err("invalid width","Corrupt PNG");
@@ -4856,17 +4856,17 @@ static int stbi__create_png_image_raw(stbi__png *a, stbi_uc *raw, stbi__uint32 r
       }
    }
 
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__create_png_image(stbi__png *a, stbi_uc *image_data, stbi__uint32 image_data_len, int out_n, int depth, int color, int interlaced)
+static int stbi__create_png_image(stbi__png *a, stbi_uc *image_data, stbi__uint32 image_data_len, int out_n, int depth, int color, int interlaced)  // stbi__create_png_image
 {
    int bytes = (depth == 16 ? 2 : 1);
    int out_bytes = out_n * bytes;
    stbi_uc *final;
    int p;
    if (!interlaced)
-      return stbi__create_png_image_raw(a, image_data, image_data_len, out_n, a->s->img_x, a->s->img_y, depth, color);
+      return stbi__create_png_image_raw(a, image_data, image_data_len, out_n, a->s->img_x, a->s->img_y, depth, color);  // stbi__create_png_image_raw
 
    // de-interlacing
    final = (stbi_uc *) stbi__malloc_mad3(a->s->img_x, a->s->img_y, out_bytes, 0);
@@ -4884,7 +4884,7 @@ static int stbi__create_png_image(stbi__png *a, stbi_uc *image_data, stbi__uint3
          stbi__uint32 img_len = ((((a->s->img_n * x * depth) + 7) >> 3) + 1) * y;
          if (!stbi__create_png_image_raw(a, image_data, image_data_len, out_n, x, y, depth, color)) {
             STBI_FREE(final);
-            return 0;
+            return 0;  // 返回
          }
          for (j=0; j < y; ++j) {
             for (i=0; i < x; ++i) {
@@ -4901,10 +4901,10 @@ static int stbi__create_png_image(stbi__png *a, stbi_uc *image_data, stbi__uint3
    }
    a->out = final;
 
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__compute_transparency(stbi__png *z, stbi_uc tc[3], int out_n)
+static int stbi__compute_transparency(stbi__png *z, stbi_uc tc[3], int out_n)  // stbi__compute_transparency
 {
    stbi__context *s = z->s;
    stbi__uint32 i, pixel_count = s->img_x * s->img_y;
@@ -4926,10 +4926,10 @@ static int stbi__compute_transparency(stbi__png *z, stbi_uc tc[3], int out_n)
          p += 4;
       }
    }
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__compute_transparency16(stbi__png *z, stbi__uint16 tc[3], int out_n)
+static int stbi__compute_transparency16(stbi__png *z, stbi__uint16 tc[3], int out_n)  // stbi__compute_transparency16
 {
    stbi__context *s = z->s;
    stbi__uint32 i, pixel_count = s->img_x * s->img_y;
@@ -4951,10 +4951,10 @@ static int stbi__compute_transparency16(stbi__png *z, stbi__uint16 tc[3], int ou
          p += 4;
       }
    }
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__expand_png_palette(stbi__png *a, stbi_uc *palette, int len, int pal_img_n)
+static int stbi__expand_png_palette(stbi__png *a, stbi_uc *palette, int len, int pal_img_n)  // stbi__expand_png_palette
 {
    stbi__uint32 i, pixel_count = a->s->img_x * a->s->img_y;
    stbi_uc *p, *temp_out, *orig = a->out;
@@ -4988,7 +4988,7 @@ static int stbi__expand_png_palette(stbi__png *a, stbi_uc *palette, int len, int
 
    STBI_NOTUSED(len);
 
-   return 1;
+   return 1;  // 返回
 }
 
 static int stbi__unpremultiply_on_load_global = 0;
@@ -5004,10 +5004,10 @@ STBIDEF void stbi_convert_iphone_png_to_rgb(int flag_true_if_should_convert)
    stbi__de_iphone_flag_global = flag_true_if_should_convert;
 }
 
-#ifndef STBI_THREAD_LOCAL
-#define stbi__unpremultiply_on_load  stbi__unpremultiply_on_load_global
-#define stbi__de_iphone_flag  stbi__de_iphone_flag_global
-#else
+#ifndef STBI_THREAD_LOCAL  // 如果未定义 STBI_THREAD_LOCAL 则编译
+#define stbi__unpremultiply_on_load  stbi__unpremultiply_on_load_global  // 宏定义 stbi__unpremultiply_on_load
+#define stbi__de_iphone_flag  stbi__de_iphone_flag_global  // 宏定义 stbi__de_iphone_flag
+#else  // 否则
 static STBI_THREAD_LOCAL int stbi__unpremultiply_on_load_local, stbi__unpremultiply_on_load_set;
 static STBI_THREAD_LOCAL int stbi__de_iphone_flag_local, stbi__de_iphone_flag_set;
 
@@ -5029,9 +5029,9 @@ STBIDEF void stbi_convert_iphone_png_to_rgb_thread(int flag_true_if_should_conve
 #define stbi__de_iphone_flag  (stbi__de_iphone_flag_set                         \
                                 ? stbi__de_iphone_flag_local                    \
                                 : stbi__de_iphone_flag_global)
-#endif // STBI_THREAD_LOCAL
+#endif // STBI_THREAD_LOCAL  // 条件编译结束
 
-static void stbi__de_iphone(stbi__png *z)
+static void stbi__de_iphone(stbi__png *z)  // stbi__de_iphone
 {
    stbi__context *s = z->s;
    stbi__uint32 i, pixel_count = s->img_x * s->img_y;
@@ -5074,9 +5074,9 @@ static void stbi__de_iphone(stbi__png *z)
    }
 }
 
-#define STBI__PNG_TYPE(a,b,c,d)  (((unsigned) (a) << 24) + ((unsigned) (b) << 16) + ((unsigned) (c) << 8) + (unsigned) (d))
+#define STBI__PNG_TYPE(a,b,c,d)  (((unsigned) (a) << 24) + ((unsigned) (b) << 16) + ((unsigned) (c) << 8) + (unsigned) (d))  // 宏定义 STBI__PNG_TYPE
 
-static int stbi__parse_png_file(stbi__png *z, int scan, int req_comp)
+static int stbi__parse_png_file(stbi__png *z, int scan, int req_comp)  // stbi__parse_png_file
 {
    stbi_uc palette[1024], pal_img_n=0;
    stbi_uc has_trans=0, tc[3]={0};
@@ -5096,7 +5096,7 @@ static int stbi__parse_png_file(stbi__png *z, int scan, int req_comp)
    for (;;) {
       stbi__pngchunk c = stbi__get_chunk_header(s);
       switch (c.type) {
-         case STBI__PNG_TYPE('C','g','B','I'):
+         case STBI__PNG_TYPE('C','g','B','I'):  // STBI__PNG_TYPE
             is_iphone = 1;
             stbi__skip(s, c.length);
             break;
@@ -5176,7 +5176,7 @@ static int stbi__parse_png_file(stbi__png *z, int scan, int req_comp)
                // header scan definitely stops at first IDAT
                if (pal_img_n)
                   s->img_n = pal_img_n;
-               return 1;
+               return 1;  // 返回
             }
             if (c.length > (1u << 30)) return stbi__err("IDAT size limit", "IDAT section larger than 2^30 bytes");
             if ((int)(ioff + c.length) < (int)ioff) return 0;
@@ -5226,7 +5226,7 @@ static int stbi__parse_png_file(stbi__png *z, int scan, int req_comp)
                s->img_out_n = pal_img_n;
                if (req_comp >= 3) s->img_out_n = req_comp;
                if (!stbi__expand_png_palette(z, palette, pal_len, s->img_out_n))
-                  return 0;
+                  return 0;  // 返回
             } else if (has_trans) {
                // non-paletted image with tRNS -> source image has (constant) alpha
                ++s->img_n;
@@ -5234,22 +5234,22 @@ static int stbi__parse_png_file(stbi__png *z, int scan, int req_comp)
             STBI_FREE(z->expanded); z->expanded = NULL;
             // end of PNG chunk, read and skip CRC
             stbi__get32be(s);
-            return 1;
+            return 1;  // 返回
          }
 
          default:
             // if critical, fail
             if (first) return stbi__err("first not IHDR", "Corrupt PNG");
             if ((c.type & (1 << 29)) == 0) {
-               #ifndef STBI_NO_FAILURE_STRINGS
+               #ifndef STBI_NO_FAILURE_STRINGS  // 如果未定义 STBI_NO_FAILURE_STRINGS 则编译
                // not threadsafe
                static char invalid_chunk[] = "XXXX PNG chunk not known";
                invalid_chunk[0] = STBI__BYTECAST(c.type >> 24);
                invalid_chunk[1] = STBI__BYTECAST(c.type >> 16);
                invalid_chunk[2] = STBI__BYTECAST(c.type >>  8);
                invalid_chunk[3] = STBI__BYTECAST(c.type >>  0);
-               #endif
-               return stbi__err(invalid_chunk, "PNG not supported: unknown PNG chunk type");
+               #endif  // 条件编译结束
+               return stbi__err(invalid_chunk, "PNG not supported: unknown PNG chunk type");  // stbi__err
             }
             stbi__skip(s, c.length);
             break;
@@ -5259,7 +5259,7 @@ static int stbi__parse_png_file(stbi__png *z, int scan, int req_comp)
    }
 }
 
-static void *stbi__do_png(stbi__png *p, int *x, int *y, int *n, int req_comp, stbi__result_info *ri)
+static void *stbi__do_png(stbi__png *p, int *x, int *y, int *n, int req_comp, stbi__result_info *ri)  // stbi__do_png
 {
    void *result=NULL;
    if (req_comp < 0 || req_comp > 4) return stbi__errpuc("bad req_comp", "Internal error");
@@ -5269,7 +5269,7 @@ static void *stbi__do_png(stbi__png *p, int *x, int *y, int *n, int req_comp, st
       else if (p->depth == 16)
          ri->bits_per_channel = 16;
       else
-         return stbi__errpuc("bad bits_per_channel", "PNG not supported: unsupported color depth");
+         return stbi__errpuc("bad bits_per_channel", "PNG not supported: unsupported color depth");  // stbi__errpuc
       result = p->out;
       p->out = NULL;
       if (req_comp && req_comp != p->s->img_out_n) {
@@ -5288,61 +5288,61 @@ static void *stbi__do_png(stbi__png *p, int *x, int *y, int *n, int req_comp, st
    STBI_FREE(p->expanded); p->expanded = NULL;
    STBI_FREE(p->idata);    p->idata    = NULL;
 
-   return result;
+   return result;  // 返回
 }
 
-static void *stbi__png_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)
+static void *stbi__png_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)  // stbi__png_load
 {
    stbi__png p;
    p.s = s;
-   return stbi__do_png(&p, x,y,comp,req_comp, ri);
+   return stbi__do_png(&p, x,y,comp,req_comp, ri);  // stbi__do_png
 }
 
-static int stbi__png_test(stbi__context *s)
+static int stbi__png_test(stbi__context *s)  // stbi__png_test
 {
    int r;
    r = stbi__check_png_header(s);
    stbi__rewind(s);
-   return r;
+   return r;  // 返回
 }
 
-static int stbi__png_info_raw(stbi__png *p, int *x, int *y, int *comp)
+static int stbi__png_info_raw(stbi__png *p, int *x, int *y, int *comp)  // stbi__png_info_raw
 {
    if (!stbi__parse_png_file(p, STBI__SCAN_header, 0)) {
       stbi__rewind( p->s );
-      return 0;
+      return 0;  // 返回
    }
    if (x) *x = p->s->img_x;
    if (y) *y = p->s->img_y;
    if (comp) *comp = p->s->img_n;
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__png_info(stbi__context *s, int *x, int *y, int *comp)
+static int stbi__png_info(stbi__context *s, int *x, int *y, int *comp)  // stbi__png_info
 {
    stbi__png p;
    p.s = s;
-   return stbi__png_info_raw(&p, x, y, comp);
+   return stbi__png_info_raw(&p, x, y, comp);  // stbi__png_info_raw
 }
 
-static int stbi__png_is16(stbi__context *s)
+static int stbi__png_is16(stbi__context *s)  // stbi__png_is16
 {
    stbi__png p;
    p.s = s;
    if (!stbi__png_info_raw(&p, NULL, NULL, NULL))
-	   return 0;
+	   return 0;  // 返回
    if (p.depth != 16) {
       stbi__rewind(p.s);
-      return 0;
+      return 0;  // 返回
    }
-   return 1;
+   return 1;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 // Microsoft/Windows BMP image
 
-#ifndef STBI_NO_BMP
-static int stbi__bmp_test_raw(stbi__context *s)
+#ifndef STBI_NO_BMP  // 如果未定义 STBI_NO_BMP 则编译
+static int stbi__bmp_test_raw(stbi__context *s)  // stbi__bmp_test_raw
 {
    int r;
    int sz;
@@ -5354,19 +5354,19 @@ static int stbi__bmp_test_raw(stbi__context *s)
    stbi__get32le(s); // discard data offset
    sz = stbi__get32le(s);
    r = (sz == 12 || sz == 40 || sz == 56 || sz == 108 || sz == 124);
-   return r;
+   return r;  // 返回
 }
 
-static int stbi__bmp_test(stbi__context *s)
+static int stbi__bmp_test(stbi__context *s)  // stbi__bmp_test
 {
    int r = stbi__bmp_test_raw(s);
    stbi__rewind(s);
-   return r;
+   return r;  // 返回
 }
 
 
 // returns 0..31 for the highest set bit
-static int stbi__high_bit(unsigned int z)
+static int stbi__high_bit(unsigned int z)  // stbi__high_bit
 {
    int n=0;
    if (z == 0) return -1;
@@ -5375,23 +5375,23 @@ static int stbi__high_bit(unsigned int z)
    if (z >= 0x00010) { n +=  4; z >>=  4; }
    if (z >= 0x00004) { n +=  2; z >>=  2; }
    if (z >= 0x00002) { n +=  1;/* >>=  1;*/ }
-   return n;
+   return n;  // 返回
 }
 
-static int stbi__bitcount(unsigned int a)
+static int stbi__bitcount(unsigned int a)  // stbi__bitcount
 {
    a = (a & 0x55555555) + ((a >>  1) & 0x55555555); // max 2
    a = (a & 0x33333333) + ((a >>  2) & 0x33333333); // max 4
    a = (a + (a >> 4)) & 0x0f0f0f0f; // max 8 per 4, now 8 bits
    a = (a + (a >> 8)); // max 16 per 8 bits
    a = (a + (a >> 16)); // max 32 per 8 bits
-   return a & 0xff;
+   return a & 0xff;  // 返回
 }
 
 // extract an arbitrarily-aligned N-bit value (N=bits)
 // from v, and then make it 8-bits long and fractionally
 // extend it to full full range.
-static int stbi__shiftsigned(unsigned int v, int shift, int bits)
+static int stbi__shiftsigned(unsigned int v, int shift, int bits)  // stbi__shiftsigned
 {
    static unsigned int mul_table[9] = {
       0,
@@ -5411,18 +5411,18 @@ static int stbi__shiftsigned(unsigned int v, int shift, int bits)
    return (int) ((unsigned) v * mul_table[bits]) >> shift_table[bits];
 }
 
-typedef struct
+typedef struct  // 类型定义
 {
    int bpp, offset, hsz;
    unsigned int mr,mg,mb,ma, all_a;
    int extra_read;
 } stbi__bmp_data;
 
-static int stbi__bmp_set_mask_defaults(stbi__bmp_data *info, int compress)
+static int stbi__bmp_set_mask_defaults(stbi__bmp_data *info, int compress)  // stbi__bmp_set_mask_defaults
 {
    // BI_BITFIELDS specifies masks explicitly, don't override
    if (compress == 3)
-      return 1;
+      return 1;  // 返回
 
    if (compress == 0) {
       if (info->bpp == 16) {
@@ -5439,12 +5439,12 @@ static int stbi__bmp_set_mask_defaults(stbi__bmp_data *info, int compress)
          // otherwise, use defaults, which is all-0
          info->mr = info->mg = info->mb = info->ma = 0;
       }
-      return 1;
+      return 1;  // 返回
    }
-   return 0; // error
+   return 0; // error  // 返回
 }
 
-static void *stbi__bmp_parse_header(stbi__context *s, stbi__bmp_data *info)
+static void *stbi__bmp_parse_header(stbi__context *s, stbi__bmp_data *info)  // stbi__bmp_parse_header
 {
    int hsz;
    if (stbi__get8(s) != 'B' || stbi__get8(s) != 'M') return stbi__errpuc("not BMP", "Corrupt BMP");
@@ -5496,16 +5496,16 @@ static void *stbi__bmp_parse_header(stbi__context *s, stbi__bmp_data *info)
                // not documented, but generated by photoshop and handled by mspaint
                if (info->mr == info->mg && info->mg == info->mb) {
                   // ?!?!?
-                  return stbi__errpuc("bad BMP", "bad BMP");
+                  return stbi__errpuc("bad BMP", "bad BMP");  // stbi__errpuc
                }
             } else
-               return stbi__errpuc("bad BMP", "bad BMP");
+               return stbi__errpuc("bad BMP", "bad BMP");  // stbi__errpuc
          }
       } else {
          // V4/V5 header
          int i;
          if (hsz != 108 && hsz != 124)
-            return stbi__errpuc("bad BMP", "bad BMP");
+            return stbi__errpuc("bad BMP", "bad BMP");  // stbi__errpuc
          info->mr = stbi__get32le(s);
          info->mg = stbi__get32le(s);
          info->mb = stbi__get32le(s);
@@ -5527,7 +5527,7 @@ static void *stbi__bmp_parse_header(stbi__context *s, stbi__bmp_data *info)
 }
 
 
-static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)
+static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)  // stbi__bmp_load
 {
    stbi_uc *out;
    unsigned int mr=0,mg=0,mb=0,ma=0, all_a;
@@ -5539,7 +5539,7 @@ static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req
 
    info.all_a = 255;
    if (stbi__bmp_parse_header(s, &info) == NULL)
-      return NULL; // error code already set
+      return NULL; // error code already set  // 返回
 
    flip_vertically = ((int) s->img_y) > 0;
    s->img_y = abs((int) s->img_y);
@@ -5567,14 +5567,14 @@ static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req
       int header_limit = 1024; // max we actually read is below 256 bytes currently.
       int extra_data_limit = 256*4; // what ordinarily goes here is a palette; 256 entries*4 bytes is its max size.
       if (bytes_read_so_far <= 0 || bytes_read_so_far > header_limit) {
-         return stbi__errpuc("bad header", "Corrupt BMP");
+         return stbi__errpuc("bad header", "Corrupt BMP");  // stbi__errpuc
       }
       // we established that bytes_read_so_far is positive and sensible.
       // the first half of this test rejects offsets that are either too small positives, or
       // negative, and guarantees that info.offset >= bytes_read_so_far > 0. this in turn
       // ensures the number computed in the second half of the test can't overflow.
       if (info.offset < bytes_read_so_far || info.offset - bytes_read_so_far > extra_data_limit) {
-         return stbi__errpuc("bad offset", "Corrupt BMP");
+         return stbi__errpuc("bad offset", "Corrupt BMP");  // stbi__errpuc
       } else {
          stbi__skip(s, info.offset - bytes_read_so_far);
       }
@@ -5591,7 +5591,7 @@ static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req
 
    // sanity-check size
    if (!stbi__mad3sizes_valid(target, s->img_x, s->img_y, 0))
-      return stbi__errpuc("too large", "Corrupt BMP");
+      return stbi__errpuc("too large", "Corrupt BMP");  // stbi__errpuc
 
    out = (stbi_uc *) stbi__malloc_mad3(target, s->img_x, s->img_y, 0);
    if (!out) return stbi__errpuc("outofmem", "Out of memory");
@@ -5727,15 +5727,15 @@ static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req
    *x = s->img_x;
    *y = s->img_y;
    if (comp) *comp = s->img_n;
-   return out;
+   return out;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 // Targa Truevision - TGA
 // by Jonathan Dummer
-#ifndef STBI_NO_TGA
+#ifndef STBI_NO_TGA  // 如果未定义 STBI_NO_TGA 则编译
 // returns STBI_rgb or whatever, 0 on error
-static int stbi__tga_get_comp(int bits_per_pixel, int is_grey, int* is_rgb16)
+static int stbi__tga_get_comp(int bits_per_pixel, int is_grey, int* is_rgb16)  // stbi__tga_get_comp
 {
    // only RGB or RGBA (incl. 16bit) or grey allowed
    if (is_rgb16) *is_rgb16 = 0;
@@ -5744,14 +5744,14 @@ static int stbi__tga_get_comp(int bits_per_pixel, int is_grey, int* is_rgb16)
       case 16: if(is_grey) return STBI_grey_alpha;
                // fallthrough
       case 15: if(is_rgb16) *is_rgb16 = 1;
-               return STBI_rgb;
+               return STBI_rgb;  // 返回
       case 24: // fallthrough
       case 32: return bits_per_pixel/8;
       default: return 0;
    }
 }
 
-static int stbi__tga_info(stbi__context *s, int *x, int *y, int *comp)
+static int stbi__tga_info(stbi__context *s, int *x, int *y, int *comp)  // stbi__tga_info
 {
     int tga_w, tga_h, tga_comp, tga_image_type, tga_bits_per_pixel, tga_colormap_bpp;
     int sz, tga_colormap_type;
@@ -5759,26 +5759,26 @@ static int stbi__tga_info(stbi__context *s, int *x, int *y, int *comp)
     tga_colormap_type = stbi__get8(s); // colormap type
     if( tga_colormap_type > 1 ) {
         stbi__rewind(s);
-        return 0;      // only RGB or indexed allowed
+        return 0;      // only RGB or indexed allowed  // 返回
     }
     tga_image_type = stbi__get8(s); // image type
     if ( tga_colormap_type == 1 ) { // colormapped (paletted) image
         if (tga_image_type != 1 && tga_image_type != 9) {
             stbi__rewind(s);
-            return 0;
+            return 0;  // 返回
         }
         stbi__skip(s,4);       // skip index of first colormap entry and number of entries
         sz = stbi__get8(s);    //   check bits per palette color entry
         if ( (sz != 8) && (sz != 15) && (sz != 16) && (sz != 24) && (sz != 32) ) {
             stbi__rewind(s);
-            return 0;
+            return 0;  // 返回
         }
         stbi__skip(s,4);       // skip image x and y origin
         tga_colormap_bpp = sz;
     } else { // "normal" image w/o colormap - only RGB or grey allowed, +/- RLE
         if ( (tga_image_type != 2) && (tga_image_type != 3) && (tga_image_type != 10) && (tga_image_type != 11) ) {
             stbi__rewind(s);
-            return 0; // only RGB or grey allowed, +/- RLE
+            return 0; // only RGB or grey allowed, +/- RLE  // 返回
         }
         stbi__skip(s,9); // skip colormap specification and image x/y origin
         tga_colormap_bpp = 0;
@@ -5786,12 +5786,12 @@ static int stbi__tga_info(stbi__context *s, int *x, int *y, int *comp)
     tga_w = stbi__get16le(s);
     if( tga_w < 1 ) {
         stbi__rewind(s);
-        return 0;   // test width
+        return 0;   // test width  // 返回
     }
     tga_h = stbi__get16le(s);
     if( tga_h < 1 ) {
         stbi__rewind(s);
-        return 0;   // test height
+        return 0;   // test height  // 返回
     }
     tga_bits_per_pixel = stbi__get8(s); // bits per pixel
     stbi__get8(s); // ignore alpha bits
@@ -5800,7 +5800,7 @@ static int stbi__tga_info(stbi__context *s, int *x, int *y, int *comp)
             // when using a colormap, tga_bits_per_pixel is the size of the indexes
             // I don't think anything but 8 or 16bit indexes makes sense
             stbi__rewind(s);
-            return 0;
+            return 0;  // 返回
         }
         tga_comp = stbi__tga_get_comp(tga_colormap_bpp, 0, NULL);
     } else {
@@ -5808,15 +5808,15 @@ static int stbi__tga_info(stbi__context *s, int *x, int *y, int *comp)
     }
     if(!tga_comp) {
       stbi__rewind(s);
-      return 0;
+      return 0;  // 返回
     }
     if (x) *x = tga_w;
     if (y) *y = tga_h;
     if (comp) *comp = tga_comp;
-    return 1;                   // seems to have passed everything
+    return 1;                   // seems to have passed everything  // 返回
 }
 
-static int stbi__tga_test(stbi__context *s)
+static int stbi__tga_test(stbi__context *s)  // stbi__tga_test
 {
    int res = 0;
    int sz, tga_color_type;
@@ -5844,11 +5844,11 @@ static int stbi__tga_test(stbi__context *s)
 
 errorEnd:
    stbi__rewind(s);
-   return res;
+   return res;  // 返回
 }
 
 // read 16bit value and convert to 24bit RGB
-static void stbi__tga_read_rgb16(stbi__context *s, stbi_uc* out)
+static void stbi__tga_read_rgb16(stbi__context *s, stbi_uc* out)  // stbi__tga_read_rgb16
 {
    stbi__uint16 px = (stbi__uint16)stbi__get16le(s);
    stbi__uint16 fiveBitMask = 31;
@@ -5867,7 +5867,7 @@ static void stbi__tga_read_rgb16(stbi__context *s, stbi_uc* out)
    // so let's treat all 15 and 16bit TGAs as RGB with no alpha.
 }
 
-static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)
+static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)  // stbi__tga_load
 {
    //   read in the TGA header stuff
    int tga_offset = stbi__get8(s);
@@ -5913,7 +5913,7 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
    else tga_comp = stbi__tga_get_comp(tga_bits_per_pixel, (tga_image_type == 3), &tga_rgb16);
 
    if(!tga_comp) // shouldn't really happen, stbi__tga_test() should have ensured basic consistency
-      return stbi__errpuc("bad format", "Can't find out TGA pixelformat");
+      return stbi__errpuc("bad format", "Can't find out TGA pixelformat");  // stbi__errpuc
 
    //   tga info
    *x = tga_width;
@@ -5921,7 +5921,7 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
    if (comp) *comp = tga_comp;
 
    if (!stbi__mad3sizes_valid(tga_width, tga_height, tga_comp, 0))
-      return stbi__errpuc("too large", "Corrupt TGA");
+      return stbi__errpuc("too large", "Corrupt TGA");  // stbi__errpuc
 
    tga_data = (unsigned char*)stbi__malloc_mad3(tga_width, tga_height, tga_comp, 0);
    if (!tga_data) return stbi__errpuc("outofmem", "Out of memory");
@@ -5941,7 +5941,7 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
       {
          if (tga_palette_len == 0) {  /* you have to have at least one entry! */
             STBI_FREE(tga_data);
-            return stbi__errpuc("bad palette", "Corrupt TGA");
+            return stbi__errpuc("bad palette", "Corrupt TGA");  // stbi__errpuc
          }
 
          //   any data to skip? (offset usually = 0)
@@ -5950,7 +5950,7 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
          tga_palette = (unsigned char*)stbi__malloc_mad2(tga_palette_len, tga_comp, 0);
          if (!tga_palette) {
             STBI_FREE(tga_data);
-            return stbi__errpuc("outofmem", "Out of memory");
+            return stbi__errpuc("outofmem", "Out of memory");  // stbi__errpuc
          }
          if (tga_rgb16) {
             stbi_uc *pal_entry = tga_palette;
@@ -5962,7 +5962,7 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
          } else if (!stbi__getn(s, tga_palette, tga_palette_len * tga_comp)) {
                STBI_FREE(tga_data);
                STBI_FREE(tga_palette);
-               return stbi__errpuc("bad palette", "Corrupt TGA");
+               return stbi__errpuc("bad palette", "Corrupt TGA");  // stbi__errpuc
          }
       }
       //   load the data
@@ -6069,22 +6069,22 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
          tga_x_origin = tga_y_origin = 0;
    STBI_NOTUSED(tga_palette_start);
    //   OK, done
-   return tga_data;
+   return tga_data;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 // *************************************************************************************************
 // Photoshop PSD loader -- PD by Thatcher Ulrich, integration by Nicolas Schulz, tweaked by STB
 
-#ifndef STBI_NO_PSD
-static int stbi__psd_test(stbi__context *s)
+#ifndef STBI_NO_PSD  // 如果未定义 STBI_NO_PSD 则编译
+static int stbi__psd_test(stbi__context *s)  // stbi__psd_test
 {
    int r = (stbi__get32be(s) == 0x38425053);
    stbi__rewind(s);
-   return r;
+   return r;  // 返回
 }
 
-static int stbi__psd_decode_rle(stbi__context *s, stbi_uc *p, int pixelCount)
+static int stbi__psd_decode_rle(stbi__context *s, stbi_uc *p, int pixelCount)  // stbi__psd_decode_rle
 {
    int count, nleft, len;
 
@@ -6119,10 +6119,10 @@ static int stbi__psd_decode_rle(stbi__context *s, stbi_uc *p, int pixelCount)
       }
    }
 
-   return 1;
+   return 1;  // 返回
 }
 
-static void *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri, int bpc)
+static void *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri, int bpc)  // stbi__psd_load
 {
    int pixelCount;
    int channelCount, compression;
@@ -6134,11 +6134,11 @@ static void *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req
 
    // Check identifier
    if (stbi__get32be(s) != 0x38425053)   // "8BPS"
-      return stbi__errpuc("not PSD", "Corrupt PSD image");
+      return stbi__errpuc("not PSD", "Corrupt PSD image");  // stbi__errpuc
 
    // Check file type version.
    if (stbi__get16be(s) != 1)
-      return stbi__errpuc("wrong version", "Unsupported version of PSD image");
+      return stbi__errpuc("wrong version", "Unsupported version of PSD image");  // stbi__errpuc
 
    // Skip 6 reserved bytes.
    stbi__skip(s, 6 );
@@ -6146,7 +6146,7 @@ static void *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req
    // Read the number of channels (R, G, B, A, etc).
    channelCount = stbi__get16be(s);
    if (channelCount < 0 || channelCount > 16)
-      return stbi__errpuc("wrong channel count", "Unsupported number of channels in PSD image");
+      return stbi__errpuc("wrong channel count", "Unsupported number of channels in PSD image");  // stbi__errpuc
 
    // Read the rows and columns of the image.
    h = stbi__get32be(s);
@@ -6158,7 +6158,7 @@ static void *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req
    // Make sure the depth is 8 bits.
    bitdepth = stbi__get16be(s);
    if (bitdepth != 8 && bitdepth != 16)
-      return stbi__errpuc("unsupported bit depth", "PSD bit depth is not 8 or 16 bit");
+      return stbi__errpuc("unsupported bit depth", "PSD bit depth is not 8 or 16 bit");  // stbi__errpuc
 
    // Make sure the color mode is RGB.
    // Valid options are:
@@ -6171,7 +6171,7 @@ static void *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req
    //   8: Duotone
    //   9: Lab color
    if (stbi__get16be(s) != 3)
-      return stbi__errpuc("wrong color format", "PSD is not in RGB color format");
+      return stbi__errpuc("wrong color format", "PSD is not in RGB color format");  // stbi__errpuc
 
    // Skip the Mode Data.  (It's the palette for indexed color; other info for other modes.)
    stbi__skip(s,stbi__get32be(s) );
@@ -6188,11 +6188,11 @@ static void *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req
    //   1: RLE compressed
    compression = stbi__get16be(s);
    if (compression > 1)
-      return stbi__errpuc("bad compression", "PSD has an unknown compression format");
+      return stbi__errpuc("bad compression", "PSD has an unknown compression format");  // stbi__errpuc
 
    // Check size
    if (!stbi__mad3sizes_valid(4, w, h, 0))
-      return stbi__errpuc("too large", "Corrupt PSD");
+      return stbi__errpuc("too large", "Corrupt PSD");  // stbi__errpuc
 
    // Create the destination image.
 
@@ -6235,7 +6235,7 @@ static void *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req
             // Read the RLE data.
             if (!stbi__psd_decode_rle(s, p, pixelCount)) {
                STBI_FREE(out);
-               return stbi__errpuc("corrupt", "bad RLE data");
+               return stbi__errpuc("corrupt", "bad RLE data");  // stbi__errpuc
             }
          }
       }
@@ -6320,9 +6320,9 @@ static void *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req
    *y = h;
    *x = w;
 
-   return out;
+   return out;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 // *************************************************************************************************
 // Softimage PIC loader
@@ -6331,39 +6331,39 @@ static void *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int req
 // See http://softimage.wiki.softimage.com/index.php/INFO:_PIC_file_format
 // See http://ozviz.wasp.uwa.edu.au/~pbourke/dataformats/softimagepic/
 
-#ifndef STBI_NO_PIC
-static int stbi__pic_is4(stbi__context *s,const char *str)
+#ifndef STBI_NO_PIC  // 如果未定义 STBI_NO_PIC 则编译
+static int stbi__pic_is4(stbi__context *s,const char *str)  // stbi__pic_is4
 {
    int i;
    for (i=0; i<4; ++i)
       if (stbi__get8(s) != (stbi_uc)str[i])
-         return 0;
+         return 0;  // 返回
 
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__pic_test_core(stbi__context *s)
+static int stbi__pic_test_core(stbi__context *s)  // stbi__pic_test_core
 {
    int i;
 
    if (!stbi__pic_is4(s,"\x53\x80\xF6\x34"))
-      return 0;
+      return 0;  // 返回
 
    for(i=0;i<84;++i)
       stbi__get8(s);
 
    if (!stbi__pic_is4(s,"PICT"))
-      return 0;
+      return 0;  // 返回
 
-   return 1;
+   return 1;  // 返回
 }
 
-typedef struct
+typedef struct  // 类型定义
 {
    stbi_uc size,type,channel;
 } stbi__pic_packet;
 
-static stbi_uc *stbi__readval(stbi__context *s, int channel, stbi_uc *dest)
+static stbi_uc *stbi__readval(stbi__context *s, int channel, stbi_uc *dest)  // stbi__readval
 {
    int mask=0x80, i;
 
@@ -6374,10 +6374,10 @@ static stbi_uc *stbi__readval(stbi__context *s, int channel, stbi_uc *dest)
       }
    }
 
-   return dest;
+   return dest;  // 返回
 }
 
-static void stbi__copyval(int channel,stbi_uc *dest,const stbi_uc *src)
+static void stbi__copyval(int channel,stbi_uc *dest,const stbi_uc *src)  // stbi__copyval
 {
    int mask=0x80,i;
 
@@ -6386,7 +6386,7 @@ static void stbi__copyval(int channel,stbi_uc *dest,const stbi_uc *src)
          dest[i]=src[i];
 }
 
-static stbi_uc *stbi__pic_load_core(stbi__context *s,int width,int height,int *comp, stbi_uc *result)
+static stbi_uc *stbi__pic_load_core(stbi__context *s,int width,int height,int *comp, stbi_uc *result)  // stbi__pic_load_core
 {
    int act_comp=0,num_packets=0,y,chained;
    stbi__pic_packet packets[10];
@@ -6397,7 +6397,7 @@ static stbi_uc *stbi__pic_load_core(stbi__context *s,int width,int height,int *c
       stbi__pic_packet *packet;
 
       if (num_packets==sizeof(packets)/sizeof(packets[0]))
-         return stbi__errpuc("bad format","too many packets");
+         return stbi__errpuc("bad format","too many packets");  // stbi__errpuc
 
       packet = &packets[num_packets++];
 
@@ -6423,14 +6423,14 @@ static stbi_uc *stbi__pic_load_core(stbi__context *s,int width,int height,int *c
 
          switch (packet->type) {
             default:
-               return stbi__errpuc("bad format","packet has bad compression type");
+               return stbi__errpuc("bad format","packet has bad compression type");  // stbi__errpuc
 
             case 0: {//uncompressed
                int x;
 
                for(x=0;x<width;++x, dest+=4)
                   if (!stbi__readval(s,packet->channel,dest))
-                     return 0;
+                     return 0;  // 返回
                break;
             }
 
@@ -6470,10 +6470,10 @@ static stbi_uc *stbi__pic_load_core(stbi__context *s,int width,int height,int *c
                      else
                         count -= 127;
                      if (count > left)
-                        return stbi__errpuc("bad file","scanline overrun");
+                        return stbi__errpuc("bad file","scanline overrun");  // stbi__errpuc
 
                      if (!stbi__readval(s,packet->channel,value))
-                        return 0;
+                        return 0;  // 返回
 
                      for(i=0;i<count;++i, dest += 4)
                         stbi__copyval(packet->channel,dest,value);
@@ -6483,7 +6483,7 @@ static stbi_uc *stbi__pic_load_core(stbi__context *s,int width,int height,int *c
 
                      for(i=0;i<count;++i, dest+=4)
                         if (!stbi__readval(s,packet->channel,dest))
-                           return 0;
+                           return 0;  // 返回
                   }
                   left-=count;
                }
@@ -6493,10 +6493,10 @@ static stbi_uc *stbi__pic_load_core(stbi__context *s,int width,int height,int *c
       }
    }
 
-   return result;
+   return result;  // 返回
 }
 
-static void *stbi__pic_load(stbi__context *s,int *px,int *py,int *comp,int req_comp, stbi__result_info *ri)
+static void *stbi__pic_load(stbi__context *s,int *px,int *py,int *comp,int req_comp, stbi__result_info *ri)  // stbi__pic_load
 {
    stbi_uc *result;
    int i, x,y, internal_comp;
@@ -6534,29 +6534,29 @@ static void *stbi__pic_load(stbi__context *s,int *px,int *py,int *comp,int req_c
    if (req_comp == 0) req_comp = *comp;
    result=stbi__convert_format(result,4,req_comp,x,y);
 
-   return result;
+   return result;  // 返回
 }
 
-static int stbi__pic_test(stbi__context *s)
+static int stbi__pic_test(stbi__context *s)  // stbi__pic_test
 {
    int r = stbi__pic_test_core(s);
    stbi__rewind(s);
-   return r;
+   return r;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 // *************************************************************************************************
 // GIF loader -- public domain by Jean-Marc Lienher -- simplified/shrunk by stb
 
-#ifndef STBI_NO_GIF
-typedef struct
+#ifndef STBI_NO_GIF  // 如果未定义 STBI_NO_GIF 则编译
+typedef struct  // 类型定义
 {
    stbi__int16 prefix;
    stbi_uc first;
    stbi_uc suffix;
 } stbi__gif_lzw;
 
-typedef struct
+typedef struct  // 类型定义
 {
    int w,h;
    stbi_uc *out;                 // output buffer (always 4 components)
@@ -6576,24 +6576,24 @@ typedef struct
    int delay;
 } stbi__gif;
 
-static int stbi__gif_test_raw(stbi__context *s)
+static int stbi__gif_test_raw(stbi__context *s)  // stbi__gif_test_raw
 {
    int sz;
    if (stbi__get8(s) != 'G' || stbi__get8(s) != 'I' || stbi__get8(s) != 'F' || stbi__get8(s) != '8') return 0;
    sz = stbi__get8(s);
    if (sz != '9' && sz != '7') return 0;
    if (stbi__get8(s) != 'a') return 0;
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__gif_test(stbi__context *s)
+static int stbi__gif_test(stbi__context *s)  // stbi__gif_test
 {
    int r = stbi__gif_test_raw(s);
    stbi__rewind(s);
-   return r;
+   return r;  // 返回
 }
 
-static void stbi__gif_parse_colortable(stbi__context *s, stbi_uc pal[256][4], int num_entries, int transp)
+static void stbi__gif_parse_colortable(stbi__context *s, stbi_uc pal[256][4], int num_entries, int transp)  // stbi__gif_parse_colortable
 {
    int i;
    for (i=0; i < num_entries; ++i) {
@@ -6604,11 +6604,11 @@ static void stbi__gif_parse_colortable(stbi__context *s, stbi_uc pal[256][4], in
    }
 }
 
-static int stbi__gif_header(stbi__context *s, stbi__gif *g, int *comp, int is_info)
+static int stbi__gif_header(stbi__context *s, stbi__gif *g, int *comp, int is_info)  // stbi__gif_header
 {
    stbi_uc version;
    if (stbi__get8(s) != 'G' || stbi__get8(s) != 'I' || stbi__get8(s) != 'F' || stbi__get8(s) != '8')
-      return stbi__err("not GIF", "Corrupt GIF");
+      return stbi__err("not GIF", "Corrupt GIF");  // stbi__err
 
    version = stbi__get8(s);
    if (version != '7' && version != '9')    return stbi__err("not GIF", "Corrupt GIF");
@@ -6632,25 +6632,25 @@ static int stbi__gif_header(stbi__context *s, stbi__gif *g, int *comp, int is_in
    if (g->flags & 0x80)
       stbi__gif_parse_colortable(s,g->pal, 2 << (g->flags & 7), -1);
 
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__gif_info_raw(stbi__context *s, int *x, int *y, int *comp)
+static int stbi__gif_info_raw(stbi__context *s, int *x, int *y, int *comp)  // stbi__gif_info_raw
 {
    stbi__gif* g = (stbi__gif*) stbi__malloc(sizeof(stbi__gif));
    if (!g) return stbi__err("outofmem", "Out of memory");
    if (!stbi__gif_header(s, g, comp, 1)) {
       STBI_FREE(g);
       stbi__rewind( s );
-      return 0;
+      return 0;  // 返回
    }
    if (x) *x = g->w;
    if (y) *y = g->h;
    STBI_FREE(g);
-   return 1;
+   return 1;  // 返回
 }
 
-static void stbi__out_gif_code(stbi__gif *g, stbi__uint16 code)
+static void stbi__out_gif_code(stbi__gif *g, stbi__uint16 code)  // stbi__out_gif_code
 {
    stbi_uc *p, *c;
    int idx;
@@ -6687,7 +6687,7 @@ static void stbi__out_gif_code(stbi__gif *g, stbi__uint16 code)
    }
 }
 
-static stbi_uc *stbi__process_gif_raster(stbi__context *s, stbi__gif *g)
+static stbi_uc *stbi__process_gif_raster(stbi__context *s, stbi__gif *g)  // stbi__process_gif_raster
 {
    stbi_uc lzw_cs;
    stbi__int32 len, init_code;
@@ -6719,7 +6719,7 @@ static stbi_uc *stbi__process_gif_raster(stbi__context *s, stbi__gif *g)
          if (len == 0) {
             len = stbi__get8(s); // start new block
             if (len == 0)
-               return g->out;
+               return g->out;  // 返回
          }
          --len;
          bits |= (stbi__int32) stbi__get8(s) << valid_bits;
@@ -6739,23 +6739,23 @@ static stbi_uc *stbi__process_gif_raster(stbi__context *s, stbi__gif *g)
             stbi__skip(s, len);
             while ((len = stbi__get8(s)) > 0)
                stbi__skip(s,len);
-            return g->out;
+            return g->out;  // 返回
          } else if (code <= avail) {
             if (first) {
-               return stbi__errpuc("no clear code", "Corrupt GIF");
+               return stbi__errpuc("no clear code", "Corrupt GIF");  // stbi__errpuc
             }
 
             if (oldcode >= 0) {
                p = &g->codes[avail++];
                if (avail > 8192) {
-                  return stbi__errpuc("too many codes", "Corrupt GIF");
+                  return stbi__errpuc("too many codes", "Corrupt GIF");  // stbi__errpuc
                }
 
                p->prefix = (stbi__int16) oldcode;
                p->first = g->codes[oldcode].first;
                p->suffix = (code == avail) ? p->first : g->codes[code].first;
             } else if (code == avail)
-               return stbi__errpuc("illegal code in raster", "Corrupt GIF");
+               return stbi__errpuc("illegal code in raster", "Corrupt GIF");  // stbi__errpuc
 
             stbi__out_gif_code(g, (stbi__uint16) code);
 
@@ -6766,7 +6766,7 @@ static stbi_uc *stbi__process_gif_raster(stbi__context *s, stbi__gif *g)
 
             oldcode = code;
          } else {
-            return stbi__errpuc("illegal code in raster", "Corrupt GIF");
+            return stbi__errpuc("illegal code in raster", "Corrupt GIF");  // stbi__errpuc
          }
       }
    }
@@ -6774,7 +6774,7 @@ static stbi_uc *stbi__process_gif_raster(stbi__context *s, stbi__gif *g)
 
 // this function is designed to support animated gifs, although stb_image doesn't support it
 // two back is the image from two frames ago, used for a very specific disposal format
-static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, int req_comp, stbi_uc *two_back)
+static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, int req_comp, stbi_uc *two_back)  // stbi__gif_load_next
 {
    int dispose;
    int first_frame;
@@ -6787,13 +6787,13 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
    if (g->out == 0) {
       if (!stbi__gif_header(s, g, comp,0)) return 0; // stbi__g_failure_reason set by stbi__gif_header
       if (!stbi__mad3sizes_valid(4, g->w, g->h, 0))
-         return stbi__errpuc("too large", "GIF image is too large");
+         return stbi__errpuc("too large", "GIF image is too large");  // stbi__errpuc
       pcount = g->w * g->h;
       g->out = (stbi_uc *) stbi__malloc(4 * pcount);
       g->background = (stbi_uc *) stbi__malloc(4 * pcount);
       g->history = (stbi_uc *) stbi__malloc(pcount);
       if (!g->out || !g->background || !g->history)
-         return stbi__errpuc("outofmem", "Out of memory");
+         return stbi__errpuc("outofmem", "Out of memory");  // stbi__errpuc
 
       // image is treated as "transparent" at the start - ie, nothing overwrites the current background;
       // background colour is only used for pixels that are not rendered first frame, after that "background"
@@ -6851,7 +6851,7 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
             w = stbi__get16le(s);
             h = stbi__get16le(s);
             if (((x + w) > (g->w)) || ((y + h) > (g->h)))
-               return stbi__errpuc("bad Image Descriptor", "Corrupt GIF");
+               return stbi__errpuc("bad Image Descriptor", "Corrupt GIF");  // stbi__errpuc
 
             g->line_size = g->w * 4;
             g->start_x = x * 4;
@@ -6884,7 +6884,7 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
             } else if (g->flags & 0x80) {
                g->color_table = (stbi_uc *) g->pal;
             } else
-               return stbi__errpuc("missing color table", "Corrupt GIF");
+               return stbi__errpuc("missing color table", "Corrupt GIF");  // stbi__errpuc
 
             o = stbi__process_gif_raster(s, g);
             if (!o) return NULL;
@@ -6901,7 +6901,7 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
                }
             }
 
-            return o;
+            return o;  // 返回
          }
 
          case 0x21: // Comment Extension.
@@ -6943,12 +6943,12 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
             return (stbi_uc *) s; // using '1' causes warning on some compilers
 
          default:
-            return stbi__errpuc("unknown code", "Corrupt GIF");
+            return stbi__errpuc("unknown code", "Corrupt GIF");  // stbi__errpuc
       }
    }
 }
 
-static void *stbi__load_gif_main_outofmem(stbi__gif *g, stbi_uc *out, int **delays)
+static void *stbi__load_gif_main_outofmem(stbi__gif *g, stbi_uc *out, int **delays)  // stbi__load_gif_main_outofmem
 {
    STBI_FREE(g->out);
    STBI_FREE(g->history);
@@ -6956,10 +6956,10 @@ static void *stbi__load_gif_main_outofmem(stbi__gif *g, stbi_uc *out, int **dela
 
    if (out) STBI_FREE(out);
    if (delays && *delays) STBI_FREE(*delays);
-   return stbi__errpuc("outofmem", "Out of memory");
+   return stbi__errpuc("outofmem", "Out of memory");  // stbi__errpuc
 }
 
-static void *stbi__load_gif_main(stbi__context *s, int **delays, int *x, int *y, int *z, int *comp, int req_comp)
+static void *stbi__load_gif_main(stbi__context *s, int **delays, int *x, int *y, int *z, int *comp, int req_comp)  // stbi__load_gif_main
 {
    if (stbi__gif_test(s)) {
       int layers = 0;
@@ -6992,7 +6992,7 @@ static void *stbi__load_gif_main(stbi__context *s, int **delays, int *x, int *y,
             if (out) {
                void *tmp = (stbi_uc*) STBI_REALLOC_SIZED( out, out_size, layers * stride );
                if (!tmp)
-                  return stbi__load_gif_main_outofmem(&g, out, delays);
+                  return stbi__load_gif_main_outofmem(&g, out, delays);  // stbi__load_gif_main_outofmem
                else {
                    out = (stbi_uc*) tmp;
                    out_size = layers * stride;
@@ -7001,19 +7001,19 @@ static void *stbi__load_gif_main(stbi__context *s, int **delays, int *x, int *y,
                if (delays) {
                   int *new_delays = (int*) STBI_REALLOC_SIZED( *delays, delays_size, sizeof(int) * layers );
                   if (!new_delays)
-                     return stbi__load_gif_main_outofmem(&g, out, delays);
+                     return stbi__load_gif_main_outofmem(&g, out, delays);  // stbi__load_gif_main_outofmem
                   *delays = new_delays;
                   delays_size = layers * sizeof(int);
                }
             } else {
                out = (stbi_uc*)stbi__malloc( layers * stride );
                if (!out)
-                  return stbi__load_gif_main_outofmem(&g, out, delays);
+                  return stbi__load_gif_main_outofmem(&g, out, delays);  // stbi__load_gif_main_outofmem
                out_size = layers * stride;
                if (delays) {
                   *delays = (int*) stbi__malloc( layers * sizeof(int) );
                   if (!*delays)
-                     return stbi__load_gif_main_outofmem(&g, out, delays);
+                     return stbi__load_gif_main_outofmem(&g, out, delays);  // stbi__load_gif_main_outofmem
                   delays_size = layers * sizeof(int);
                }
             }
@@ -7038,13 +7038,13 @@ static void *stbi__load_gif_main(stbi__context *s, int **delays, int *x, int *y,
          out = stbi__convert_format(out, 4, req_comp, layers * g.w, g.h);
 
       *z = layers;
-      return out;
+      return out;  // 返回
    } else {
-      return stbi__errpuc("not GIF", "Image was not as a gif type.");
+      return stbi__errpuc("not GIF", "Image was not as a gif type.");  // stbi__errpuc
    }
 }
 
-static void *stbi__gif_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)
+static void *stbi__gif_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)  // stbi__gif_load
 {
    stbi_uc *u = 0;
    stbi__gif g;
@@ -7070,30 +7070,30 @@ static void *stbi__gif_load(stbi__context *s, int *x, int *y, int *comp, int req
    STBI_FREE(g.history);
    STBI_FREE(g.background);
 
-   return u;
+   return u;  // 返回
 }
 
-static int stbi__gif_info(stbi__context *s, int *x, int *y, int *comp)
+static int stbi__gif_info(stbi__context *s, int *x, int *y, int *comp)  // stbi__gif_info
 {
-   return stbi__gif_info_raw(s,x,y,comp);
+   return stbi__gif_info_raw(s,x,y,comp);  // stbi__gif_info_raw
 }
-#endif
+#endif  // 条件编译结束
 
 // *************************************************************************************************
 // Radiance RGBE HDR loader
 // originally by Nicolas Schulz
-#ifndef STBI_NO_HDR
-static int stbi__hdr_test_core(stbi__context *s, const char *signature)
+#ifndef STBI_NO_HDR  // 如果未定义 STBI_NO_HDR 则编译
+static int stbi__hdr_test_core(stbi__context *s, const char *signature)  // stbi__hdr_test_core
 {
    int i;
    for (i=0; signature[i]; ++i)
       if (stbi__get8(s) != signature[i])
-          return 0;
+          return 0;  // 返回
    stbi__rewind(s);
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__hdr_test(stbi__context* s)
+static int stbi__hdr_test(stbi__context* s)  // stbi__hdr_test
 {
    int r = stbi__hdr_test_core(s, "#?RADIANCE\n");
    stbi__rewind(s);
@@ -7101,11 +7101,11 @@ static int stbi__hdr_test(stbi__context* s)
        r = stbi__hdr_test_core(s, "#?RGBE\n");
        stbi__rewind(s);
    }
-   return r;
+   return r;  // 返回
 }
 
-#define STBI__HDR_BUFLEN  1024
-static char *stbi__hdr_gettoken(stbi__context *z, char *buffer)
+#define STBI__HDR_BUFLEN  1024  // 宏定义 STBI__HDR_BUFLEN
+static char *stbi__hdr_gettoken(stbi__context *z, char *buffer)  // stbi__hdr_gettoken
 {
    int len=0;
    char c = '\0';
@@ -7124,10 +7124,10 @@ static char *stbi__hdr_gettoken(stbi__context *z, char *buffer)
    }
 
    buffer[len] = 0;
-   return buffer;
+   return buffer;  // 返回
 }
 
-static void stbi__hdr_convert(float *output, stbi_uc *input, int req_comp)
+static void stbi__hdr_convert(float *output, stbi_uc *input, int req_comp)  // stbi__hdr_convert
 {
    if ( input[3] != 0 ) {
       float f1;
@@ -7154,7 +7154,7 @@ static void stbi__hdr_convert(float *output, stbi_uc *input, int req_comp)
    }
 }
 
-static float *stbi__hdr_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)
+static float *stbi__hdr_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)  // stbi__hdr_load
 {
    char buffer[STBI__HDR_BUFLEN];
    char *token;
@@ -7171,7 +7171,7 @@ static float *stbi__hdr_load(stbi__context *s, int *x, int *y, int *comp, int re
    // Check identifier
    headerToken = stbi__hdr_gettoken(s,buffer);
    if (strcmp(headerToken, "#?RADIANCE") != 0 && strcmp(headerToken, "#?RGBE") != 0)
-      return stbi__errpf("not HDR", "Corrupt HDR image");
+      return stbi__errpf("not HDR", "Corrupt HDR image");  // stbi__errpf
 
    // Parse header
    for(;;) {
@@ -7203,12 +7203,12 @@ static float *stbi__hdr_load(stbi__context *s, int *x, int *y, int *comp, int re
    if (req_comp == 0) req_comp = 3;
 
    if (!stbi__mad4sizes_valid(width, height, req_comp, sizeof(float), 0))
-      return stbi__errpf("too large", "HDR image is too large");
+      return stbi__errpf("too large", "HDR image is too large");  // stbi__errpf
 
    // Read data
    hdr_data = (float *) stbi__malloc_mad4(width, height, req_comp, sizeof(float), 0);
    if (!hdr_data)
-      return stbi__errpf("outofmem", "Out of memory");
+      return stbi__errpf("outofmem", "Out of memory");  // stbi__errpf
 
    // Load image data
    // image data is stored as some number of sca
@@ -7251,7 +7251,7 @@ static float *stbi__hdr_load(stbi__context *s, int *x, int *y, int *comp, int re
             scanline = (stbi_uc *) stbi__malloc_mad2(width, 4, 0);
             if (!scanline) {
                STBI_FREE(hdr_data);
-               return stbi__errpf("outofmem", "Out of memory");
+               return stbi__errpf("outofmem", "Out of memory");  // stbi__errpf
             }
          }
 
@@ -7282,10 +7282,10 @@ static float *stbi__hdr_load(stbi__context *s, int *x, int *y, int *comp, int re
          STBI_FREE(scanline);
    }
 
-   return hdr_data;
+   return hdr_data;  // 返回
 }
 
-static int stbi__hdr_info(stbi__context *s, int *x, int *y, int *comp)
+static int stbi__hdr_info(stbi__context *s, int *x, int *y, int *comp)  // stbi__hdr_info
 {
    char buffer[STBI__HDR_BUFLEN];
    char *token;
@@ -7298,7 +7298,7 @@ static int stbi__hdr_info(stbi__context *s, int *x, int *y, int *comp)
 
    if (stbi__hdr_test(s) == 0) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
 
    for(;;) {
@@ -7309,29 +7309,29 @@ static int stbi__hdr_info(stbi__context *s, int *x, int *y, int *comp)
 
    if (!valid) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
    token = stbi__hdr_gettoken(s,buffer);
    if (strncmp(token, "-Y ", 3)) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
    token += 3;
    *y = (int) strtol(token, &token, 10);
    while (*token == ' ') ++token;
    if (strncmp(token, "+X ", 3)) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
    token += 3;
    *x = (int) strtol(token, NULL, 10);
    *comp = 3;
-   return 1;
+   return 1;  // 返回
 }
-#endif // STBI_NO_HDR
+#endif // STBI_NO_HDR  // 条件编译结束
 
-#ifndef STBI_NO_BMP
-static int stbi__bmp_info(stbi__context *s, int *x, int *y, int *comp)
+#ifndef STBI_NO_BMP  // 如果未定义 STBI_NO_BMP 则编译
+static int stbi__bmp_info(stbi__context *s, int *x, int *y, int *comp)  // stbi__bmp_info
 {
    void *p;
    stbi__bmp_data info;
@@ -7340,7 +7340,7 @@ static int stbi__bmp_info(stbi__context *s, int *x, int *y, int *comp)
    p = stbi__bmp_parse_header(s, &info);
    if (p == NULL) {
       stbi__rewind( s );
-      return 0;
+      return 0;  // 返回
    }
    if (x) *x = s->img_x;
    if (y) *y = s->img_y;
@@ -7350,12 +7350,12 @@ static int stbi__bmp_info(stbi__context *s, int *x, int *y, int *comp)
       else
          *comp = info.ma ? 4 : 3;
    }
-   return 1;
+   return 1;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_PSD
-static int stbi__psd_info(stbi__context *s, int *x, int *y, int *comp)
+#ifndef STBI_NO_PSD  // 如果未定义 STBI_NO_PSD 则编译
+static int stbi__psd_info(stbi__context *s, int *x, int *y, int *comp)  // stbi__psd_info
 {
    int channelCount, dummy, depth;
    if (!x) x = &dummy;
@@ -7363,63 +7363,63 @@ static int stbi__psd_info(stbi__context *s, int *x, int *y, int *comp)
    if (!comp) comp = &dummy;
    if (stbi__get32be(s) != 0x38425053) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
    if (stbi__get16be(s) != 1) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
    stbi__skip(s, 6);
    channelCount = stbi__get16be(s);
    if (channelCount < 0 || channelCount > 16) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
    *y = stbi__get32be(s);
    *x = stbi__get32be(s);
    depth = stbi__get16be(s);
    if (depth != 8 && depth != 16) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
    if (stbi__get16be(s) != 3) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
    *comp = 4;
-   return 1;
+   return 1;  // 返回
 }
 
-static int stbi__psd_is16(stbi__context *s)
+static int stbi__psd_is16(stbi__context *s)  // stbi__psd_is16
 {
    int channelCount, depth;
    if (stbi__get32be(s) != 0x38425053) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
    if (stbi__get16be(s) != 1) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
    stbi__skip(s, 6);
    channelCount = stbi__get16be(s);
    if (channelCount < 0 || channelCount > 16) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
    STBI_NOTUSED(stbi__get32be(s));
    STBI_NOTUSED(stbi__get32be(s));
    depth = stbi__get16be(s);
    if (depth != 16) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
-   return 1;
+   return 1;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-#ifndef STBI_NO_PIC
-static int stbi__pic_info(stbi__context *s, int *x, int *y, int *comp)
+#ifndef STBI_NO_PIC  // 如果未定义 STBI_NO_PIC 则编译
+static int stbi__pic_info(stbi__context *s, int *x, int *y, int *comp)  // stbi__pic_info
 {
    int act_comp=0,num_packets=0,chained,dummy;
    stbi__pic_packet packets[10];
@@ -7430,7 +7430,7 @@ static int stbi__pic_info(stbi__context *s, int *x, int *y, int *comp)
 
    if (!stbi__pic_is4(s,"\x53\x80\xF6\x34")) {
       stbi__rewind(s);
-      return 0;
+      return 0;  // 返回
    }
 
    stbi__skip(s, 88);
@@ -7439,11 +7439,11 @@ static int stbi__pic_info(stbi__context *s, int *x, int *y, int *comp)
    *y = stbi__get16be(s);
    if (stbi__at_eof(s)) {
       stbi__rewind( s);
-      return 0;
+      return 0;  // 返回
    }
    if ( (*x) != 0 && (1 << 28) / (*x) < (*y)) {
       stbi__rewind( s );
-      return 0;
+      return 0;  // 返回
    }
 
    stbi__skip(s, 8);
@@ -7452,7 +7452,7 @@ static int stbi__pic_info(stbi__context *s, int *x, int *y, int *comp)
       stbi__pic_packet *packet;
 
       if (num_packets==sizeof(packets)/sizeof(packets[0]))
-         return 0;
+         return 0;  // 返回
 
       packet = &packets[num_packets++];
       chained = stbi__get8(s);
@@ -7463,19 +7463,19 @@ static int stbi__pic_info(stbi__context *s, int *x, int *y, int *comp)
 
       if (stbi__at_eof(s)) {
           stbi__rewind( s );
-          return 0;
+          return 0;  // 返回
       }
       if (packet->size != 8) {
           stbi__rewind( s );
-          return 0;
+          return 0;  // 返回
       }
    } while (chained);
 
    *comp = (act_comp & 0x10 ? 4 : 3);
 
-   return 1;
+   return 1;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 // *************************************************************************************************
 // Portable Gray Map and Portable Pixel Map loader
@@ -7488,28 +7488,28 @@ static int stbi__pic_info(stbi__context *s, int *x, int *y, int *comp)
 //    Does not support comments in the header section
 //    Does not support ASCII image data (formats P2 and P3)
 
-#ifndef STBI_NO_PNM
+#ifndef STBI_NO_PNM  // 如果未定义 STBI_NO_PNM 则编译
 
-static int      stbi__pnm_test(stbi__context *s)
+static int      stbi__pnm_test(stbi__context *s)  // stbi__pnm_test
 {
    char p, t;
    p = (char) stbi__get8(s);
    t = (char) stbi__get8(s);
    if (p != 'P' || (t != '5' && t != '6')) {
        stbi__rewind( s );
-       return 0;
+       return 0;  // 返回
    }
-   return 1;
+   return 1;  // 返回
 }
 
-static void *stbi__pnm_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)
+static void *stbi__pnm_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)  // stbi__pnm_load
 {
    stbi_uc *out;
    STBI_NOTUSED(ri);
 
    ri->bits_per_channel = stbi__pnm_info(s, (int *)&s->img_x, (int *)&s->img_y, (int *)&s->img_n);
    if (ri->bits_per_channel == 0)
-      return 0;
+      return 0;  // 返回
 
    if (s->img_y > STBI_MAX_DIMENSIONS) return stbi__errpuc("too large","Very large image (corrupt?)");
    if (s->img_x > STBI_MAX_DIMENSIONS) return stbi__errpuc("too large","Very large image (corrupt?)");
@@ -7519,13 +7519,13 @@ static void *stbi__pnm_load(stbi__context *s, int *x, int *y, int *comp, int req
    if (comp) *comp = s->img_n;
 
    if (!stbi__mad4sizes_valid(s->img_n, s->img_x, s->img_y, ri->bits_per_channel / 8, 0))
-      return stbi__errpuc("too large", "PNM too large");
+      return stbi__errpuc("too large", "PNM too large");  // stbi__errpuc
 
    out = (stbi_uc *) stbi__malloc_mad4(s->img_n, s->img_x, s->img_y, ri->bits_per_channel / 8, 0);
    if (!out) return stbi__errpuc("outofmem", "Out of memory");
    if (!stbi__getn(s, out, s->img_n * s->img_x * s->img_y * (ri->bits_per_channel / 8))) {
       STBI_FREE(out);
-      return stbi__errpuc("bad PNM", "PNM file truncated");
+      return stbi__errpuc("bad PNM", "PNM file truncated");  // stbi__errpuc
    }
 
    if (req_comp && req_comp != s->img_n) {
@@ -7536,15 +7536,15 @@ static void *stbi__pnm_load(stbi__context *s, int *x, int *y, int *comp, int req
       }
       if (out == NULL) return out; // stbi__convert_format frees input on failure
    }
-   return out;
+   return out;  // 返回
 }
 
-static int      stbi__pnm_isspace(char c)
+static int      stbi__pnm_isspace(char c)  // stbi__pnm_isspace
 {
-   return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
+   return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';  // 返回
 }
 
-static void     stbi__pnm_skip_whitespace(stbi__context *s, char *c)
+static void     stbi__pnm_skip_whitespace(stbi__context *s, char *c)  // stbi__pnm_skip_whitespace
 {
    for (;;) {
       while (!stbi__at_eof(s) && stbi__pnm_isspace(*c))
@@ -7558,12 +7558,12 @@ static void     stbi__pnm_skip_whitespace(stbi__context *s, char *c)
    }
 }
 
-static int      stbi__pnm_isdigit(char c)
+static int      stbi__pnm_isdigit(char c)  // stbi__pnm_isdigit
 {
-   return c >= '0' && c <= '9';
+   return c >= '0' && c <= '9';  // 返回
 }
 
-static int      stbi__pnm_getinteger(stbi__context *s, char *c)
+static int      stbi__pnm_getinteger(stbi__context *s, char *c)  // stbi__pnm_getinteger
 {
    int value = 0;
 
@@ -7571,13 +7571,13 @@ static int      stbi__pnm_getinteger(stbi__context *s, char *c)
       value = value*10 + (*c - '0');
       *c = (char) stbi__get8(s);
       if((value > 214748364) || (value == 214748364 && *c > '7'))
-          return stbi__err("integer parse overflow", "Parsing an integer in the PPM header overflowed a 32-bit int");
+          return stbi__err("integer parse overflow", "Parsing an integer in the PPM header overflowed a 32-bit int");  // stbi__err
    }
 
-   return value;
+   return value;  // 返回
 }
 
-static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp)
+static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp)  // stbi__pnm_info
 {
    int maxv, dummy;
    char c, p, t;
@@ -7593,7 +7593,7 @@ static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp)
    t = (char) stbi__get8(s);
    if (p != 'P' || (t != '5' && t != '6')) {
        stbi__rewind(s);
-       return 0;
+       return 0;  // 返回
    }
 
    *comp = (t == '6') ? 3 : 1;  // '5' is 1-component .pgm; '6' is 3-component .ppm
@@ -7603,90 +7603,90 @@ static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp)
 
    *x = stbi__pnm_getinteger(s, &c); // read width
    if(*x == 0)
-       return stbi__err("invalid width", "PPM image header had zero or overflowing width");
+       return stbi__err("invalid width", "PPM image header had zero or overflowing width");  // stbi__err
    stbi__pnm_skip_whitespace(s, &c);
 
    *y = stbi__pnm_getinteger(s, &c); // read height
    if (*y == 0)
-       return stbi__err("invalid width", "PPM image header had zero or overflowing width");
+       return stbi__err("invalid width", "PPM image header had zero or overflowing width");  // stbi__err
    stbi__pnm_skip_whitespace(s, &c);
 
    maxv = stbi__pnm_getinteger(s, &c);  // read max value
    if (maxv > 65535)
-      return stbi__err("max value > 65535", "PPM image supports only 8-bit and 16-bit images");
+      return stbi__err("max value > 65535", "PPM image supports only 8-bit and 16-bit images");  // stbi__err
    else if (maxv > 255)
-      return 16;
+      return 16;  // 返回
    else
-      return 8;
+      return 8;  // 返回
 }
 
-static int stbi__pnm_is16(stbi__context *s)
+static int stbi__pnm_is16(stbi__context *s)  // stbi__pnm_is16
 {
    if (stbi__pnm_info(s, NULL, NULL, NULL) == 16)
-	   return 1;
-   return 0;
+	   return 1;  // 返回
+   return 0;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-static int stbi__info_main(stbi__context *s, int *x, int *y, int *comp)
+static int stbi__info_main(stbi__context *s, int *x, int *y, int *comp)  // stbi__info_main
 {
-   #ifndef STBI_NO_JPEG
+   #ifndef STBI_NO_JPEG  // 如果未定义 STBI_NO_JPEG 则编译
    if (stbi__jpeg_info(s, x, y, comp)) return 1;
-   #endif
+   #endif  // 条件编译结束
 
-   #ifndef STBI_NO_PNG
+   #ifndef STBI_NO_PNG  // 如果未定义 STBI_NO_PNG 则编译
    if (stbi__png_info(s, x, y, comp))  return 1;
-   #endif
+   #endif  // 条件编译结束
 
-   #ifndef STBI_NO_GIF
+   #ifndef STBI_NO_GIF  // 如果未定义 STBI_NO_GIF 则编译
    if (stbi__gif_info(s, x, y, comp))  return 1;
-   #endif
+   #endif  // 条件编译结束
 
-   #ifndef STBI_NO_BMP
+   #ifndef STBI_NO_BMP  // 如果未定义 STBI_NO_BMP 则编译
    if (stbi__bmp_info(s, x, y, comp))  return 1;
-   #endif
+   #endif  // 条件编译结束
 
-   #ifndef STBI_NO_PSD
+   #ifndef STBI_NO_PSD  // 如果未定义 STBI_NO_PSD 则编译
    if (stbi__psd_info(s, x, y, comp))  return 1;
-   #endif
+   #endif  // 条件编译结束
 
-   #ifndef STBI_NO_PIC
+   #ifndef STBI_NO_PIC  // 如果未定义 STBI_NO_PIC 则编译
    if (stbi__pic_info(s, x, y, comp))  return 1;
-   #endif
+   #endif  // 条件编译结束
 
-   #ifndef STBI_NO_PNM
+   #ifndef STBI_NO_PNM  // 如果未定义 STBI_NO_PNM 则编译
    if (stbi__pnm_info(s, x, y, comp))  return 1;
-   #endif
+   #endif  // 条件编译结束
 
-   #ifndef STBI_NO_HDR
+   #ifndef STBI_NO_HDR  // 如果未定义 STBI_NO_HDR 则编译
    if (stbi__hdr_info(s, x, y, comp))  return 1;
-   #endif
+   #endif  // 条件编译结束
 
    // test tga last because it's a crappy test!
-   #ifndef STBI_NO_TGA
+   #ifndef STBI_NO_TGA  // 如果未定义 STBI_NO_TGA 则编译
    if (stbi__tga_info(s, x, y, comp))
-       return 1;
-   #endif
-   return stbi__err("unknown image type", "Image not of any known type, or corrupt");
+       return 1;  // 返回
+   #endif  // 条件编译结束
+   return stbi__err("unknown image type", "Image not of any known type, or corrupt");  // stbi__err
 }
 
-static int stbi__is_16_main(stbi__context *s)
+static int stbi__is_16_main(stbi__context *s)  // stbi__is_16_main
 {
-   #ifndef STBI_NO_PNG
+   #ifndef STBI_NO_PNG  // 如果未定义 STBI_NO_PNG 则编译
    if (stbi__png_is16(s))  return 1;
-   #endif
+   #endif  // 条件编译结束
 
-   #ifndef STBI_NO_PSD
+   #ifndef STBI_NO_PSD  // 如果未定义 STBI_NO_PSD 则编译
    if (stbi__psd_is16(s))  return 1;
-   #endif
+   #endif  // 条件编译结束
 
-   #ifndef STBI_NO_PNM
+   #ifndef STBI_NO_PNM  // 如果未定义 STBI_NO_PNM 则编译
    if (stbi__pnm_is16(s))  return 1;
-   #endif
-   return 0;
+   #endif  // 条件编译结束
+   return 0;  // 返回
 }
 
-#ifndef STBI_NO_STDIO
+#ifndef STBI_NO_STDIO  // 如果未定义 STBI_NO_STDIO 则编译
 STBIDEF int stbi_info(char const *filename, int *x, int *y, int *comp)
 {
     FILE *f = stbi__fopen(filename, "rb");
@@ -7694,7 +7694,7 @@ STBIDEF int stbi_info(char const *filename, int *x, int *y, int *comp)
     if (!f) return stbi__err("can't fopen", "Unable to open file");
     result = stbi_info_from_file(f, x, y, comp);
     fclose(f);
-    return result;
+    return result;  // 返回
 }
 
 STBIDEF int stbi_info_from_file(FILE *f, int *x, int *y, int *comp)
@@ -7705,7 +7705,7 @@ STBIDEF int stbi_info_from_file(FILE *f, int *x, int *y, int *comp)
    stbi__start_file(&s, f);
    r = stbi__info_main(&s,x,y,comp);
    fseek(f,pos,SEEK_SET);
-   return r;
+   return r;  // 返回
 }
 
 STBIDEF int stbi_is_16_bit(char const *filename)
@@ -7715,7 +7715,7 @@ STBIDEF int stbi_is_16_bit(char const *filename)
     if (!f) return stbi__err("can't fopen", "Unable to open file");
     result = stbi_is_16_bit_from_file(f);
     fclose(f);
-    return result;
+    return result;  // 返回
 }
 
 STBIDEF int stbi_is_16_bit_from_file(FILE *f)
@@ -7726,39 +7726,39 @@ STBIDEF int stbi_is_16_bit_from_file(FILE *f)
    stbi__start_file(&s, f);
    r = stbi__is_16_main(&s);
    fseek(f,pos,SEEK_SET);
-   return r;
+   return r;  // 返回
 }
-#endif // !STBI_NO_STDIO
+#endif // !STBI_NO_STDIO  // 条件编译结束
 
 STBIDEF int stbi_info_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp)
 {
    stbi__context s;
    stbi__start_mem(&s,buffer,len);
-   return stbi__info_main(&s,x,y,comp);
+   return stbi__info_main(&s,x,y,comp);  // stbi__info_main
 }
 
 STBIDEF int stbi_info_from_callbacks(stbi_io_callbacks const *c, void *user, int *x, int *y, int *comp)
 {
    stbi__context s;
    stbi__start_callbacks(&s, (stbi_io_callbacks *) c, user);
-   return stbi__info_main(&s,x,y,comp);
+   return stbi__info_main(&s,x,y,comp);  // stbi__info_main
 }
 
 STBIDEF int stbi_is_16_bit_from_memory(stbi_uc const *buffer, int len)
 {
    stbi__context s;
    stbi__start_mem(&s,buffer,len);
-   return stbi__is_16_main(&s);
+   return stbi__is_16_main(&s);  // stbi__is_16_main
 }
 
 STBIDEF int stbi_is_16_bit_from_callbacks(stbi_io_callbacks const *c, void *user)
 {
    stbi__context s;
    stbi__start_callbacks(&s, (stbi_io_callbacks *) c, user);
-   return stbi__is_16_main(&s);
+   return stbi__is_16_main(&s);  // stbi__is_16_main
 }
 
-#endif // STB_IMAGE_IMPLEMENTATION
+#endif // STB_IMAGE_IMPLEMENTATION  // 条件编译结束
 
 /*
    revision history:
@@ -7800,7 +7800,7 @@ STBIDEF int stbi_is_16_bit_from_callbacks(stbi_io_callbacks const *c, void *user
       2.07  (2015-09-13) fix compiler warnings
                          partial animated GIF support
                          limited 16-bpc PSD support
-                         #ifdef unused functions
+                         #ifdef unused functions  // 如果定义了 unused 则编译
                          bug with < 92 byte PIC,PNM,HDR,TGA
       2.06  (2015-04-19) fix bug where PSD returns wrong '*comp' value
       2.05  (2015-04-19) fix bug in progressive JPEG handling, fix warning
@@ -7812,14 +7812,14 @@ STBIDEF int stbi_is_16_bit_from_callbacks(stbi_io_callbacks const *c, void *user
       2.01  (2015-01-17) fix various warnings; suppress SIMD on gcc 32-bit without -msse2
       2.00b (2014-12-25) fix STBI_MALLOC in progressive JPEG
       2.00  (2014-12-25) optimize JPG, including x86 SSE2 & NEON SIMD (ryg)
-                         progressive JPEG (stb)
+                         progressive JPEG (stb)  // JPEG
                          PGM/PPM support (Ken Miller)
                          STBI_MALLOC,STBI_REALLOC,STBI_FREE
                          GIF bugfix -- seemingly never worked
                          STBI_NO_*, STBI_ONLY_*
       1.48  (2014-12-14) fix incorrectly-named assert()
       1.47  (2014-12-14) 1/2/4-bit PNG support, both direct and paletted (Omar Cornut & stb)
-                         optimize PNG (ryg)
+                         optimize PNG (ryg)  // PNG
                          fix bug in interlaced PNG with user-specified channel count (stb)
       1.46  (2014-08-26)
               fix broken tRNS chunk (colorkey-style transparency) in non-paletted PNG

@@ -1,15 +1,15 @@
-#include "convert.hpp"
-#include "dequantize.hpp"
-#include "presets.hpp"
+#include "convert.hpp"  // 引入 convert.hpp 头文件
+#include "dequantize.hpp"  // 引入 dequantize.hpp 头文件
+#include "presets.hpp"  // 引入 presets.hpp 头文件
 
-template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>  // 模板
 static void dequantize_block(const void * __restrict__ vx, dst_t * __restrict__ y, const int64_t k,
                              const sycl::nd_item<3> &item_ct1) {
     const int64_t i = 2 * (item_ct1.get_local_range(2) * item_ct1.get_group(2) +
                        item_ct1.get_local_id(2));
 
     if (i >= k) {
-        return;
+        return;  // 返回
     }
 
     const int64_t ib = i/qk; // block index
@@ -25,7 +25,7 @@ static void dequantize_block(const void * __restrict__ vx, dst_t * __restrict__ 
     y[iybs + iqs + y_offset] = v.y();
 }
 
-template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>  // 模板
 static void dequantize_block_sycl(const void *__restrict__ vx,
                                   dst_t *__restrict__ y, const int64_t k,
                                   dpct::queue_ptr stream) {
@@ -44,11 +44,11 @@ static void dequantize_block_sycl(const void *__restrict__ vx,
     }
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_q2_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                      dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -60,7 +60,7 @@ static void dequantize_row_q2_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                  dequantize_block_q2_K(vx, y, item_ct1);
                              });
     }
-#else
+#else  // 否则
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -73,14 +73,14 @@ static void dequantize_row_q2_K_sycl(const void *vx, dst_t *y, const int64_t k,
                              });
     }
 
-#endif
+#endif  // 条件编译结束
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_q3_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                      dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -92,7 +92,7 @@ static void dequantize_row_q3_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                  dequantize_block_q3_K(vx, y, item_ct1);
                              });
     }
-#else
+#else  // 否则
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -104,10 +104,10 @@ static void dequantize_row_q3_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                  dequantize_block_q3_K(vx, y, item_ct1);
                              });
     }
-#endif
+#endif  // 条件编译结束
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_q4_0_sycl(const void *vx, dst_t *y, const int64_t k,
                                      dpct::queue_ptr stream) {
     const int64_t nb32 = k / 32;
@@ -125,7 +125,7 @@ static void dequantize_row_q4_0_sycl(const void *vx, dst_t *y, const int64_t k,
     }
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_q4_0_sycl_reorder(const void *vx, dst_t *y, const int64_t k,
                                      dpct::queue_ptr stream) {
 
@@ -144,7 +144,7 @@ static void dequantize_row_q4_0_sycl_reorder(const void *vx, dst_t *y, const int
 
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_q8_0_sycl_reorder(const void *vx, dst_t *y, const int64_t k,
                                      dpct::queue_ptr stream) {
 
@@ -163,7 +163,7 @@ static void dequantize_row_q8_0_sycl_reorder(const void *vx, dst_t *y, const int
 
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_q4_1_sycl(const void *vx, dst_t *y, const int64_t k,
                                      dpct::queue_ptr stream) {
     const int64_t nb32 = k / 32;
@@ -182,7 +182,7 @@ static void dequantize_row_q4_1_sycl(const void *vx, dst_t *y, const int64_t k,
 }
 
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_q4_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                      dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
@@ -202,7 +202,7 @@ static void dequantize_row_q4_K_sycl(const void *vx, dst_t *y, const int64_t k,
     }
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_q4_K_sycl_reorder(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
     const size_t  local_size  = 32;
@@ -220,11 +220,11 @@ static void dequantize_row_q4_K_sycl_reorder(const void * vx, dst_t * y, const i
     });
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_q5_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                      dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -236,7 +236,7 @@ static void dequantize_row_q5_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                  dequantize_block_q5_K(vx, y, item_ct1);
                              });
     }
-#else
+#else  // 否则
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -249,14 +249,14 @@ static void dequantize_row_q5_K_sycl(const void *vx, dst_t *y, const int64_t k,
                              });
     }
 
-#endif
+#endif  // 条件编译结束
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_q6_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                      dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -268,7 +268,7 @@ static void dequantize_row_q6_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                  dequantize_block_q6_K(vx, y, item_ct1);
                              });
     }
-#else
+#else  // 否则
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -281,10 +281,10 @@ static void dequantize_row_q6_K_sycl(const void *vx, dst_t *y, const int64_t k,
                              });
     }
 
-#endif
+#endif  // 条件编译结束
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_q6_K_sycl_reorder(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
 
@@ -295,7 +295,7 @@ static void dequantize_row_q6_K_sycl_reorder(const void * vx, dst_t * y, const i
         [=](sycl::nd_item<3> item_ct1) { dequantize_block_q6_K_reorder(vx, y, item_ct1, nb); });
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_iq1_s_sycl(const void *vx, dst_t *y, const int64_t k,
                                         dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
@@ -316,7 +316,7 @@ static void dequantize_row_iq1_s_sycl(const void *vx, dst_t *y, const int64_t k,
     }
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_iq1_m_sycl(const void *vx, dst_t *y, const int64_t k,
                                         dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
@@ -337,7 +337,7 @@ static void dequantize_row_iq1_m_sycl(const void *vx, dst_t *y, const int64_t k,
     }
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_iq2_xxs_sycl(const void *vx, dst_t *y, const int64_t k,
                                         dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
@@ -358,7 +358,7 @@ static void dequantize_row_iq2_xxs_sycl(const void *vx, dst_t *y, const int64_t 
     }
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_iq2_xs_sycl(const void *vx, dst_t *y, const int64_t k,
                                        dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
@@ -379,7 +379,7 @@ static void dequantize_row_iq2_xs_sycl(const void *vx, dst_t *y, const int64_t k
     }
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_iq2_s_sycl(const void *vx, dst_t *y, const int64_t k,
                                       dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
@@ -399,7 +399,7 @@ static void dequantize_row_iq2_s_sycl(const void *vx, dst_t *y, const int64_t k,
 }
 
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_iq3_xxs_sycl(const void *vx, dst_t *y, const int64_t k,
                                         dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
@@ -420,7 +420,7 @@ static void dequantize_row_iq3_xxs_sycl(const void *vx, dst_t *y, const int64_t 
     }
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_iq3_s_sycl(const void *vx, dst_t *y, const int64_t k,
                                         dpct::queue_ptr stream) {
     const int64_t nb = k / QK_K;
@@ -440,13 +440,13 @@ static void dequantize_row_iq3_s_sycl(const void *vx, dst_t *y, const int64_t k,
     }
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_iq4_xs_sycl(const void *vx, dst_t *y, const int64_t k,
                                        dpct::queue_ptr stream) {
     const int64_t nb = (k + QK_K - 1) / QK_K;
-#if QK_K == 64
+#if QK_K == 64  // 条件编译
     dequantize_row_iq4_nl_sycl(vx, y, k, stream);
-#else
+#else  // 否则
       {
             dpct::has_capability_or_fail(stream->get_device(),
                                          {sycl::aspect::fp16});
@@ -461,10 +461,10 @@ static void dequantize_row_iq4_xs_sycl(const void *vx, dst_t *y, const int64_t k
                       });
             });
       }
-#endif
+#endif  // 条件编译结束
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_iq4_nl_sycl(const void *vx, dst_t *y, const int64_t k,
                                        dpct::queue_ptr stream) {
     const int64_t nb = (k + QK_K - 1) / QK_K;
@@ -484,7 +484,7 @@ static void dequantize_row_iq4_nl_sycl(const void *vx, dst_t *y, const int64_t k
       }
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_mxfp4_sycl(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
     const int nb = (k + QK_K - 1) / QK_K;
     stream->parallel_for(
@@ -494,7 +494,7 @@ static void dequantize_row_mxfp4_sycl(const void * vx, dst_t * y, const int64_t 
         });
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_row_nvfp4_sycl(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
     GGML_ASSERT(k % QK_NVFP4 == 0);
     const int nb = k / QK_NVFP4;
@@ -506,7 +506,7 @@ static void dequantize_row_nvfp4_sycl(const void * vx, dst_t * y, const int64_t 
 }
 
 
-template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>  // 模板
 static void dequantize_block_nc(const void * __restrict__ vx, dst_t * __restrict__ y,
         const int64_t ne00, const int64_t ne01, const int64_t ne02,
         const int64_t s01, const int64_t s02, const int64_t s03) {
@@ -514,7 +514,7 @@ static void dequantize_block_nc(const void * __restrict__ vx, dst_t * __restrict
     const int64_t i00 = 2 * (int64_t(item_ct1.get_local_range(2)) * item_ct1.get_group(2) + item_ct1.get_local_id(2));
 
     if (i00 >= ne00) {
-        return;
+        return;  // 返回
     }
 
     const int64_t i01 = item_ct1.get_group(1);
@@ -529,11 +529,11 @@ static void dequantize_block_nc(const void * __restrict__ vx, dst_t * __restrict
     const int64_t y_offset = qr == 1 ? 1 : qk/2;
 
     // dequantize
-    #ifdef GGML_SYCL_F16
+    #ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
         sycl::half2 v;
-    #else
+    #else  // 否则
         sycl::float2 v;
-    #endif
+    #endif  // 条件编译结束
 
     dequantize_kernel(vx, ib, iqs, v);
 
@@ -543,7 +543,7 @@ static void dequantize_block_nc(const void * __restrict__ vx, dst_t * __restrict
 }
 
 
-template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>  // 模板
 static void dequantize_block_nc_sycl(const void *    vx,
                                   dst_t *         y,
                                   const int64_t   ne00,
@@ -563,7 +563,7 @@ static void dequantize_block_nc_sycl(const void *    vx,
                              dequantize_block_nc<qk, qr, dequantize_kernel>(vx, y, ne00, ne01, ne02, s01, s02, s03);
                          });
 }
-template <typename src_t, typename dst_t>
+template <typename src_t, typename dst_t>  // 模板
 static void convert_unary_nc(const void * __restrict__ vx, dst_t * __restrict__ y, const int64_t ne00, const int64_t ne01,
                           const int64_t ne02, const int64_t s01, const int64_t s02, const int64_t s03,
                           const sycl::nd_item<3> & item_ct1) {
@@ -586,7 +586,7 @@ static void convert_unary_nc(const void * __restrict__ vx, dst_t * __restrict__ 
     }
 }
 
-template <typename src_t, typename dst_t>
+template <typename src_t, typename dst_t>  // 模板
 static void convert_unary_nc_sycl(const void * __restrict__ vx, dst_t * __restrict__ y,
                                   const int64_t ne00, const int64_t ne01, const int64_t ne02, const int64_t ne03,
                                   const int64_t s01, const int64_t s02, const int64_t s03, dpct::queue_ptr queue) {
@@ -604,7 +604,7 @@ static void convert_unary_nc_sycl(const void * __restrict__ vx, dst_t * __restri
     });
 }
 
-template <typename src_t, typename dst_t>
+template <typename src_t, typename dst_t>  // 模板
 static void convert_unary_sycl(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr queue) {
     convert_unary_nc_sycl<src_t>(vx, y, k, 1, 1, 1, k, k, k, queue);
 }
@@ -615,72 +615,72 @@ to_fp16_sycl_t ggml_get_to_fp16_sycl(ggml_type type, ggml_tensor * dst) {
         case GGML_TYPE_Q4_0:
             if (dst->src[0]->extra &&
                 ((ggml_tensor_extra_gpu*)dst->src[0]->extra)->optimized_feature.reorder) {
-                return dequantize_row_q4_0_sycl_reorder;
+                return dequantize_row_q4_0_sycl_reorder;  // 返回
             } else {
-                return dequantize_block_sycl<QK4_0, QR4_0, dequantize_q4_0>;
+                return dequantize_block_sycl<QK4_0, QR4_0, dequantize_q4_0>;  // 返回
             }
         case GGML_TYPE_Q4_1:
-            return dequantize_block_sycl<QK4_1, QR4_1, dequantize_q4_1>;
+            return dequantize_block_sycl<QK4_1, QR4_1, dequantize_q4_1>;  // 返回
         case GGML_TYPE_Q5_0:
-            return dequantize_block_sycl<QK5_0, QR5_0, dequantize_q5_0>;
+            return dequantize_block_sycl<QK5_0, QR5_0, dequantize_q5_0>;  // 返回
         case GGML_TYPE_Q5_1:
-            return dequantize_block_sycl<QK5_1, QR5_1, dequantize_q5_1>;
+            return dequantize_block_sycl<QK5_1, QR5_1, dequantize_q5_1>;  // 返回
         case GGML_TYPE_Q8_0:
             if (dst->src[0]->extra &&
                 ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                return dequantize_row_q8_0_sycl_reorder;
+                return dequantize_row_q8_0_sycl_reorder;  // 返回
             } else {
-                return dequantize_block_sycl<QK8_0, QR8_0, dequantize_q8_0>;
+                return dequantize_block_sycl<QK8_0, QR8_0, dequantize_q8_0>;  // 返回
             }
         case GGML_TYPE_Q2_K:
-            return dequantize_row_q2_K_sycl;
+            return dequantize_row_q2_K_sycl;  // 返回
         case GGML_TYPE_Q3_K:
-            return dequantize_row_q3_K_sycl;
+            return dequantize_row_q3_K_sycl;  // 返回
         case GGML_TYPE_Q4_K:
             if (dst->src[0]->extra && ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                return dequantize_row_q4_K_sycl_reorder;
+                return dequantize_row_q4_K_sycl_reorder;  // 返回
             } else {
-                return dequantize_row_q4_K_sycl;
+                return dequantize_row_q4_K_sycl;  // 返回
             }
         case GGML_TYPE_Q5_K:
-            return dequantize_row_q5_K_sycl;
+            return dequantize_row_q5_K_sycl;  // 返回
         case GGML_TYPE_Q6_K:
             if (dst->src[0]->extra && ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                return dequantize_row_q6_K_sycl_reorder;
+                return dequantize_row_q6_K_sycl_reorder;  // 返回
             } else {
-                return dequantize_row_q6_K_sycl;
+                return dequantize_row_q6_K_sycl;  // 返回
             }
         case GGML_TYPE_IQ1_S:
-            return dequantize_row_iq1_s_sycl;
+            return dequantize_row_iq1_s_sycl;  // 返回
         case GGML_TYPE_IQ1_M:
-            return dequantize_row_iq1_m_sycl;
+            return dequantize_row_iq1_m_sycl;  // 返回
         case GGML_TYPE_IQ2_XXS:
-            return dequantize_row_iq2_xxs_sycl;
+            return dequantize_row_iq2_xxs_sycl;  // 返回
         case GGML_TYPE_IQ2_XS:
-            return dequantize_row_iq2_xs_sycl;
+            return dequantize_row_iq2_xs_sycl;  // 返回
         case GGML_TYPE_IQ2_S:
-            return dequantize_row_iq2_s_sycl;
+            return dequantize_row_iq2_s_sycl;  // 返回
         case GGML_TYPE_IQ3_XXS:
-            return dequantize_row_iq3_xxs_sycl;
+            return dequantize_row_iq3_xxs_sycl;  // 返回
         case GGML_TYPE_IQ3_S:
-            return dequantize_row_iq3_s_sycl;
+            return dequantize_row_iq3_s_sycl;  // 返回
         case GGML_TYPE_IQ4_XS:
-            return dequantize_row_iq4_xs_sycl;
+            return dequantize_row_iq4_xs_sycl;  // 返回
         case GGML_TYPE_IQ4_NL:
-            return dequantize_row_iq4_nl_sycl;
+            return dequantize_row_iq4_nl_sycl;  // 返回
         case GGML_TYPE_MXFP4:
-            return dequantize_row_mxfp4_sycl;
+            return dequantize_row_mxfp4_sycl;  // 返回
         case GGML_TYPE_NVFP4:
-            return dequantize_row_nvfp4_sycl;
+            return dequantize_row_nvfp4_sycl;  // 返回
         case GGML_TYPE_F32:
-            return convert_unary_sycl<float>;
-#ifdef GGML_SYCL_HAS_BF16
+            return convert_unary_sycl<float>;  // 返回
+#ifdef GGML_SYCL_HAS_BF16  // 如果定义了 GGML_SYCL_HAS_BF16 则编译
         case GGML_TYPE_BF16:
-            return convert_unary_sycl<sycl::ext::oneapi::bfloat16>;
-#endif
+            return convert_unary_sycl<sycl::ext::oneapi::bfloat16>;  // 返回
+#endif  // 条件编译结束
         default:
             GGML_ABORT("fatal error: unsupport data type=%s\n", ggml_type_name(type));
-            return nullptr;
+            return nullptr;  // 返回
     }
 }
 
@@ -689,112 +689,112 @@ to_fp32_sycl_t ggml_get_to_fp32_sycl(ggml_type type, ggml_tensor *dst) {
         case GGML_TYPE_Q4_0:
             if (dst->src[0]->extra &&
                 ((ggml_tensor_extra_gpu*)dst->src[0]->extra)->optimized_feature.reorder) {
-                return dequantize_row_q4_0_sycl_reorder;
+                return dequantize_row_q4_0_sycl_reorder;  // 返回
             } else {
-                return dequantize_row_q4_0_sycl;
+                return dequantize_row_q4_0_sycl;  // 返回
             }
         case GGML_TYPE_Q4_1:
-            return dequantize_row_q4_1_sycl;
+            return dequantize_row_q4_1_sycl;  // 返回
         case GGML_TYPE_Q5_0:
-            return dequantize_block_sycl<QK5_0, QR5_0, dequantize_q5_0>;
+            return dequantize_block_sycl<QK5_0, QR5_0, dequantize_q5_0>;  // 返回
         case GGML_TYPE_Q5_1:
-            return dequantize_block_sycl<QK5_1, QR5_1, dequantize_q5_1>;
+            return dequantize_block_sycl<QK5_1, QR5_1, dequantize_q5_1>;  // 返回
         case GGML_TYPE_Q8_0:
             if (dst->src[0]->extra &&
                 ((ggml_tensor_extra_gpu*)dst->src[0]->extra)->optimized_feature.reorder) {
-                return dequantize_row_q8_0_sycl_reorder;
+                return dequantize_row_q8_0_sycl_reorder;  // 返回
             } else {
-                return dequantize_block_sycl<QK8_0, QR8_0, dequantize_q8_0>;
+                return dequantize_block_sycl<QK8_0, QR8_0, dequantize_q8_0>;  // 返回
             }
         case GGML_TYPE_Q2_K:
-            return dequantize_row_q2_K_sycl;
+            return dequantize_row_q2_K_sycl;  // 返回
         case GGML_TYPE_Q3_K:
-            return dequantize_row_q3_K_sycl;
+            return dequantize_row_q3_K_sycl;  // 返回
         case GGML_TYPE_Q4_K:
             if (dst->src[0]->extra &&
                 ((ggml_tensor_extra_gpu*)dst->src[0]->extra)->optimized_feature.reorder) {
-                return dequantize_row_q4_K_sycl_reorder;
+                return dequantize_row_q4_K_sycl_reorder;  // 返回
             } else {
-                return dequantize_row_q4_K_sycl;
+                return dequantize_row_q4_K_sycl;  // 返回
             }
         case GGML_TYPE_Q5_K:
-            return dequantize_row_q5_K_sycl;
+            return dequantize_row_q5_K_sycl;  // 返回
         case GGML_TYPE_Q6_K:
             if (dst->src[0]->extra && ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                return dequantize_row_q6_K_sycl_reorder;
+                return dequantize_row_q6_K_sycl_reorder;  // 返回
             } else {
-                return dequantize_row_q6_K_sycl;
+                return dequantize_row_q6_K_sycl;  // 返回
             }
         case GGML_TYPE_IQ1_S:
-            return dequantize_row_iq1_s_sycl;
+            return dequantize_row_iq1_s_sycl;  // 返回
         case GGML_TYPE_IQ1_M:
-            return dequantize_row_iq1_m_sycl;
+            return dequantize_row_iq1_m_sycl;  // 返回
         case GGML_TYPE_IQ2_XXS:
-            return dequantize_row_iq2_xxs_sycl;
+            return dequantize_row_iq2_xxs_sycl;  // 返回
         case GGML_TYPE_IQ2_XS:
-            return dequantize_row_iq2_xs_sycl;
+            return dequantize_row_iq2_xs_sycl;  // 返回
         case GGML_TYPE_IQ2_S:
-            return dequantize_row_iq2_s_sycl;
+            return dequantize_row_iq2_s_sycl;  // 返回
         case GGML_TYPE_IQ3_XXS:
-            return dequantize_row_iq3_xxs_sycl;
+            return dequantize_row_iq3_xxs_sycl;  // 返回
         case GGML_TYPE_IQ3_S:
-            return dequantize_row_iq3_s_sycl;
+            return dequantize_row_iq3_s_sycl;  // 返回
         case GGML_TYPE_IQ4_XS:
-            return dequantize_row_iq4_xs_sycl;
+            return dequantize_row_iq4_xs_sycl;  // 返回
         case GGML_TYPE_IQ4_NL:
-            return dequantize_row_iq4_nl_sycl;
+            return dequantize_row_iq4_nl_sycl;  // 返回
         case GGML_TYPE_MXFP4:
-            return dequantize_row_mxfp4_sycl;
+            return dequantize_row_mxfp4_sycl;  // 返回
         case GGML_TYPE_NVFP4:
-            return dequantize_row_nvfp4_sycl;
+            return dequantize_row_nvfp4_sycl;  // 返回
         case GGML_TYPE_F16:
-            return convert_unary_sycl<sycl::half>;
-#ifdef GGML_SYCL_HAS_BF16
+            return convert_unary_sycl<sycl::half>;  // 返回
+#ifdef GGML_SYCL_HAS_BF16  // 如果定义了 GGML_SYCL_HAS_BF16 则编译
         case GGML_TYPE_BF16:
-            return convert_unary_sycl<sycl::ext::oneapi::bfloat16>;
-#endif
+            return convert_unary_sycl<sycl::ext::oneapi::bfloat16>;  // 返回
+#endif  // 条件编译结束
         default:
             GGML_ABORT("fatal error: unsupport data type=%s\n", ggml_type_name(type));
-            return nullptr;
+            return nullptr;  // 返回
     }
 }
 
 
-#ifdef GGML_SYCL_HAS_BF16
+#ifdef GGML_SYCL_HAS_BF16  // 如果定义了 GGML_SYCL_HAS_BF16 则编译
 to_bf16_sycl_t ggml_get_to_bf16_sycl(ggml_type type, ggml_tensor * /*dst*/) {
     switch (type) {
         case GGML_TYPE_F32:
-            return convert_unary_sycl<float>;
+            return convert_unary_sycl<float>;  // 返回
         case GGML_TYPE_F16:
-            return convert_unary_sycl<sycl::half>;
+            return convert_unary_sycl<sycl::half>;  // 返回
         case GGML_TYPE_BF16:
-            return convert_unary_sycl<sycl::ext::oneapi::bfloat16>;
+            return convert_unary_sycl<sycl::ext::oneapi::bfloat16>;  // 返回
         default:
             GGML_ABORT("fatal error: unsupport data type=%s\n", ggml_type_name(type));
-            return nullptr;
+            return nullptr;  // 返回
     }
 }
-#endif
+#endif  // 条件编译结束
 
 to_fp16_nc_sycl_t ggml_get_to_fp16_nc_sycl(ggml_type type) {
     switch (type) {
         case GGML_TYPE_F32:
-            return convert_unary_nc_sycl<float>;
-#ifdef GGML_SYCL_HAS_BF16
+            return convert_unary_nc_sycl<float>;  // 返回
+#ifdef GGML_SYCL_HAS_BF16  // 如果定义了 GGML_SYCL_HAS_BF16 则编译
         case GGML_TYPE_BF16:
-            return convert_unary_nc_sycl<sycl::ext::oneapi::bfloat16>;
-#endif
+            return convert_unary_nc_sycl<sycl::ext::oneapi::bfloat16>;  // 返回
+#endif  // 条件编译结束
         case GGML_TYPE_Q4_0:
-            return dequantize_block_nc_sycl<QK4_0, QR4_0, dequantize_q4_0>;
+            return dequantize_block_nc_sycl<QK4_0, QR4_0, dequantize_q4_0>;  // 返回
         case GGML_TYPE_Q4_1:
-            return dequantize_block_nc_sycl<QK4_1, QR4_1, dequantize_q4_1>;
+            return dequantize_block_nc_sycl<QK4_1, QR4_1, dequantize_q4_1>;  // 返回
         case GGML_TYPE_Q5_0:
-            return dequantize_block_nc_sycl<QK5_0, QR5_0, dequantize_q5_0>;
+            return dequantize_block_nc_sycl<QK5_0, QR5_0, dequantize_q5_0>;  // 返回
         case GGML_TYPE_Q5_1:
-            return dequantize_block_nc_sycl<QK5_1, QR5_1, dequantize_q5_1>;
+            return dequantize_block_nc_sycl<QK5_1, QR5_1, dequantize_q5_1>;  // 返回
         case GGML_TYPE_Q8_0:
-            return dequantize_block_nc_sycl<QK8_0, QR8_0, dequantize_q8_0>;
+            return dequantize_block_nc_sycl<QK8_0, QR8_0, dequantize_q8_0>;  // 返回
         default:
-            return nullptr;
+            return nullptr;  // 返回
     }
 }

@@ -10,7 +10,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "conv.hpp"
+#include "conv.hpp"  // 引入 conv.hpp 头文件
 
 static  void conv_transpose_1d_kernel(
         const int s0, const int output_size,
@@ -21,7 +21,7 @@ static  void conv_transpose_1d_kernel(
     int global_index = item_ct1.get_local_id(2) +
                        item_ct1.get_group(2) * item_ct1.get_local_range(2);
     if (global_index >= output_size) {
-        return;
+        return;  // 返回
     }
 
     int out_index = global_index / dst_ne0;
@@ -72,7 +72,7 @@ static void conv_transpose_1d_f32_f32_sycl(
 }
 
 void ggml_sycl_op_conv_transpose_1d(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     const ggml_tensor *src0 = dst->src[0];
     const ggml_tensor *src1 = dst->src[1];
     const float * src0_d = (const float *)src0->data;

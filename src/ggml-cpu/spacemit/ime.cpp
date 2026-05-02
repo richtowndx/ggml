@@ -1,60 +1,60 @@
-#define GGML_COMMON_IMPL_CPP
-#define GGML_COMMON_DECL_CPP
+#define GGML_COMMON_IMPL_CPP  // 宏定义 GGML_COMMON_IMPL_CPP
+#define GGML_COMMON_DECL_CPP  // 宏定义 GGML_COMMON_DECL_CPP
 
-#include "ime.h"
+#include "ime.h"  // 引入 ime.h 头文件
 
-#include "ggml-backend-impl.h"
-#include "ggml-common.h"
-#include "ggml-cpu.h"
-#include "ime_kernels.h"
-#include "traits.h"
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ime_kernels.h"  // 引入 ime_kernels.h 头文件
+#include "traits.h"  // 引入 traits.h 头文件
 
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-#include <cstdio>  // for GGML_ASSERT
-#include <stdexcept>
-#include <thread>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdio>  // for GGML_ASSERT  // 引入 cstdio 头文件
+#include <stdexcept>  // 引入 stdexcept 头文件
+#include <thread>  // 引入 thread 头文件
 
 // clang-format off
-#if defined(__riscv)
+#if defined(__riscv)  // 条件编译
 
-#if !defined(__riscv_v) || !defined(__riscv_v_intrinsic)
+#if !defined(__riscv_v) || !defined(__riscv_v_intrinsic)  // 条件编译
 #error "riscv v extension or v_intrinsic not enabled"
-#else
-#include <riscv_vector.h>
-#endif
+#else  // 否则
+#include <riscv_vector.h>  // 引入 riscv_vector.h 头文件
+#endif  // 条件编译结束
 
-#if !defined(__riscv_zfh)
+#if !defined(__riscv_zfh)  // 条件编译
 #error "riscv zfh extension not enabled"
-#endif
+#endif  // 条件编译结束
 
-#if defined(RISCV64_SPACEMIT_IME1)
-#else
+#if defined(RISCV64_SPACEMIT_IME1)  // 条件编译
+#else  // 否则
 #error "RISCV64_SPACEMIT_IME1 not defined"
-#endif
+#endif  // 条件编译结束
 
-#else
+#else  // 否则
 
 #error "riscv not enabled in this build"
 
-#endif
+#endif  // 条件编译结束
 
-#if defined(__GNUC__)
+#if defined(__GNUC__)  // 条件编译
 #pragma GCC diagnostic ignored "-Woverlength-strings"
 #pragma GCC diagnostic ignored "-Wcast-qual"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
+#endif  // 条件编译结束
 
-#if defined(RISCV64_SPACEMIT_IME1)
-#define QGEMM_STRIDEN_THREAD_ALIGN 16
-#else
-#define QGEMM_STRIDEN_THREAD_ALIGN 32
-#endif
+#if defined(RISCV64_SPACEMIT_IME1)  // 条件编译
+#define QGEMM_STRIDEN_THREAD_ALIGN 16  // 宏定义 QGEMM_STRIDEN_THREAD_ALIGN
+#else  // 否则
+#define QGEMM_STRIDEN_THREAD_ALIGN 32  // 宏定义 QGEMM_STRIDEN_THREAD_ALIGN
+#endif  // 条件编译结束
 
 // clang-format on
 
-struct qnbitgemm_spacemit_ime_args {
+struct qnbitgemm_spacemit_ime_args {  // 结构体定义
     const float *     a_ptr               = nullptr;
     size_t            lda                 = 0;
     const std::byte * packed_quant_b_data = nullptr;
@@ -75,10 +75,10 @@ constexpr size_t q8_blk_size(size_t blk_len) {
     // Currently, the strictest alignment requirement of a block is for a float.
     // Ensure contiguous blocks are suitably aligned.
     assert(blk_size % alignof(float) == 0);
-    return blk_size;
+    return blk_size;  // 返回
 }
 
-namespace ggml::cpu::riscv64_spacemit {
+namespace ggml::cpu::riscv64_spacemit {  // 命名空间
 
 const int num_ai_cores = std::thread::hardware_concurrency() / 2;
 
@@ -133,22 +133,22 @@ static void sqnbitgemm_spacemit_ime_i8i4(const size_t                        blk
     }
 }
 
-template <int K> constexpr int QK_0() {
+template <int K> constexpr int QK_0() {  // 模板
     if constexpr (K == 4) {
-        return QK4_0;
+        return QK4_0;  // 返回
     }
     if constexpr (K == 8) {
-        return QK8_0;
+        return QK8_0;  // 返回
     }
-    return -1;
+    return -1;  // 返回
 }
 
-template <int K, int N> struct block {
+template <int K, int N> struct block {  // 模板
     ggml_half d[N];                         // deltas for N qK_0 blocks
     uint8_t   qs[(QK_0<K>() * N * K) / 8];  // quants for N qK_0 blocks
 };
 
-template <int K, int N> struct block_with_zp {
+template <int K, int N> struct block_with_zp {  // 模板
     ggml_half d[N];                         // deltas for N qK_1 blocks
     uint8_t   zp[N];                        // zero points for N qK_1 blocks
     uint8_t   qs[(QK_0<K>() * N * K) / 8];  // quants for N qK_1 blocks
@@ -160,9 +160,9 @@ static_assert(sizeof(block_with_zp<4, 16>) == 16 * sizeof(ggml_half) + QK4_0 * 8
               "wrong block_with_zp<4,16> size/padding");
 static_assert(sizeof(block<8, 16>) == 16 * sizeof(ggml_half) + QK4_0 * 16, "wrong block<8,16> size/padding");
 
-using block_q4_0x16 = block<4, 16>;
-using block_q4_1x16 = block_with_zp<4, 16>;
-using block_q8_0x16 = block<8, 16>;
+using block_q4_0x16 = block<4, 16>;  // using 声明
+using block_q4_1x16 = block_with_zp<4, 16>;  // using 声明
+using block_q8_0x16 = block<8, 16>;  // using 声明
 
 static block_q4_0x16 make_block_q4_0x16(block_q4_0 * in, unsigned int blck_size_interleave) {
     block_q4_0x16 out;
@@ -190,7 +190,7 @@ static block_q4_0x16 make_block_q4_0x16(block_q4_0 * in, unsigned int blck_size_
         }
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static block_q4_1x16 make_block_q4_1x16(block_q4_1 * in, unsigned int blck_size_interleave) {
@@ -224,7 +224,7 @@ static block_q4_1x16 make_block_q4_1x16(block_q4_1 * in, unsigned int blck_size_
         }
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static int repack_q4_0_to_q4_0_16_bl(struct ggml_tensor *       t,
@@ -245,7 +245,7 @@ static int repack_q4_0_to_q4_0_16_bl(struct ggml_tensor *       t,
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_0));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % QK4_0 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -257,7 +257,7 @@ static int repack_q4_0_to_q4_0_16_bl(struct ggml_tensor *       t,
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
@@ -280,7 +280,7 @@ static int repack_q4_1_to_q4_1_16_bl(struct ggml_tensor *       t,
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_1));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % QK4_1 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -292,7 +292,7 @@ static int repack_q4_1_to_q4_1_16_bl(struct ggml_tensor *       t,
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
@@ -327,7 +327,7 @@ static int repack_q4_k_to_q4_1_16_bl(struct ggml_tensor *       t,
     int                nblocks = t->ne[0] / QK_K;
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % QK_K != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -362,45 +362,45 @@ static int repack_q4_k_to_q4_1_16_bl(struct ggml_tensor *       t,
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
 
-namespace ggml::cpu::riscv64_spacemit {
+namespace ggml::cpu::riscv64_spacemit {  // 命名空间
 
-template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS>
-int repack(struct ggml_tensor *, const void *, size_t);
+template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS>  // 模板
+int repack(struct ggml_tensor *, const void *, size_t);  // repack
 
-template <> int repack<block_q4_0, 8, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_0_to_q4_0_16_bl(t, 16, data, data_size);
+template <> int repack<block_q4_0, 8, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q4_0_to_q4_0_16_bl(t, 16, data, data_size);  // repack_q4_0_to_q4_0_16_bl
 }
 
-template <> int repack<block_q4_1, 8, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_1_to_q4_1_16_bl(t, 16, data, data_size);
+template <> int repack<block_q4_1, 8, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q4_1_to_q4_1_16_bl(t, 16, data, data_size);  // repack_q4_1_to_q4_1_16_bl
 }
 
-template <> int repack<block_q4_K, 8, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_k_to_q4_1_16_bl(t, 16, data, data_size);
+template <> int repack<block_q4_K, 8, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q4_k_to_q4_1_16_bl(t, 16, data, data_size);  // repack_q4_k_to_q4_1_16_bl
 }
 
-class tensor_traits_base : public ggml::cpu::tensor_traits {
+class tensor_traits_base : public ggml::cpu::tensor_traits {  // 类定义
   public:
     virtual int repack(struct ggml_tensor * t, const void * data, size_t data_size) = 0;
 };
 
-template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_traits : public tensor_traits_base {
+template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_traits : public tensor_traits_base {  // 模板
     bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
         switch (op->op) {
             case GGML_OP_MUL_MAT:
                 size = ggml_row_size(GGML_TYPE_Q8_0, ggml_nelements(op->src[1])) * 4;
                 size = ((size + QK4_0 - 1) / QK4_0) * (QK4_0 * sizeof(float) + sizeof(float));
-                return true;
+                return true;  // 返回
             default:
                 // GGML_ABORT("fatal error");
                 break;
         }
-        return false;
+        return false;  // 返回
     }
 
     bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) override {
@@ -410,13 +410,13 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_
                     op->src[0]->type == GGML_TYPE_Q4_1 ||  //
                     op->src[0]->type == GGML_TYPE_Q4_K) {
                     forward_mul_mat_q4(params, op);
-                    return true;
+                    return true;  // 返回
                 }
             default:
                 // GGML_ABORT("fatal error");
                 break;
         }
-        return false;
+        return false;  // 返回
     }
 
     void forward_mul_mat_q4(ggml_compute_params * params, ggml_tensor * op) {
@@ -512,7 +512,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_
         ggml_barrier(params->threadpool);
 
         if (ith >= ggml::cpu::riscv64_spacemit::num_ai_cores) {
-            return;
+            return;  // 返回
         }
         nth = std::min(nth, int{ ggml::cpu::riscv64_spacemit::num_ai_cores });
 
@@ -562,33 +562,33 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS> class tensor_
     }
 };
 
-class tensor_traits_common : public tensor_traits_base {
+class tensor_traits_common : public tensor_traits_base {  // 类定义
     bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
         switch (op->op) {
             case GGML_OP_NORM:
             case GGML_OP_RMS_NORM:
                 size = 0;
-                return true;
+                return true;  // 返回
             default:
                 // GGML_ABORT("fatal error");
                 break;
         }
-        return false;
+        return false;  // 返回
     }
 
     bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) override {
         switch (op->op) {
             case GGML_OP_NORM:
                 forward_norm_f32(params, op);
-                return true;
+                return true;  // 返回
             case GGML_OP_RMS_NORM:
                 forward_rms_norm_f32(params, op);
-                return true;
+                return true;  // 返回
             default:
                 // GGML_ABORT("fatal error");
                 break;
         }
-        return false;
+        return false;  // 返回
     }
 
     void forward_norm_f32(ggml_compute_params * params, ggml_tensor * op) {
@@ -833,7 +833,7 @@ class tensor_traits_common : public tensor_traits_base {
 
     int repack(struct ggml_tensor * t, const void * data, size_t data_size) override {
         memcpy(t->data, data, data_size);
-        return 0;
+        return 0;  // 返回
     }
 };
 
@@ -847,31 +847,31 @@ static const tensor_traits_common             rvv_impl;
 static const ggml::cpu::tensor_traits * ggml_riscv64_spacemit_get_optimal_repack_type(const struct ggml_tensor * cur) {
     if (cur->type == GGML_TYPE_Q4_0) {
         if (cur->ne[1] % 16 == 0) {
-            return &ggml::cpu::riscv64_spacemit::q4_0_16x8_q8_0;
+            return &ggml::cpu::riscv64_spacemit::q4_0_16x8_q8_0;  // 返回
         }
     } else if (cur->type == GGML_TYPE_Q4_1) {
         if (cur->ne[1] % 16 == 0) {
-            return &ggml::cpu::riscv64_spacemit::q4_1_16x8_q8_0;
+            return &ggml::cpu::riscv64_spacemit::q4_1_16x8_q8_0;  // 返回
         }
     } else if (cur->type == GGML_TYPE_Q4_K) {
         if (cur->ne[1] % 16 == 0) {
-            return &ggml::cpu::riscv64_spacemit::q4_k_16x8_q8_0;
+            return &ggml::cpu::riscv64_spacemit::q4_k_16x8_q8_0;  // 返回
         }
     } else if (cur->type == GGML_TYPE_F32) {
-        return &ggml::cpu::riscv64_spacemit::rvv_impl;
+        return &ggml::cpu::riscv64_spacemit::rvv_impl;  // 返回
     }
 
-    return nullptr;
+    return nullptr;  // 返回
 }
 
 static enum ggml_status ggml_backend_riscv64_spacemit_buffer_init_tensor(ggml_backend_buffer_t buffer,
-                                                                         struct ggml_tensor *  tensor) {
+                                                                         struct ggml_tensor *  tensor) {  // 结构体定义
     tensor->extra =
         (void *) const_cast<ggml::cpu::tensor_traits *>(ggml_riscv64_spacemit_get_optimal_repack_type(tensor));
 
     GGML_UNUSED(buffer);
 
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 static void ggml_backend_riscv64_spacemit_buffer_set_tensor(ggml_backend_buffer_t buffer,
@@ -892,7 +892,7 @@ static void ggml_backend_riscv64_spacemit_buffer_set_tensor(ggml_backend_buffer_
 }
 
 static const char * ggml_backend_cpu_riscv64_spacemit_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "CPU_RISCV64_SPACEMIT";
+    return "CPU_RISCV64_SPACEMIT";  // 返回
 
     GGML_UNUSED(buft);
 }
@@ -902,7 +902,7 @@ static ggml_backend_buffer_t ggml_backend_cpu_riscv64_spacemit_buffer_type_alloc
     ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
 
     if (buffer == nullptr) {
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     buffer->buft              = buft;
@@ -910,11 +910,11 @@ static ggml_backend_buffer_t ggml_backend_cpu_riscv64_spacemit_buffer_type_alloc
     buffer->iface.set_tensor  = ggml_backend_riscv64_spacemit_buffer_set_tensor;
     buffer->iface.get_tensor  = nullptr;
     buffer->iface.cpy_tensor  = nullptr;
-    return buffer;
+    return buffer;  // 返回
 }
 
 static size_t ggml_backend_cpu_riscv64_spacemit_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 64;
+    return 64;  // 返回
 
     GGML_UNUSED(buft);
 }
@@ -923,7 +923,7 @@ static size_t ggml_backend_cpu_riscv64_spacemit_nbytes(ggml_backend_buffer_type_
                                                        const struct ggml_tensor * tensor) {
     for (int i = 0; i < GGML_MAX_DIMS; ++i) {
         if (tensor->ne[i] <= 0) {
-            return 0;
+            return 0;  // 返回
         }
     }
 
@@ -950,12 +950,12 @@ static size_t ggml_backend_cpu_riscv64_spacemit_nbytes(ggml_backend_buffer_type_
     }
 
     GGML_UNUSED(buft);
-    return nbytes;
+    return nbytes;  // 返回
 }
 
-namespace ggml::cpu::riscv64_spacemit {
+namespace ggml::cpu::riscv64_spacemit {  // 命名空间
 
-class extra_buffer_type : ggml::cpu::extra_buffer_type {
+class extra_buffer_type : ggml::cpu::extra_buffer_type {  // 类定义
     bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
         switch (op->op) {
             case GGML_OP_MUL_MAT:
@@ -963,24 +963,24 @@ class extra_buffer_type : ggml::cpu::extra_buffer_type {
                     op->src[0]->buffer->buft == ggml_backend_cpu_riscv64_spacemit_buffer_type() &&
                     ggml_riscv64_spacemit_get_optimal_repack_type(op->src[0])) {
                     if (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {
-                        return false;
+                        return false;  // 返回
                     }
                     if (op->src[1]->type == GGML_TYPE_F32) {
-                        return true;
+                        return true;  // 返回
                     }
                 }
                 break;
             case GGML_OP_NORM:
             case GGML_OP_RMS_NORM:
                 if (op->src[0]->type == GGML_TYPE_F32) {
-                    return true;
+                    return true;  // 返回
                 }
                 break;
             default:
                 // GGML_ABORT("fatal error");
                 break;
         }
-        return false;
+        return false;  // 返回
     }
 
     ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
@@ -998,7 +998,7 @@ class extra_buffer_type : ggml::cpu::extra_buffer_type {
                 break;
         }
 
-        return nullptr;
+        return nullptr;  // 返回
     }
 };
 
@@ -1021,5 +1021,5 @@ ggml_backend_buffer_type_t ggml_backend_cpu_riscv64_spacemit_buffer_type(void) {
         new ggml::cpu::riscv64_spacemit::extra_buffer_type(),
     };
 
-    return &ggml_backend_cpu_buffer_type_riscv64_spacemit;
+    return &ggml_backend_cpu_buffer_type_riscv64_spacemit;  // 返回
 }

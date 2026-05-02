@@ -1,7 +1,7 @@
-#include "convert.hpp"
-#include "dmmv.hpp"
-#include "dequantize.hpp"
-#include "presets.hpp"
+#include "convert.hpp"  // 引入 convert.hpp 头文件
+#include "dmmv.hpp"  // 引入 dmmv.hpp 头文件
+#include "dequantize.hpp"  // 引入 dequantize.hpp 头文件
+#include "presets.hpp"  // 引入 presets.hpp 头文件
 
 static void convert_f16(const void * vx, const int64_t ib, const int iqs, dfloat2 & v){
     const sycl::half *x = (const sycl::half *)vx;
@@ -19,7 +19,7 @@ static void convert_f32(const void * vx, const int64_t ib, const int iqs, dfloat
     v.y() = x[ib + iqs + 1];
 }
 
-template <int qk, int qr, dequantize_kernel_t dequantize_kernel>
+template <int qk, int qr, dequantize_kernel_t dequantize_kernel>  // 模板
 static void dequantize_mul_mat_vec(const void * __restrict__ vx, const dfloat * __restrict__ y, float * __restrict__ dst, const int ncols, const int nrows,
                                    const sycl::nd_item<3> &item_ct1) {
     // qk = quantized weights per x block
@@ -28,7 +28,7 @@ static void dequantize_mul_mat_vec(const void * __restrict__ vx, const dfloat * 
                     item_ct1.get_local_id(1);
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int tid = item_ct1.get_local_id(2);
@@ -38,11 +38,11 @@ static void dequantize_mul_mat_vec(const void * __restrict__ vx, const dfloat * 
     const int y_offset = qr == 1 ? 1 : qk/2;
 
 // partial sum for each thread
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     sycl::half2 tmp = {0.0f, 0.0f}; // two sums for f16 to take advantage of half2 intrinsics
-#else
+#else  // 否则
     float tmp = 0.0f;
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 
     for (int i = 0; i < ncols; i += iter_stride) {
         const int col = i + vals_per_iter*tid;
@@ -62,15 +62,15 @@ static void dequantize_mul_mat_vec(const void * __restrict__ vx, const dfloat * 
 
             // matrix multiplication
             // for qr = 2 the y index needs to increase by 1 per j iter because of y_offset = qk/2
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
             dfloat2 t1{y[iybs + iqs + j / qr + 0],
                         y[iybs + iqs + j / qr + y_offset]};
 
             tmp += v * t1;
-#else
+#else  // 否则
             tmp += v.x() * y[iybs + iqs + j / qr + 0];
             tmp += v.y() * y[iybs + iqs + j / qr + y_offset];
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
         }
     }
 
@@ -82,15 +82,15 @@ static void dequantize_mul_mat_vec(const void * __restrict__ vx, const dfloat * 
     }
 
     if (tid == 0) {
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
         dst[row] = tmp.x() + tmp.y();
-#else
+#else  // 否则
         dst[row] = tmp;
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
     }
 }
 
-template <int qk, int qr, dequantize_kernel_t_reorder dequantize_kernel_reorder>
+template <int qk, int qr, dequantize_kernel_t_reorder dequantize_kernel_reorder>  // 模板
 static void dequantize_mul_mat_vec_reorder(const void * __restrict__ vx, const dfloat * __restrict__ y, float * __restrict__ dst, const int ncols, const int nrows,
                                    const sycl::nd_item<3> &item_ct1) {
     // qk = quantized weights per x block
@@ -99,7 +99,7 @@ static void dequantize_mul_mat_vec_reorder(const void * __restrict__ vx, const d
                     item_ct1.get_local_id(1);
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int tid = item_ct1.get_local_id(2);
@@ -112,11 +112,11 @@ static void dequantize_mul_mat_vec_reorder(const void * __restrict__ vx, const d
     const int y_offset = qr == 1 ? 1 : qk/2;
 
 // partial sum for each thread
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     sycl::half2 tmp = {0.0f, 0.0f}; // two sums for f16 to take advantage of half2 intrinsics
-#else
+#else  // 否则
     float tmp = 0.0f;
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
     const char *d_ptr = (const char*)vx+ncols*nrows/2;
     int i=0;
     for (i = 0; i < ncols_align; i += iter_stride) {
@@ -137,15 +137,15 @@ static void dequantize_mul_mat_vec_reorder(const void * __restrict__ vx, const d
 
             // matrix multiplication
             // for qr = 2 the y index needs to increase by 1 per j iter because of y_offset = qk/2
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
             dfloat2 t1{y[iybs + iqs + j / qr + 0],
                         y[iybs + iqs + j / qr + y_offset]};
 
             tmp += v * t1;
-#else
+#else  // 否则
             tmp += v.x() * y[iybs + iqs + j / qr + 0];
             tmp += v.y() * y[iybs + iqs + j / qr + y_offset];
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
         }
     }
 
@@ -168,15 +168,15 @@ static void dequantize_mul_mat_vec_reorder(const void * __restrict__ vx, const d
 
             // matrix multiplication
             // for qr = 2 the y index needs to increase by 1 per j iter because of y_offset = qk/2
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
             dfloat2 t1{y[iybs + iqs + j / qr + 0],
                         y[iybs + iqs + j / qr + y_offset]};
 
             tmp += v * t1;
-#else
+#else  // 否则
             tmp += v.x() * y[iybs + iqs + j / qr + 0];
             tmp += v.y() * y[iybs + iqs + j / qr + y_offset];
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
         }
     }
 
@@ -188,11 +188,11 @@ static void dequantize_mul_mat_vec_reorder(const void * __restrict__ vx, const d
     }
 
     if (tid == 0) {
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
         dst[row] = tmp.x() + tmp.y();
-#else
+#else  // 否则
         dst[row] = tmp;
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
     }
 }
 
@@ -243,7 +243,7 @@ static void dequantize_mul_mat_vec_q2_k(const void *__restrict__ vx,
 
     float tmp = 0; // partial sum for thread in warp
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const int tid =
         item_ct1.get_local_id(2) / K_QUANTS_PER_ITERATION; // 0...31 or 0...15
     const int ix =
@@ -294,7 +294,7 @@ static void dequantize_mul_mat_vec_q2_k(const void *__restrict__ vx,
         tmp += dall * sum1 - dmin * sum2;
 
     }
-#else
+#else  // 否则
     const int tid = item_ct1.get_local_id(2) /
                     (2 * K_QUANTS_PER_ITERATION); // 0...15 or 0...7
     const int ix = item_ct1.get_local_id(2) %
@@ -329,7 +329,7 @@ static void dequantize_mul_mat_vec_q2_k(const void *__restrict__ vx,
         tmp += dall.x() * sum1 - dall.y() * sum2;
     }
 
-#endif
+#endif  // 条件编译结束
 
     // sum up partial sums and write back result
 #pragma unroll
@@ -367,7 +367,7 @@ static void dequantize_mul_mat_vec_q3_k(const void *__restrict__ vx,
 
     float tmp = 0; // partial sum for thread in warp
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
 
     const uint16_t kmask1 = 0x0303;
     const uint16_t kmask2 = 0x0f0f;
@@ -421,7 +421,7 @@ static void dequantize_mul_mat_vec_q3_k(const void *__restrict__ vx,
         tmp += d * sum;
 
     }
-#else
+#else  // 否则
 
     const int tid = item_ct1.get_local_id(2)/(2*K_QUANTS_PER_ITERATION);  // 0...15 or 0...7
     const int ix  = item_ct1.get_local_id(2)%(2*K_QUANTS_PER_ITERATION);  // 0....1 or 0...3
@@ -448,7 +448,7 @@ static void dequantize_mul_mat_vec_q3_k(const void *__restrict__ vx,
         }
         tmp += sum;
     }
-#endif
+#endif  // 条件编译结束
 
     // sum up partial sums and write back result
 #pragma unroll
@@ -483,7 +483,7 @@ static void dequantize_mul_mat_vec_q4_k(const void *__restrict__ vx,
 
     const block_q4_K * x = (const block_q4_K *)vx + ib0;
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const uint16_t kmask1 = 0x3f3f;
     const uint16_t kmask2 = 0x0f0f;
     const uint16_t kmask3 = 0xc0c0;
@@ -509,13 +509,13 @@ static void dequantize_mul_mat_vec_q4_k(const void *__restrict__ vx,
     uint16_t aux[4];
     const uint8_t * sc = (const uint8_t *)aux;
 
-#if K_QUANTS_PER_ITERATION == 2
+#if K_QUANTS_PER_ITERATION == 2  // 条件编译
     uint32_t q32[4];
     const uint8_t * q4 = (const uint8_t *)q32;
-#else
+#else  // 否则
     uint16_t q16[4];
     const uint8_t * q4 = (const uint8_t *)q16;
-#endif
+#endif  // 条件编译结束
 
     float tmp = 0; // partial sum for thread in warp
 
@@ -533,7 +533,7 @@ static void dequantize_mul_mat_vec_q4_k(const void *__restrict__ vx,
         aux[2] = ((a[im+4] >> 0) & kmask2) | ((a[im+0] & kmask3) >> 2);
         aux[3] = ((a[im+4] >> 4) & kmask2) | ((a[im+2] & kmask3) >> 2);
 
-#if K_QUANTS_PER_ITERATION == 2
+#if K_QUANTS_PER_ITERATION == 2  // 条件编译
         const uint32_t * q1 = (const uint32_t *)(x[i].qs + q_offset);
         const uint32_t * q2 = q1 + 16;
 
@@ -552,7 +552,7 @@ static void dequantize_mul_mat_vec_q4_k(const void *__restrict__ vx,
         tmp += dall * (s.x() * sc[0] + s.y() * sc[1] * 1.f / 16.f +
                        s.z() * sc[4] + s.w() * sc[5] * 1.f / 16.f) -
                dmin * smin;
-#else
+#else  // 否则
         const uint16_t * q1 = (const uint16_t *)(x[i].qs + q_offset);
         const uint16_t * q2 = q1 + 32;
 
@@ -569,10 +569,10 @@ static void dequantize_mul_mat_vec_q4_k(const void *__restrict__ vx,
             smin += y1[l] * sc[2] + y1[l+32] * sc[3] + y2[l] * sc[6] + y2[l+32] * sc[7];
         }
         tmp += dall * (s.x * sc[0] + s.y * sc[1] * 1.f/16.f + s.z * sc[4] + s.w * sc[5] * 1.f/16.f) - dmin * smin;
-#endif
+#endif  // 条件编译结束
 
     }
-#else
+#else  // 否则
     const int tid = item_ct1.get_local_id(2)/(2*K_QUANTS_PER_ITERATION);  // 0...15
     const int ix  = item_ct1.get_local_id(2)%(2*K_QUANTS_PER_ITERATION);
 
@@ -601,7 +601,7 @@ static void dequantize_mul_mat_vec_q4_k(const void *__restrict__ vx,
         tmp += sum;
     }
 
-#endif
+#endif  // 条件编译结束
 
     // sum up partial sums and write back result
 #pragma unroll
@@ -634,7 +634,7 @@ static void dequantize_mul_mat_vec_q4_k_reorder(const void *__restrict__ vx,
     const uint8_t     * scales_base = qs_base + (size_t)nb * (QK_K / 2);
     const sycl::half2 * dm_base     = (const sycl::half2 *)(scales_base + (size_t)nb * K_SCALE_SIZE);
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const uint16_t kmask1 = 0x3f3f;
     const uint16_t kmask2 = 0x0f0f;
     const uint16_t kmask3 = 0xc0c0;
@@ -660,13 +660,13 @@ static void dequantize_mul_mat_vec_q4_k_reorder(const void *__restrict__ vx,
     uint16_t aux[4];
     const uint8_t * sc = (const uint8_t *)aux;
 
-#if K_QUANTS_PER_ITERATION == 2
+#if K_QUANTS_PER_ITERATION == 2  // 条件编译
     uint32_t q32[4];
     const uint8_t * q4 = (const uint8_t *)q32;
-#else
+#else  // 否则
     uint16_t q16[4];
     const uint8_t * q4 = (const uint8_t *)q16;
-#endif
+#endif  // 条件编译结束
 
     float tmp = 0; // partial sum for thread in warp
 
@@ -686,7 +686,7 @@ static void dequantize_mul_mat_vec_q4_k_reorder(const void *__restrict__ vx,
         aux[2] = ((a[im+4] >> 0) & kmask2) | ((a[im+0] & kmask3) >> 2);
         aux[3] = ((a[im+4] >> 4) & kmask2) | ((a[im+2] & kmask3) >> 2);
 
-#if K_QUANTS_PER_ITERATION == 2
+#if K_QUANTS_PER_ITERATION == 2  // 条件编译
         const uint32_t * q1 = (const uint32_t *)(qs_base + bi * (QK_K / 2) + q_offset);
         const uint32_t * q2 = q1 + 16;
 
@@ -705,7 +705,7 @@ static void dequantize_mul_mat_vec_q4_k_reorder(const void *__restrict__ vx,
         tmp += dall * (s.x() * sc[0] + s.y() * sc[1] * 1.f / 16.f +
                        s.z() * sc[4] + s.w() * sc[5] * 1.f / 16.f) -
                dmin * smin;
-#else
+#else  // 否则
         const uint16_t * q1 = (const uint16_t *)(qs_base + bi * (QK_K / 2) + q_offset);
         const uint16_t * q2 = q1 + 32;
 
@@ -722,10 +722,10 @@ static void dequantize_mul_mat_vec_q4_k_reorder(const void *__restrict__ vx,
             smin += y1[l] * sc[2] + y1[l+32] * sc[3] + y2[l] * sc[6] + y2[l+32] * sc[7];
         }
         tmp += dall * (s.x * sc[0] + s.y * sc[1] * 1.f/16.f + s.z * sc[4] + s.w * sc[5] * 1.f/16.f) - dmin * smin;
-#endif
+#endif  // 条件编译结束
 
     }
-#else
+#else  // 否则
     const int tid = item_ct1.get_local_id(2)/(2*K_QUANTS_PER_ITERATION);  // 0...15
     const int ix  = item_ct1.get_local_id(2)%(2*K_QUANTS_PER_ITERATION);
 
@@ -757,7 +757,7 @@ static void dequantize_mul_mat_vec_q4_k_reorder(const void *__restrict__ vx,
         tmp += sum;
     }
 
-#endif
+#endif  // 条件编译结束
 
     // sum up partial sums and write back result
 #pragma unroll
@@ -792,7 +792,7 @@ static void dequantize_mul_mat_vec_q5_k(const void *__restrict__ vx,
 
     float tmp = 0; // partial sum for thread in warp
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const uint16_t kmask1 = 0x3f3f;
     const uint16_t kmask2 = 0x0f0f;
     const uint16_t kmask3 = 0xc0c0;
@@ -869,7 +869,7 @@ static void dequantize_mul_mat_vec_q5_k(const void *__restrict__ vx,
                dmin * smin;
     }
 
-#else
+#else  // 否则
     const int tid = item_ct1.get_local_id(2)/(2*K_QUANTS_PER_ITERATION);  // 0...15
     const int ix  = item_ct1.get_local_id(2)%(2*K_QUANTS_PER_ITERATION);
     const int step = tid * K_QUANTS_PER_ITERATION;
@@ -891,7 +891,7 @@ static void dequantize_mul_mat_vec_q5_k(const void *__restrict__ vx,
         }
         tmp += sum;
     }
-#endif
+#endif  // 条件编译结束
 
     // sum up partial sums and write back result
 #pragma unroll
@@ -919,7 +919,7 @@ static void dequantize_mul_mat_vec_q6_k(const void * __restrict__ vx, const floa
 
     const block_q6_K * x = (const block_q6_K *)vx + ib0;
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
 
     const int tid =
         item_ct1.get_local_id(2) / K_QUANTS_PER_ITERATION; // 0...31 or 0...16
@@ -931,13 +931,13 @@ static void dequantize_mul_mat_vec_q6_k(const void * __restrict__ vx, const floa
     const int im = tid/step;                             // 0 or 1. 0 computes 0..., 1 computes 128...
     const int in = tid - step*im;                        // 0...15 or 0...7
 
-#if K_QUANTS_PER_ITERATION == 1
+#if K_QUANTS_PER_ITERATION == 1  // 条件编译
     const int l0 = K_QUANTS_PER_ITERATION*in;            // 0...15
     const int is = 0;
-#else
+#else  // 否则
     const int l0 = 4 * in;                               // 0, 4, 8, ..., 28
     const int is = in / 4;
-#endif
+#endif  // 条件编译结束
     const int ql_offset = 64*im + l0;
     const int qh_offset = 32*im + l0;
     const int s_offset  =  8*im + is;
@@ -954,7 +954,7 @@ static void dequantize_mul_mat_vec_q6_k(const void * __restrict__ vx, const floa
 
         const float d = x[i].d;
 
-#if K_QUANTS_PER_ITERATION == 1
+#if K_QUANTS_PER_ITERATION == 1  // 条件编译
         float sum = y[ 0] * s[0] * d * ((int8_t)((ql[ 0] & 0xF) | ((qh[ 0] & 0x03) << 4)) - 32)
                   + y[16] * s[1] * d * ((int8_t)((ql[16] & 0xF) | ((qh[16] & 0x03) << 4)) - 32)
                   + y[32] * s[2] * d * ((int8_t)((ql[32] & 0xF) | ((qh[ 0] & 0x0c) << 2)) - 32)
@@ -964,7 +964,7 @@ static void dequantize_mul_mat_vec_q6_k(const void * __restrict__ vx, const floa
                   + y[96] * s[6] * d * ((int8_t)((ql[32]  >> 4) | ((qh[ 0] & 0xc0) >> 2)) - 32)
                   +y[112] * s[7] * d * ((int8_t)((ql[48]  >> 4) | ((qh[16] & 0xc0) >> 2)) - 32);
         tmp += sum;
-#else
+#else  // 否则
         float sum = 0;
         for (int l = 0; l < 4; ++l) {
             sum += y[l+ 0] * s[0] * d * ((int8_t)((ql[l+ 0] & 0xF) | (((qh[l] >> 0) & 3) << 4)) - 32)
@@ -973,11 +973,11 @@ static void dequantize_mul_mat_vec_q6_k(const void * __restrict__ vx, const floa
                  + y[l+96] * s[6] * d * ((int8_t)((ql[l+32]  >> 4) | (((qh[l] >> 6) & 3) << 4)) - 32);
         }
         tmp += sum;
-#endif
+#endif  // 条件编译结束
 
     }
 
-#else
+#else  // 否则
 
     const int tid = item_ct1.get_local_id(2)/(2*K_QUANTS_PER_ITERATION);  // 0...7
     const int ix  = item_ct1.get_local_id(2)%(2*K_QUANTS_PER_ITERATION);  // 0...3
@@ -1006,7 +1006,7 @@ static void dequantize_mul_mat_vec_q6_k(const void * __restrict__ vx, const floa
 
     }
 
-#endif
+#endif  // 条件编译结束
 
     // sum up partial sums and write back result
 #pragma unroll
@@ -1040,7 +1040,7 @@ static void dequantize_mul_mat_vec_q6_k_reorder(const void * __restrict__ vx, co
     const int8_t    * scales_base = (const int8_t *)(qh_base + (size_t)nb * (QK_K / 4));
     const sycl::half * d_base     = (const sycl::half *)((const uint8_t *)scales_base + (size_t)nb * (QK_K / 16));
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
 
     const int tid =
         item_ct1.get_local_id(2) / K_QUANTS_PER_ITERATION; // 0...31 or 0...16
@@ -1052,13 +1052,13 @@ static void dequantize_mul_mat_vec_q6_k_reorder(const void * __restrict__ vx, co
     const int im = tid/step;                             // 0 or 1. 0 computes 0..., 1 computes 128...
     const int in = tid - step*im;                        // 0...15 or 0...7
 
-#if K_QUANTS_PER_ITERATION == 1
+#if K_QUANTS_PER_ITERATION == 1  // 条件编译
     const int l0 = K_QUANTS_PER_ITERATION*in;            // 0...15
     const int is = 0;
-#else
+#else  // 否则
     const int l0 = 4 * in;                               // 0, 4, 8, ..., 28
     const int is = in / 4;
-#endif
+#endif  // 条件编译结束
     const int ql_offset = 64*im + l0;
     const int qh_offset = 32*im + l0;
     const int s_offset  =  8*im + is;
@@ -1076,7 +1076,7 @@ static void dequantize_mul_mat_vec_q6_k_reorder(const void * __restrict__ vx, co
 
         const float d = d_base[bi];
 
-#if K_QUANTS_PER_ITERATION == 1
+#if K_QUANTS_PER_ITERATION == 1  // 条件编译
         float sum = y[ 0] * s[0] * d * ((int8_t)((ql[ 0] & 0xF) | ((qh[ 0] & 0x03) << 4)) - 32)
                   + y[16] * s[1] * d * ((int8_t)((ql[16] & 0xF) | ((qh[16] & 0x03) << 4)) - 32)
                   + y[32] * s[2] * d * ((int8_t)((ql[32] & 0xF) | ((qh[ 0] & 0x0c) << 2)) - 32)
@@ -1086,7 +1086,7 @@ static void dequantize_mul_mat_vec_q6_k_reorder(const void * __restrict__ vx, co
                   + y[96] * s[6] * d * ((int8_t)((ql[32]  >> 4) | ((qh[ 0] & 0xc0) >> 2)) - 32)
                   +y[112] * s[7] * d * ((int8_t)((ql[48]  >> 4) | ((qh[16] & 0xc0) >> 2)) - 32);
         tmp += sum;
-#else
+#else  // 否则
         float sum = 0;
         for (int l = 0; l < 4; ++l) {
             sum += y[l+ 0] * s[0] * d * ((int8_t)((ql[l+ 0] & 0xF) | (((qh[l] >> 0) & 3) << 4)) - 32)
@@ -1095,11 +1095,11 @@ static void dequantize_mul_mat_vec_q6_k_reorder(const void * __restrict__ vx, co
                  + y[l+96] * s[6] * d * ((int8_t)((ql[l+32]  >> 4) | (((qh[l] >> 6) & 3) << 4)) - 32);
         }
         tmp += sum;
-#endif
+#endif  // 条件编译结束
 
     }
 
-#else
+#else  // 否则
 
     const int tid = item_ct1.get_local_id(2)/(2*K_QUANTS_PER_ITERATION);  // 0...7
     const int ix  = item_ct1.get_local_id(2)%(2*K_QUANTS_PER_ITERATION);  // 0...3
@@ -1129,7 +1129,7 @@ static void dequantize_mul_mat_vec_q6_k_reorder(const void * __restrict__ vx, co
 
     }
 
-#endif
+#endif  // 条件编译结束
 
     // sum up partial sums and write back result
 #pragma unroll
@@ -1279,11 +1279,11 @@ static void dequantize_mul_mat_vec_q8_0_sycl_reorder(const void *vx, const dfloa
                 const int ncols_left = ncols % (QK8_0*WARP_SIZE);
                 const int ncols_align = ncols - ncols_left;
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
                 sycl::half2 tmp = {0.0f, 0.0f};
-#else
+#else  // 否则
                 float tmp = 0.0f;
-#endif
+#endif  // 条件编译结束
                 const char *d_ptr = (const char*)vx + ncols*nrows;  // d after all qs
 
                 int i = 0;
@@ -1298,13 +1298,13 @@ static void dequantize_mul_mat_vec_q8_0_sycl_reorder(const void *vx, const dfloa
                         dequantize_q8_0_reorder((const void *)d_ptr, ib, (const void *)vx,
                                                 ib * QK8_0 + iqs + j, v);
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
                         dfloat2 t1{y[col + j + 0], y[col + j + 1]};
                         tmp += v * t1;
-#else
+#else  // 否则
                         tmp += v.x() * y[col + j + 0];
                         tmp += v.y() * y[col + j + 1];
-#endif
+#endif  // 条件编译结束
                     }
                 }
 
@@ -1321,13 +1321,13 @@ static void dequantize_mul_mat_vec_q8_0_sycl_reorder(const void *vx, const dfloa
                         dequantize_q8_0_reorder((const void *)d_ptr, ib, (const void *)vx,
                                                 ib * QK8_0 + iqs + j, v);
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
                         dfloat2 t1{y[col + j + 0], y[col + j + 1]};
                         tmp += v * t1;
-#else
+#else  // 否则
                         tmp += v.x() * y[col + j + 0];
                         tmp += v.y() * y[col + j + 1];
-#endif
+#endif  // 条件编译结束
                     }
                 }
 
@@ -1338,11 +1338,11 @@ static void dequantize_mul_mat_vec_q8_0_sycl_reorder(const void *vx, const dfloa
                 }
 
                 if (tid == 0) {
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
                     dst[row] = tmp.x() + tmp.y();
-#else
+#else  // 否则
                     dst[row] = tmp;
-#endif
+#endif  // 条件编译结束
                 }
             });
     }
@@ -1490,7 +1490,7 @@ void ggml_sycl_op_dequantize_mul_mat_vec(
     const int64_t row_diff = row_high - row_low;
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     // on some GPUs it is faster to convert src1 to half and to use half precision intrinsics
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     ggml_sycl_pool_alloc<sycl::half> src1_dfloat_a(ctx.pool());
     sycl::half *src1_dfloat = nullptr; // dfloat == half
 
@@ -1507,9 +1507,9 @@ void ggml_sycl_op_dequantize_mul_mat_vec(
         GGML_ASSERT(to_fp16_sycl != nullptr);
         to_fp16_sycl(src1_ddf_i, src1_dfloat, ne00, stream);
     }
-#else
+#else  // 否则
     const dfloat * src1_dfloat = (const dfloat *) src1_ddf_i; // dfloat == float, no conversion
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 
     switch (src0->type) {
         case GGML_TYPE_Q4_0:

@@ -1,76 +1,76 @@
-#if defined(__GNUC__)
+#if defined(__GNUC__)  // 条件编译
 #pragma GCC diagnostic ignored "-Wpedantic"
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#endif
+#endif  // 条件编译结束
 
-#include "amx.h"
-#include "mmq.h"
-#include "ggml-impl.h"
-#include "ggml-cpu-impl.h"
-#include "simd-mappings.h"
-#include "quants.h"
-#include "ggml-quants.h"
-#include <algorithm>
-#include <type_traits>
+#include "amx.h"  // 引入 amx.h 头文件
+#include "mmq.h"  // 引入 mmq.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-cpu-impl.h"  // 引入 ggml-cpu-impl.h 头文件
+#include "simd-mappings.h"  // 引入 simd-mappings.h 头文件
+#include "quants.h"  // 引入 quants.h 头文件
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
+#include <algorithm>  // 引入 algorithm 头文件
+#include <type_traits>  // 引入 type_traits 头文件
 
-#if defined(__gnu_linux__)
-#include <sys/syscall.h>
-#include <unistd.h>
-#endif
+#if defined(__gnu_linux__)  // 条件编译
+#include <sys/syscall.h>  // 引入 sys/syscall.h 头文件
+#include <unistd.h>  // 引入 unistd.h 头文件
+#endif  // 条件编译结束
 
-#if (defined(_WIN32) || defined(_WIN64))
-#define RESTRICT __restrict
-#else
-#define RESTRICT __restrict__
-#endif
+#if (defined(_WIN32) || defined(_WIN64))  // 条件编译
+#define RESTRICT __restrict  // 宏定义 RESTRICT
+#else  // 否则
+#define RESTRICT __restrict__  // 宏定义 RESTRICT
+#endif  // 条件编译结束
 
-#if (defined(_WIN32) || defined(_WIN64))
-#define ALWAYS_INLINE __forceinline
-#elif __has_attribute(always_inline) || defined(__GNUC__)
-#define ALWAYS_INLINE __attribute__((__always_inline__)) inline
-#else
-#define ALWAYS_INLINE inline
-#endif
+#if (defined(_WIN32) || defined(_WIN64))  // 条件编译
+#define ALWAYS_INLINE __forceinline  // 宏定义 ALWAYS_INLINE
+#elif __has_attribute(always_inline) || defined(__GNUC__)  // 否则如果
+#define ALWAYS_INLINE __attribute__((__always_inline__)) inline  // 宏定义 ALWAYS_INLINE
+#else  // 否则
+#define ALWAYS_INLINE inline  // 宏定义 ALWAYS_INLINE
+#endif  // 条件编译结束
 
-#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)  // 条件编译
 
-namespace {
+namespace {  // 命名空间
 
 // Forced unrolling
-template <int n>
-struct Unroll {
-    template <typename Func, typename... Args>
+template <int n>  // 模板
+struct Unroll {  // 结构体定义
+    template <typename Func, typename... Args>  // 模板
     ALWAYS_INLINE void operator()(const Func& f, Args... args) const {
         Unroll<n - 1>{}(f, args...);
         f(std::integral_constant<int, n - 1>{}, args...);
     }
 };
 
-template <>
-struct Unroll<1> {
-    template <typename Func, typename... Args>
+template <>  // 模板
+struct Unroll<1> {  // 结构体定义
+    template <typename Func, typename... Args>  // 模板
     ALWAYS_INLINE void operator()(const Func& f, Args... args) const {
         f(std::integral_constant<int, 0>{}, args...);
     }
 };
 
 // type traits
-template <typename T> struct PackedTypes {};
-template <> struct PackedTypes<block_q4_0> { using type = int8_t; };
-template <> struct PackedTypes<block_q4_1> { using type = uint8_t; };
-template <> struct PackedTypes<block_q8_0> { using type = int8_t; };
-template <typename T> using packed_B_type = typename PackedTypes<T>::type;
+template <typename T> struct PackedTypes {};  // 模板
+template <> struct PackedTypes<block_q4_0> { using type = int8_t; };  // 模板
+template <> struct PackedTypes<block_q4_1> { using type = uint8_t; };  // 模板
+template <> struct PackedTypes<block_q8_0> { using type = int8_t; };  // 模板
+template <typename T> using packed_B_type = typename PackedTypes<T>::type;  // 模板
 
-template <typename T>
+template <typename T>  // 模板
 struct do_compensate : std::integral_constant<bool,
     std::is_same<T, block_q8_0>::value> {};
 
-template <typename T>
+template <typename T>  // 模板
 struct do_unpack : std::integral_constant<bool,
     std::is_same<T, block_q4_0>::value ||
     std::is_same<T, block_q4_1>::value> {};
 
-template <typename T>
+template <typename T>  // 模板
 struct is_type_qkk : std::integral_constant<bool,
     std::is_same<T, block_q4_K>::value ||
     std::is_same<T, block_q5_K>::value ||
@@ -157,7 +157,7 @@ struct is_type_qkk : std::integral_constant<bool,
     }()
 
 // define amx tile config data structure
-struct tile_config_t{
+struct tile_config_t{  // 结构体定义
     uint8_t palette_id = 0;
     uint8_t start_row = 0;
     uint8_t reserved_0[14] = {0};
@@ -205,7 +205,7 @@ inline void ggml_tile_config_init(void) {
     static thread_local bool done = false;
 
     if (done) {
-        return;
+        return;  // 返回
     }
 
     alignas(64) tile_config_t tc = {};
@@ -226,7 +226,7 @@ inline void ggml_tile_config_init(void) {
 
 // we need an extra 16 * 4B (TILE_N * int32_t) for each NB/KB block for compensation.
 // See the notes `s8s8 igemm compensation in avx512-vnni` for detail.
-template <typename TB>
+template <typename TB>  // 模板
 int get_tile_size() {
     int tile_size = TILE_N * sizeof(TB);
     if (do_compensate<TB>::value) {
@@ -239,10 +239,10 @@ int get_tile_size() {
     if (std::is_same<TB, block_iq4_xs>::value) {
         tile_size += TILE_N * 2;
     }
-    return tile_size;
+    return tile_size;  // 返回
 }
 
-template <typename TB, int BLOCK_K>
+template <typename TB, int BLOCK_K>  // 模板
 int get_row_size(int K) {
     int KB = K / BLOCK_K;
     int row_size = KB * sizeof(TB);
@@ -256,7 +256,7 @@ int get_row_size(int K) {
     if (std::is_same<TB, block_iq4_xs>::value) {
         row_size += KB * 2;
     }
-    return row_size;
+    return row_size;  // 返回
 }
 
 // transpose utils
@@ -455,27 +455,27 @@ void quantize_row_q8_K_vnni(const float * RESTRICT x, void * RESTRICT vy, int64_
 }
 
 // quantize A from float to `vec_dot_type`
-template <typename T>
-inline void from_float(const float * x, char * vy, int64_t k);
+template <typename T>  // 模板
+inline void from_float(const float * x, char * vy, int64_t k);  // from_float
 
-template <>
+template <>  // 模板
 inline void from_float<block_q8_0>(const float * x, char * vy, int64_t k) {
     quantize_row_q8_0(x, (block_q8_0 *)vy, k);
 }
 
-template <>
+template <>  // 模板
 inline void from_float<block_q8_1>(const float * x, char * vy, int64_t k) {
     quantize_row_q8_1(x, (block_q8_1 *)vy, k);
 }
 
-template <>
+template <>  // 模板
 inline void from_float<block_q8_K>(const float * x, char * vy, int64_t k) {
-#if 1
+#if 1  // 条件编译
     // TODO: this is reference impl!
     quantize_row_q8_K_ref(x, (block_q8_K *)vy, k);
-#else
+#else  // 否则
     quantize_row_q8_K_vnni(x, vy, k);
-#endif
+#endif  // 条件编译结束
 }
 
 // load A from memory to array when nrows can not fill in whole tile
@@ -495,7 +495,7 @@ void unpack_A(int8_t * RESTRICT tile, const block_q8_1 * RESTRICT A, int lda, in
     }
 }
 
-template <typename TB>
+template <typename TB>  // 模板
 void unpack_A(int8_t * RESTRICT tile, const block_q8_K * RESTRICT A, int lda, int k, int nr) {
     assert(nr <= TILE_M);
     for (int m = 0; m < nr; ++m) {
@@ -504,7 +504,7 @@ void unpack_A(int8_t * RESTRICT tile, const block_q8_K * RESTRICT A, int lda, in
     }
 }
 
-template <>
+template <>  // 模板
 void unpack_A<block_q6_K>(int8_t * RESTRICT tile, const block_q8_K * RESTRICT A, int lda, int k, int nr) {
     assert(nr <= TILE_M);
     // zero padding k from 16 to 32, so that we don't have to re-config amx
@@ -516,12 +516,12 @@ void unpack_A<block_q6_K>(int8_t * RESTRICT tile, const block_q8_K * RESTRICT A,
     }
 }
 
-#define MM256_SET_M128I(a, b) _mm256_insertf128_si256(_mm256_castsi128_si256(b), (a), 1)
+#define MM256_SET_M128I(a, b) _mm256_insertf128_si256(_mm256_castsi128_si256(b), (a), 1)  // 宏定义 MM256_SET_M128I
 inline __m256i bytes_from_nibbles_32(const uint8_t * rsi) {
     const __m128i tmp = _mm_loadu_si128((const __m128i *)rsi);
     const __m256i bytes = MM256_SET_M128I(_mm_srli_epi16(tmp, 4), tmp);
     const __m256i lowMask = _mm256_set1_epi8(0xF);
-    return _mm256_and_si256(lowMask, bytes);
+    return _mm256_and_si256(lowMask, bytes);  // _mm256_and_si256
 }
 
 // used for block_q4_K
@@ -530,7 +530,7 @@ inline __m512i bytes_from_nibbles_64(const uint8_t * rsi) {
     const __m256i lowMask = _mm256_set1_epi8(0xF);
     const __m256i q4l = _mm256_and_si256(tmp, lowMask);
     const __m256i q4h = _mm256_and_si256(_mm256_srli_epi16(tmp, 4), lowMask);
-    return _mm512_inserti32x8(_mm512_castsi256_si512(q4l), q4h, 1);
+    return _mm512_inserti32x8(_mm512_castsi256_si512(q4l), q4h, 1);  // _mm512_inserti32x8
 }
 
 // used for block_q5_K
@@ -551,7 +551,7 @@ inline __m512i bytes_from_nibbles_64(const uint8_t * qs, const uint8_t * qh, int
     const __m256i q5h_1 = _mm256_slli_epi16(_mm256_srli_epi16(_mm256_and_si256(hbits, hmask), k + 1), 4);
     const __m256i q5_1  = _mm256_add_epi8(q5l_1, q5h_1);
 
-    return _mm512_inserti32x8(_mm512_castsi256_si512(q5_0), q5_1, 1);
+    return _mm512_inserti32x8(_mm512_castsi256_si512(q5_0), q5_1, 1);  // _mm512_inserti32x8
 }
 
 // used for block_q6_K
@@ -578,10 +578,10 @@ inline void bytes_from_nibbles_128(__m512i& r0, __m512i& r1, const uint8_t * qs,
 }
 
 inline __m512i packNibbles(__m512i r0, __m512i r1) {
-    return _mm512_or_si512(r0, _mm512_slli_epi16(r1, 4));
+    return _mm512_or_si512(r0, _mm512_slli_epi16(r1, 4));  // _mm512_or_si512
 }
 
-template <typename TB>
+template <typename TB>  // 模板
 inline void pack_qs(void * RESTRICT packed_B, const TB * RESTRICT B, int KB) {
     int8_t tmp[8 * 64];
     __m256i v[8], v2[8];
@@ -609,7 +609,7 @@ inline void pack_qs(void * RESTRICT packed_B, const TB * RESTRICT B, int KB) {
     }
 }
 
-template <>
+template <>  // 模板
 inline void pack_qs<block_q8_0>(void * RESTRICT packed_B, const block_q8_0 * RESTRICT B, int KB) {
     __m256i v[8], v2[8];
     for (int n = 0; n < 8; ++n) {
@@ -628,7 +628,7 @@ inline void pack_qs<block_q8_0>(void * RESTRICT packed_B, const block_q8_0 * RES
     }
 }
 
-template <>
+template <>  // 模板
 inline void pack_qs<block_q4_K>(void * RESTRICT packed_B, const block_q4_K * RESTRICT B, int KB) {
     __m512i v[16];
     // QK_K 256 with 8 groups, handle 2 groups at a time
@@ -650,7 +650,7 @@ inline void pack_qs<block_q4_K>(void * RESTRICT packed_B, const block_q4_K * RES
     }
 }
 
-template <>
+template <>  // 模板
 inline void pack_qs<block_q5_K>(void * RESTRICT packed_B, const block_q5_K * RESTRICT B, int KB) {
     __m512i v[16];
     const __m512i lowMask = _mm512_set1_epi8(0xF);
@@ -691,7 +691,7 @@ inline void pack_qs<block_q5_K>(void * RESTRICT packed_B, const block_q5_K * RES
     }
 }
 
-template <>
+template <>  // 模板
 inline void pack_qs<block_q6_K>(void * RESTRICT packed_B, const block_q6_K * RESTRICT B, int KB) {
     __m512i v[32];
     const __m512i lowMask = _mm512_set1_epi8(0xF);
@@ -727,7 +727,7 @@ inline void pack_qs<block_q6_K>(void * RESTRICT packed_B, const block_q6_K * RES
     }
 }
 
-template <>
+template <>  // 模板
 inline void pack_qs<block_iq4_xs>(void * RESTRICT packed_B, const block_iq4_xs * RESTRICT B, int KB) {
     __m512i v[16];
     char * pb = (char *)packed_B;
@@ -909,13 +909,13 @@ void pack_B(void * RESTRICT packed_B, const block_iq4_xs * RESTRICT B, int KB) {
     }
 }
 
-template<typename TB, typename packed_B_t = packed_B_type<TB>>
+template<typename TB, typename packed_B_t = packed_B_type<TB>>  // 模板
 void unpack_B(packed_B_t * RESTRICT tile, const void * RESTRICT packed_B) {
     GGML_UNUSED(tile);
     GGML_UNUSED(packed_B);
 }
 
-template <>
+template <>  // 模板
 void unpack_B<block_q4_0>(int8_t * RESTRICT tile, const void * RESTRICT packed_B) {
   const __m512i off = _mm512_set1_epi8(8);
   const __m512i lowMask = _mm512_set1_epi8(0xF);
@@ -928,7 +928,7 @@ void unpack_B<block_q4_0>(int8_t * RESTRICT tile, const void * RESTRICT packed_B
   }
 }
 
-template <>
+template <>  // 模板
 void unpack_B<block_q4_1>(uint8_t * RESTRICT tile, const void * RESTRICT packed_B) {
     const __m512i lowMask = _mm512_set1_epi8(0xF);
     for (int n = 0; n < 8; n += 2) {
@@ -941,7 +941,7 @@ void unpack_B<block_q4_1>(uint8_t * RESTRICT tile, const void * RESTRICT packed_
 }
 
 // packed_B_t for QKK is int8_t
-template <typename TB>
+template <typename TB>  // 模板
 void unpack_B(int8_t * RESTRICT tile, const void * RESTRICT packed_B, int k) {
     const int packed_B_group_size = QK_K / 2 * TILE_N / 8;
     const char * packed_B_group = (const char *)packed_B + k * packed_B_group_size;
@@ -955,7 +955,7 @@ void unpack_B(int8_t * RESTRICT tile, const void * RESTRICT packed_B, int k) {
     }
 }
 
-template <>
+template <>  // 模板
 void unpack_B<block_q5_K>(int8_t * RESTRICT tile, const void * RESTRICT packed_B, int k) {
     // lower 4bits, stride 256 bytes
     const int packed_l4_group_size = QK_K / 2 * TILE_N / 8;
@@ -986,7 +986,7 @@ void unpack_B<block_q5_K>(int8_t * RESTRICT tile, const void * RESTRICT packed_B
     }
 }
 
-template <>
+template <>  // 模板
 void unpack_B<block_q6_K>(int8_t * RESTRICT tile, const void * RESTRICT packed_B, int k) {
     // lower 4bits, stride 128 bytes
     const int packed_l4_group_size = QK_K / 2 * TILE_N / 16;
@@ -1023,7 +1023,7 @@ void unpack_B<block_q6_K>(int8_t * RESTRICT tile, const void * RESTRICT packed_B
     _mm512_storeu_si512((__m512i *)(tile + 192), _mm512_sub_epi8(_mm512_add_epi8(r1, h1), off));
 }
 
-template <>
+template <>  // 模板
 void unpack_B<block_iq4_xs>(int8_t * RESTRICT tile, const void * RESTRICT packed_B, int k) {
     static const __m512i values128 = _mm512_set_epi8(
         113, 89, 69, 53, 38, 25, 13, 1, -10, -22, -35, -49, -65, -83, -104, -127,
@@ -1045,11 +1045,11 @@ void unpack_B<block_iq4_xs>(int8_t * RESTRICT tile, const void * RESTRICT packed
     }
 }
 
-template <typename TA, typename TB, bool is_acc>
-struct acc_C {};
+template <typename TA, typename TB, bool is_acc>  // 模板
+struct acc_C {};  // 结构体定义
 
-template <bool is_acc>
-struct acc_C<block_q8_0, block_q4_0, is_acc> {
+template <bool is_acc>  // 模板
+struct acc_C<block_q8_0, block_q4_0, is_acc> {  // 结构体定义
     static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_0 * A, int lda, const void * packed_B, int nr) {
         const int offset = TILE_N * TILE_K / 2;
         const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)((const char *)packed_B + offset)));
@@ -1070,8 +1070,8 @@ struct acc_C<block_q8_0, block_q4_0, is_acc> {
     }
 };
 
-template <bool is_acc>
-struct acc_C<block_q8_1, block_q4_1, is_acc> {
+template <bool is_acc>  // 模板
+struct acc_C<block_q8_1, block_q4_1, is_acc> {  // 结构体定义
     static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_1 * A, int lda, const void * packed_B, int nr) {
         const int offset = TILE_N * TILE_K / 2;
         const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)((const char *)packed_B + offset)));
@@ -1095,8 +1095,8 @@ struct acc_C<block_q8_1, block_q4_1, is_acc> {
     }
 };
 
-template <bool is_acc>
-struct acc_C<block_q8_0, block_q8_0, is_acc> {
+template <bool is_acc>  // 模板
+struct acc_C<block_q8_0, block_q8_0, is_acc> {  // 结构体定义
     static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_0 * A, int lda, const void * packed_B, int nr) {
         const int offset = TILE_N * TILE_K;
         const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)((const char *)packed_B + offset)));
@@ -1117,8 +1117,8 @@ struct acc_C<block_q8_0, block_q8_0, is_acc> {
     }
 };
 
-template <bool is_acc>
-struct acc_C<block_q8_K, block_q4_K, is_acc> {
+template <bool is_acc>  // 模板
+struct acc_C<block_q8_K, block_q4_K, is_acc> {  // 结构体定义
     static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_K * A, int lda, const void * packed_B, int nr) {
         const uint8_t * scales = reinterpret_cast<const uint8_t *>((const char *)packed_B + (QK_K / 2) * TILE_N);
         const uint8_t * mins = scales + 8 * TILE_N;
@@ -1159,8 +1159,8 @@ struct acc_C<block_q8_K, block_q4_K, is_acc> {
     }
 };
 
-template <bool is_acc>
-struct acc_C<block_q8_K, block_q5_K, is_acc> {
+template <bool is_acc>  // 模板
+struct acc_C<block_q8_K, block_q5_K, is_acc> {  // 结构体定义
     static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_K * A, int lda, const void * packed_B, int nr) {
         const uint8_t * scales = reinterpret_cast<const uint8_t *>((const char *)packed_B + (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N);
         const uint8_t * mins = scales + 8 * TILE_N;
@@ -1201,8 +1201,8 @@ struct acc_C<block_q8_K, block_q5_K, is_acc> {
     }
 };
 
-template <bool is_acc>
-struct acc_C<block_q8_K, block_q6_K, is_acc> {
+template <bool is_acc>  // 模板
+struct acc_C<block_q8_K, block_q6_K, is_acc> {  // 结构体定义
     static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_K * A, int lda, const void * packed_B, int nr) {
         const uint8_t * scales = reinterpret_cast<const uint8_t *>((const char *)packed_B + (QK_K / 2) * TILE_N + (QK_K / 4) * TILE_N);
         const ggml_half * d0 = reinterpret_cast<const ggml_half *>(scales + 16 * TILE_N);
@@ -1227,8 +1227,8 @@ struct acc_C<block_q8_K, block_q6_K, is_acc> {
     }
 };
 
-template <bool is_acc>
-struct acc_C<block_q8_K, block_iq4_xs, is_acc> {
+template <bool is_acc>  // 模板
+struct acc_C<block_q8_K, block_iq4_xs, is_acc> {  // 结构体定义
     static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_K * A, int lda, const void * packed_B, int nr) {
         const int8_t * scales = reinterpret_cast<const int8_t *>((const char *)packed_B + (QK_K / 2) * TILE_N);
         const ggml_half * d0 = reinterpret_cast<const ggml_half *>(scales + 8 * TILE_N);
@@ -1254,13 +1254,13 @@ struct acc_C<block_q8_K, block_iq4_xs, is_acc> {
 };
 
 template <typename TB> constexpr int get_quants_size();
-template <> constexpr int get_quants_size<block_q4_K>() { return (QK_K / 2) * TILE_N; }
-template <> constexpr int get_quants_size<block_q5_K>() { return (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N; }
-template <> constexpr int get_quants_size<block_q6_K>() { return (QK_K / 2) * TILE_N + (QK_K / 4) * TILE_N; }
-template <> constexpr int get_quants_size<block_iq4_xs>() { return (QK_K / 2) * TILE_N; }
+template <> constexpr int get_quants_size<block_q4_K>() { return (QK_K / 2) * TILE_N; }  // 模板
+template <> constexpr int get_quants_size<block_q5_K>() { return (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N; }  // 模板
+template <> constexpr int get_quants_size<block_q6_K>() { return (QK_K / 2) * TILE_N + (QK_K / 4) * TILE_N; }  // 模板
+template <> constexpr int get_quants_size<block_iq4_xs>() { return (QK_K / 2) * TILE_N; }  // 模板
 
 // used for QKK format
-template <typename TB, bool is_acc,
+template <typename TB, bool is_acc,  // 模板
           typename std::enable_if<is_type_qkk<TB>::value, int>::type = 0>
 inline void scale_C(const int32_t * RESTRICT tile, int32_t * RESTRICT sumi, const void * packed_B, int k, int nr) {
     const uint8_t * scales = reinterpret_cast<const uint8_t *>((const char *)packed_B + get_quants_size<TB>());
@@ -1279,8 +1279,8 @@ inline void scale_C(const int32_t * RESTRICT tile, int32_t * RESTRICT sumi, cons
     }
 }
 
-template <typename TA, typename TB, typename TC, int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_avx {
+template <typename TA, typename TB, typename TC, int BLOCK_M, int BLOCK_N, int BLOCK_K>  // 模板
+struct tinygemm_kernel_avx {  // 结构体定义
     static void apply(int K, const TA * RESTRICT A, const TB * RESTRICT B, TC * RESTRICT C, int ldc) {
         GGML_UNUSED(K);
         GGML_UNUSED(A);
@@ -1290,8 +1290,8 @@ struct tinygemm_kernel_avx {
     }
 };
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_avx<float, ggml_fp16_t, float, BLOCK_M, BLOCK_N, BLOCK_K> {
+template <int BLOCK_M, int BLOCK_N, int BLOCK_K>  // 模板
+struct tinygemm_kernel_avx<float, ggml_fp16_t, float, BLOCK_M, BLOCK_N, BLOCK_K> {  // 结构体定义
     static void apply(int K, const float * RESTRICT A, const ggml_fp16_t * RESTRICT B, float * RESTRICT C, int ldc) {
         constexpr int ROWS = BLOCK_M;
         constexpr int COLS = BLOCK_N;
@@ -1340,9 +1340,9 @@ struct tinygemm_kernel_avx<float, ggml_fp16_t, float, BLOCK_M, BLOCK_N, BLOCK_K>
 
 
 // re-organize in the format {NB, KB, TILE_SIZE}:
-#define PACKED_INDEX(n, k, KB, tile_size) (n * KB + k) * tile_size
+#define PACKED_INDEX(n, k, KB, tile_size) (n * KB + k) * tile_size  // 宏定义 PACKED_INDEX
 
-template<typename TB, int BLOCK_K>
+template<typename TB, int BLOCK_K>  // 模板
 void convert_B_packed_format(void * RESTRICT packed_B, const TB * RESTRICT B, int N, int K) {
     const int NB = N / TILE_N;
     const int KB = K / BLOCK_K;
@@ -1359,11 +1359,11 @@ void convert_B_packed_format(void * RESTRICT packed_B, const TB * RESTRICT B, in
     });
 }
 
-template <typename TA, typename TB, typename TC, int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni {};
+template <typename TA, typename TB, typename TC, int BLOCK_M, int BLOCK_N, int BLOCK_K>  // 模板
+struct tinygemm_kernel_vnni {};  // 结构体定义
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_0, block_q4_0, float, BLOCK_M, BLOCK_N, BLOCK_K> {
+template <int BLOCK_M, int BLOCK_N, int BLOCK_K>  // 模板
+struct tinygemm_kernel_vnni<block_q8_0, block_q4_0, float, BLOCK_M, BLOCK_N, BLOCK_K> {  // 结构体定义
     static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
 
         constexpr int COLS = BLOCK_N / 16;
@@ -1434,8 +1434,8 @@ struct tinygemm_kernel_vnni<block_q8_0, block_q4_0, float, BLOCK_M, BLOCK_N, BLO
     }
 };
 
-template <int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_1, block_q4_1, float, 1, BLOCK_N, BLOCK_K> {
+template <int BLOCK_N, int BLOCK_K>  // 模板
+struct tinygemm_kernel_vnni<block_q8_1, block_q4_1, float, 1, BLOCK_N, BLOCK_K> {  // 结构体定义
     static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
 
         constexpr int COLS = BLOCK_N / 16;
@@ -1499,8 +1499,8 @@ struct tinygemm_kernel_vnni<block_q8_1, block_q4_1, float, 1, BLOCK_N, BLOCK_K> 
     }
 };
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_0, block_q8_0, float, BLOCK_M, BLOCK_N, BLOCK_K> {
+template <int BLOCK_M, int BLOCK_N, int BLOCK_K>  // 模板
+struct tinygemm_kernel_vnni<block_q8_0, block_q8_0, float, BLOCK_M, BLOCK_N, BLOCK_K> {  // 结构体定义
     static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
 
         constexpr int COLS = BLOCK_N / 16;
@@ -1570,8 +1570,8 @@ struct tinygemm_kernel_vnni<block_q8_0, block_q8_0, float, BLOCK_M, BLOCK_N, BLO
     }
 };
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_K, block_q4_K, float, BLOCK_M, BLOCK_N, BLOCK_K> {
+template <int BLOCK_M, int BLOCK_N, int BLOCK_K>  // 模板
+struct tinygemm_kernel_vnni<block_q8_K, block_q4_K, float, BLOCK_M, BLOCK_N, BLOCK_K> {  // 结构体定义
     static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
 
         constexpr int COLS = BLOCK_N / 16;
@@ -1670,8 +1670,8 @@ struct tinygemm_kernel_vnni<block_q8_K, block_q4_K, float, BLOCK_M, BLOCK_N, BLO
     }
 };
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_K, block_q5_K, float, BLOCK_M, BLOCK_N, BLOCK_K> {
+template <int BLOCK_M, int BLOCK_N, int BLOCK_K>  // 模板
+struct tinygemm_kernel_vnni<block_q8_K, block_q5_K, float, BLOCK_M, BLOCK_N, BLOCK_K> {  // 结构体定义
     static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
 
         constexpr int COLS = BLOCK_N / 16;
@@ -1776,8 +1776,8 @@ struct tinygemm_kernel_vnni<block_q8_K, block_q5_K, float, BLOCK_M, BLOCK_N, BLO
     }
 };
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_K, block_q6_K, float, BLOCK_M, BLOCK_N, BLOCK_K> {
+template <int BLOCK_M, int BLOCK_N, int BLOCK_K>  // 模板
+struct tinygemm_kernel_vnni<block_q8_K, block_q6_K, float, BLOCK_M, BLOCK_N, BLOCK_K> {  // 结构体定义
     static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
 
         constexpr int COLS = BLOCK_N / 16;
@@ -1886,8 +1886,8 @@ struct tinygemm_kernel_vnni<block_q8_K, block_q6_K, float, BLOCK_M, BLOCK_N, BLO
     }
 };
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_K, block_iq4_xs, float, BLOCK_M, BLOCK_N, BLOCK_K> {
+template <int BLOCK_M, int BLOCK_N, int BLOCK_K>  // 模板
+struct tinygemm_kernel_vnni<block_q8_K, block_iq4_xs, float, BLOCK_M, BLOCK_N, BLOCK_K> {  // 结构体定义
     static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
 
         constexpr int COLS = BLOCK_N / 16;
@@ -1989,10 +1989,10 @@ struct tinygemm_kernel_vnni<block_q8_K, block_iq4_xs, float, BLOCK_M, BLOCK_N, B
         (const char *)src0->data + src0_offset + PACKED_INDEX(nb * kTilesN, 0, KB, TILE_SIZE), \
         (float *) dst->data + dst_offset + nb_start, ldc)
 
-template <typename TA, typename TB, typename TC, int BLOCK_K,
+template <typename TA, typename TB, typename TC, int BLOCK_K,  // 模板
           typename std::enable_if<!is_type_qkk<TB>::value, int>::type = 0>
 void tinygemm_kernel_amx(int M, int N, int KB, const void * RESTRICT _A, const void * RESTRICT _B, TC * RESTRICT C, int ldc) {
-    using packed_B_t = packed_B_type<TB>;
+    using packed_B_t = packed_B_type<TB>;  // using 声明
     const int TILE_SIZE = get_tile_size<TB>();
     const bool need_unpack = do_unpack<TB>::value;
 
@@ -2170,10 +2170,10 @@ void tinygemm_kernel_amx(int M, int N, int KB, const void * RESTRICT _A, const v
             }
         }
     }
-    return;
+    return;  // 返回
 }
 
-template <typename TA, typename TB, typename TC, int BLOCK_K,
+template <typename TA, typename TB, typename TC, int BLOCK_K,  // 模板
           typename std::enable_if<is_type_qkk<TB>::value, int>::type = 0>
 void tinygemm_kernel_amx(int M, int N, int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
     static_assert(std::is_same<TA, block_q8_K>::value);
@@ -2258,7 +2258,7 @@ void tinygemm_kernel_amx(int M, int N, int KB, const void * RESTRICT _A, const v
             }
         });
     }
-    return;
+    return;  // 返回
 }
 
 } // anonymous namespace
@@ -2275,14 +2275,14 @@ size_t ggml_backend_amx_get_alloc_size(const struct ggml_tensor * tensor) {
         GGML_DISPATCH_QTYPES(TYPE, [&] {
             row_size_B = get_row_size<type, blck_size>(K);
         });
-        return N * row_size_B;
+        return N * row_size_B;  // 返回
     };
 
     if (qtype_has_amx_kernels(TYPE)) {
-        return get_tensor_size();
+        return get_tensor_size();  // get_tensor_size
     } else {
         // for f16, bf16 we don't do packing
-        return ggml_nbytes(tensor);
+        return ggml_nbytes(tensor);  // ggml_nbytes
     }
 }
 
@@ -2304,7 +2304,7 @@ void ggml_backend_amx_convert_weight(struct ggml_tensor * tensor, const void * d
 inline int64_t ggml_batch_offset(const ggml_tensor * t, int64_t batch_idx, int64_t ne2) {
     const int64_t i2 = batch_idx % ne2;
     const int64_t i3 = batch_idx / ne2;
-    return i3 * t->nb[3] + i2 * t->nb[2];
+    return i3 * t->nb[3] + i2 * t->nb[2];  // 返回
 }
 
 size_t ggml_backend_amx_desired_wsize(const struct ggml_tensor * dst) {
@@ -2314,7 +2314,7 @@ size_t ggml_backend_amx_desired_wsize(const struct ggml_tensor * dst) {
 
     const bool is_floating_type = TYPE == GGML_TYPE_F16;
     if (is_floating_type) {
-        return 0;
+        return 0;  // 返回
     }
 
     const int M = dst->ne[1];
@@ -2328,7 +2328,7 @@ size_t ggml_backend_amx_desired_wsize(const struct ggml_tensor * dst) {
         desired_wsize = n_batch * M * row_size_A;
     });
 
-    return desired_wsize;
+    return desired_wsize;  // 返回
 }
 
 // NB: mixed dtype gemm with Advanced Matrix Extensions (Intel AMX)
@@ -2398,7 +2398,7 @@ void ggml_backend_amx_mul_mat(const ggml_compute_params * params, struct ggml_te
                 }
             });
         });
-        return;
+        return;  // 返回
     }
 
     // pointer to work space, used convert A from float to quantized type
@@ -2466,7 +2466,7 @@ void ggml_backend_amx_mul_mat(const ggml_compute_params * params, struct ggml_te
                 }
             });
         });
-        return;
+        return;  // 返回
     }
 
     // handle 4 tiles at a tile
@@ -2509,4 +2509,4 @@ void ggml_backend_amx_mul_mat(const ggml_compute_params * params, struct ggml_te
     });
 }
 
-#endif // if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#endif // if defined(__AMX_INT8__) && defined(__AVX512VNNI__)  // 条件编译结束

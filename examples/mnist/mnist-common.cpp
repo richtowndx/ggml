@@ -1,25 +1,25 @@
-#include "ggml.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
-#include "ggml-opt.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-opt.h"  // 引入 ggml-opt.h 头文件
 
-#include "mnist-common.h"
+#include "mnist-common.h"  // 引入 mnist-common.h 头文件
 
-#include <algorithm>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <cstdint>
-#include <fstream>
-#include <random>
-#include <string>
-#include <utility>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <random>  // 引入 random 头文件
+#include <string>  // 引入 string 头文件
+#include <utility>  // 引入 utility 头文件
 
 bool mnist_image_load(const std::string & fname, ggml_opt_dataset_t dataset) {
     auto fin = std::ifstream(fname, std::ios::binary);
     if (!fin) {
         fprintf(stderr, "failed to open images file %s\n", fname.c_str());
-        return false;
+        return false;  // 返回
     }
     fin.seekg(16);
 
@@ -36,7 +36,7 @@ bool mnist_image_load(const std::string & fname, ggml_opt_dataset_t dataset) {
         }
     }
 
-    return true;
+    return true;  // 返回
 }
 
 void mnist_image_print(FILE * stream, ggml_opt_dataset_t dataset, const int iex) {
@@ -48,11 +48,11 @@ void mnist_image_print(FILE * stream, ggml_opt_dataset_t dataset, const int iex)
     for (int64_t row = 0; row < MNIST_HW; row++) {
         for (int64_t col = 0; col < MNIST_HW; col++) {
             const int rgb = roundf(255.0f * image[row*MNIST_HW + col]);
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
             fprintf(stream, "%s", rgb >= 220 ? "##" : "__");                // Represented via text.
-#else
+#else  // 否则
             fprintf(stream, "\033[48;2;%d;%d;%dm  \033[0m", rgb, rgb, rgb); // Represented via colored blocks.
-#endif // _WIN32
+#endif // _WIN32  // 条件编译结束
         }
         fprintf(stream, "\n");
     }
@@ -62,7 +62,7 @@ bool mnist_label_load(const std::string & fname, ggml_opt_dataset_t dataset) {
     auto fin = std::ifstream(fname, std::ios::binary);
     if (!fin) {
         fprintf(stderr, "failed to open labels file %s\n", fname.c_str());
-        return 0;
+        return 0;  // 返回
     }
     fin.seekg(8);
 
@@ -79,14 +79,14 @@ bool mnist_label_load(const std::string & fname, ggml_opt_dataset_t dataset) {
         }
     }
 
-    return true;
+    return true;  // 返回
 }
 
 // Temporary util function for loading data from GGUF to a backend != CPU until GGML itself provides this functionality:
 bool load_from_gguf(const char * fname, struct ggml_context * ctx_ggml, struct gguf_context * ctx_gguf) {
     FILE * f = ggml_fopen(fname, "rb");
     if (!f) {
-        return false;
+        return false;  // 返回
     }
 
     const size_t buf_size = 4*1024*1024;
@@ -106,7 +106,7 @@ bool load_from_gguf(const char * fname, struct ggml_context * ctx_ggml, struct g
         if (fseek(f, offs, SEEK_SET) != 0) {
             fclose(f);
             free(buf);
-            return false;
+            return false;  // 返回
         }
 
         const size_t nbytes = ggml_nbytes(tensor);
@@ -116,7 +116,7 @@ bool load_from_gguf(const char * fname, struct ggml_context * ctx_ggml, struct g
             if (fread(buf, 1, nbytes_cpy, f) != nbytes_cpy) {
                 fclose(f);
                 free(buf);
-                return false;
+                return false;  // 返回
             }
 
             ggml_backend_tensor_set(tensor, buf, pos, nbytes_cpy);
@@ -125,16 +125,16 @@ bool load_from_gguf(const char * fname, struct ggml_context * ctx_ggml, struct g
 
     fclose(f);
     free(buf);
-    return true;
+    return true;  // 返回
 }
 
 mnist_model mnist_model_init_from_file(const std::string & fname, const std::string & backend, const int nbatch_logical, const int nbatch_physical) {
-    mnist_model model(backend, nbatch_logical, nbatch_physical);
+    mnist_model model(backend, nbatch_logical, nbatch_physical);  // model
     fprintf(stderr, "%s: loading model weights from '%s'\n", __func__, fname.c_str());
 
     struct gguf_context * ctx;
     {
-        struct gguf_init_params params = {
+        struct gguf_init_params params = {  // 结构体定义
             /*.no_alloc   =*/ true,
             /*.ctx        =*/ &model.ctx_gguf,
         };
@@ -235,11 +235,11 @@ mnist_model mnist_model_init_from_file(const std::string & fname, const std::str
     model.buf_static = ggml_backend_alloc_ctx_tensors(model.ctx_static, model.backends[0]);
 
     fprintf(stderr, "%s: successfully loaded weights from %s\n", __func__, fname.c_str());
-    return model;
+    return model;  // 返回
 }
 
 mnist_model mnist_model_init_random(const std::string & arch, const std::string & backend, const int nbatch_logical, const int nbatch_physical) {
-    mnist_model model(backend, nbatch_logical, nbatch_physical);
+    mnist_model model(backend, nbatch_logical, nbatch_physical);  // model
     model.arch = arch;
 
     std::random_device rd{};
@@ -306,7 +306,7 @@ mnist_model mnist_model_init_random(const std::string & arch, const std::string 
         ggml_backend_tensor_set(t, tmp.data(), 0, ggml_nbytes(t));
     }
 
-    return model;
+    return model;  // 返回
 }
 
 void mnist_model_build(mnist_model & model) {
@@ -406,7 +406,7 @@ ggml_opt_result_t mnist_model_eval(mnist_model & model, ggml_opt_dataset_t datas
 
     ggml_opt_free(opt_ctx);
 
-    return result;
+    return result;  // 返回
 }
 
 void mnist_model_train(mnist_model & model, ggml_opt_dataset_t dataset, const int nepoch, const float val_split) {
@@ -419,7 +419,7 @@ void mnist_model_save(mnist_model & model, const std::string & fname) {
 
     struct ggml_context * ggml_ctx;
     {
-        struct ggml_init_params params = {
+        struct ggml_init_params params = {  // 结构体定义
             /*.mem_size   =*/ 100 * 1024*1024,
             /*.mem_buffer =*/ NULL,
             /*.no_alloc   =*/ false,
@@ -450,9 +450,9 @@ void mnist_model_save(mnist_model & model, const std::string & fname) {
     gguf_free(gguf_ctx);
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
 int wasm_eval(uint8_t * digitPtr) {
     std::vector<float> digit(digitPtr, digitPtr + MNIST_NINPUT);
@@ -473,14 +473,14 @@ int wasm_eval(uint8_t * digitPtr) {
     int32_t pred;
     ggml_opt_result_pred(result, &pred);
 
-    return pred;
+    return pred;  // 返回
 }
 
 int wasm_random_digit(char * digitPtr) {
     auto fin = std::ifstream("t10k-images-idx3-ubyte", std::ios::binary);
     if (!fin) {
         fprintf(stderr, "failed to open digits file\n");
-        return 0;
+        return 0;  // 返回
     }
     srand(time(NULL));
 
@@ -488,9 +488,9 @@ int wasm_random_digit(char * digitPtr) {
     fin.seekg(16 + MNIST_NINPUT * (rand() % MNIST_NTEST));
     fin.read(digitPtr, MNIST_NINPUT);
 
-    return 1;
+    return 1;  // 返回
 }
 
-#ifdef __cplusplus
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束

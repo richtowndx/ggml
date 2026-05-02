@@ -1,28 +1,28 @@
-#include "virtgpu.h"
+#include "virtgpu.h"  // 引入 virtgpu.h 头文件
 
-#include <stdio.h>
-#include <unistd.h>
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <unistd.h>  // 引入 unistd.h 头文件
 
-#include <cassert>
-#include <cerrno>
-#include <cstdlib>
+#include <cassert>  // 引入 cassert 头文件
+#include <cerrno>  // 引入 cerrno 头文件
+#include <cstdlib>  // 引入 cstdlib 头文件
 
-static virt_gpu_result_t virtgpu_open_device(virtgpu * gpu, const drmDevicePtr dev);
-static virt_gpu_result_t virtgpu_open(virtgpu * gpu);
+static virt_gpu_result_t virtgpu_open_device(virtgpu * gpu, const drmDevicePtr dev);  // virtgpu_open_device
+static virt_gpu_result_t virtgpu_open(virtgpu * gpu);  // virtgpu_open
 
-static virt_gpu_result_t virtgpu_init_capset(virtgpu * gpu);
-static virt_gpu_result_t virtgpu_init_context(virtgpu * gpu);
+static virt_gpu_result_t virtgpu_init_capset(virtgpu * gpu);  // virtgpu_init_capset
+static virt_gpu_result_t virtgpu_init_context(virtgpu * gpu);  // virtgpu_init_context
 
-static int      virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capset_id);
+static int      virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capset_id);  // virtgpu_ioctl_context_init
 static int      virtgpu_ioctl_get_caps(virtgpu *             gpu,
                                        virgl_renderer_capset id,
                                        uint32_t              version,
                                        void *                capset,
                                        size_t                capset_size);
-static uint64_t virtgpu_ioctl_getparam(virtgpu * gpu, uint64_t param);
-static void     virtgpu_init_renderer_info(virtgpu * gpu);
+static uint64_t virtgpu_ioctl_getparam(virtgpu * gpu, uint64_t param);  // virtgpu_ioctl_getparam
+static void     virtgpu_init_renderer_info(virtgpu * gpu);  // virtgpu_init_renderer_info
 
-static void log_call_duration(long long call_duration_ns, const char * name);
+static void log_call_duration(long long call_duration_ns, const char * name);  // log_call_duration
 
 const uint64_t APIR_HANDSHAKE_MAX_WAIT_MS   = 2 * 1000;   // 2s
 const uint64_t APIR_LOADLIBRARY_MAX_WAIT_MS = 60 * 1000;  // 60s
@@ -34,7 +34,7 @@ static int virtgpu_handshake(virtgpu * gpu) {
     encoder = remote_call_prepare(gpu, APIR_COMMAND_TYPE_HANDSHAKE, 0);
     if (!encoder) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to prepare the remote call encoder", __func__);
-        return 1;
+        return 1;  // 返回
     }
 
     /* write handshake props */
@@ -56,7 +56,7 @@ static int virtgpu_handshake(virtgpu * gpu) {
                    "%s: failed to initiate the communication with the virglrenderer library. "
                    "Most likely, the wrong virglrenderer library was loaded in the hypervisor.",
                    __func__);
-        return 1;
+        return 1;  // 返回
     }
 
     /* read handshake return values */
@@ -75,7 +75,7 @@ static int virtgpu_handshake(virtgpu * gpu) {
     remote_call_finish(gpu, encoder, decoder);
 
     if (ret_magic != APIR_HANDSHAKE_MAGIC) {
-        return 1;
+        return 1;  // 返回
     }
 
     GGML_LOG_INFO(GGML_VIRTGPU "%s: Guest is running with %u.%u\n", __func__, guest_major, guest_minor);
@@ -87,7 +87,7 @@ static int virtgpu_handshake(virtgpu * gpu) {
         GGML_LOG_WARN(GGML_VIRTGPU "Host minor (%d) and guest minor (%d) version differ\n", host_minor, guest_minor);
     }
 
-    return 0;
+    return 0;  // 返回
 }
 
 static ApirLoadLibraryReturnCode virtgpu_load_library(virtgpu * gpu) {
@@ -98,7 +98,7 @@ static ApirLoadLibraryReturnCode virtgpu_load_library(virtgpu * gpu) {
     encoder = remote_call_prepare(gpu, APIR_COMMAND_TYPE_LOADLIBRARY, 0);
     if (!encoder) {
         GGML_ABORT(GGML_VIRTGPU "%s: hypercall error: failed to prepare the API Remoting command encoder", __func__);
-        return APIR_LOAD_LIBRARY_HYPERCALL_INITIALIZATION_ERROR;
+        return APIR_LOAD_LIBRARY_HYPERCALL_INITIALIZATION_ERROR;  // 返回
     }
 
     long long call_duration_ns;
@@ -109,7 +109,7 @@ static ApirLoadLibraryReturnCode virtgpu_load_library(virtgpu * gpu) {
 
     if (!decoder) {
         GGML_ABORT(GGML_VIRTGPU "%s: hypercall error: failed to trigger the API Remoting hypercall.\n", __func__);
-        return APIR_LOAD_LIBRARY_HYPERCALL_INITIALIZATION_ERROR;
+        return APIR_LOAD_LIBRARY_HYPERCALL_INITIALIZATION_ERROR;  // 返回
     }
 
     remote_call_finish(gpu, encoder, decoder);
@@ -117,7 +117,7 @@ static ApirLoadLibraryReturnCode virtgpu_load_library(virtgpu * gpu) {
     if (ret == APIR_LOAD_LIBRARY_SUCCESS) {
         GGML_LOG_INFO(GGML_VIRTGPU "The API Remoting backend was successfully loaded and initialized\n");
 
-        return ret;
+        return ret;  // 返回
     }
 
     // something wrong happened, find out what.
@@ -142,7 +142,7 @@ static ApirLoadLibraryReturnCode virtgpu_load_library(virtgpu * gpu) {
             GGML_ABORT(GGML_VIRTGPU "%s: virglrenderer could not load the API Remoting backend library. (%s - code %d)",
                        __func__, apir_load_library_error(ret), ret);
         }
-        return ret;
+        return ret;  // 返回
     }
 
     GGML_LOG_INFO(GGML_VIRTGPU "%s: virglrenderer successfully loaded the API Remoting backend library.\n", __func__);
@@ -170,7 +170,7 @@ static ApirLoadLibraryReturnCode virtgpu_load_library(virtgpu * gpu) {
                    "%s: the API Remoting backend library failed to initialize its backend library: apir code=%d)",
                    __func__, lib_ret);
     }
-    return ret;
+    return ret;  // 返回
 }
 
 virtgpu * create_virtgpu() {
@@ -183,12 +183,12 @@ virtgpu * create_virtgpu() {
     if (mtx_init(&gpu->data_shmem_mutex, mtx_plain) != thrd_success) {
         delete gpu;
         GGML_ABORT(GGML_VIRTGPU "%s: failed to initialize data_shmem mutex", __func__);
-        return NULL;
+        return NULL;  // 返回
     }
 
     if (virtgpu_open(gpu) != APIR_SUCCESS) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to open the virtgpu device\n", __func__);
-        return NULL;
+        return NULL;  // 返回
     }
 
     if (virtgpu_init_capset(gpu) != APIR_SUCCESS) {
@@ -200,35 +200,35 @@ virtgpu * create_virtgpu() {
         } else {
             GGML_ABORT(GGML_VIRTGPU "%s: failed to initialize the virtgpu Venus capset", __func__);
         }
-        return NULL;
+        return NULL;  // 返回
     }
 
     if (virtgpu_init_context(gpu) != APIR_SUCCESS) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to initialize the GPU context", __func__);
-        return NULL;
+        return NULL;  // 返回
     }
 
     if (virtgpu_shmem_create(gpu, SHMEM_REPLY_SIZE, &gpu->reply_shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to create the shared reply memory pages", __func__);
-        return NULL;
+        return NULL;  // 返回
     }
 
     if (virtgpu_shmem_create(gpu, SHMEM_DATA_SIZE, &gpu->data_shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to create the shared data memory pages", __func__);
-        return NULL;
+        return NULL;  // 返回
     }
 
     if (virtgpu_handshake(gpu)) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to handshake with the virglrenderer library", __func__);
-        return NULL;
+        return NULL;  // 返回
     }
 
     if (virtgpu_load_library(gpu) != APIR_LOAD_LIBRARY_SUCCESS) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to load the backend library", __func__);
-        return NULL;
+        return NULL;  // 返回
     }
 
-    return gpu;
+    return gpu;  // 返回
 }
 
 static virt_gpu_result_t virtgpu_open(virtgpu * gpu) {
@@ -236,7 +236,7 @@ static virt_gpu_result_t virtgpu_open(virtgpu * gpu) {
     int          count = drmGetDevices2(0, devs, ARRAY_SIZE(devs));
     if (count < 0) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to enumerate DRM devices\n", __func__);
-        return APIR_ERROR_INITIALIZATION_FAILED;
+        return APIR_ERROR_INITIALIZATION_FAILED;  // 返回
     }
 
     virt_gpu_result_t result = APIR_ERROR_INITIALIZATION_FAILED;
@@ -249,7 +249,7 @@ static virt_gpu_result_t virtgpu_open(virtgpu * gpu) {
 
     drmFreeDevices(devs, count);
 
-    return result;
+    return result;  // 返回
 }
 
 static virt_gpu_result_t virtgpu_open_device(virtgpu * gpu, const drmDevicePtr dev) {
@@ -258,13 +258,13 @@ static virt_gpu_result_t virtgpu_open_device(virtgpu * gpu, const drmDevicePtr d
     int fd = open(node_path, O_RDWR | O_CLOEXEC);
     if (fd < 0) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to open %s", __func__, node_path);
-        return APIR_ERROR_INITIALIZATION_FAILED;
+        return APIR_ERROR_INITIALIZATION_FAILED;  // 返回
     }
 
     drmVersionPtr version = drmGetVersion(fd);
     if (!version || strcmp(version->name, "virtio_gpu") || version->version_major != 0) {
         if (version) {
-            GGML_LOG_ERROR(GGML_VIRTGPU "%s: unknown DRM driver %s version %d\n", __func__, version->name,
+            GGML_LOG_ERROR(GGML_VIRTGPU "%s: unknown DRM driver %s version %d\n", __func__, version->name,  // 打印错误日志
                            version->version_major);
         } else {
             GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to get DRM driver version\n", __func__);
@@ -274,7 +274,7 @@ static virt_gpu_result_t virtgpu_open_device(virtgpu * gpu, const drmDevicePtr d
             drmFreeVersion(version);
         }
         close(fd);
-        return APIR_ERROR_INITIALIZATION_FAILED;
+        return APIR_ERROR_INITIALIZATION_FAILED;  // 返回
     }
 
     gpu->fd = fd;
@@ -283,7 +283,7 @@ static virt_gpu_result_t virtgpu_open_device(virtgpu * gpu, const drmDevicePtr d
 
     GGML_LOG_INFO(GGML_VIRTGPU "using DRM device %s\n", node_path);
 
-    return APIR_SUCCESS;
+    return APIR_SUCCESS;  // 返回
 }
 
 static virt_gpu_result_t virtgpu_init_context(virtgpu * gpu) {
@@ -291,10 +291,10 @@ static virt_gpu_result_t virtgpu_init_context(virtgpu * gpu) {
     const int ret = virtgpu_ioctl_context_init(gpu, gpu->capset.id);
     if (ret) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to initialize context: %s\n", __func__, strerror(errno));
-        return APIR_ERROR_INITIALIZATION_FAILED;
+        return APIR_ERROR_INITIALIZATION_FAILED;  // 返回
     }
 
-    return APIR_SUCCESS;
+    return APIR_SUCCESS;  // 返回
 }
 
 static virt_gpu_result_t virtgpu_init_capset(virtgpu * gpu) {
@@ -311,14 +311,14 @@ static virt_gpu_result_t virtgpu_init_capset(virtgpu * gpu) {
         virtgpu_ioctl_get_caps(gpu, gpu->capset.id, gpu->capset.version, &gpu->capset.data, sizeof(gpu->capset.data));
 
     if (ret) {
-        GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to get APIR v%d capset: %s\n", __func__, gpu->capset.version,
+        GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to get APIR v%d capset: %s\n", __func__, gpu->capset.version,  // 打印错误日志
                        strerror(errno));
-        return APIR_ERROR_INITIALIZATION_FAILED;
+        return APIR_ERROR_INITIALIZATION_FAILED;  // 返回
     }
 
     assert(gpu->capset.data.supports_blob_resources);
 
-    return APIR_SUCCESS;
+    return APIR_SUCCESS;  // 返回
 }
 
 static int virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capset_id) {
@@ -343,7 +343,7 @@ static int virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capse
         .ctx_set_params = (uintptr_t) &ctx_set_params,
     };
 
-    return virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_CONTEXT_INIT, &args);
+    return virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_CONTEXT_INIT, &args);  // virtgpu_ioctl
 }
 
 static int virtgpu_ioctl_get_caps(virtgpu *             gpu,
@@ -359,7 +359,7 @@ static int virtgpu_ioctl_get_caps(virtgpu *             gpu,
         .pad         = 0,
     };
 
-    return virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GET_CAPS, &args);
+    return virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GET_CAPS, &args);  // virtgpu_ioctl
 }
 
 static uint64_t virtgpu_ioctl_getparam(virtgpu * gpu, uint64_t param) {
@@ -371,7 +371,7 @@ static uint64_t virtgpu_ioctl_getparam(virtgpu * gpu, uint64_t param) {
     };
 
     const int ret = virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GETPARAM, &args);
-    return ret ? 0 : val;
+    return ret ? 0 : val;  // 返回
 }
 
 apir_encoder * remote_call_prepare(virtgpu * gpu, ApirCommandType apir_cmd_type, int32_t cmd_flags) {
@@ -408,7 +408,7 @@ apir_encoder * remote_call_prepare(virtgpu * gpu, ApirCommandType apir_cmd_type,
     uint32_t reply_res_id = gpu->reply_shmem.res_id;
     apir_encode_uint32_t(&enc, &reply_res_id);
 
-    return &enc;
+    return &enc;  // 返回
 }
 
 void remote_call_finish(virtgpu * gpu, apir_encoder * enc, apir_decoder * dec) {
@@ -514,7 +514,7 @@ uint32_t remote_call(virtgpu *       gpu,
 
     if (max_wait_ms && timedout) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: timed out waiting for the host answer...\n", __func__);
-        return APIR_FORWARD_TIMEOUT;
+        return APIR_FORWARD_TIMEOUT;  // 返回
     }
 
     /*
@@ -527,7 +527,7 @@ uint32_t remote_call(virtgpu *       gpu,
 
     // extract the actual return value from the notif flag
     uint32_t returned_value = notif_value - 1;
-    return returned_value;
+    return returned_value;  // 返回
 }
 
 static void log_call_duration(long long call_duration_ns, const char * name) {

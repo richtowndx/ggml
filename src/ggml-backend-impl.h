@@ -1,20 +1,20 @@
-#pragma once
+#pragma once  // 防止重复包含
 
 // ggml-backend internal header
 
-#include "ggml-backend.h"
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
-    #define GGML_BACKEND_API_VERSION 2
+    #define GGML_BACKEND_API_VERSION 2  // 宏定义 GGML_BACKEND_API_VERSION
 
     //
     // Backend buffer type
     //
 
-    struct ggml_backend_buffer_type_i {
+    struct ggml_backend_buffer_type_i {  // 结构体定义
         const char *          (*get_name)      (ggml_backend_buffer_type_t buft);
         // allocate a buffer of this type
         ggml_backend_buffer_t (*alloc_buffer)  (ggml_backend_buffer_type_t buft, size_t size);
@@ -28,7 +28,7 @@ extern "C" {
         bool                  (*is_host)       (ggml_backend_buffer_type_t buft);
     };
 
-    struct ggml_backend_buffer_type {
+    struct ggml_backend_buffer_type {  // 结构体定义
         struct ggml_backend_buffer_type_i  iface;
         ggml_backend_dev_t device;
         void * context;
@@ -38,13 +38,13 @@ extern "C" {
     // Backend buffer
     //
 
-    struct ggml_backend_buffer_i {
+    struct ggml_backend_buffer_i {  // 结构体定义
         // (optional) free the buffer
         void         (*free_buffer)  (ggml_backend_buffer_t buffer);
         // base address of the buffer
         void *       (*get_base)     (ggml_backend_buffer_t buffer);
         // (optional) initialize a tensor in the buffer (eg. add tensor extras)
-        enum ggml_status (*init_tensor)(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor);
+        enum ggml_status (*init_tensor)(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor);  // ggml_status
         // tensor data access
         void         (*memset_tensor)(ggml_backend_buffer_t buffer,       struct ggml_tensor * tensor,     uint8_t value, size_t offset, size_t size);
         void         (*set_tensor)   (ggml_backend_buffer_t buffer,       struct ggml_tensor * tensor, const void * data, size_t offset, size_t size);
@@ -61,7 +61,7 @@ extern "C" {
         void         (*reset)        (ggml_backend_buffer_t buffer);
     };
 
-    struct ggml_backend_buffer {
+    struct ggml_backend_buffer {  // 结构体定义
         struct ggml_backend_buffer_i  iface;
         ggml_backend_buffer_type_t    buft;
         void * context;
@@ -102,7 +102,7 @@ extern "C" {
     // Backend (stream)
     //
 
-    struct ggml_backend_i {
+    struct ggml_backend_i {  // 结构体定义
         const char * (*get_name)(ggml_backend_t backend);
 
         void (*free)(ggml_backend_t backend);
@@ -124,10 +124,10 @@ extern "C" {
         // update the plan with a new graph - this should be faster than creating a new plan when the graph has the same topology
         void                      (*graph_plan_update) (ggml_backend_t backend, ggml_backend_graph_plan_t plan, const struct ggml_cgraph * cgraph);
         // compute the graph with the plan
-        enum ggml_status          (*graph_plan_compute)(ggml_backend_t backend, ggml_backend_graph_plan_t plan);
+        enum ggml_status          (*graph_plan_compute)(ggml_backend_t backend, ggml_backend_graph_plan_t plan);  // ggml_status
 
         // compute graph (always async if supported by the backend)
-        enum ggml_status          (*graph_compute)     (ggml_backend_t backend, struct ggml_cgraph * cgraph);
+        enum ggml_status          (*graph_compute)     (ggml_backend_t backend, struct ggml_cgraph * cgraph);  // ggml_status
 
         // (optional) event synchronization
         // record an event on this stream
@@ -139,14 +139,14 @@ extern "C" {
         void                      (*graph_optimize)    (ggml_backend_t backend, struct ggml_cgraph * cgraph);
     };
 
-    struct ggml_backend {
+    struct ggml_backend {  // 结构体定义
         ggml_guid_t guid;
         struct ggml_backend_i iface;
         ggml_backend_dev_t device;
         void * context;
     };
 
-    struct ggml_backend_event {
+    struct ggml_backend_event {  // 结构体定义
         struct ggml_backend_device * device;
         void * context;
     };
@@ -157,7 +157,7 @@ extern "C" {
 
     // Note: if additional properties are needed, we should add a struct with all of them
     //       the current functions to obtain the properties can remain, since they are more convenient for often used properties
-    struct ggml_backend_device_i {
+    struct ggml_backend_device_i {  // 结构体定义
         // device name: short identifier for this device, such as "CPU" or "CUDA0"
         const char * (*get_name)(ggml_backend_dev_t dev);
 
@@ -168,7 +168,7 @@ extern "C" {
         void         (*get_memory)(ggml_backend_dev_t dev, size_t * free, size_t * total);
 
         // device type
-        enum ggml_backend_dev_type (*get_type)(ggml_backend_dev_t dev);
+        enum ggml_backend_dev_type (*get_type)(ggml_backend_dev_t dev);  // ggml_backend_dev_type
 
         // device properties
         void (*get_props)(ggml_backend_dev_t dev, struct ggml_backend_dev_props * props);
@@ -201,7 +201,7 @@ extern "C" {
         void                 (*event_synchronize) (ggml_backend_dev_t dev, ggml_backend_event_t event);
     };
 
-    struct ggml_backend_device {
+    struct ggml_backend_device {  // 结构体定义
         struct ggml_backend_device_i iface;
         ggml_backend_reg_t reg;
         void * context;
@@ -211,7 +211,7 @@ extern "C" {
     // Backend (reg)
     //
 
-    struct ggml_backend_reg_i {
+    struct ggml_backend_reg_i {  // 结构体定义
         const char * (*get_name)(ggml_backend_reg_t reg);
 
         // enumerate available devices
@@ -223,7 +223,7 @@ extern "C" {
         void * (*get_proc_address)(ggml_backend_reg_t reg, const char * name);
     };
 
-    struct ggml_backend_reg {
+    struct ggml_backend_reg {  // 结构体定义
         int api_version; // initialize to GGML_BACKEND_API_VERSION
         struct ggml_backend_reg_i iface;
         void * context;
@@ -232,13 +232,13 @@ extern "C" {
     // Add backend dynamic loading support to the backend
 
     // Initialize the backend
-    typedef ggml_backend_reg_t (*ggml_backend_init_t)(void);
+    typedef ggml_backend_reg_t (*ggml_backend_init_t)(void);  // 类型定义
     // Optional: obtain a score for the backend based on the system configuration
     // Higher scores are preferred, 0 means the backend is not supported in the current system
-    typedef int                (*ggml_backend_score_t)(void);
+    typedef int                (*ggml_backend_score_t)(void);  // 类型定义
 
-#ifdef GGML_BACKEND_DL
-#    ifdef __cplusplus
+#ifdef GGML_BACKEND_DL  // 如果定义了 GGML_BACKEND_DL 则编译
+#    ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
 #        define GGML_BACKEND_DL_IMPL(reg_fn)                             \
             extern "C" {                                                 \
             GGML_BACKEND_API ggml_backend_reg_t ggml_backend_init(void); \
@@ -265,11 +265,11 @@ extern "C" {
                 return score_fn();                          \
             }
 #    endif
-#else
-#    define GGML_BACKEND_DL_IMPL(reg_fn)
-#    define GGML_BACKEND_DL_SCORE_IMPL(score_fn)
-#endif
+#else  // 否则
+#    define GGML_BACKEND_DL_IMPL(reg_fn)  // 宏定义 GGML_BACKEND_DL_IMPL
+#    define GGML_BACKEND_DL_SCORE_IMPL(score_fn)  // 宏定义 GGML_BACKEND_DL_SCORE_IMPL
+#endif  // 条件编译结束
 
-#ifdef  __cplusplus
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束

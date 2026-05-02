@@ -1,21 +1,21 @@
-#include "op_table.h"
+#include "op_table.h"  // 引入 op_table.h 头文件
 
-#include "utils.h"
+#include "utils.h"  // 引入 utils.h 头文件
 
-#include <openvino/op/add.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/subtract.hpp>
+#include <openvino/op/add.hpp>  // 引入 openvino/op/add.hpp 头文件
+#include <openvino/op/divide.hpp>  // 引入 openvino/op/divide.hpp 头文件
+#include <openvino/op/gather.hpp>  // 引入 openvino/op/gather.hpp 头文件
+#include <openvino/op/matmul.hpp>  // 引入 openvino/op/matmul.hpp 头文件
+#include <openvino/op/multiply.hpp>  // 引入 openvino/op/multiply.hpp 头文件
+#include <openvino/op/subtract.hpp>  // 引入 openvino/op/subtract.hpp 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
 
 std::unordered_map<std::string, CreatorFunction> get_supported_ops() {
-    using namespace ov::op;
-    return {
+    using namespace ov::op;  // using 声明
+    return {  // 返回
         {"GGML_OP_ADD",            op::translate_1to1_match_2_inputs<v1::Add>     },
         {"GGML_OP_ADD1",           op::translate_1to1_match_2_inputs<v1::Add>     },
         {"GGML_OP_CONT",           op::translate_cont                             },

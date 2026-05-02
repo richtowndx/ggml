@@ -1,25 +1,25 @@
-#pragma once
+#pragma once  // 防止重复包含
 
 /* device */
-void                           apir_device_get_device_count(struct virtgpu * gpu);
-int                            apir_device_get_count(struct virtgpu * gpu);
-char *                         apir_device_get_name(struct virtgpu * gpu);
-char *                         apir_device_get_description(struct virtgpu * gpu);
-uint32_t                       apir_device_get_type(struct virtgpu * gpu);
-void                           apir_device_get_memory(struct virtgpu * gpu, size_t * free, size_t * total);
-bool                           apir_device_supports_op(struct virtgpu * gpu, const ggml_tensor * op);
-apir_buffer_type_host_handle_t apir_device_get_buffer_type(struct virtgpu * gpu);
+void                           apir_device_get_device_count(struct virtgpu * gpu);  // apir_device_get_device_count
+int                            apir_device_get_count(struct virtgpu * gpu);  // apir_device_get_count
+char *                         apir_device_get_name(struct virtgpu * gpu);  // apir_device_get_name
+char *                         apir_device_get_description(struct virtgpu * gpu);  // apir_device_get_description
+uint32_t                       apir_device_get_type(struct virtgpu * gpu);  // apir_device_get_type
+void                           apir_device_get_memory(struct virtgpu * gpu, size_t * free, size_t * total);  // apir_device_get_memory
+bool                           apir_device_supports_op(struct virtgpu * gpu, const ggml_tensor * op);  // apir_device_supports_op
+apir_buffer_type_host_handle_t apir_device_get_buffer_type(struct virtgpu * gpu);  // apir_device_get_buffer_type
 void                           apir_device_get_props(struct virtgpu * gpu,
                                                      bool *           async,
                                                      bool *           host_buffer,
                                                      bool *           buffer_from_host_ptr,
                                                      bool *           events);
-apir_buffer_context_t          apir_device_buffer_from_ptr(struct virtgpu * gpu, size_t size, size_t max_tensor_size);
+apir_buffer_context_t          apir_device_buffer_from_ptr(struct virtgpu * gpu, size_t size, size_t max_tensor_size);  // apir_device_buffer_from_ptr
 
 /* buffer-type */
-char *                apir_buffer_type_get_name(struct virtgpu * gpu, apir_buffer_type_host_handle_t host_handle);
-size_t                apir_buffer_type_get_alignment(struct virtgpu * gpu, apir_buffer_type_host_handle_t host_handle);
-size_t                apir_buffer_type_get_max_size(struct virtgpu * gpu, apir_buffer_type_host_handle_t host_handle);
+char *                apir_buffer_type_get_name(struct virtgpu * gpu, apir_buffer_type_host_handle_t host_handle);  // apir_buffer_type_get_name
+size_t                apir_buffer_type_get_alignment(struct virtgpu * gpu, apir_buffer_type_host_handle_t host_handle);  // apir_buffer_type_get_alignment
+size_t                apir_buffer_type_get_max_size(struct virtgpu * gpu, apir_buffer_type_host_handle_t host_handle);  // apir_buffer_type_get_max_size
 /* apir_buffer_type_is_host is deprecated. */
 apir_buffer_context_t apir_buffer_type_alloc_buffer(struct virtgpu *               gpu,
                                                     apir_buffer_type_host_handle_t host_handle,
@@ -29,7 +29,7 @@ size_t                apir_buffer_type_get_alloc_size(struct virtgpu *          
                                                       const ggml_tensor *            op);
 
 /* buffer */
-void * apir_buffer_get_base(struct virtgpu * gpu, apir_buffer_context_t * buffer_context);
+void * apir_buffer_get_base(struct virtgpu * gpu, apir_buffer_context_t * buffer_context);  // apir_buffer_get_base
 void   apir_buffer_set_tensor(struct virtgpu *        gpu,
                               apir_buffer_context_t * buffer_context,
                               ggml_tensor *           tensor,
@@ -46,8 +46,8 @@ bool   apir_buffer_cpy_tensor(struct virtgpu *        gpu,
                               apir_buffer_context_t * buffer_context,
                               const ggml_tensor *     src,
                               const ggml_tensor *     dst);
-void   apir_buffer_clear(struct virtgpu * gpu, apir_buffer_context_t * buffer_context, uint8_t value);
-void   apir_buffer_free_buffer(struct virtgpu * gpu, apir_buffer_context_t * buffer_context);
+void   apir_buffer_clear(struct virtgpu * gpu, apir_buffer_context_t * buffer_context, uint8_t value);  // apir_buffer_clear
+void   apir_buffer_free_buffer(struct virtgpu * gpu, apir_buffer_context_t * buffer_context);  // apir_buffer_free_buffer
 
 /* backend */
-ggml_status apir_backend_graph_compute(struct virtgpu * gpu, ggml_cgraph * cgraph);
+ggml_status apir_backend_graph_compute(struct virtgpu * gpu, ggml_cgraph * cgraph);  // apir_backend_graph_compute

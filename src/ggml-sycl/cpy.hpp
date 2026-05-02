@@ -1,17 +1,17 @@
-#ifndef GGML_SYCL_CPY_HPP
-#define GGML_SYCL_CPY_HPP
+#ifndef GGML_SYCL_CPY_HPP  // 如果未定义 GGML_SYCL_CPY_HPP 则编译
+#define GGML_SYCL_CPY_HPP  // 宏定义 GGML_SYCL_CPY_HPP
 
-#include "common.hpp"
-#include <float.h>
+#include "common.hpp"  // 引入 common.hpp 头文件
+#include <float.h>  // 引入 float.h 头文件
 
-typedef void (*cpy_kernel_t)(const char * cx, char * cdst);
+typedef void (*cpy_kernel_t)(const char * cx, char * cdst);  // 类型定义
 
 __dpct_inline__ int best_index_int8(int n, const int8_t * val, float x) {
     if (x <= val[0]) {
-        return 0;
+        return 0;  // 返回
     }
     if (x >= val[n - 1]) {
-        return n - 1;
+        return n - 1;  // 返回
     }
     int ml = 0, mu = n - 1;
     while (mu - ml > 1) {
@@ -22,7 +22,7 @@ __dpct_inline__ int best_index_int8(int n, const int8_t * val, float x) {
             ml = mav;
         }
     }
-    return x - val[mu - 1] < val[mu] - x ? mu - 1 : mu;
+    return x - val[mu - 1] < val[mu] - x ? mu - 1 : mu;  // 返回
 }
 
 inline void cpy_blck_f32_q8_0(const char * cxi, char * cdsti) {
@@ -217,7 +217,7 @@ inline void cpy_blck_f32_iq4_nl(const char * cxi, char * cdsti) {
     dsti->d = sumq2 > 0 ? sumqx / sumq2 : d;
 }
 
-void ggml_sycl_cpy(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1);
-void ggml_sycl_dup(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+void ggml_sycl_cpy(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1);  // ggml_sycl_cpy
+void ggml_sycl_dup(ggml_backend_sycl_context & ctx, ggml_tensor * dst);  // ggml_sycl_dup
 
-#endif  // GGML_SYCL_CPY_HPP
+#endif  // GGML_SYCL_CPY_HPP  // 条件编译结束

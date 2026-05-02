@@ -1,29 +1,29 @@
 // TODO refactor
 
-#include "ggml.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
-#include "ggml-opt.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-opt.h"  // 引入 ggml-opt.h 头文件
 
-#include <cmath>
-#include <cinttypes>
-#include <cstring>
-#include <random>
-#include <string>
-#include <thread>
-#include <vector>
+#include <cmath>  // 引入 cmath 头文件
+#include <cinttypes>  // 引入 cinttypes 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <random>  // 引入 random 头文件
+#include <string>  // 引入 string 头文件
+#include <thread>  // 引入 thread 头文件
+#include <vector>  // 引入 vector 头文件
 
-#define TEST_LOG(...)       printf(__VA_ARGS__)
+#define TEST_LOG(...)       printf(__VA_ARGS__)  // 宏定义 TEST_LOG
 
 static bool almost_equal(const double a, const double b, const double atol) {
-    return fabs(a - b) < atol;
+    return fabs(a - b) < atol;  // fabs
 }
 
 constexpr int64_t ne_datapoint = 2;
 constexpr int64_t ne_label     = 1;
 constexpr int64_t ndata        = 6;
 
-struct helper_ctx_data {
+struct helper_ctx_data {  // 结构体定义
     std::vector<ggml_opt_dataset_t>   datasets_supervised;
     std::vector<struct ggml_tensor *> data_batch;
     std::vector<struct ggml_tensor *> labels_batch;
@@ -53,7 +53,7 @@ static ggml_opt_optimizer_params helper_get_test_opt_pars(void * userdata) {
     result.sgd.wd      = 0.0f;
     result.sgd.alpha   = 1.0f;
 
-    return result;
+    return result;  // 返回
 }
 
 static helper_ctx_data helper_get_ctx_data(
@@ -64,7 +64,7 @@ static helper_ctx_data helper_get_ctx_data(
         const bool              optimizer_defaults = true,
         int64_t                 nbatch_logical     = 1,
         int64_t                 nbatch_physical    = 1,
-        enum ggml_opt_loss_type loss_type          = GGML_OPT_LOSS_TYPE_SUM) {
+        enum ggml_opt_loss_type loss_type          = GGML_OPT_LOSS_TYPE_SUM) {  // 枚举定义
     std::vector<ggml_opt_dataset_t> datasets(ndata);
     for (int64_t ndata_shard = 1; ndata_shard <= ndata; ++ndata_shard) {
         ggml_opt_dataset_t dataset = ggml_opt_dataset_init(
@@ -97,7 +97,7 @@ static helper_ctx_data helper_get_ctx_data(
     struct ggml_context * ctx_static;
     struct ggml_context * ctx_compute;
     {
-        struct ggml_init_params params = {
+        struct ggml_init_params params = {  // 结构体定义
             /*.mem_size   =*/ (2*ndata + 2)*ggml_tensor_overhead(),
             /*.mem_buffer =*/ nullptr,
             /*.no_alloc   =*/ true,
@@ -105,7 +105,7 @@ static helper_ctx_data helper_get_ctx_data(
         ctx_static = ggml_init(params);
     }
     {
-        struct ggml_init_params params = {
+        struct ggml_init_params params = {  // 结构体定义
             /*.mem_size   =*/ GGML_DEFAULT_GRAPH_SIZE*ggml_tensor_overhead() + 3*ggml_graph_overhead(),
             /*.mem_buffer =*/ nullptr,
             /*.no_alloc   =*/ true,
@@ -155,7 +155,7 @@ static helper_ctx_data helper_get_ctx_data(
     ggml_opt_result_t result  = ggml_opt_result_init();
     ggml_opt_result_t result2 = ggml_opt_result_init();
 
-    return {datasets, data_batch, labels_batch, dataset_unsupervised, ctx_static, ctx_compute, opt_params, opt_ctx, inputs, weights, outputs, buf, result, result2};
+    return {datasets, data_batch, labels_batch, dataset_unsupervised, ctx_static, ctx_compute, opt_params, opt_ctx, inputs, weights, outputs, buf, result, result2};  // 返回
 }
 
 static void helper_free_ctx_data(struct helper_ctx_data ctx_data) {
@@ -740,7 +740,7 @@ static ggml_opt_optimizer_params helper_get_regression_opt_pars(void * userdata)
     result.adamw.alpha = 0.1f;
     result.sgd.alpha = g_sgd_lr * std::pow(.99, 1000 * (double)epoch / g_sgd_epochs);
     result.sgd.wd = 1e-10;
-    return result;
+    return result;  // 返回
 }
 
 static std::pair<int, int> test_regression(
@@ -778,7 +778,7 @@ static std::pair<int, int> test_regression(
     struct ggml_context * ctx_static;
     struct ggml_context * ctx_compute;
     {
-        struct ggml_init_params params = {
+        struct ggml_init_params params = {  // 结构体定义
             /*.mem_size   =*/ 3*ggml_tensor_overhead(),
             /*.mem_buffer =*/ nullptr,
             /*.no_alloc   =*/ true,
@@ -786,7 +786,7 @@ static std::pair<int, int> test_regression(
         ctx_static = ggml_init(params);
     }
     {
-        struct ggml_init_params params = {
+        struct ggml_init_params params = {  // 结构体定义
             /*.mem_size   =*/ GGML_DEFAULT_GRAPH_SIZE*ggml_tensor_overhead() + 3*ggml_graph_overhead(),
             /*.mem_buffer =*/ nullptr,
             /*.no_alloc   =*/ true,
@@ -940,7 +940,7 @@ int main(void) {
 
             bool skip;
             {
-                struct ggml_init_params params = {
+                struct ggml_init_params params = {  // 结构体定义
                     /*.mem_size   =*/ 6*ggml_tensor_overhead(),
                     /*.mem_buffer =*/ nullptr,
                     /*.no_alloc   =*/ true,
@@ -999,5 +999,5 @@ int main(void) {
     printf("%zu/%zu backend*optimizer passed\n", n_ok, n_total);
     bool ok = n_ok == n_total;
     print_ok(ok);
-    return ok ? 0 : 1;
+    return ok ? 0 : 1;  // 返回
 }

@@ -10,15 +10,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_VECDOTQ_HPP
-#define GGML_SYCL_VECDOTQ_HPP
+#ifndef GGML_SYCL_VECDOTQ_HPP  // 如果未定义 GGML_SYCL_VECDOTQ_HPP 则编译
+#define GGML_SYCL_VECDOTQ_HPP  // 宏定义 GGML_SYCL_VECDOTQ_HPP
 
-#include "dpct/helper.hpp"
-#include "ggml.h"
-#include "type.hpp"
-#include "quants.hpp"
+#include "dpct/helper.hpp"  // 引入 dpct/helper.hpp 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "type.hpp"  // 引入 type.hpp 头文件
+#include "quants.hpp"  // 引入 quants.hpp 头文件
 
-typedef float (*vec_dot_q_sycl_t)(const void * __restrict__ vbq, const block_q8_1 * __restrict__ bq8_1,
+typedef float (*vec_dot_q_sycl_t)(const void * __restrict__ vbq, const block_q8_1 * __restrict__ bq8_1,  // 类型定义
                                   const int & iqs);
 
 static __dpct_inline__ int get_int_b1(const void * x, const int & i32) {
@@ -29,7 +29,7 @@ static __dpct_inline__ int get_int_b1(const void * x, const int & i32) {
     x32     |= x8[4*i32 + 2] << 16;
     x32     |= x8[4*i32 + 3] << 24;
 
-    return x32;
+    return x32;  // 返回
 }
 
 static __dpct_inline__ int get_int_b2(const void * x, const int & i32) {
@@ -38,7 +38,7 @@ static __dpct_inline__ int get_int_b2(const void * x, const int & i32) {
     int x32  = x16[2*i32 + 0] <<  0;
     x32     |= x16[2*i32 + 1] << 16;
 
-    return x32;
+    return x32;  // 返回
 }
 
 static __dpct_inline__ int get_int_b4(const void * x, const int & i32) {
@@ -54,7 +54,7 @@ static __dpct_inline__ int get_int_from_int8(const int8_t* x8, const int& i32) {
   x32 |= x16[0] << 0;
   x32 |= x16[1] << 16;
 
-  return x32;
+  return x32;  // 返回
 }
 
 static __dpct_inline__ int get_int_from_uint8(
@@ -68,20 +68,20 @@ static __dpct_inline__ int get_int_from_uint8(
   x32 |= x16[0] << 0;
   x32 |= x16[1] << 16;
 
-  return x32;
+  return x32;  // 返回
 }
 
 static __dpct_inline__ int get_int_from_int8_aligned(
     const int8_t* x8,
     const int& i32) {
-  return *(
+  return *(  // 返回
       (const int*)(x8 + sizeof(int) * i32)); // assume at least 4 byte alignment
 }
 
 static __dpct_inline__ int get_int_from_uint8_aligned(
     const uint8_t* x8,
     const int& i32) {
-  return *(
+  return *(  // 返回
       (const int*)(x8 + sizeof(int) * i32)); // assume at least 4 byte alignment
 }
 
@@ -117,12 +117,12 @@ static __dpct_inline__ sycl::int2 get_int_from_table_16(
     tmp[i] = dpct::byte_level_permute(
         low, high, low_high_selection_indices >> shift);
   }
-  return sycl::int2(
+  return sycl::int2(  // 返回
       dpct::byte_level_permute(tmp[0], tmp[1], 0x6420),
       dpct::byte_level_permute(tmp[0], tmp[1], 0x7531));
 }
 
-#define VDR_Q2_K_Q8_1_MMVQ 1
+#define VDR_Q2_K_Q8_1_MMVQ 1  // 宏定义 VDR_Q2_K_Q8_1_MMVQ
 
 // contiguous v/x values
 static __dpct_inline__ float vec_dot_q2_K_q8_1_impl_mmvq(
@@ -158,7 +158,7 @@ static __dpct_inline__ float vec_dot_q2_K_q8_1_impl_mmvq(
 }
 
 
-#define VDR_Q3_K_Q8_1_MMVQ 1
+#define VDR_Q3_K_Q8_1_MMVQ 1  // 宏定义 VDR_Q3_K_Q8_1_MMVQ
 
 // contiguous v/x values
 static __dpct_inline__ float vec_dot_q3_K_q8_1_impl_mmvq(
@@ -192,10 +192,10 @@ static __dpct_inline__ float vec_dot_q3_K_q8_1_impl_mmvq(
         sumf += d8[i] * (dpct::dp4a(vi, u[i], 0) * sc); // SIMD dot product
     }
 
-    return d3 * sumf;
+    return d3 * sumf;  // 返回
 }
 
-#define VDR_Q4_K_Q8_1_MMVQ 2
+#define VDR_Q4_K_Q8_1_MMVQ 2  // 宏定义 VDR_Q4_K_Q8_1_MMVQ
 
 // contiguous v/x values
 static __dpct_inline__ float vec_dot_q4_K_q8_1_impl_vmmq(
@@ -229,7 +229,7 @@ static __dpct_inline__ float vec_dot_q4_K_q8_1_impl_vmmq(
 }
 
 
-#define VDR_Q5_K_Q8_1_MMVQ 2
+#define VDR_Q5_K_Q8_1_MMVQ 2  // 宏定义 VDR_Q5_K_Q8_1_MMVQ
 
 // contiguous v/x values
 static __dpct_inline__ float vec_dot_q5_K_q8_1_impl_vmmq(
@@ -271,7 +271,7 @@ static __dpct_inline__ float vec_dot_q5_K_q8_1_impl_vmmq(
 }
 
 
-#define VDR_Q6_K_Q8_1_MMVQ 1
+#define VDR_Q6_K_Q8_1_MMVQ 1  // 宏定义 VDR_Q6_K_Q8_1_MMVQ
 
 // contiguous v/x values
 static __dpct_inline__ float
@@ -296,21 +296,21 @@ vec_dot_q6_K_q8_1_impl_mmvq(const int &vl, const int &vh,
         sumf += d8[i] * (dpct::dp4a(vi, u[i], 0) * sc); // SIMD dot product
     }
 
-    return d*sumf;
+    return d*sumf;  // 返回
 }
 
 // VDR = vec dot ratio, how many contiguous integers each thread processes when the vec dot kernel is called
 // MMVQ = mul_mat_vec_q, MMQ = mul_mat_q
 
-template <ggml_type T> struct reorder_vec_dot_q_sycl {
+template <ggml_type T> struct reorder_vec_dot_q_sycl {  // 模板
     static_assert(T != T, "ggml_type for reorder vecdot not implemented");
 };
 
-template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0> {
+template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0> {  // 模板
     static constexpr ggml_type gtype = GGML_TYPE_Q4_0;
 
-    using q4_0_block  = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q4_0>;
-    using q4_0_traits = typename q4_0_block::traits;
+    using q4_0_block  = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q4_0>;  // using 声明
+    using q4_0_traits = typename q4_0_block::traits;  // using 声明
 
     __dpct_inline__ float vec_dot_q4_0_q8_1_impl(const int * v, const int * u, const float & d4, const sycl::half2 & ds8) {
         int sumi = 0;
@@ -347,15 +347,15 @@ template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0> {
             u[2 * i + 1] = get_int_from_int8_aligned(q8_1_quant_ptr, iqs + i + q4_0_traits::qi);
         }
 
-        return vec_dot_q4_0_q8_1_impl(v, u, d, *q8_1_ds);
+        return vec_dot_q4_0_q8_1_impl(v, u, d, *q8_1_ds);  // vec_dot_q4_0_q8_1_impl
     };
 };
 
-template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q8_0> {
+template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q8_0> {  // 模板
     static constexpr ggml_type gtype = GGML_TYPE_Q8_0;
 
-    using q8_0_block  = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q8_0>;
-    using q8_0_traits = typename q8_0_block::traits;
+    using q8_0_block  = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q8_0>;  // using 声明
+    using q8_0_traits = typename q8_0_block::traits;  // using 声明
 
     __dpct_inline__ float vec_dot_q8_0_q8_1_impl(const int * v, const int * u, const float & d8_0, const sycl::half2 & ds8) {
         int sumi = 0;
@@ -387,7 +387,7 @@ template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q8_0> {
             u[i] = get_int_from_int8_aligned(q8_1_quant_ptr, iqs + i);
         }
 
-        return vec_dot_q8_0_q8_1_impl(v, u, d, *q8_1_ds);
+        return vec_dot_q8_0_q8_1_impl(v, u, d, *q8_1_ds);  // vec_dot_q8_0_q8_1_impl
     };
 };
 
@@ -425,14 +425,14 @@ static inline float vec_dot_q4_K_q8_1_common(const int * __restrict__ q4, const 
         u[2 * i + 1]   = q8[4];
     }
 
-    return vec_dot_q4_K_q8_1_impl_vmmq(v, u, sc, m, dm, d8);
+    return vec_dot_q4_K_q8_1_impl_vmmq(v, u, sc, m, dm, d8);  // vec_dot_q4_K_q8_1_impl_vmmq
 }
 
-template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q4_K> {
+template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q4_K> {  // 模板
     static constexpr ggml_type gtype = GGML_TYPE_Q4_K;
 
-    using q4_k_block  = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q4_K>;
-    using q4_k_traits = typename q4_k_block::traits;
+    using q4_k_block  = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q4_K>;  // using 声明
+    using q4_k_traits = typename q4_k_block::traits;  // using 声明
 
     __dpct_inline__ float operator()(const void * __restrict__ vbq, const std::pair<int, int> ibx_offset,
                                      const std::pair<int, int> d_offset, const int8_t * q8_1_quant_ptr,
@@ -477,15 +477,15 @@ template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q4_K> {
             u[2 * i + 1]   = q8[4];
         }
 
-        return vec_dot_q4_K_q8_1_impl_vmmq(v, u, sc, m, *dms, d8);
+        return vec_dot_q4_K_q8_1_impl_vmmq(v, u, sc, m, *dms, d8);  // vec_dot_q4_K_q8_1_impl_vmmq
     }
 };
 
-template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q6_K> {
+template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q6_K> {  // 模板
     static constexpr ggml_type gtype = GGML_TYPE_Q6_K;
 
-    using q6_k_block  = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q6_K>;
-    using q6_k_traits = typename q6_k_block::traits;
+    using q6_k_block  = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q6_K>;  // using 声明
+    using q6_k_traits = typename q6_k_block::traits;  // using 声明
 
     __dpct_inline__ float vec_dot_q6_K_q8_1_impl_mmvq(const int vl, const int vh, const int * __restrict__ u,
                                                       const int8_t * __restrict__ scales, const float d,
@@ -506,7 +506,7 @@ template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q6_K> {
             sumf += d8[i] * (dpct::dp4a(vi, u[i], 0) * sc);                        // SIMD dot product
         }
 
-        return d * sumf;
+        return d * sumf;  // 返回
     }
 
     __dpct_inline__ float operator()(const void * __restrict__ vbq, const std::pair<int, int> ibx_offset,
@@ -536,13 +536,13 @@ template <> struct reorder_vec_dot_q_sycl<GGML_TYPE_Q6_K> {
             const sycl::half2 ds_values = *(q8_1_ds + bq8_offset + 2 * i);
             d8[i]                       = ds_values[0];
         }
-        return vec_dot_q6_K_q8_1_impl_mmvq(vl, vh, u, scs, *d, d8);
+        return vec_dot_q6_K_q8_1_impl_mmvq(vl, vh, u, scs, *d, d8);  // vec_dot_q6_K_q8_1_impl_mmvq
     }
 };
-#define VDR_Q4_0_Q8_1_MMVQ 2
-#define VDR_Q4_0_Q8_1_MMQ  4
+#define VDR_Q4_0_Q8_1_MMVQ 2  // 宏定义 VDR_Q4_0_Q8_1_MMVQ
+#define VDR_Q4_0_Q8_1_MMQ  4  // 宏定义 VDR_Q4_0_Q8_1_MMQ
 
-template <int vdr>
+template <int vdr>  // 模板
 static __dpct_inline__ float vec_dot_q4_0_q8_1_impl(const int * v, const int * u, const float & d4,
                                                     const sycl::half2 & ds8) {
     int sumi = 0;
@@ -562,10 +562,10 @@ static __dpct_inline__ float vec_dot_q4_0_q8_1_impl(const int * v, const int * u
     return d4 * (sumi * ds8f.x() - (8 * vdr / QI4_0) * ds8f.y());
 }
 
-#define VDR_Q4_1_Q8_1_MMVQ 2
-#define VDR_Q4_1_Q8_1_MMQ  4
+#define VDR_Q4_1_Q8_1_MMVQ 2  // 宏定义 VDR_Q4_1_Q8_1_MMVQ
+#define VDR_Q4_1_Q8_1_MMQ  4  // 宏定义 VDR_Q4_1_Q8_1_MMQ
 
-template <int vdr>
+template <int vdr>  // 模板
 static __dpct_inline__ float vec_dot_q4_1_q8_1_impl(const int *v, const int *u,
                                                     const sycl::half2 &dm4,
                                                     const sycl::half2 &ds8) {
@@ -582,28 +582,28 @@ static __dpct_inline__ float vec_dot_q4_1_q8_1_impl(const int *v, const int *u,
         sumi = dpct::dp4a(vi1, u[2 * i + 1], sumi);
     }
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     const sycl::float2 tmp =
         (dm4 * ds8).convert<float, sycl::rounding_mode::automatic>();
     const float d4d8 = tmp.x();
     const float m4s8 = tmp.y();
-#else
+#else  // 否则
     const sycl::float2 dm4f =
         dm4.convert<float, sycl::rounding_mode::automatic>();
     const sycl::float2 ds8f =
         ds8.convert<float, sycl::rounding_mode::automatic>();
     const float d4d8 = dm4f.x() * ds8f.x();
     const float m4s8 = dm4f.y() * ds8f.y();
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 
     // scale second part of sum by QI8_1/(vdr * QR4_1) to compensate for multiple threads adding it
     return sumi * d4d8 + m4s8 / (QI8_1 / (vdr * QR4_1));
 }
 
-#define VDR_Q5_0_Q8_1_MMVQ 2
-#define VDR_Q5_0_Q8_1_MMQ  4
+#define VDR_Q5_0_Q8_1_MMVQ 2  // 宏定义 VDR_Q5_0_Q8_1_MMVQ
+#define VDR_Q5_0_Q8_1_MMQ  4  // 宏定义 VDR_Q5_0_Q8_1_MMQ
 
-template <int vdr>
+template <int vdr>  // 模板
 static __dpct_inline__ float
 vec_dot_q5_0_q8_1_impl(const int *vl, const int *vh, const int *u,
                        const float &d5, const sycl::half2 &ds8) {
@@ -635,10 +635,10 @@ vec_dot_q5_0_q8_1_impl(const int *vl, const int *vh, const int *u,
     return d5 * (sumi * ds8f.x() - (16 * vdr / QI5_0) * ds8f.y());
 }
 
-#define VDR_Q5_1_Q8_1_MMVQ 2
-#define VDR_Q5_1_Q8_1_MMQ  4
+#define VDR_Q5_1_Q8_1_MMVQ 2  // 宏定义 VDR_Q5_1_Q8_1_MMVQ
+#define VDR_Q5_1_Q8_1_MMQ  4  // 宏定义 VDR_Q5_1_Q8_1_MMQ
 
-template <int vdr>
+template <int vdr>  // 模板
 static __dpct_inline__ float
 vec_dot_q5_1_q8_1_impl(const int *vl, const int *vh, const int *u,
                        const sycl::half2 &dm5, const sycl::half2 &ds8) {
@@ -664,30 +664,30 @@ vec_dot_q5_1_q8_1_impl(const int *vl, const int *vh, const int *u,
                           sumi); // SIMD dot product of quantized values
     }
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
      const sycl::float2 tmp =
         (dm5 * ds8).convert<float, sycl::rounding_mode::automatic>();
     const float d5d8 = tmp.x();
     const float m5s8 = tmp.y();
 
 
-#else
+#else  // 否则
     const sycl::float2 dm5f =
         dm5.convert<float, sycl::rounding_mode::automatic>();
     const sycl::float2 ds8f =
         ds8.convert<float, sycl::rounding_mode::automatic>();
     const float d5d8 = dm5f.x() * ds8f.x();
     const float m5s8 = dm5f.y() * ds8f.y();
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 
     // scale second part of sum by QI5_1 / vdr to compensate for multiple threads adding it
     return sumi*d5d8 + m5s8 / (QI5_1 / vdr);
 }
 
-#define VDR_Q8_0_Q8_1_MMVQ 2
-#define VDR_Q8_0_Q8_1_MMQ 8
+#define VDR_Q8_0_Q8_1_MMVQ 2  // 宏定义 VDR_Q8_0_Q8_1_MMVQ
+#define VDR_Q8_0_Q8_1_MMQ 8  // 宏定义 VDR_Q8_0_Q8_1_MMQ
 
-template <int vdr>
+template <int vdr>  // 模板
 static __dpct_inline__ float vec_dot_q8_0_q8_1_impl(const int *v, const int *u,
                                                     const float &d8_0,
                                                     const float &d8_1) {
@@ -700,10 +700,10 @@ static __dpct_inline__ float vec_dot_q8_0_q8_1_impl(const int *v, const int *u,
         sumi = dpct::dp4a(v[i], u[i], sumi);
     }
 
-    return d8_0*d8_1 * sumi;
+    return d8_0*d8_1 * sumi;  // 返回
 }
 
-template <typename T, int vdr>
+template <typename T, int vdr>  // 模板
 static __dpct_inline__ T vec_dot_q8_0_q8_1_impl(const int * v, const int * u, const T & d8_0, const T & d8_1) {
     int sumi = 0;
 
@@ -716,7 +716,7 @@ static __dpct_inline__ T vec_dot_q8_0_q8_1_impl(const int * v, const int * u, co
     return d8_0*d8_1 * ((T) sumi);
 }
 
-template <int vdr>
+template <int vdr>  // 模板
 static __dpct_inline__ float vec_dot_q8_1_q8_1_impl(const int *v, const int *u,
                                                     const sycl::half2 &dm8,
                                                     const sycl::half2 &ds8) {
@@ -729,19 +729,19 @@ static __dpct_inline__ float vec_dot_q8_1_q8_1_impl(const int *v, const int *u,
         sumi = dpct::dp4a(v[i], u[i], sumi);
     }
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     const sycl::float2 tmp =
         (dm8 * ds8).convert<float, sycl::rounding_mode::automatic>();
     const float d8d8 = tmp.x();
     const float m8s8 = tmp.y();
-#else
+#else  // 否则
     const sycl::float2 dm8f =
         dm8.convert<float, sycl::rounding_mode::automatic>();
     const sycl::float2 ds8f =
         ds8.convert<float, sycl::rounding_mode::automatic>();
     const float d8d8 = dm8f.x() * ds8f.x();
     const float m8s8 = dm8f.y() * ds8f.y();
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 
     // scale second part of sum by QI8_1/ vdr to compensate for multiple threads adding it
     return sumi*d8d8 + m8s8 / (QI8_1 / vdr);
@@ -785,8 +785,8 @@ vec_dot_q4_1_q8_1(const void *__restrict__ vbq,
     return vec_dot_q4_1_q8_1_impl<VDR_Q4_1_Q8_1_MMVQ>(v, u, bq4_1->dm, bq8_1->ds);
 }
 
-#define VDR_MXFP4_Q8_1_MMVQ 2
-#define VDR_MXFP4_Q8_1_MMQ  4
+#define VDR_MXFP4_Q8_1_MMVQ 2  // 宏定义 VDR_MXFP4_Q8_1_MMVQ
+#define VDR_MXFP4_Q8_1_MMQ  4  // 宏定义 VDR_MXFP4_Q8_1_MMQ
 
 static __dpct_inline__ float vec_dot_mxfp4_q8_1(const void * __restrict__ vbq,
                                                 const block_q8_1 * __restrict__ bq8_1,
@@ -805,11 +805,11 @@ static __dpct_inline__ float vec_dot_mxfp4_q8_1(const void * __restrict__ vbq,
     }
 
     const float d = ggml_sycl_e8m0_to_fp32(bq4->e) * 0.5f * (bq8_1->ds)[0];
-    return d * sumi;
+    return d * sumi;  // 返回
 }
 
-#define VDR_NVFP4_Q8_1_MMVQ 4
-#define VDR_NVFP4_Q8_1_MMQ  8
+#define VDR_NVFP4_Q8_1_MMVQ 4  // 宏定义 VDR_NVFP4_Q8_1_MMVQ
+#define VDR_NVFP4_Q8_1_MMQ  8  // 宏定义 VDR_NVFP4_Q8_1_MMQ
 
 static __dpct_inline__ float vec_dot_nvfp4_q8_1(const void * __restrict__ vbq,
                                                 const block_q8_1 * __restrict__ bq8_1,
@@ -835,7 +835,7 @@ static __dpct_inline__ float vec_dot_nvfp4_q8_1(const void * __restrict__ vbq,
         sum += d * float(sumi);
     }
 
-    return sum;
+    return sum;  // 返回
 }
 
 static __dpct_inline__ float
@@ -895,7 +895,7 @@ vec_dot_q8_0_q8_1(const void *__restrict__ vbq,
         u[i] = get_int_from_int8_aligned(bq8_1->qs, iqs + i);
     }
 
-    return vec_dot_q8_0_q8_1_impl<VDR_Q8_0_Q8_1_MMVQ>(v, u, bq8_0->d,
+    return vec_dot_q8_0_q8_1_impl<VDR_Q8_0_Q8_1_MMVQ>(v, u, bq8_0->d,  // 返回
                                                       bq8_1->ds[0]);
 }
 
@@ -920,7 +920,7 @@ vec_dot_q2_K_q8_1(const void *__restrict__ vbq,
         d8[i] = bq8_1[bq8_offset + i].ds[0];
     }
 
-    return vec_dot_q2_K_q8_1_impl_mmvq(v, u, scales, bq2_K->dm, d8);
+    return vec_dot_q2_K_q8_1_impl_mmvq(v, u, scales, bq2_K->dm, d8);  // vec_dot_q2_K_q8_1_impl_mmvq
 }
 
 static __dpct_inline__ float
@@ -948,12 +948,12 @@ vec_dot_q3_K_q8_1(const void *__restrict__ vbq,
         d8[i] = bq8_1[bq8_offset + i].ds[0];
     }
 
-    return vec_dot_q3_K_q8_1_impl_mmvq(vl, vh, u, bq3_K->scales, scale_offset, d, d8);
+    return vec_dot_q3_K_q8_1_impl_mmvq(vl, vh, u, bq3_K->scales, scale_offset, d, d8);  // vec_dot_q3_K_q8_1_impl_mmvq
 }
 
 static __dpct_inline__ float vec_dot_q4_K_q8_1(const void * __restrict__ vbq, const block_q8_1 * __restrict__ bq8_1,
                                                const int & iqs) {
-#ifndef GGML_QKK_64
+#ifndef GGML_QKK_64  // 如果未定义 GGML_QKK_64 则编译
 
     const block_q4_K * bq4_K = (const block_q4_K *) vbq;
 
@@ -961,11 +961,11 @@ static __dpct_inline__ float vec_dot_q4_K_q8_1(const void * __restrict__ vbq, co
     const int *      q4         = (const int *) (bq4_K->qs + 16 * bq8_offset + 4 * ((iqs / 2) % 4));
     const uint16_t * scales     = (const uint16_t *) bq4_K->scales;
 
-    return vec_dot_q4_K_q8_1_common(q4, scales, bq4_K->dm, bq8_1, iqs);
+    return vec_dot_q4_K_q8_1_common(q4, scales, bq4_K->dm, bq8_1, iqs);  // vec_dot_q4_K_q8_1_common
 
-#else
+#else  // 否则
 
-#if __SYCL_ARCH__ >= VER_4VEC // lowest compute capability for integer intrinsics
+#if __SYCL_ARCH__ >= VER_4VEC // lowest compute capability for integer intrinsics  // 条件编译
     const block_q4_K * bq4_K = (const block_q4_K *) vbq;
 
     float sumf_d = 0.0f;
@@ -1001,20 +1001,20 @@ static __dpct_inline__ float vec_dot_q4_K_q8_1(const void * __restrict__ vbq, co
     sumf_d += d8_1 * (dot1 * s[0]) + d8_2 * (dot2 * s[1]);
     sumf_m += d8_1 * (dot3 * s[2]) + d8_2 * (dot4 * s[3]);
 
-    return dall * sumf_d - dmin * sumf_m;
+    return dall * sumf_d - dmin * sumf_m;  // 返回
 
-#else
+#else  // 否则
     bad_arch();
-#endif // __SYCL_ARCH__ >= VER_4VEC
+#endif // __SYCL_ARCH__ >= VER_4VEC  // 条件编译结束
 
-#endif
+#endif  // 条件编译结束
 }
 
 static __dpct_inline__ float
 vec_dot_q5_K_q8_1(const void *__restrict__ vbq,
                   const block_q8_1 *__restrict__ bq8_1, const int &iqs) {
 
-#ifndef GGML_QKK_64
+#ifndef GGML_QKK_64  // 如果未定义 GGML_QKK_64 则编译
     const block_q5_K * bq5_K = (const block_q5_K *) vbq;
 
     int   vl[2];
@@ -1055,11 +1055,11 @@ vec_dot_q5_K_q8_1(const void *__restrict__ vbq,
         u[2*i+1] = q8[4];
     }
 
-    return vec_dot_q5_K_q8_1_impl_vmmq(vl, vh, u, sc, m, bq5_K->dm, d8);
+    return vec_dot_q5_K_q8_1_impl_vmmq(vl, vh, u, sc, m, bq5_K->dm, d8);  // vec_dot_q5_K_q8_1_impl_vmmq
 
-#else
+#else  // 否则
 
-#if __SYCL_ARCH__ >= VER_4VEC // lowest compute capability for integer intrinsics
+#if __SYCL_ARCH__ >= VER_4VEC // lowest compute capability for integer intrinsics  // 条件编译
     const block_q5_K * bq5_K = (const block_q5_K *) vbq;
 
     const int8_t * s = bq5_K->scales;
@@ -1091,13 +1091,13 @@ vec_dot_q5_K_q8_1(const void *__restrict__ vbq,
     const float sumf_d = d8_1 * (dpct::dp4a(ui1, v1, 0) * s[0] + dpct::dp4a(ui2, v2, 0) * s[1])
                        + d8_2 * (dpct::dp4a(ui3, v3, 0) * s[2] + dpct::dp4a(ui4, v4, 0) * s[3]);
 
-    return d * sumf_d;
+    return d * sumf_d;  // 返回
 
-#else
+#else  // 否则
     bad_arch();
-#endif // __SYCL_ARCH__ >= VER_4VEC
+#endif // __SYCL_ARCH__ >= VER_4VEC  // 条件编译结束
 
-#endif
+#endif  // 条件编译结束
 }
 
 static __dpct_inline__ float
@@ -1124,7 +1124,7 @@ vec_dot_q6_K_q8_1(const void *__restrict__ vbq,
         d8[i] = bq8_1[bq8_offset + 2 * i].ds[0];
     }
 
-    return vec_dot_q6_K_q8_1_impl_mmvq(vl, vh, u, scales, bq6_K->d, d8);
+    return vec_dot_q6_K_q8_1_impl_mmvq(vl, vh, u, scales, bq6_K->d, d8);  // vec_dot_q6_K_q8_1_impl_mmvq
 }
 
 
@@ -1133,7 +1133,7 @@ vec_dot_iq2_xxs_q8_1(const void *__restrict__ vbq,
                      const block_q8_1 *__restrict__ bq8_1, const int &iqs,
                      const uint64_t *iq2xxs_grid, const uint8_t *ksigns_iq2xs,
                      const uint8_t *kmask_iq2xs) {
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const block_iq2_xxs * bq2 = (const block_iq2_xxs *) vbq;
 
     const int ib32 = iqs;
@@ -1152,11 +1152,11 @@ vec_dot_iq2_xxs_q8_1(const void *__restrict__ vbq,
         aux32 >>= 7;
     }
     const float d = (float)bq2->d * (0.5f + aux32) * bq8_1[ib32].ds[0] * 0.25f;
-    return d * sumi;
-#else
+    return d * sumi;  // 返回
+#else  // 否则
     assert(false);
-    return 0.f;
-#endif
+    return 0.f;  // 返回
+#endif  // 条件编译结束
 }
 
 static __dpct_inline__ float
@@ -1165,7 +1165,7 @@ vec_dot_iq2_xs_q8_1(const void *__restrict__ vbq,
                     const uint64_t *iq2xs_grid, const uint64_t *ksigns64) {
 #if DPCT_COMPATIBILITY_TEMP >=                                                 \
     MIN_CC_DP4A // lowest compute capability for integer intrinsics
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const block_iq2_xs * bq2 = (const block_iq2_xs *) vbq;
 
     const int ib32 = iqs;
@@ -1199,20 +1199,20 @@ vec_dot_iq2_xs_q8_1(const void *__restrict__ vbq,
     }
     const float d = (float)bq2->d * bq8_1[ib32].ds[0] * 0.25f;
     return d * ((0.5f + ls1) * sumi1 + (0.5f + ls2) * sumi2);
-#else
+#else  // 否则
     assert(false);
-    return 0.f;
-#endif
-#else
+    return 0.f;  // 返回
+#endif  // 条件编译结束
+#else  // 否则
     assert(false);
-    return 0.f;
-#endif
+    return 0.f;  // 返回
+#endif  // 条件编译结束
 }
 
 static __dpct_inline__ float
 vec_dot_iq2_s_q8_1(const void *__restrict__ vbq,
                    const block_q8_1 *__restrict__ bq8_1, const int &iqs) {
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const block_iq2_s * bq2 = (const block_iq2_s *) vbq;
 
     const int ib32 = iqs;
@@ -1256,9 +1256,9 @@ vec_dot_iq2_s_q8_1(const void *__restrict__ vbq,
     }
     const float d = (float)bq2->d * bq8_1[ib32].ds[0] * 0.25f;
     return d * ((0.5f + ls1) * sumi1 + (0.5f + ls2) * sumi2);
-#else
+#else  // 否则
     assert(false);
-#endif
+#endif  // 条件编译结束
 }
 
 static __dpct_inline__ float
@@ -1267,7 +1267,7 @@ vec_dot_iq3_xxs_q8_1(const void *__restrict__ vbq,
                      const uint32_t *iq3xxs_grid, const uint64_t *ksigns64) {
 #if DPCT_COMPATIBILITY_TEMP >=                                                 \
     MIN_CC_DP4A // lowest compute capability for integer intrinsics
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const block_iq3_xxs * bq2 = (const block_iq3_xxs *) vbq;
 
     const int ib32 = iqs;
@@ -1290,22 +1290,22 @@ vec_dot_iq3_xxs_q8_1(const void *__restrict__ vbq,
         aux32 >>= 7;
     }
     const float d = (float)bq2->d * (0.5f + aux32) * bq8_1[ib32].ds[0] * 0.5f;
-    return d * sumi;
-#else
+    return d * sumi;  // 返回
+#else  // 否则
     assert(false);
-    return 0.f;
-#endif
-#else
+    return 0.f;  // 返回
+#endif  // 条件编译结束
+#else  // 否则
     assert(false);
-    return 0.f;
-#endif
+    return 0.f;  // 返回
+#endif  // 条件编译结束
 }
 
 static __dpct_inline__ float
 vec_dot_iq3_s_q8_1(const void *__restrict__ vbq,
                    const block_q8_1 *__restrict__ bq8_1, const int &iqs,
                    const uint32_t *iq3s_grid) {
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const block_iq3_s * bq2 = (const block_iq3_s *) vbq;
 
     const int ib32 = iqs;
@@ -1333,17 +1333,17 @@ vec_dot_iq3_s_q8_1(const void *__restrict__ vbq,
         (float)bq2->d *
         (1 + 2 * ((bq2->scales[ib32 / 2] >> 4 * (ib32 % 2)) & 0xf)) *
         bq8_1[ib32].ds[0];
-    return d * sumi;
-#else
+    return d * sumi;  // 返回
+#else  // 否则
     assert(false);
-#endif
+#endif  // 条件编译结束
 }
 
 static __dpct_inline__ float
 vec_dot_iq1_s_q8_1(const void *__restrict__ vbq,
                    const block_q8_1 *__restrict__ bq8_1, const int &iqs,
                    const uint32_t *iq1s_grid_gpu) {
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const block_iq1_s * bq1 = (const block_iq1_s *) vbq;
 
     const int ib32 = iqs;
@@ -1361,16 +1361,16 @@ vec_dot_iq1_s_q8_1(const void *__restrict__ vbq,
     const float d1q = (float)bq1->d * (2*((bq1->qh[ib32] >> 12) & 7) + 1);
     const float d = d1q * bq8_1[ib32].ds[0];
     const float m = d1q * bq8_1[ib32].ds[1];
-    return d * sumi + m * delta;
-#else
+    return d * sumi + m * delta;  // 返回
+#else  // 否则
     assert(false);
-#endif
+#endif  // 条件编译结束
 }
 
 static __dpct_inline__ float
 vec_dot_iq1_m_q8_1(const void *__restrict__ vbq,
                    const block_q8_1 *__restrict__ bq8_1, const int &iqs) {
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const block_iq1_m * bq1 = (const block_iq1_m *) vbq;
 
     const int ib32 = iqs;
@@ -1395,9 +1395,9 @@ vec_dot_iq1_m_q8_1(const void *__restrict__ vbq,
     scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
     const float d = (float)scale.f16 * bq8_1[ib32].ds[0];
     return d * ((sumi[0] + sumf[0]) * (2*((sc[ib32/2] >> 6*(ib32%2)) & 0x7) + 1) + (sumi[1] + sumf[1]) * (2*((sc[ib32/2] >> (6*(ib32%2)+3)) & 0x7) + 1));
-#else
+#else  // 否则
     assert(false);
-#endif
+#endif  // 条件编译结束
 }
 
 
@@ -1430,7 +1430,7 @@ static __dpct_inline__ float
 vec_dot_iq4_xs_q8_1(const void *__restrict__ vbq,
                     const block_q8_1 *__restrict__ bq8_1, const int &iqs) {
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const block_iq4_xs * bq4 = (const block_iq4_xs *) vbq;
     const uint8_t * values = (const uint8_t *)kvalues_iq4nl;
 
@@ -1448,9 +1448,9 @@ vec_dot_iq4_xs_q8_1(const void *__restrict__ vbq,
         sumi2 = dpct::dp4a(v2, q8[j + 4], sumi2);
     }
     return d * (sumi1 + sumi2);
-#else
+#else  // 否则
     assert(false);
-#endif
+#endif  // 条件编译结束
 }
 
-#endif // GGML_SYCL_VECDOTQ_HPP
+#endif // GGML_SYCL_VECDOTQ_HPP  // 条件编译结束

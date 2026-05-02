@@ -43,435 +43,435 @@
 // [1] J. Tunney, ‘LLaMA Now Goes Faster on CPUs’, Mar. 2024. [Online].
 //     Available: https://justine.lol/matmul/. [Accessed: 29-Mar-2024].
 
-#if defined(__GNUC__)
+#if defined(__GNUC__)  // 条件编译
 #pragma GCC diagnostic ignored "-Wpedantic"
 #pragma GCC diagnostic ignored "-Wignored-attributes"
-#endif
+#endif  // 条件编译结束
 
-#include "sgemm.h"
-#include "ggml-impl.h"
-#include "ggml-cpu-impl.h"
-#include "ggml-quants.h"
-#include "simd-mappings.h"
+#include "sgemm.h"  // 引入 sgemm.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-cpu-impl.h"  // 引入 ggml-cpu-impl.h 头文件
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
+#include "simd-mappings.h"  // 引入 simd-mappings.h 头文件
 
-#include <array>
-#include <type_traits>
+#include <array>  // 引入 array 头文件
+#include <type_traits>  // 引入 type_traits 头文件
 
-#ifdef _MSC_VER
-#define NOINLINE __declspec(noinline)
-#else
-#define NOINLINE __attribute__((__noinline__))
-#endif
+#ifdef _MSC_VER  // 如果定义了 _MSC_VER 则编译
+#define NOINLINE __declspec(noinline)  // 宏定义 NOINLINE
+#else  // 否则
+#define NOINLINE __attribute__((__noinline__))  // 宏定义 NOINLINE
+#endif  // 条件编译结束
 
-#if defined(__ARM_NEON) || defined(__AVX512F__) || defined(__VXE__) || defined(__VXE2__)
-#define VECTOR_REGISTERS 32
-#else
-#define VECTOR_REGISTERS 16
-#endif
+#if defined(__ARM_NEON) || defined(__AVX512F__) || defined(__VXE__) || defined(__VXE2__)  // 条件编译
+#define VECTOR_REGISTERS 32  // 宏定义 VECTOR_REGISTERS
+#else  // 否则
+#define VECTOR_REGISTERS 16  // 宏定义 VECTOR_REGISTERS
+#endif  // 条件编译结束
 
-#if defined(__riscv_v_intrinsic)
-#define LMUL 4
-#endif
+#if defined(__riscv_v_intrinsic)  // 条件编译
+#define LMUL 4  // 宏定义 LMUL
+#endif  // 条件编译结束
 
-#define MM256_SET_M128I(a, b) _mm256_insertf128_si256(_mm256_castsi128_si256(b), (a), 1)
+#define MM256_SET_M128I(a, b) _mm256_insertf128_si256(_mm256_castsi128_si256(b), (a), 1)  // 宏定义 MM256_SET_M128I
 
-namespace {
+namespace {  // 命名空间
 
 inline float unhalf(ggml_fp16_t d) {
-    return GGML_CPU_FP16_TO_FP32(d);
+    return GGML_CPU_FP16_TO_FP32(d);  // GGML_CPU_FP16_TO_FP32
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // VECTORIZED ARITHMETIC OPERATIONS
 
-#if defined(__SSE__) || defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__SSE__) || defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
 inline __m128 add(__m128 x, __m128 y) { return _mm_add_ps(x, y); }
 inline __m128 sub(__m128 x, __m128 y) { return _mm_sub_ps(x, y); }
 inline __m128 mul(__m128 x, __m128 y) { return _mm_mul_ps(x, y); }
-#endif  // __SSE__
+#endif  // __SSE__  // 条件编译结束
 
-#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
 inline __m256 add(__m256 x, __m256 y) { return _mm256_add_ps(x, y); }
 inline __m256 sub(__m256 x, __m256 y) { return _mm256_sub_ps(x, y); }
 inline __m256 mul(__m256 x, __m256 y) { return _mm256_mul_ps(x, y); }
-#endif // __AVX__
+#endif // __AVX__  // 条件编译结束
 
-#if defined(__AVX512F__)
+#if defined(__AVX512F__)  // 条件编译
 inline __m512 add(__m512 x, __m512 y) { return _mm512_add_ps(x, y); }
 inline __m512 sub(__m512 x, __m512 y) { return _mm512_sub_ps(x, y); }
 inline __m512 mul(__m512 x, __m512 y) { return _mm512_mul_ps(x, y); }
-#endif // __AVX512F__
+#endif // __AVX512F__  // 条件编译结束
 
-#if defined(__ARM_NEON)
+#if defined(__ARM_NEON)  // 条件编译
 inline float32x4_t add(float32x4_t x, float32x4_t y) { return vaddq_f32(x, y); }
 inline float32x4_t sub(float32x4_t x, float32x4_t y) { return vsubq_f32(x, y); }
 inline float32x4_t mul(float32x4_t x, float32x4_t y) { return vmulq_f32(x, y); }
-#endif // __ARM_NEON
+#endif // __ARM_NEON  // 条件编译结束
 
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)  // 条件编译
 inline float16x8_t add(float16x8_t x, float16x8_t y) { return vaddq_f16(x, y); }
 inline float16x8_t sub(float16x8_t x, float16x8_t y) { return vsubq_f16(x, y); }
 inline float16x8_t mul(float16x8_t x, float16x8_t y) { return vmulq_f16(x, y); }
-#endif // __ARM_FEATURE_FP16_VECTOR_ARITHMETIC
+#endif // __ARM_FEATURE_FP16_VECTOR_ARITHMETIC  // 条件编译结束
 
-#if defined(__VXE__) || defined(__VXE2__)
+#if defined(__VXE__) || defined(__VXE2__)  // 条件编译
 inline float32x4_t add(float32x4_t x, float32x4_t y) { return vec_add(x, y); }
 inline float32x4_t sub(float32x4_t x, float32x4_t y) { return vec_sub(x, y); }
 inline float32x4_t mul(float32x4_t x, float32x4_t y) { return vec_mul(x, y); }
-#endif
+#endif  // 条件编译结束
 
-#if defined(__MMA__)
-typedef vector unsigned char vec_t;
-typedef __vector_quad acc_t;
-#endif
+#if defined(__MMA__)  // 条件编译
+typedef vector unsigned char vec_t;  // 类型定义
+typedef __vector_quad acc_t;  // 类型定义
+#endif  // 条件编译结束
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // VECTORIZED FUSED MULTIPLY ADD
 
 /**
  * Computes a * b + c.
  */
-template <typename T, typename U>
+template <typename T, typename U>  // 模板
 inline U madd(T a, T b, U c) {
-    return add(mul(a, b), c);
+    return add(mul(a, b), c);  // add
 }
 
-#if defined(__FMA__)
-#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)
-template <>
+#if defined(__FMA__)  // 条件编译
+#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
+template <>  // 模板
 inline __m256 madd(__m256 a, __m256 b, __m256 c) {
-    return _mm256_fmadd_ps(a, b, c);
+    return _mm256_fmadd_ps(a, b, c);  // _mm256_fmadd_ps
 }
-#endif
-#if defined(__AVX512F__)
-template <>
+#endif  // 条件编译结束
+#if defined(__AVX512F__)  // 条件编译
+template <>  // 模板
 inline __m512 madd(__m512 a, __m512 b, __m512 c) {
-    return _mm512_fmadd_ps(a, b, c);
+    return _mm512_fmadd_ps(a, b, c);  // _mm512_fmadd_ps
 }
-#endif
-#if defined(__AVX512BF16__)
-template <>
+#endif  // 条件编译结束
+#if defined(__AVX512BF16__)  // 条件编译
+template <>  // 模板
 inline __m512 madd(__m512bh a, __m512bh b, __m512 c) {
-    return _mm512_dpbf16_ps(c, a, b);
+    return _mm512_dpbf16_ps(c, a, b);  // _mm512_dpbf16_ps
 }
-template <>
+template <>  // 模板
 inline __m256 madd(__m256bh a, __m256bh b, __m256 c) {
-    return _mm256_dpbf16_ps(c, a, b);
+    return _mm256_dpbf16_ps(c, a, b);  // _mm256_dpbf16_ps
 }
-#endif
-#endif
+#endif  // 条件编译结束
+#endif  // 条件编译结束
 
-#if defined(__ARM_FEATURE_FMA)
-template <>
+#if defined(__ARM_FEATURE_FMA)  // 条件编译
+template <>  // 模板
 inline float32x4_t madd(float32x4_t a, float32x4_t b, float32x4_t c) {
-    return vfmaq_f32(c, b, a);
+    return vfmaq_f32(c, b, a);  // vfmaq_f32
 }
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC) && !defined(_MSC_VER)
-template <>
+#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC) && !defined(_MSC_VER)  // 条件编译
+template <>  // 模板
 inline float16x8_t madd(float16x8_t a, float16x8_t b, float16x8_t c) {
-    return vfmaq_f16(c, b, a);
+    return vfmaq_f16(c, b, a);  // vfmaq_f16
 }
-#endif
-#endif
+#endif  // 条件编译结束
+#endif  // 条件编译结束
 
-#if defined(__VXE__) || defined(__VXE2__)
-template <>
+#if defined(__VXE__) || defined(__VXE2__)  // 条件编译
+template <>  // 模板
 inline float32x4_t madd(float32x4_t a, float32x4_t b, float32x4_t c) {
-    return vec_madd(a, b, c);
+    return vec_madd(a, b, c);  // vec_madd
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(__riscv_v_intrinsic)
-template <> inline vfloat32m1_t madd(vfloat32m1_t a, vfloat32m1_t b, vfloat32m1_t c) {
-    return __riscv_vfmacc_vv_f32m1(c, a, b, __riscv_vsetvlmax_e32m1());
+#if defined(__riscv_v_intrinsic)  // 条件编译
+template <> inline vfloat32m1_t madd(vfloat32m1_t a, vfloat32m1_t b, vfloat32m1_t c) {  // 模板
+    return __riscv_vfmacc_vv_f32m1(c, a, b, __riscv_vsetvlmax_e32m1());  // __riscv_vfmacc_vv_f32m1
 }
-template <> inline vfloat32m2_t madd(vfloat32m2_t a, vfloat32m2_t b, vfloat32m2_t c) {
-    return __riscv_vfmacc_vv_f32m2(c, a, b, __riscv_vsetvlmax_e32m2());
+template <> inline vfloat32m2_t madd(vfloat32m2_t a, vfloat32m2_t b, vfloat32m2_t c) {  // 模板
+    return __riscv_vfmacc_vv_f32m2(c, a, b, __riscv_vsetvlmax_e32m2());  // __riscv_vfmacc_vv_f32m2
 }
-template <> inline vfloat32m4_t madd(vfloat32m4_t a, vfloat32m4_t b, vfloat32m4_t c) {
-    return __riscv_vfmacc_vv_f32m4(c, a, b, __riscv_vsetvlmax_e32m4());
+template <> inline vfloat32m4_t madd(vfloat32m4_t a, vfloat32m4_t b, vfloat32m4_t c) {  // 模板
+    return __riscv_vfmacc_vv_f32m4(c, a, b, __riscv_vsetvlmax_e32m4());  // __riscv_vfmacc_vv_f32m4
 }
-template <> inline vfloat32m8_t madd(vfloat32m8_t a, vfloat32m8_t b, vfloat32m8_t c) {
-    return __riscv_vfmacc_vv_f32m8(c, a, b, __riscv_vsetvlmax_e32m8());
+template <> inline vfloat32m8_t madd(vfloat32m8_t a, vfloat32m8_t b, vfloat32m8_t c) {  // 模板
+    return __riscv_vfmacc_vv_f32m8(c, a, b, __riscv_vsetvlmax_e32m8());  // __riscv_vfmacc_vv_f32m8
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(__riscv_zvfh)
-template <> inline vfloat32m1_t madd(vfloat16mf2_t a, vfloat16mf2_t b, vfloat32m1_t c) {
-    return __riscv_vfwmacc_vv_f32m1(c, a, b, __riscv_vsetvlmax_e32m1());
+#if defined(__riscv_zvfh)  // 条件编译
+template <> inline vfloat32m1_t madd(vfloat16mf2_t a, vfloat16mf2_t b, vfloat32m1_t c) {  // 模板
+    return __riscv_vfwmacc_vv_f32m1(c, a, b, __riscv_vsetvlmax_e32m1());  // __riscv_vfwmacc_vv_f32m1
 }
-template <> inline vfloat32m2_t madd(vfloat16m1_t a, vfloat16m1_t b, vfloat32m2_t c) {
-    return __riscv_vfwmacc_vv_f32m2(c, a, b, __riscv_vsetvlmax_e32m2());
+template <> inline vfloat32m2_t madd(vfloat16m1_t a, vfloat16m1_t b, vfloat32m2_t c) {  // 模板
+    return __riscv_vfwmacc_vv_f32m2(c, a, b, __riscv_vsetvlmax_e32m2());  // __riscv_vfwmacc_vv_f32m2
 }
-template <> inline vfloat32m4_t madd(vfloat16m2_t a, vfloat16m2_t b, vfloat32m4_t c) {
-    return __riscv_vfwmacc_vv_f32m4(c, a, b, __riscv_vsetvlmax_e32m4());
+template <> inline vfloat32m4_t madd(vfloat16m2_t a, vfloat16m2_t b, vfloat32m4_t c) {  // 模板
+    return __riscv_vfwmacc_vv_f32m4(c, a, b, __riscv_vsetvlmax_e32m4());  // __riscv_vfwmacc_vv_f32m4
 }
-template <> inline vfloat32m8_t madd(vfloat16m4_t a, vfloat16m4_t b, vfloat32m8_t c) {
-    return __riscv_vfwmacc_vv_f32m8(c, a, b, __riscv_vsetvlmax_e32m8());
+template <> inline vfloat32m8_t madd(vfloat16m4_t a, vfloat16m4_t b, vfloat32m8_t c) {  // 模板
+    return __riscv_vfwmacc_vv_f32m8(c, a, b, __riscv_vsetvlmax_e32m8());  // __riscv_vfwmacc_vv_f32m8
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(__riscv_zvfbfwma)
-template <> inline vfloat32m1_t madd(vbfloat16mf2_t a, vbfloat16mf2_t b, vfloat32m1_t c) {
-    return __riscv_vfwmaccbf16_vv_f32m1(c, a, b, __riscv_vsetvlmax_e32m1());
+#if defined(__riscv_zvfbfwma)  // 条件编译
+template <> inline vfloat32m1_t madd(vbfloat16mf2_t a, vbfloat16mf2_t b, vfloat32m1_t c) {  // 模板
+    return __riscv_vfwmaccbf16_vv_f32m1(c, a, b, __riscv_vsetvlmax_e32m1());  // __riscv_vfwmaccbf16_vv_f32m1
 }
-template <> inline vfloat32m2_t madd(vbfloat16m1_t a, vbfloat16m1_t b, vfloat32m2_t c) {
-    return __riscv_vfwmaccbf16_vv_f32m2(c, a, b, __riscv_vsetvlmax_e32m2());
+template <> inline vfloat32m2_t madd(vbfloat16m1_t a, vbfloat16m1_t b, vfloat32m2_t c) {  // 模板
+    return __riscv_vfwmaccbf16_vv_f32m2(c, a, b, __riscv_vsetvlmax_e32m2());  // __riscv_vfwmaccbf16_vv_f32m2
 }
-template <> inline vfloat32m4_t madd(vbfloat16m2_t a, vbfloat16m2_t b, vfloat32m4_t c) {
-    return __riscv_vfwmaccbf16_vv_f32m4(c, a, b, __riscv_vsetvlmax_e32m4());
+template <> inline vfloat32m4_t madd(vbfloat16m2_t a, vbfloat16m2_t b, vfloat32m4_t c) {  // 模板
+    return __riscv_vfwmaccbf16_vv_f32m4(c, a, b, __riscv_vsetvlmax_e32m4());  // __riscv_vfwmaccbf16_vv_f32m4
 }
-template <> inline vfloat32m8_t madd(vbfloat16m4_t a, vbfloat16m4_t b, vfloat32m8_t c) {
-    return __riscv_vfwmaccbf16_vv_f32m8(c, a, b, __riscv_vsetvlmax_e32m8());
+template <> inline vfloat32m8_t madd(vbfloat16m4_t a, vbfloat16m4_t b, vfloat32m8_t c) {  // 模板
+    return __riscv_vfwmaccbf16_vv_f32m8(c, a, b, __riscv_vsetvlmax_e32m8());  // __riscv_vfwmaccbf16_vv_f32m8
 }
-#endif
+#endif  // 条件编译结束
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // VECTORIZED HORIZONTAL SUM
 
-#if defined(__ARM_NEON)
+#if defined(__ARM_NEON)  // 条件编译
 inline float hsum(float32x4_t x) {
-    return vaddvq_f32(x);
+    return vaddvq_f32(x);  // vaddvq_f32
 }
-#endif // __ARM_NEON
+#endif // __ARM_NEON  // 条件编译结束
 
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC) && !defined(_MSC_VER)
+#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC) && !defined(_MSC_VER)  // 条件编译
 inline float hsum(float16x8_t x) {
-    return vaddvq_f32(vaddq_f32(vcvt_f32_f16(vget_low_f16(x)),
+    return vaddvq_f32(vaddq_f32(vcvt_f32_f16(vget_low_f16(x)),  // vaddvq_f32
                                 vcvt_f32_f16(vget_high_f16(x))));
 }
-#endif // __ARM_FEATURE_FP16_VECTOR_ARITHMETIC
+#endif // __ARM_FEATURE_FP16_VECTOR_ARITHMETIC  // 条件编译结束
 
-#if defined(__VXE__) || defined(__VXE2__)
+#if defined(__VXE__) || defined(__VXE2__)  // 条件编译
 inline float hsum(float32x4_t x) {
     float32x4_t tmp = x + vec_reve(x);
-    return tmp[0] + tmp[1];
+    return tmp[0] + tmp[1];  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(__SSE__) || defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__SSE__) || defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
 inline float hsum(__m128 x) {
-#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
     x = _mm_add_ps(x, _mm_movehl_ps(x, x));
     x = _mm_add_ss(x, _mm_movehdup_ps(x));
-#else
+#else  // 否则
     __m128 t;
     t = _mm_shuffle_ps(x, x, _MM_SHUFFLE(2, 3, 0, 1));
     x = _mm_add_ps(x, t);
     t = _mm_movehl_ps(t, x);
     x = _mm_add_ss(x, t);
-#endif
-    return _mm_cvtss_f32(x);
+#endif  // 条件编译结束
+    return _mm_cvtss_f32(x);  // _mm_cvtss_f32
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
 inline float hsum(__m256 x) {
-    return hsum(_mm_add_ps(_mm256_extractf128_ps(x, 1),
+    return hsum(_mm_add_ps(_mm256_extractf128_ps(x, 1),  // hsum
                            _mm256_castps256_ps128(x)));
 }
-#endif // __AVX__
+#endif // __AVX__  // 条件编译结束
 
-#if defined(__AVX512F__)
+#if defined(__AVX512F__)  // 条件编译
 inline float hsum(__m512 x) {
-    return _mm512_reduce_add_ps(x);
+    return _mm512_reduce_add_ps(x);  // _mm512_reduce_add_ps
 }
-#endif // __AVX512F__
+#endif // __AVX512F__  // 条件编译结束
 
-#if defined(__riscv_v_intrinsic)
+#if defined(__riscv_v_intrinsic)  // 条件编译
 inline float hsum(vfloat32m1_t x) {
-    return __riscv_vfmv_f_s_f32m1_f32(
+    return __riscv_vfmv_f_s_f32m1_f32(  // 返回
         __riscv_vfredusum_vs_f32m1_f32m1(x, __riscv_vfmv_v_f_f32m1(0, 1), __riscv_vsetvlmax_e32m1()));
 }
 inline float hsum(vfloat32m2_t x) {
-    return __riscv_vfmv_f_s_f32m1_f32(
+    return __riscv_vfmv_f_s_f32m1_f32(  // 返回
         __riscv_vfredusum_vs_f32m2_f32m1(x, __riscv_vfmv_v_f_f32m1(0, 1), __riscv_vsetvlmax_e32m2()));
 }
 inline float hsum(vfloat32m4_t x) {
-    return __riscv_vfmv_f_s_f32m1_f32(
+    return __riscv_vfmv_f_s_f32m1_f32(  // 返回
         __riscv_vfredusum_vs_f32m4_f32m1(x, __riscv_vfmv_v_f_f32m1(0, 1), __riscv_vsetvlmax_e32m4()));
 }
 inline float hsum(vfloat32m8_t x) {
-    return __riscv_vfmv_f_s_f32m1_f32(
+    return __riscv_vfmv_f_s_f32m1_f32(  // 返回
         __riscv_vfredusum_vs_f32m8_f32m1(x, __riscv_vfmv_v_f_f32m1(0, 1), __riscv_vsetvlmax_e32m8()));
 }
-#endif
+#endif  // 条件编译结束
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // VECTORIZED MEMORY LOADING
 
 template <typename T, typename U> T load(const U *);
 
-#if defined(__ARM_NEON)
-template <> inline float32x4_t load(const float *p) {
-    return vld1q_f32(p);
+#if defined(__ARM_NEON)  // 条件编译
+template <> inline float32x4_t load(const float *p) {  // 模板
+    return vld1q_f32(p);  // vld1q_f32
 }
-#if !defined(_MSC_VER)
+#if !defined(_MSC_VER)  // 条件编译
 // FIXME: this should check for __ARM_FEATURE_FP16_VECTOR_ARITHMETIC
-template <> inline float16x8_t load(const ggml_fp16_t *p) {
-    return vld1q_f16((const float16_t *)p);
+template <> inline float16x8_t load(const ggml_fp16_t *p) {  // 模板
+    return vld1q_f16((const float16_t *)p);  // vld1q_f16
 }
-template <> inline float32x4_t load(const ggml_fp16_t *p) {
-    return vcvt_f32_f16(vld1_f16((const float16_t *)p));
+template <> inline float32x4_t load(const ggml_fp16_t *p) {  // 模板
+    return vcvt_f32_f16(vld1_f16((const float16_t *)p));  // vcvt_f32_f16
 }
-#endif // _MSC_VER
-#endif // __ARM_NEON
+#endif // _MSC_VER  // 条件编译结束
+#endif // __ARM_NEON  // 条件编译结束
 
-#if defined(__VXE__) || defined(__VXE2__)
-template <> inline float32x4_t load(const ggml_fp16_t * p) {
+#if defined(__VXE__) || defined(__VXE2__)  // 条件编译
+template <> inline float32x4_t load(const ggml_fp16_t * p) {  // 模板
     float tmp[4];
 
     for (int i = 0; i < 4; i++) {
         tmp[i] = GGML_CPU_FP16_TO_FP32(p[i]);
     }
 
-    return vec_xl(0, (const float *)(tmp));
+    return vec_xl(0, (const float *)(tmp));  // vec_xl
 }
-template <> inline float32x4_t load(const float * p) {
-    return vec_xl(0, p);
+template <> inline float32x4_t load(const float * p) {  // 模板
+    return vec_xl(0, p);  // vec_xl
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(__SSE__) || defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)
-template <> inline __m128 load(const float *p) {
-    return _mm_loadu_ps(p);
+#if defined(__SSE__) || defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
+template <> inline __m128 load(const float *p) {  // 模板
+    return _mm_loadu_ps(p);  // _mm_loadu_ps
 }
-#endif  // __SSE__
+#endif  // __SSE__  // 条件编译结束
 
-#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)
-template <> inline __m256 load(const float *p) {
-    return _mm256_loadu_ps(p);
+#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
+template <> inline __m256 load(const float *p) {  // 模板
+    return _mm256_loadu_ps(p);  // _mm256_loadu_ps
 }
-#endif // __AVX__
+#endif // __AVX__  // 条件编译结束
 
-#if defined(__AVX2__) || defined(__AVX512F__)
-template <> inline __m256 load(const ggml_bf16_t *p) {
-    return _mm256_castsi256_ps(
+#if defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
+template <> inline __m256 load(const ggml_bf16_t *p) {  // 模板
+    return _mm256_castsi256_ps(  // 返回
         _mm256_slli_epi32(_mm256_cvtepu16_epi32(_mm_loadu_si128((const __m128i *)p)), 16));
 }
-#endif // __AVX2__
+#endif // __AVX2__  // 条件编译结束
 
-#if defined(__F16C__)
-template <> inline __m256 load(const ggml_fp16_t *p) {
-    return _mm256_cvtph_ps(_mm_loadu_si128((const __m128i *)p));
+#if defined(__F16C__)  // 条件编译
+template <> inline __m256 load(const ggml_fp16_t *p) {  // 模板
+    return _mm256_cvtph_ps(_mm_loadu_si128((const __m128i *)p));  // _mm256_cvtph_ps
 }
-#endif // __F16C__
+#endif // __F16C__  // 条件编译结束
 
-#if defined(__AVX512F__)
-template <> inline __m512 load(const float *p) {
-    return _mm512_loadu_ps(p);
+#if defined(__AVX512F__)  // 条件编译
+template <> inline __m512 load(const float *p) {  // 模板
+    return _mm512_loadu_ps(p);  // _mm512_loadu_ps
 }
-template <> inline __m512 load(const ggml_fp16_t *p) {
-    return _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)p));
+template <> inline __m512 load(const ggml_fp16_t *p) {  // 模板
+    return _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)p));  // _mm512_cvtph_ps
 }
-template <> inline __m512 load(const ggml_bf16_t *p) {
-    return _mm512_castsi512_ps(
+template <> inline __m512 load(const ggml_bf16_t *p) {  // 模板
+    return _mm512_castsi512_ps(  // 返回
         _mm512_slli_epi32(_mm512_cvtepu16_epi32(_mm256_loadu_si256((const __m256i *)p)), 16));
 }
-#endif // __AVX512F__
+#endif // __AVX512F__  // 条件编译结束
 
-#if defined(__AVX512BF16__)
-template <> inline __m512bh load(const ggml_bf16_t *p) {
+#if defined(__AVX512BF16__)  // 条件编译
+template <> inline __m512bh load(const ggml_bf16_t *p) {  // 模板
     return (__m512bh)_mm512_loadu_ps((const float *)p);
 }
-template <> inline __m256bh load(const ggml_bf16_t *p) {
+template <> inline __m256bh load(const ggml_bf16_t *p) {  // 模板
     return (__m256bh)_mm256_loadu_ps((const float *)p);
 }
-template <> inline __m512bh load(const float *p) {
-    return _mm512_cvtne2ps_pbh(_mm512_loadu_ps(p + 16), _mm512_loadu_ps(p));
+template <> inline __m512bh load(const float *p) {  // 模板
+    return _mm512_cvtne2ps_pbh(_mm512_loadu_ps(p + 16), _mm512_loadu_ps(p));  // _mm512_cvtne2ps_pbh
 }
-template <> inline __m256bh load(const float *p) {
-    return _mm512_cvtneps_pbh(_mm512_loadu_ps(p));
+template <> inline __m256bh load(const float *p) {  // 模板
+    return _mm512_cvtneps_pbh(_mm512_loadu_ps(p));  // _mm512_cvtneps_pbh
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(__riscv_v_intrinsic)
-template <> inline vfloat32m1_t load(const float *p) {
-    return __riscv_vle32_v_f32m1(p, __riscv_vsetvlmax_e32m1());
+#if defined(__riscv_v_intrinsic)  // 条件编译
+template <> inline vfloat32m1_t load(const float *p) {  // 模板
+    return __riscv_vle32_v_f32m1(p, __riscv_vsetvlmax_e32m1());  // __riscv_vle32_v_f32m1
 }
-template <> inline vfloat32m2_t load(const float *p) {
-    return __riscv_vle32_v_f32m2(p, __riscv_vsetvlmax_e32m2());
+template <> inline vfloat32m2_t load(const float *p) {  // 模板
+    return __riscv_vle32_v_f32m2(p, __riscv_vsetvlmax_e32m2());  // __riscv_vle32_v_f32m2
 }
-template <> inline vfloat32m4_t load(const float *p) {
-    return __riscv_vle32_v_f32m4(p, __riscv_vsetvlmax_e32m4());
+template <> inline vfloat32m4_t load(const float *p) {  // 模板
+    return __riscv_vle32_v_f32m4(p, __riscv_vsetvlmax_e32m4());  // __riscv_vle32_v_f32m4
 }
-template <> inline vfloat32m8_t load(const float *p) {
-    return __riscv_vle32_v_f32m8(p, __riscv_vsetvlmax_e32m8());
+template <> inline vfloat32m8_t load(const float *p) {  // 模板
+    return __riscv_vle32_v_f32m8(p, __riscv_vsetvlmax_e32m8());  // __riscv_vle32_v_f32m8
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(__riscv_zvfh)
-template <> inline vfloat16mf2_t load(const ggml_fp16_t *p) {
-    return __riscv_vle16_v_f16mf2(reinterpret_cast<const _Float16 *>(p), __riscv_vsetvlmax_e16mf2());
+#if defined(__riscv_zvfh)  // 条件编译
+template <> inline vfloat16mf2_t load(const ggml_fp16_t *p) {  // 模板
+    return __riscv_vle16_v_f16mf2(reinterpret_cast<const _Float16 *>(p), __riscv_vsetvlmax_e16mf2());  // __riscv_vle16_v_f16mf2
 }
-template <> inline vfloat16m1_t load(const ggml_fp16_t *p) {
-    return __riscv_vle16_v_f16m1(reinterpret_cast<const _Float16 *>(p), __riscv_vsetvlmax_e16m1());
+template <> inline vfloat16m1_t load(const ggml_fp16_t *p) {  // 模板
+    return __riscv_vle16_v_f16m1(reinterpret_cast<const _Float16 *>(p), __riscv_vsetvlmax_e16m1());  // __riscv_vle16_v_f16m1
 }
-template <> inline vfloat16m2_t load(const ggml_fp16_t *p) {
-    return __riscv_vle16_v_f16m2(reinterpret_cast<const _Float16 *>(p), __riscv_vsetvlmax_e16m2());
+template <> inline vfloat16m2_t load(const ggml_fp16_t *p) {  // 模板
+    return __riscv_vle16_v_f16m2(reinterpret_cast<const _Float16 *>(p), __riscv_vsetvlmax_e16m2());  // __riscv_vle16_v_f16m2
 }
-template <> inline vfloat16m4_t load(const ggml_fp16_t *p) {
-    return __riscv_vle16_v_f16m4(reinterpret_cast<const _Float16 *>(p), __riscv_vsetvlmax_e16m4());
+template <> inline vfloat16m4_t load(const ggml_fp16_t *p) {  // 模板
+    return __riscv_vle16_v_f16m4(reinterpret_cast<const _Float16 *>(p), __riscv_vsetvlmax_e16m4());  // __riscv_vle16_v_f16m4
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(__riscv_zvfbfwma)
-template <> inline vbfloat16mf2_t load(const ggml_bf16_t *p) {
-    return __riscv_vle16_v_bf16mf2(reinterpret_cast<const __bf16*>(p), __riscv_vsetvlmax_e16mf2());
+#if defined(__riscv_zvfbfwma)  // 条件编译
+template <> inline vbfloat16mf2_t load(const ggml_bf16_t *p) {  // 模板
+    return __riscv_vle16_v_bf16mf2(reinterpret_cast<const __bf16*>(p), __riscv_vsetvlmax_e16mf2());  // __riscv_vle16_v_bf16mf2
 }
-template <> inline vbfloat16m1_t load(const ggml_bf16_t *p) {
-    return __riscv_vle16_v_bf16m1(reinterpret_cast<const __bf16*>(p), __riscv_vsetvlmax_e16m1());
+template <> inline vbfloat16m1_t load(const ggml_bf16_t *p) {  // 模板
+    return __riscv_vle16_v_bf16m1(reinterpret_cast<const __bf16*>(p), __riscv_vsetvlmax_e16m1());  // __riscv_vle16_v_bf16m1
 }
-template <> inline vbfloat16m2_t load(const ggml_bf16_t *p) {
-    return __riscv_vle16_v_bf16m2(reinterpret_cast<const __bf16*>(p), __riscv_vsetvlmax_e16m2());
+template <> inline vbfloat16m2_t load(const ggml_bf16_t *p) {  // 模板
+    return __riscv_vle16_v_bf16m2(reinterpret_cast<const __bf16*>(p), __riscv_vsetvlmax_e16m2());  // __riscv_vle16_v_bf16m2
 }
-template <> inline vbfloat16m4_t load(const ggml_bf16_t *p) {
-    return __riscv_vle16_v_bf16m4(reinterpret_cast<const __bf16*>(p), __riscv_vsetvlmax_e16m4());
+template <> inline vbfloat16m4_t load(const ggml_bf16_t *p) {  // 模板
+    return __riscv_vle16_v_bf16m4(reinterpret_cast<const __bf16*>(p), __riscv_vsetvlmax_e16m4());  // __riscv_vle16_v_bf16m4
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(__riscv_v_intrinsic)
+#if defined(__riscv_v_intrinsic)  // 条件编译
 template <typename T> T set_zero();
 
-template <> inline vfloat32m1_t set_zero() {
-    return __riscv_vfmv_v_f_f32m1(0.0f, __riscv_vsetvlmax_e32m1());
+template <> inline vfloat32m1_t set_zero() {  // 模板
+    return __riscv_vfmv_v_f_f32m1(0.0f, __riscv_vsetvlmax_e32m1());  // __riscv_vfmv_v_f_f32m1
 }
-template <> inline vfloat32m2_t set_zero() {
-    return __riscv_vfmv_v_f_f32m2(0, __riscv_vsetvlmax_e32m2());
+template <> inline vfloat32m2_t set_zero() {  // 模板
+    return __riscv_vfmv_v_f_f32m2(0, __riscv_vsetvlmax_e32m2());  // __riscv_vfmv_v_f_f32m2
 }
-template <> inline vfloat32m4_t set_zero() {
-    return __riscv_vfmv_v_f_f32m4(0, __riscv_vsetvlmax_e32m4());
+template <> inline vfloat32m4_t set_zero() {  // 模板
+    return __riscv_vfmv_v_f_f32m4(0, __riscv_vsetvlmax_e32m4());  // __riscv_vfmv_v_f_f32m4
 }
-template <> inline vfloat32m8_t set_zero() {
-    return __riscv_vfmv_v_f_f32m8(0, __riscv_vsetvlmax_e32m8());
+template <> inline vfloat32m8_t set_zero() {  // 模板
+    return __riscv_vfmv_v_f_f32m8(0, __riscv_vsetvlmax_e32m8());  // __riscv_vfmv_v_f_f32m8
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(__riscv_v_intrinsic)
-template <typename T> size_t vlmax() {
+#if defined(__riscv_v_intrinsic)  // 条件编译
+template <typename T> size_t vlmax() {  // 模板
     if constexpr (std::is_same_v<T, vfloat32m1_t>) { return  __riscv_vsetvlmax_e32m1(); }
     else if constexpr (std::is_same_v<T, vfloat32m2_t>) { return  __riscv_vsetvlmax_e32m2(); }
     else if constexpr (std::is_same_v<T, vfloat32m4_t>) { return  __riscv_vsetvlmax_e32m4(); }
     else if constexpr (std::is_same_v<T, vfloat32m8_t>) { return  __riscv_vsetvlmax_e32m8(); }
-    #if defined (__riscv_zvfh)
+    #if defined (__riscv_zvfh)  // 条件编译
     else if constexpr (std::is_same_v<T, vfloat16mf2_t>) { return  __riscv_vsetvlmax_e16mf2(); }
     else if constexpr (std::is_same_v<T, vfloat16m1_t>) { return  __riscv_vsetvlmax_e16m1(); }
     else if constexpr (std::is_same_v<T, vfloat16m2_t>) { return  __riscv_vsetvlmax_e16m2(); }
     else if constexpr (std::is_same_v<T, vfloat16m4_t>) { return  __riscv_vsetvlmax_e16m4(); }
-    #endif
-    #if defined (__riscv_zvfbfwma)
+    #endif  // 条件编译结束
+    #if defined (__riscv_zvfbfwma)  // 条件编译
     else if constexpr (std::is_same_v<T, vbfloat16mf2_t>) { return  __riscv_vsetvlmax_e16mf2(); }
     else if constexpr (std::is_same_v<T, vbfloat16m1_t>) { return  __riscv_vsetvlmax_e16m1(); }
     else if constexpr (std::is_same_v<T, vbfloat16m2_t>) { return  __riscv_vsetvlmax_e16m2(); }
     else if constexpr (std::is_same_v<T, vbfloat16m4_t>) { return  __riscv_vsetvlmax_e16m4(); }
-    #endif
-    return 0;
+    #endif  // 条件编译结束
+    return 0;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // FLOATING POINT MATRIX MULTIPLICATION
 
-template <int M>
+template <int M>  // 模板
 static inline int64_t BLOCK_SIZE(size_t m) {
     const int64_t NB_BLOC_M = (m + M - 1) / M;
     return (m % NB_BLOC_M == 0) ? m / NB_BLOC_M : (m / NB_BLOC_M) + 1;
@@ -481,8 +481,8 @@ static constexpr inline int64_t BLOC_POS(int64_t ib, int64_t ibN, int64_t bloc_s
     return ib < ibN ? ib * bloc_size : ibN * bloc_size + (ib - ibN) * (bloc_size - 1);
 }
 
-template <int KN, typename D, typename V, typename TA, typename TB, typename TC>
-class tinyBLAS {
+template <int KN, typename D, typename V, typename TA, typename TB, typename TC>  // 模板
+class tinyBLAS {  // 类定义
   public:
     tinyBLAS(const ggml_compute_params * params, int64_t k,
              const TA *A, int64_t lda,
@@ -493,46 +493,46 @@ class tinyBLAS {
 
     bool matmul(int64_t m, int64_t n) {
         if (k % KN != 0)
-            return false;
+            return false;  // 返回
         // compute RM for only need tile with size RM&RM-1
-#if VECTOR_REGISTERS == 32
+#if VECTOR_REGISTERS == 32  // 条件编译
         if (m % 16 == 0 && (m/16 >= params->nth)) {
             const int64_t SIZE_N = BLOCK_SIZE<6>(n);
             mnpack<4, 6, 4>(m, n, SIZE_N, 12);
-            return true;
+            return true;  // 返回
         }
         if (m % 8 == 0 ) {
             const int64_t SIZE_N = BLOCK_SIZE<6>(n);
             mnpack<4, 6, 2>(m, n, SIZE_N, 12);
-            return true;
+            return true;  // 返回
         }
         if (m % 4 == 0) {
             const int64_t SIZE_N = BLOCK_SIZE<6>(n);
             mnpack<4, 6, 1>(m, n, SIZE_N, 12);
-            return true;
+            return true;  // 返回
         }
-#else  // VECTOR_REGISTERS == 16
+#else  // VECTOR_REGISTERS == 16  // 否则
         if (m % 16 == 0 && (m/16 >= params->nth)) {
             const int64_t SIZE_N = BLOCK_SIZE<3>(n);
             mnpack<4, 3, 4>(m, n, SIZE_N, 24);
-            return true;
+            return true;  // 返回
         }
         if (m % 8 == 0 ) {
             const int64_t SIZE_N = BLOCK_SIZE<3>(n);
             mnpack<4, 3, 2>(m, n, SIZE_N, 24);
-            return true;
+            return true;  // 返回
         }
         if (m % 4 == 0) {
             const int64_t SIZE_N = BLOCK_SIZE<3>(n);
             mnpack<4, 3, 1>(m, n, SIZE_N, 24);
-            return true;
+            return true;  // 返回
         }
-#endif
-        return false;
+#endif  // 条件编译结束
+        return false;  // 返回
     }
 
   private:
-    template <int RM, int RN, int BM>
+    template <int RM, int RN, int BM>  // 模板
     inline void mnpack(int64_t m, int64_t n, int64_t SIZE_N, int64_t BN) {
         if (SIZE_N == RN) {
             return gemm<RM, RN, BM>(m, n, BN);
@@ -545,7 +545,7 @@ class tinyBLAS {
         }
     }
 
-    template <int RM, int RN>
+    template <int RM, int RN>  // 模板
     inline void gemm_bloc(int64_t ii, int64_t jj) {
         D Cv[RN][RM] = {};
         for (int64_t l = 0; l < k; l += KN) {
@@ -579,7 +579,7 @@ class tinyBLAS {
                 C[ldc * (jj + j) + (ii + i)] = hsum(Cv[j][i]);
     }
 
-    template <int RM, int RN, int BM>
+    template <int RM, int RN, int BM>  // 模板
     NOINLINE void gemm(int64_t m, int64_t n, int64_t BN) {
         GGML_ASSERT(m % (RM * BM) == 0);
         const int64_t ytiles = m / (RM * BM);
@@ -628,7 +628,7 @@ class tinyBLAS {
         }
 
         ggml_barrier(params->threadpool);
-        return;
+        return;  // 返回
     }
 
     const ggml_compute_params * params;
@@ -641,9 +641,9 @@ class tinyBLAS {
     const int64_t ldc;
 };
 
-#if defined(__riscv_v_intrinsic)
-template <typename D, typename V, typename TA, typename TB, typename TC>
-class tinyBLAS_RVV {
+#if defined(__riscv_v_intrinsic)  // 条件编译
+template <typename D, typename V, typename TA, typename TB, typename TC>  // 模板
+class tinyBLAS_RVV {  // 类定义
   public:
     tinyBLAS_RVV(const ggml_compute_params * params, int64_t k,
              const TA *A, int64_t lda,
@@ -654,63 +654,63 @@ class tinyBLAS_RVV {
 
     bool matmul(int64_t m, int64_t n) {
         if (k % vlmax<V>() != 0) {
-            return false;
+            return false;  // 返回
         }
 
-#if LMUL == 1
+#if LMUL == 1  // 条件编译
         if (m % 16 == 0 && (m/16 >= params->nth)) {
             const int64_t SIZE_N = BLOCK_SIZE<6>(n);
             mnpack<4, 6, 4>(m, n, SIZE_N, 12);
-            return true;
+            return true;  // 返回
         }
         if (m % 8 == 0 ) {
             const int64_t SIZE_N = BLOCK_SIZE<6>(n);
             mnpack<4, 6, 2>(m, n, SIZE_N, 12);
-            return true;
+            return true;  // 返回
         }
         if (m % 4 == 0) {
             const int64_t SIZE_N = BLOCK_SIZE<6>(n);
             mnpack<4, 6, 1>(m, n, SIZE_N, 12);
-            return true;
+            return true;  // 返回
         }
-#elif LMUL == 2
+#elif LMUL == 2  // 否则如果
         if (m % 16 == 0 && (m/16 >= params->nth)) {
             const int64_t SIZE_N = BLOCK_SIZE<3>(n);
             mnpack<4, 3, 4>(m, n, SIZE_N, 24);
-            return true;
+            return true;  // 返回
         }
         if (m % 8 == 0 ) {
             const int64_t SIZE_N = BLOCK_SIZE<3>(n);
             mnpack<4, 3, 2>(m, n, SIZE_N, 24);
-            return true;
+            return true;  // 返回
         }
         if (m % 4 == 0) {
             const int64_t SIZE_N = BLOCK_SIZE<3>(n);
             mnpack<4, 3, 1>(m, n, SIZE_N, 24);
-            return true;
+            return true;  // 返回
         }
-#else // LMUL = 4
+#else // LMUL = 4  // 否则
         if (m % 16 == 0 && (m/16 >= params->nth)) {
             const int64_t SIZE_N = BLOCK_SIZE<2>(n);
             mnpack<2, 2, 8>(m, n, SIZE_N, 36);
-            return true;
+            return true;  // 返回
         }
         if (m % 8 == 0 ) {
             const int64_t SIZE_N = BLOCK_SIZE<2>(n);
             mnpack<2, 2, 4>(m, n, SIZE_N, 36);
-            return true;
+            return true;  // 返回
         }
         if (m % 4 == 0) {
             const int64_t SIZE_N = BLOCK_SIZE<2>(n);
             mnpack<2, 2, 2>(m, n, SIZE_N, 36);
-            return true;
+            return true;  // 返回
         }
-#endif
-        return false;
+#endif  // 条件编译结束
+        return false;  // 返回
     }
 
   private:
-    template<int RM, int RN, int BM>
+    template<int RM, int RN, int BM>  // 模板
     inline void mnpack(int64_t m, int64_t n, int64_t SIZE_N, int64_t BN) {
         if (SIZE_N == RN) {
             return gemm<RM, RN, BM>(m, n, BN);
@@ -1130,7 +1130,7 @@ class tinyBLAS_RVV {
         C[ldc * (jj + 0) + (ii + 1)] = hsum(Cv01);
     }
 
-    template <int RM, int RN>
+    template <int RM, int RN>  // 模板
     inline void gemm_bloc(int64_t ii, int64_t jj) {
         if constexpr (RM == 4) {
             if constexpr (RN == 6) { return gemm_bloc_4x6(ii, jj); }
@@ -1145,7 +1145,7 @@ class tinyBLAS_RVV {
         }
     }
 
-    template <int RM, int RN, int BM>
+    template <int RM, int RN, int BM>  // 模板
     NOINLINE void gemm(int64_t m, int64_t n, int64_t BN) {
         GGML_ASSERT(m % (RM * BM) == 0);
         const int64_t ytiles = m / (RM * BM);
@@ -1194,7 +1194,7 @@ class tinyBLAS_RVV {
         }
 
         ggml_barrier(params->threadpool);
-        return;
+        return;  // 返回
     }
 
     const ggml_compute_params * params;
@@ -1206,14 +1206,14 @@ class tinyBLAS_RVV {
     const int64_t ldb;
     const int64_t ldc;
 };
-#endif
+#endif  // 条件编译结束
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // QUANT ZERO MATRIX MULTIPLICATION
 
-#if defined(__ARM_FEATURE_DOTPROD)
-template <typename TA>
-class tinyBLAS_Q0_ARM {
+#if defined(__ARM_FEATURE_DOTPROD)  // 条件编译
+template <typename TA>  // 模板
+class tinyBLAS_Q0_ARM {  // 类定义
   public:
     tinyBLAS_Q0_ARM(int64_t k,
                     const TA *A, int64_t lda,
@@ -1277,7 +1277,7 @@ class tinyBLAS_Q0_ARM {
             gemm<1, 1>(m0, m, n0, n);
             break;
         default:
-            return;
+            return;  // 返回
         }
         mp = m0 + (m - m0) / mc * mc;
         np = n0 + (n - n0) / nc * nc;
@@ -1285,7 +1285,7 @@ class tinyBLAS_Q0_ARM {
         mnpack(m0, m, np, n);
     }
 
-    template <int RM, int RN>
+    template <int RM, int RN>  // 模板
     NOINLINE void gemm(int64_t m0, int64_t m, int64_t n0, int64_t n) {
         int64_t ytiles = (m - m0) / RM;
         int64_t xtiles = (n - n0) / RN;
@@ -1318,21 +1318,21 @@ class tinyBLAS_Q0_ARM {
     }
 
     inline int8x16_t load_lo(const block_q8_0 *b) {
-        return vld1q_s8(b->qs);
+        return vld1q_s8(b->qs);  // vld1q_s8
     }
 
     inline int8x16_t load_hi(const block_q8_0 *b) {
-        return vld1q_s8(b->qs + 16);
+        return vld1q_s8(b->qs + 16);  // vld1q_s8
     }
 
     inline int8x16_t load_lo(const block_q4_0 *b) {
-        return vsubq_s8(vreinterpretq_s8_u8(vandq_u8(vld1q_u8(b->qs),
+        return vsubq_s8(vreinterpretq_s8_u8(vandq_u8(vld1q_u8(b->qs),  // vsubq_s8
                                                      vdupq_n_u8(0x0f))),
                         vdupq_n_s8(0x8));
     }
 
     inline int8x16_t load_hi(const block_q4_0 *b) {
-        return vsubq_s8(vreinterpretq_s8_u8(vshrq_n_u8(vld1q_u8(b->qs), 4)),
+        return vsubq_s8(vreinterpretq_s8_u8(vshrq_n_u8(vld1q_u8(b->qs), 4)),  // vsubq_s8
                         vdupq_n_s8(0x8));
     }
 
@@ -1346,11 +1346,11 @@ class tinyBLAS_Q0_ARM {
     const int ith;
     const int nth;
 };
-#endif // __ARM_FEATURE_DOTPROD
+#endif // __ARM_FEATURE_DOTPROD  // 条件编译结束
 
-#if defined(__AVX2__) || defined(__AVX512F__) || defined(__AVX__)
-template <typename TA, typename TB, typename TC>
-class tinyBLAS_Q0_AVX {
+#if defined(__AVX2__) || defined(__AVX512F__) || defined(__AVX__)  // 条件编译
+template <typename TA, typename TB, typename TC>  // 模板
+class tinyBLAS_Q0_AVX {  // 类定义
   public:
     tinyBLAS_Q0_AVX(int64_t k,
                     const TA *A, int64_t lda,
@@ -1376,33 +1376,33 @@ class tinyBLAS_Q0_AVX {
     void mnpack(int64_t m0, int64_t m, int64_t n0, int64_t n) {
         int64_t mc, nc, mp, np;
         switch ((MIN(m - m0, 4) << 4) | MIN(n - n0, 4)) {
-#if VECTOR_REGISTERS == 32
+#if VECTOR_REGISTERS == 32  // 条件编译
         case 0x44:
             mc = 4;
             nc = 4;
-#if defined(__AVX2__) && defined(__F16C__)
+#if defined(__AVX2__) && defined(__F16C__)  // 条件编译
             gemm4xN<4>(m0, m, n0, n);
-#else
+#else  // 否则
             gemm<4, 4>(m0, m, n0, n);
-#endif
+#endif  // 条件编译结束
             break;
         case 0x43:
             mc = 4;
             nc = 3;
-#if defined(__AVX2__) && defined(__F16C__)
+#if defined(__AVX2__) && defined(__F16C__)  // 条件编译
             gemm4xN<3>(m0, m, n0, n);
-#else
+#else  // 否则
             gemm<4, 3>(m0, m, n0, n);
-#endif
+#endif  // 条件编译结束
             break;
         case 0x34:
             mc = 3;
             nc = 4;
-#if defined(__AVX2__) && defined(__F16C__)
+#if defined(__AVX2__) && defined(__F16C__)  // 条件编译
             gemmMx4<3>(m0, m, n0, n);
-#else
+#else  // 否则
             gemm<3, 4>(m0, m, n0, n);
-#endif
+#endif  // 条件编译结束
             break;
         case 0x33:
             mc = 3;
@@ -1412,45 +1412,45 @@ class tinyBLAS_Q0_AVX {
         case 0x42:
             mc = 4;
             nc = 2;
-#if defined(__AVX2__) && defined(__F16C__)
+#if defined(__AVX2__) && defined(__F16C__)  // 条件编译
             gemm4xN<2>(m0, m, n0, n);
-#else
+#else  // 否则
             gemm<4, 2>(m0, m, n0, n);
-#endif
+#endif  // 条件编译结束
             break;
         case 0x24:
             mc = 2;
             nc = 4;
-#if defined(__AVX2__) && defined(__F16C__)
+#if defined(__AVX2__) && defined(__F16C__)  // 条件编译
             gemmMx4<2>(m0, m, n0, n);
-#else
+#else  // 否则
             gemm<2, 4>(m0, m, n0, n);
-#endif
+#endif  // 条件编译结束
             break;
-#else
+#else  // 否则
         case 0x44:
         case 0x43:
         case 0x42:
             mc = 4;
             nc = 2;
-#if defined(__AVX2__) && defined(__F16C__)
+#if defined(__AVX2__) && defined(__F16C__)  // 条件编译
             gemm4xN<2>(m0, m, n0, n);
-#else
+#else  // 否则
             gemm<4, 2>(m0, m, n0, n);
-#endif
+#endif  // 条件编译结束
             break;
         case 0x34:
         case 0x24:
             mc = 2;
             nc = 4;
-#if defined(__AVX2__) && defined(__F16C__)
+#if defined(__AVX2__) && defined(__F16C__)  // 条件编译
             gemmMx4<2>(m0, m, n0, n);
-#else
+#else  // 否则
             gemm<2, 4>(m0, m, n0, n);
-#endif
+#endif  // 条件编译结束
             break;
         case 0x33:
-#endif
+#endif  // 条件编译结束
         case 0x32:
             mc = 3;
             nc = 2;
@@ -1464,11 +1464,11 @@ class tinyBLAS_Q0_AVX {
         case 0x41:
             mc = 4;
             nc = 1;
-#if defined(__AVX2__) && defined(__F16C__)
+#if defined(__AVX2__) && defined(__F16C__)  // 条件编译
             gemm4xN<1>(m0, m, n0, n);
-#else
+#else  // 否则
             gemm<4, 1>(m0, m, n0, n);
-#endif
+#endif  // 条件编译结束
             break;
         case 0x22:
             mc = 2;
@@ -1478,11 +1478,11 @@ class tinyBLAS_Q0_AVX {
         case 0x14:
             mc = 1;
             nc = 4;
-#if defined(__AVX2__) && defined(__F16C__)
+#if defined(__AVX2__) && defined(__F16C__)  // 条件编译
             gemmMx4<1>(m0, m, n0, n);
-#else
+#else  // 否则
             gemm<1, 4>(m0, m, n0, n);
-#endif
+#endif  // 条件编译结束
             break;
         case 0x31:
             mc = 3;
@@ -1510,7 +1510,7 @@ class tinyBLAS_Q0_AVX {
             gemm<1, 1>(m0, m, n0, n);
             break;
         default:
-            return;
+            return;  // 返回
         }
         mp = m0 + (m - m0) / mc * mc;
         np = n0 + (n - n0) / nc * nc;
@@ -1518,9 +1518,9 @@ class tinyBLAS_Q0_AVX {
         mnpack(m0, m, np, n);
     }
 
-#if defined(__AVX2__) && defined(__F16C__)
+#if defined(__AVX2__) && defined(__F16C__)  // 条件编译
 // Templated functions for gemm of dimensions 4xN
-    template <int RN>
+    template <int RN>  // 模板
     NOINLINE void gemm4xN(int64_t m0, int64_t m, int64_t n0, int64_t n) {
         int64_t ytiles = (m - m0) / 4;
         int64_t xtiles = (n - n0) / RN;
@@ -1574,7 +1574,7 @@ class tinyBLAS_Q0_AVX {
     }
 
     // Templated functions for gemm of dimensions Mx4
-    template <int RM>
+    template <int RM>  // 模板
     NOINLINE void gemmMx4(int64_t m0, int64_t m, int64_t n0, int64_t n) {
         int64_t ytiles = (m - m0) / RM;
         int64_t xtiles = (n - n0) / 4;
@@ -1629,9 +1629,9 @@ class tinyBLAS_Q0_AVX {
                     C[ldc * (jj + j) + (ii + i)] = hsum(Cv[j][i]);
         }
     }
-#endif
+#endif  // 条件编译结束
 
-    template <int RM, int RN>
+    template <int RM, int RN>  // 模板
     NOINLINE void gemm(int64_t m0, int64_t m, int64_t n0, int64_t n) {
         int64_t ytiles = (m - m0) / RM;
         int64_t xtiles = (n - n0) / RN;
@@ -1648,12 +1648,12 @@ class tinyBLAS_Q0_AVX {
             for (int64_t l = 0; l < k; ++l)
                 for (int64_t j = 0; j < RN; ++j)
                     for (int64_t i = 0; i < RM; ++i) {
-#if defined(__AVX2__)
+#if defined(__AVX2__)  // 条件编译
                         __m256 udTmp = updot(_mm256_sign_epi8(load(A + lda * (ii + i) + l),
                                                               load(A + lda * (ii + i) + l)),
                                              _mm256_sign_epi8(load(B + ldb * (jj + j) + l),
                                                               load(A + lda * (ii + i) + l)));
-#else
+#else  // 否则
                         __m128i ali0 = load0(A + lda * (ii + i) + l);
                         __m128i ali1 = load1(A + lda * (ii + i) + l);
                         __m128i blj0 = load0(B + ldb * (jj + j) + l);
@@ -1669,7 +1669,7 @@ class tinyBLAS_Q0_AVX {
                         __m128i mad0 = _mm_maddubs_epi16(sepAA0, sepBA0);
                         __m128i mad1 = _mm_maddubs_epi16(sepAA1, sepBA1);
                         __m256 udTmp = _mm256_cvtepi32_ps(MM256_SET_M128I(_mm_madd_epi16(oneFill, mad1), _mm_madd_epi16(oneFill, mad0)));
-#endif
+#endif  // 条件编译结束
                         Cv[j][i] = madd(_mm256_set1_ps(unhalf(A[lda * (ii + i) + l].d) *
                                                        unhalf(B[ldb * (jj + j) + l].d)),
                                                        udTmp,
@@ -1682,33 +1682,33 @@ class tinyBLAS_Q0_AVX {
     }
 
     inline __m256i load(const block_q8_0 *b) {
-        return _mm256_loadu_si256((const __m256i *)b->qs);
+        return _mm256_loadu_si256((const __m256i *)b->qs);  // _mm256_loadu_si256
     }
 
     inline __m128i load0(const block_q8_0 *b) {
-        return _mm_loadu_si128((const __m128i *)b->qs);
+        return _mm_loadu_si128((const __m128i *)b->qs);  // _mm_loadu_si128
     }
 
     inline __m128i load1(const block_q8_0 *b) {
-        return _mm_loadu_si128(((const __m128i *)b->qs) + 1);
+        return _mm_loadu_si128(((const __m128i *)b->qs) + 1);  // _mm_loadu_si128
     }
 
     inline __m256i load(const block_q4_0 *b) {
-        return _mm256_sub_epi8(denibble(b->qs), _mm256_set1_epi8(8));
+        return _mm256_sub_epi8(denibble(b->qs), _mm256_set1_epi8(8));  // _mm256_sub_epi8
     }
 
     inline __m128i load0(const block_q4_0 *b) {
         const __m128i x = _mm_loadu_si128((const __m128i *)(b->qs));
-        return _mm_sub_epi8(_mm_and_si128(_mm_set1_epi8(15), x), _mm_set1_epi8(8));
+        return _mm_sub_epi8(_mm_and_si128(_mm_set1_epi8(15), x), _mm_set1_epi8(8));  // _mm_sub_epi8
     }
 
     inline __m128i load1(const block_q4_0 *b) {
         const __m128i x = _mm_loadu_si128((const __m128i *)(b->qs));
-        return _mm_sub_epi8(_mm_and_si128(_mm_set1_epi8(15), _mm_srli_epi16(x, 4)), _mm_set1_epi8(8));
+        return _mm_sub_epi8(_mm_and_si128(_mm_set1_epi8(15), _mm_srli_epi16(x, 4)), _mm_set1_epi8(8));  // _mm_sub_epi8
     }
 
     inline __m256i load(const block_q5_0 *b) {
-        return _mm256_or_si256(denibble(b->qs), bittobyte(b->qh));
+        return _mm256_or_si256(denibble(b->qs), bittobyte(b->qh));  // _mm256_or_si256
     }
 
     inline __m128i load0(const block_q5_0* b) {
@@ -1721,7 +1721,7 @@ class tinyBLAS_Q0_AVX {
                                                      _mm_shuffle_epi8(_mm_set1_epi32(x32),
                                                                       _mm_set_epi64x(0x0101010101010101, 0x0000000000000000))));
         bytesl = _mm_andnot_si128(bytesl, _mm_set1_epi8((char)0xF0));
-        return _mm_or_si128(qxl, bytesl);
+        return _mm_or_si128(qxl, bytesl);  // _mm_or_si128
     }
 
     inline __m128i load1(const block_q5_0* b) {
@@ -1734,38 +1734,38 @@ class tinyBLAS_Q0_AVX {
                                                      _mm_shuffle_epi8(_mm_set1_epi32(x32),
                                                                       _mm_set_epi64x(0x0303030303030303, 0x0202020202020202))));
         bytesh = _mm_andnot_si128(bytesh, _mm_set1_epi8((char)0xF0));
-        return _mm_or_si128(qxh, bytesh);
+        return _mm_or_si128(qxh, bytesh);  // _mm_or_si128
     }
 
     inline __m256i load(const block_iq4_nl *b) {
-        return MM256_SET_M128I(load1(b), load0(b));
+        return MM256_SET_M128I(load1(b), load0(b));  // MM256_SET_M128I
     }
 
     inline __m128i load0(const block_iq4_nl *b) {
         const __m128i x = _mm_loadu_si128((const __m128i *)(b->qs));
-        return _mm_shuffle_epi8(iq4nlt, _mm_and_si128(_mm_set1_epi8(15), x));
+        return _mm_shuffle_epi8(iq4nlt, _mm_and_si128(_mm_set1_epi8(15), x));  // _mm_shuffle_epi8
     }
 
     inline __m128i load1(const block_iq4_nl *b) {
         const __m128i x = _mm_loadu_si128((const __m128i *)(b->qs));
-        return _mm_shuffle_epi8(iq4nlt, _mm_and_si128(_mm_set1_epi8(15), _mm_srli_epi16(x, 4)));
+        return _mm_shuffle_epi8(iq4nlt, _mm_and_si128(_mm_set1_epi8(15), _mm_srli_epi16(x, 4)));  // _mm_shuffle_epi8
     }
 
     inline __m256 updot(__m256i u, __m256i s) {
         __m256i res;
-#if defined(__AVX512VNNI__) && defined(__AVX512VL__)
+#if defined(__AVX512VNNI__) && defined(__AVX512VL__)  // 条件编译
         res = _mm256_dpbusd_epi32(_mm256_setzero_si256(), u, s);
-#elif defined(__AVXVNNI__)
+#elif defined(__AVXVNNI__)  // 否则如果
         res = _mm256_dpbusd_avx_epi32(_mm256_setzero_si256(), u, s);
-#else
+#else  // 否则
         res = _mm256_madd_epi16(_mm256_set1_epi16(1), _mm256_maddubs_epi16(u, s));
-#endif
-        return _mm256_cvtepi32_ps(res);
+#endif  // 条件编译结束
+        return _mm256_cvtepi32_ps(res);  // _mm256_cvtepi32_ps
     }
 
     static inline __m256i denibble(const uint8_t *p) {
         __m128i x = _mm_loadu_si128((const __m128i *)p);
-        return _mm256_and_si256(_mm256_set1_epi8(15),
+        return _mm256_and_si256(_mm256_set1_epi8(15),  // _mm256_and_si256
                                 _mm256_insertf128_si256(_mm256_castsi128_si256(x),
                                                         _mm_srli_epi16(x, 4), 1));
     }
@@ -1778,7 +1778,7 @@ class tinyBLAS_Q0_AVX {
                                                           _mm256_shuffle_epi8(_mm256_set1_epi32(x32),
                                                                               _mm256_set_epi64x(0x0303030303030303, 0x0202020202020202,
                                                                                                 0x0101010101010101, 0x0000000000000000))));
-        return _mm256_andnot_si256(bytes, _mm256_set1_epi8((char)0xF0));
+        return _mm256_andnot_si256(bytes, _mm256_set1_epi8((char)0xF0));  // _mm256_andnot_si256
     }
 
     const TA *const A;
@@ -1792,10 +1792,10 @@ class tinyBLAS_Q0_AVX {
     const int nth;
     __m128i iq4nlt;
 };
-#endif // __AVX__
+#endif // __AVX__  // 条件编译结束
 
 //PPC Implementation
-#if defined(__MMA__)
+#if defined(__MMA__)  // 条件编译
 
 #define SAVE_ACC(ACC, ii, jj) \
    __builtin_mma_disassemble_acc(vec_C, ACC); \
@@ -1805,25 +1805,25 @@ class tinyBLAS_Q0_AVX {
       } \
    } \
 
-template<typename T>
+template<typename T>  // 模板
 struct mma_instr;
 
-template<>
-struct mma_instr<ggml_bf16_t> {
+template<>  // 模板
+struct mma_instr<ggml_bf16_t> {  // 结构体定义
     static inline void outer_product(acc_t *acc, vec_t a, vec_t b) {
         __builtin_mma_xvbf16ger2pp(acc, a, b);
     }
 };
 
-template<>
-struct mma_instr<ggml_fp16_t> {
+template<>  // 模板
+struct mma_instr<ggml_fp16_t> {  // 结构体定义
     static inline void outer_product(acc_t *acc, vec_t a, vec_t b) {
         __builtin_mma_xvf16ger2pp(acc, a, b);
     }
 };
 
-template <typename TA, typename TB, typename TC>
-class tinyBLAS_HP16_PPC {
+template <typename TA, typename TB, typename TC>  // 模板
+class tinyBLAS_HP16_PPC {  // 类定义
   public:
     tinyBLAS_HP16_PPC(int64_t k,
                 const TA *A, int64_t lda,
@@ -2022,7 +2022,7 @@ class tinyBLAS_HP16_PPC {
                     gemm_Mx8<3>(m0, m, n0, n);
                     break;
                 default:
-                    return;
+                    return;  // 返回
             }
         } else if (m_rem >= 4 && n_rem >= 4) {
             mc = 4;
@@ -2045,7 +2045,7 @@ class tinyBLAS_HP16_PPC {
                     break;
 
                 default:
-                    return;
+                    return;  // 返回
             }
         } else {
             switch((m_rem << 4) | n_rem) {
@@ -2125,7 +2125,7 @@ class tinyBLAS_HP16_PPC {
                     gemm_small<1, 1>(m0, m, n0, n);
                     break;
                 default:
-                    return;
+                    return;  // 返回
             }
         }
         mp = m0 + (m - m0) / mc * mc;
@@ -2193,7 +2193,7 @@ class tinyBLAS_HP16_PPC {
         SAVE_ACC(&acc_3, ii+4, jj+4);
     }
 
-    template<int RM, int RN>
+    template<int RM, int RN>  // 模板
     void gemm_small(int64_t m0, int64_t m, int64_t n0, int64_t n) {
         int64_t ytiles = (m - m0) / RM;
         int64_t xtiles = (n - n0) / RN;
@@ -2226,7 +2226,7 @@ class tinyBLAS_HP16_PPC {
         }
     }
 
-    template<int RM>
+    template<int RM>  // 模板
     void gemm_Mx8(int64_t m0, int64_t m, int64_t n0, int64_t n) {
         int RN = 8;
         int64_t ytiles = (m - m0) / RM;
@@ -2268,7 +2268,7 @@ class tinyBLAS_HP16_PPC {
         }
     }
 
-    template<int RM, int RN>
+    template<int RM, int RN>  // 模板
     inline void kernel(int64_t ii, int64_t jj) {
        if constexpr(RM == 4 && RN == 8) {
           KERNEL_4x8(ii,jj);
@@ -2281,7 +2281,7 @@ class tinyBLAS_HP16_PPC {
        }
     }
 
-    template <int RM, int RN>
+    template <int RM, int RN>  // 模板
     NOINLINE void gemm(int64_t m0, int64_t m, int64_t n0, int64_t n) {
         int64_t ytiles = (m - m0) / RM;
         int64_t xtiles = (n - n0) / RN;
@@ -2309,8 +2309,8 @@ class tinyBLAS_HP16_PPC {
     const int nth;
 };
 
-template <typename TA>
-class tinyBLAS_Q0_PPC {
+template <typename TA>  // 模板
+class tinyBLAS_Q0_PPC {  // 类定义
   public:
     tinyBLAS_Q0_PPC(int64_t k,
              const TA * A, int64_t lda,
@@ -2321,9 +2321,9 @@ class tinyBLAS_Q0_PPC {
     }
 
     void matmul(int64_t m, int64_t n) {
-    #if defined(_AIX) || defined(__BIG_ENDIAN__)
+    #if defined(_AIX) || defined(__BIG_ENDIAN__)  // 条件编译
         mnpack(0, m, 0, n);
-    #else
+    #else  // 否则
         const int64_t mc = 64;
         const int64_t kc = 64;
         int64_t nc = 64;
@@ -2354,7 +2354,7 @@ class tinyBLAS_Q0_PPC {
         } else {
             mnpack(0, m, 0, n);
         }
-    #endif
+    #endif  // 条件编译结束
     }
 
   private:
@@ -2387,7 +2387,7 @@ class tinyBLAS_Q0_PPC {
         }
     }
 
-    template<typename ArrayType>
+    template<typename ArrayType>  // 模板
     inline void compute(acc_t * ACC, int c_idx, int s_idx, ArrayType & comparray, vector float * vs, vector float * fin_res) {
         vector signed int vec_C[4];
         vector float CA[4] = {0};
@@ -2416,7 +2416,7 @@ class tinyBLAS_Q0_PPC {
         *(ca) = vsum[0] + vsum[1] + vsum[2] + vsum[3];
     }
 
-    template <typename V1, typename V2>
+    template <typename V1, typename V2>  // 模板
     inline void vector_permute_store(V2 & s1, V2 & s2, V2 & s3, V2 & s4, V1 * vecOffset, bool flip) {
         vector unsigned char swiz1 = {0, 1, 2, 3, 4, 5, 6, 7, 16, 17, 18, 19, 20, 21, 22, 23};
         vector unsigned char swiz2 = {8, 9, 10, 11, 12, 13, 14, 15, 24, 25, 26, 27, 28, 29, 30, 31};
@@ -2525,7 +2525,7 @@ class tinyBLAS_Q0_PPC {
         }
     }
 
-    template <int chunk_size>
+    template <int chunk_size>  // 模板
     static inline void pack_q8_block(const block_q8_0 * a, int64_t lda, int rows, int blocks, unsigned char * vec) {
         unsigned char * vecOffset = vec;
         const vec_t swiz1 = {0, 1, 2, 3, 16, 17, 18, 19, 4, 5, 6, 7, 20, 21, 22, 23};
@@ -2595,7 +2595,7 @@ class tinyBLAS_Q0_PPC {
         }
     }
 
-    template<int size>
+    template<int size>  // 模板
     void packNormalInt4(const TA * a, int64_t lda, int rows, int cols, int8_t * vec, std::array<int, size> & comparray) {
         int64_t i, j;
         TA * aoffset = NULL;
@@ -2717,7 +2717,7 @@ class tinyBLAS_Q0_PPC {
         }
     }
 
-    template<typename VA, typename VB>
+    template<typename VA, typename VB>  // 模板
     void packNormal(const block_q8_0 * a, int64_t lda, int rows, int cols, VA * vec, bool flip) {
         int64_t i, j;
         block_q8_0 * aoffset = NULL;
@@ -2839,7 +2839,7 @@ class tinyBLAS_Q0_PPC {
             mc = (m_rem >= 4) ? 4 : m_rem;
             nc = (n_rem >= 4) ? 4 : n_rem;
             if (mc == 0 || nc == 0)
-               return;
+               return;  // 返回
             gemm_small(m0, m, n0, n, mc, nc);
         }
 
@@ -3142,7 +3142,7 @@ class tinyBLAS_Q0_PPC {
         }
     }
 
-    template<int RM, int RN>
+    template<int RM, int RN>  // 模板
     inline void kernel(int64_t ii, int64_t jj) {
         if constexpr(RM == 4 && RN == 8) {
             KERNEL_4x8(ii,jj);
@@ -3155,7 +3155,7 @@ class tinyBLAS_Q0_PPC {
         }
     }
 
-    template <int RM, int RN>
+    template <int RM, int RN>  // 模板
     NOINLINE void gemm(int64_t m0, int64_t m, int64_t n0, int64_t n) {
         int64_t ytiles = (m - m0) / RM;
         int64_t xtiles = (n - n0) / RN;
@@ -3183,7 +3183,7 @@ class tinyBLAS_Q0_PPC {
     const int nth;
 };
 
-class tinyBLAS_PPC {
+class tinyBLAS_PPC {  // 类定义
   public:
     tinyBLAS_PPC(int64_t k,
                 const float * A, int64_t lda,
@@ -3194,16 +3194,16 @@ class tinyBLAS_PPC {
     }
 
     void matmul(int64_t m, int64_t n) {
-    #if defined(_AIX) || defined(__BIG_ENDIAN__)
+    #if defined(_AIX) || defined(__BIG_ENDIAN__)  // 条件编译
         mnpack(0, m, 0, n);
-    #else
+    #else  // 否则
         int64_t mc = 256; int64_t nc = 256; int64_t kc = 256;
         if (m % mc == 0 && n % nc == 0 && k % kc == 0) {
             matmul_tiled(m, n, mc, nc, kc);
         } else {
             mnpack(0, m, 0, n);
         }
-    #endif
+    #endif  // 条件编译结束
     }
 
   private:
@@ -3551,7 +3551,7 @@ class tinyBLAS_PPC {
             mc = (m_rem >= 4) ? 4 : m_rem;
             nc = (n_rem >= 4) ? 4 : n_rem;
             if (mc == 0 || nc == 0)
-                return;
+                return;  // 返回
             gemm_small(m0, m, n0, n, mc, nc);
         }
         int64_t mp = m0 + ((m - m0) / mc) * mc;
@@ -3614,7 +3614,7 @@ class tinyBLAS_PPC {
        }
     }
 
-    template<int RM, int RN>
+    template<int RM, int RN>  // 模板
     inline void kernel(int64_t ii, int64_t jj) {
         if constexpr(RM == 4 && RN == 4) {
             KERNEL_4x4(ii, jj);
@@ -3629,7 +3629,7 @@ class tinyBLAS_PPC {
         }
     }
 
-    template <int RM, int RN>
+    template <int RM, int RN>  // 模板
     NOINLINE void gemm(int64_t m0, int64_t m, int64_t n0, int64_t n) {
         int64_t ytiles = (m - m0) / RM;
         int64_t xtiles = (n - n0) / RN;
@@ -3656,7 +3656,7 @@ class tinyBLAS_PPC {
     const int ith;
     const int nth;
 };
-#endif
+#endif  // 条件编译结束
 } // namespace
 
 /**
@@ -3703,82 +3703,82 @@ bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t m, int64
     assert(params->ith < params->nth);
 
     // only enable sgemm for prompt processing
-#if !defined(__MMA__)
+#if !defined(__MMA__)  // 条件编译
     if (n < 2)
-        return false;
-#endif
+        return false;  // 返回
+#endif  // 条件编译结束
 
     if (Ctype != GGML_TYPE_F32)
-        return false;
+        return false;  // 返回
 
     switch (Atype) {
 
     case GGML_TYPE_F32: {
         if (Btype != GGML_TYPE_F32)
-            return false;
-#if defined(__AVX512F__)
+            return false;  // 返回
+#if defined(__AVX512F__)  // 条件编译
         tinyBLAS<16, __m512, __m512, float, float, float> tb{ params,
             k, (const float *)A, lda,
             (const float *)B, ldb,
             (float *)C, ldc};
         return tb.matmul(m, n);
-#elif defined(__AVX__) || defined(__AVX2__)
+#elif defined(__AVX__) || defined(__AVX2__)  // 否则如果
         tinyBLAS<8, __m256, __m256, float, float, float> tb{ params,
             k, (const float *)A, lda,
             (const float *)B, ldb,
             (float *)C, ldc};
         return tb.matmul(m, n);
-#elif defined(__ARM_NEON)
+#elif defined(__ARM_NEON)  // 否则如果
         if (n < 4)
-            return false;
+            return false;  // 返回
         tinyBLAS<4, float32x4_t, float32x4_t, float, float, float> tb{ params,
             k, (const float *)A, lda,
             (const float *)B, ldb,
             (float *)C, ldc};
         return tb.matmul(m, n);
-#elif defined(__VXE__) || defined(__VXE2__)
+#elif defined(__VXE__) || defined(__VXE2__)  // 否则如果
         if (n < 4)
-            return false;
+            return false;  // 返回
         tinyBLAS<4, float32x4_t, float32x4_t, float, float, float> tb{ params,
             k, (const float *)A, lda,
             (const float *)B, ldb,
             (float *)C, ldc};
         return tb.matmul(m, n);
-#elif defined(__MMA__)
+#elif defined(__MMA__)  // 否则如果
         if (k % 8)
-            return false;
+            return false;  // 返回
         tinyBLAS_PPC tb{
             k, (const float *)A, lda,
             (const float *)B, ldb,
             (float *)C, ldc,
             params->ith, params->nth};
         tb.matmul(m, n);
-        return true;
-#elif defined(__riscv_v_intrinsic)
-    #if LMUL == 1
+        return true;  // 返回
+#elif defined(__riscv_v_intrinsic)  // 否则如果
+    #if LMUL == 1  // 条件编译
         tinyBLAS_RVV<vfloat32m1_t, vfloat32m1_t, float, float, float> tb{ params,
             k, (const float *)A, lda,
             (const float *)B, ldb,
             (float *)C, ldc};
-    #elif LMUL == 2
+    #elif LMUL == 2  // 否则如果
         tinyBLAS_RVV<vfloat32m2_t, vfloat32m2_t, float, float, float> tb{ params,
             k, (const float *)A, lda,
             (const float *)B, ldb,
             (float *)C, ldc};
-    #else // LMUL = 4
+    #else // LMUL = 4  // 否则
         tinyBLAS_RVV<vfloat32m4_t, vfloat32m4_t, float, float, float> tb{ params,
             k, (const float *)A, lda,
             (const float *)B, ldb,
             (float *)C, ldc};
-    #endif
+    #endif  // 条件编译结束
         return tb.matmul(m, n);
-#else
-        return false;
-#endif
+#else  // 否则
+        return false;  // 返回
+#endif  // 条件编译结束
     }
 
     case GGML_TYPE_BF16: {
-#if defined(__AVX512BF16__)
+#if defined(__AVX512BF16__)  // 条件编译
         if (Btype == GGML_TYPE_BF16) {
             tinyBLAS<32, __m512, __m512bh, ggml_bf16_t, ggml_bf16_t, float> tb{ params, k,
                 (const ggml_bf16_t *)A, lda,
@@ -3786,7 +3786,7 @@ bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t m, int64
                 (float *)C, ldc};
             return tb.matmul(m, n);
         }
-#elif defined(__AVX512F__)
+#elif defined(__AVX512F__)  // 否则如果
         if (Btype == GGML_TYPE_BF16) {
             tinyBLAS<16, __m512, __m512, ggml_bf16_t, ggml_bf16_t, float> tb{ params, k,
                 (const ggml_bf16_t *)A, lda,
@@ -3794,7 +3794,7 @@ bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t m, int64
                 (float *)C, ldc};
             return tb.matmul(m, n);
         }
-#elif defined(__AVX2__)
+#elif defined(__AVX2__)  // 否则如果
         if (Btype == GGML_TYPE_BF16) {
             tinyBLAS<8, __m256, __m256, ggml_bf16_t, ggml_bf16_t, float> tb{ params, k,
                 (const ggml_bf16_t *)A, lda,
@@ -3802,9 +3802,9 @@ bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t m, int64
                 (float *)C, ldc};
             return tb.matmul(m, n);
         }
-#elif defined(__MMA__)
+#elif defined(__MMA__)  // 否则如果
         if (k % 8) {
-            return false;
+            return false;  // 返回
         }
 
         if (Btype == GGML_TYPE_BF16) {
@@ -3815,34 +3815,34 @@ bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t m, int64
                 params->ith, params->nth };
 
             tb.matmul(m, n);
-            return true;
+            return true;  // 返回
         }
-#elif defined(__riscv_zvfbfwma)
+#elif defined(__riscv_zvfbfwma)  // 否则如果
         if (Btype == GGML_TYPE_BF16) {
-            #if LMUL == 1
+            #if LMUL == 1  // 条件编译
                 tinyBLAS_RVV<vfloat32m1_t, vbfloat16mf2_t, ggml_bf16_t, ggml_bf16_t, float> tb{ params,
                     k, (const ggml_bf16_t *)A, lda,
                     (const ggml_bf16_t *)B, ldb,
                     (float *)C, ldc};
-            #elif LMUL == 2
+            #elif LMUL == 2  // 否则如果
                 tinyBLAS_RVV<vfloat32m2_t, vbfloat16m1_t, ggml_bf16_t, ggml_bf16_t, float> tb{ params,
                     k, (const ggml_bf16_t *)A, lda,
                     (const ggml_bf16_t *)B, ldb,
                     (float *)C, ldc};
-            #else // LMUL = 4
+            #else // LMUL = 4  // 否则
                 tinyBLAS_RVV<vfloat32m4_t, vbfloat16m2_t, ggml_bf16_t, ggml_bf16_t, float> tb{ params,
                     k, (const ggml_bf16_t *)A, lda,
                     (const ggml_bf16_t *)B, ldb,
                     (float *)C, ldc};
-            #endif
+            #endif  // 条件编译结束
                 return tb.matmul(m, n);
         }
-#endif
-        return false;
+#endif  // 条件编译结束
+        return false;  // 返回
     }
 
     case GGML_TYPE_F16: {
-#if defined(__AVX512F__)
+#if defined(__AVX512F__)  // 条件编译
         if (Btype == GGML_TYPE_F16) {
             tinyBLAS<16, __m512, __m512, ggml_fp16_t, ggml_fp16_t, float> tb{ params, k,
                 (const ggml_fp16_t *)A, lda,
@@ -3850,7 +3850,7 @@ bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t m, int64
                 (float *)C, ldc};
             return tb.matmul(m, n);
         }
-#elif (defined(__AVX__) || defined(__AVX2__)) && defined(__F16C__)
+#elif (defined(__AVX__) || defined(__AVX2__)) && defined(__F16C__)  // 否则如果
         if (Btype == GGML_TYPE_F16) {
             tinyBLAS<8, __m256, __m256, ggml_fp16_t, ggml_fp16_t, float> tb{ params, k,
                 (const ggml_fp16_t *)A, lda,
@@ -3858,9 +3858,9 @@ bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t m, int64
                 (float *)C, ldc};
             return tb.matmul(m, n);
         }
-#elif defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC) && !defined(_MSC_VER)
+#elif defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC) && !defined(_MSC_VER)  // 否则如果
         if (n < 8)
-            return false;
+            return false;  // 返回
         if (Btype == GGML_TYPE_F16) {
             tinyBLAS<8, float16x8_t, float16x8_t, ggml_fp16_t, ggml_fp16_t, float> tb{ params,
                 k, (const ggml_fp16_t *)A, lda,
@@ -3868,7 +3868,7 @@ bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t m, int64
                 (float *)C, ldc};
             return tb.matmul(m, n);
         }
-#elif defined(__ARM_NEON) && !defined(_MSC_VER)
+#elif defined(__ARM_NEON) && !defined(_MSC_VER)  // 否则如果
         if (Btype == GGML_TYPE_F32) {
             tinyBLAS<4, float32x4_t, float32x4_t, ggml_fp16_t, float, float> tb{ params,
                 k, (const ggml_fp16_t *)A, lda,
@@ -3876,9 +3876,9 @@ bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t m, int64
                 (float *)C, ldc};
             return tb.matmul(m, n);
         }
-#elif defined(__VXE__) || defined(__VXE2__)
+#elif defined(__VXE__) || defined(__VXE2__)  // 否则如果
         if (n < 4)
-            return false;
+            return false;  // 返回
         if (Btype == GGML_TYPE_F16) {
             tinyBLAS<4, float32x4_t, float32x4_t, ggml_fp16_t, ggml_fp16_t, float> tb{ params,
                 k, (const ggml_fp16_t *)A, lda,
@@ -3886,29 +3886,29 @@ bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t m, int64
                 (float *)C, ldc};
             return tb.matmul(m, n);
         }
-#elif defined(__riscv_zvfh)
+#elif defined(__riscv_zvfh)  // 否则如果
         if (Btype == GGML_TYPE_F16) {
-        #if LMUL == 1
+        #if LMUL == 1  // 条件编译
             tinyBLAS_RVV<vfloat32m1_t, vfloat16mf2_t, ggml_fp16_t, ggml_fp16_t, float> tb{ params,
                 k, (const ggml_fp16_t *)A, lda,
                 (const ggml_fp16_t *)B, ldb,
                 (float *)C, ldc};
-        #elif LMUL == 2
+        #elif LMUL == 2  // 否则如果
             tinyBLAS_RVV<vfloat32m2_t, vfloat16m1_t, ggml_fp16_t, ggml_fp16_t, float> tb{ params,
                 k, (const ggml_fp16_t *)A, lda,
                 (const ggml_fp16_t *)B, ldb,
                 (float *)C, ldc};
-        #else // LMUL = 4
+        #else // LMUL = 4  // 否则
             tinyBLAS_RVV<vfloat32m4_t, vfloat16m2_t, ggml_fp16_t, ggml_fp16_t, float> tb{ params,
                 k, (const ggml_fp16_t *)A, lda,
                 (const ggml_fp16_t *)B, ldb,
                 (float *)C, ldc};
-        #endif
+        #endif  // 条件编译结束
             return tb.matmul(m, n);
         }
-#elif defined(__MMA__)
+#elif defined(__MMA__)  // 否则如果
         if (k % 8) {
-            return false;
+            return false;  // 返回
         }
 
         if (Btype == GGML_TYPE_F16) {
@@ -3919,120 +3919,120 @@ bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t m, int64
                 params->ith, params->nth };
 
             tb.matmul(m, n);
-            return true;
+            return true;  // 返回
         }
-#endif
-        return false;
+#endif  // 条件编译结束
+        return false;  // 返回
     }
 
     case GGML_TYPE_Q8_0: {
         if (Btype != GGML_TYPE_Q8_0)
-           return false;
-#if defined(__AVX2__) || defined(__AVX512F__) || defined(__AVX__)
+           return false;  // 返回
+#if defined(__AVX2__) || defined(__AVX512F__) || defined(__AVX__)  // 条件编译
         tinyBLAS_Q0_AVX<block_q8_0, block_q8_0, float> tb{
             k, (const block_q8_0 *)A, lda,
             (const block_q8_0 *)B, ldb,
             (float *)C, ldc,
             params->ith, params->nth};
         tb.matmul(m, n);
-        return true;
-#elif defined(__ARM_FEATURE_DOTPROD)
+        return true;  // 返回
+#elif defined(__ARM_FEATURE_DOTPROD)  // 否则如果
         tinyBLAS_Q0_ARM<block_q8_0> tb{
             k, (const block_q8_0 *)A, lda,
             (const block_q8_0 *)B, ldb,
             (float *)C, ldc,
             params->ith, params->nth};
         tb.matmul(m, n);
-        return true;
-#elif defined(__MMA__)
+        return true;  // 返回
+#elif defined(__MMA__)  // 否则如果
     //TO-DO: Remove this condition once gemv forwarding is enabled.
         if (n < 8 && n != 4)
-           return false;
+           return false;  // 返回
         if (m < 8 && m != 4)
-           return false;
+           return false;  // 返回
         tinyBLAS_Q0_PPC<block_q8_0> tb{
             k, (const block_q8_0 *)A, lda,
             (const block_q8_0 *)B, ldb,
             (float *)C, ldc,
             params->ith, params->nth};
         tb.matmul(m, n);
-        return true;
-#else
-        return false;
-#endif
+        return true;  // 返回
+#else  // 否则
+        return false;  // 返回
+#endif  // 条件编译结束
     }
 
     case GGML_TYPE_Q4_0: {
         if (Btype != GGML_TYPE_Q8_0)
-            return false;
-#if defined(__AVX2__) || defined(__AVX512F__) || defined(__AVX__)
+            return false;  // 返回
+#if defined(__AVX2__) || defined(__AVX512F__) || defined(__AVX__)  // 条件编译
         tinyBLAS_Q0_AVX<block_q4_0, block_q8_0, float> tb{
             k, (const block_q4_0 *)A, lda,
             (const block_q8_0 *)B, ldb,
             (float *)C, ldc,
             params->ith, params->nth};
         tb.matmul(m, n);
-        return true;
-#elif defined(__ARM_FEATURE_DOTPROD)
+        return true;  // 返回
+#elif defined(__ARM_FEATURE_DOTPROD)  // 否则如果
         tinyBLAS_Q0_ARM<block_q4_0> tb{
             k, (const block_q4_0 *)A, lda,
             (const block_q8_0 *)B, ldb,
             (float *)C, ldc,
             params->ith, params->nth};
         tb.matmul(m, n);
-        return true;
-#elif defined(__MMA__)
+        return true;  // 返回
+#elif defined(__MMA__)  // 否则如果
     //TO-DO: Remove this condition once gemv forwarding is enabled.
         if (n < 8 && n != 4)
-           return false;
+           return false;  // 返回
         if (m < 8 && m != 4)
-           return false;
+           return false;  // 返回
         tinyBLAS_Q0_PPC<block_q4_0> tb{
             k, (const block_q4_0 *)A, lda,
             (const block_q8_0 *)B, ldb,
             (float *)C, ldc,
             params->ith, params->nth};
         tb.matmul(m, n);
-        return true;
-#else
-        return false;
-#endif
+        return true;  // 返回
+#else  // 否则
+        return false;  // 返回
+#endif  // 条件编译结束
     }
 
     case GGML_TYPE_Q5_0: {
         if (Btype != GGML_TYPE_Q8_0)
-            return false;
-#if defined(__AVX2__) || defined(__AVX512F__) || defined(__AVX__)
+            return false;  // 返回
+#if defined(__AVX2__) || defined(__AVX512F__) || defined(__AVX__)  // 条件编译
         tinyBLAS_Q0_AVX<block_q5_0, block_q8_0, float> tb{
             k, (const block_q5_0 *)A, lda,
             (const block_q8_0 *)B, ldb,
             (float *)C, ldc,
             params->ith, params->nth};
         tb.matmul(m, n);
-        return true;
-#else
-        return false;
-#endif
+        return true;  // 返回
+#else  // 否则
+        return false;  // 返回
+#endif  // 条件编译结束
     }
 
     case GGML_TYPE_IQ4_NL: {
         if (Btype != GGML_TYPE_Q8_0)
-            return false;
-#if defined(__AVX2__) || defined(__AVX512F__) || defined(__AVX__)
+            return false;  // 返回
+#if defined(__AVX2__) || defined(__AVX512F__) || defined(__AVX__)  // 条件编译
         tinyBLAS_Q0_AVX<block_iq4_nl, block_q8_0, float> tb{
             k, (const block_iq4_nl *)A, lda,
             (const block_q8_0 *)B, ldb,
             (float *)C, ldc,
             params->ith, params->nth};
         tb.matmul(m, n);
-        return true;
-#else
-        return false;
-#endif
+        return true;  // 返回
+#else  // 否则
+        return false;  // 返回
+#endif  // 条件编译结束
     }
 
     default:
-        return false;
+        return false;  // 返回
     }
 
     (void)params;

@@ -1,21 +1,21 @@
 // Various helper functions and utilities
 
-#pragma once
+#pragma once  // 防止重复包含
 
-#include <string>
-#include <map>
-#include <vector>
-#include <random>
-#include <thread>
-#include <ctime>
-#include <fstream>
-#include <sstream>
+#include <string>  // 引入 string 头文件
+#include <map>  // 引入 map 头文件
+#include <vector>  // 引入 vector 头文件
+#include <random>  // 引入 random 头文件
+#include <thread>  // 引入 thread 头文件
+#include <ctime>  // 引入 ctime 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <sstream>  // 引入 sstream 头文件
 
 //
 // GPT CLI argument parsing
 //
 
-struct gpt_params {
+struct gpt_params {  // 结构体定义
     int32_t seed         = -1;   // RNG seed
     int32_t n_threads    = std::min(4, (int32_t) std::thread::hardware_concurrency());
     int32_t n_predict    = 200;  // new tokens to predict
@@ -41,9 +41,9 @@ struct gpt_params {
     int32_t interactive_port = -1;
 };
 
-bool gpt_params_parse(int argc, char ** argv, gpt_params & params);
+bool gpt_params_parse(int argc, char ** argv, gpt_params & params);  // gpt_params_parse
 
-void gpt_print_usage(int argc, char ** argv, const gpt_params & params);
+void gpt_print_usage(int argc, char ** argv, const gpt_params & params);  // gpt_print_usage
 
 std::string gpt_random_prompt(std::mt19937 & rng);
 
@@ -58,15 +58,15 @@ std::string replace(
         const std::string & from,
         const std::string & to);
 
-struct gpt_vocab {
-    using id    = int32_t;
-    using token = std::string;
+struct gpt_vocab {  // 结构体定义
+    using id    = int32_t;  // using 声明
+    using token = std::string;  // using 声明
 
     std::map<token, id> token_to_id;
     std::map<id, token> id_to_token;
     std::vector<std::string> special_tokens;
 
-    void add_special_token(const std::string & token);
+    void add_special_token(const std::string & token);  // add_special_token
 };
 
 // poor-man's JSON parsing
@@ -76,7 +76,7 @@ std::string convert_to_utf8(const std::wstring & input);
 
 std::wstring convert_to_wstring(const std::string & input);
 
-void gpt_split_words(std::string str, std::vector<std::string>& words);
+void gpt_split_words(std::string str, std::vector<std::string>& words);  // gpt_split_words
 
 // split text into tokens
 //
@@ -97,10 +97,10 @@ std::vector<gpt_vocab::id> gpt_tokenize(const gpt_vocab & vocab, const std::stri
 //   - if all sentences are tokenized identically, print 'All tests passed.'
 //   - otherwise, print sentence, huggingface tokens, ggml tokens
 //
-void test_gpt_tokenizer(gpt_vocab & vocab, const std::string & fpath_test);
+void test_gpt_tokenizer(gpt_vocab & vocab, const std::string & fpath_test);  // test_gpt_tokenizer
 
 // load the tokens from encoder.json
-bool gpt_vocab_init(const std::string & fname, gpt_vocab & vocab);
+bool gpt_vocab_init(const std::string & fname, gpt_vocab & vocab);  // gpt_vocab_init
 
 // sample next token given probabilities for each embedding
 //
@@ -135,7 +135,7 @@ gpt_vocab::id gpt_sample_top_k_top_p_repeat(
 //
 
 // Write PCM data into WAV audio file
-class wav_writer {
+class wav_writer {  // 类定义
 private:
     std::ofstream file;
     uint32_t dataSize = 0;
@@ -165,7 +165,7 @@ private:
         file.write("data", 4);
         file.write("\0\0\0\0", 4);    // Placeholder for data size
 
-        return true;
+        return true;  // 返回
     }
 
     // It is assumed that PCM data is normalized to a range from -1 to 1
@@ -183,7 +183,7 @@ private:
             file.write(reinterpret_cast<char *>(&dataSize), 4);
             file.seekp(0, std::ios::end);
         }
-        return true;
+        return true;  // 返回
     }
 
     bool open_wav(const std::string & filename) {
@@ -209,19 +209,19 @@ public:
         if (open_wav(filename)) {
             write_header(sample_rate, bits_per_sample, channels);
         } else {
-            return false;
+            return false;  // 返回
         }
 
-        return true;
+        return true;  // 返回
     }
 
     bool close() {
         file.close();
-        return true;
+        return true;  // 返回
     }
 
     bool write(const float * data, size_t length) {
-        return write_audio(data, length);
+        return write_audio(data, length);  // write_audio
     }
 
     ~wav_writer() {
@@ -249,14 +249,14 @@ bool vad_simple(
         bool  verbose);
 
 // compute similarity between two strings using Levenshtein distance
-float similarity(const std::string & s0, const std::string & s1);
+float similarity(const std::string & s0, const std::string & s1);  // similarity
 
 //
 // Terminal utils
 //
 
-#define SQR(X)    ((X) * (X))
-#define UNCUBE(x) x < 48 ? 0 : x < 115 ? 1 : (x - 35) / 40
+#define SQR(X)    ((X) * (X))  // 宏定义 SQR
+#define UNCUBE(x) x < 48 ? 0 : x < 115 ? 1 : (x - 35) / 40  // 宏定义 UNCUBE
 
 /**
  * Quantizes 24-bit RGB to xterm256 code range [16,256).
@@ -271,8 +271,8 @@ static int rgb2xterm256(int r, int g, int b) {
     qb = cube[(ib = UNCUBE(b))];
     if (SQR(qr - r) + SQR(qg - g) + SQR(qb - b) <=
         SQR(ql - r) + SQR(ql - g) + SQR(ql - b))
-        return ir * 36 + ig * 6 + ib + 020;
-    return il + 0350;
+        return ir * 36 + ig * 6 + ib + 020;  // 返回
+    return il + 0350;  // 返回
 }
 
 static std::string set_xterm256_foreground(int r, int g, int b) {
@@ -296,15 +296,15 @@ const std::vector<std::string> k_colors = {
 
 // ANSI formatting codes
 static std::string set_inverse() {
-    return "\033[7m";
+    return "\033[7m";  // 返回
 }
 
 static std::string set_underline() {
-    return "\033[4m";
+    return "\033[4m";  // 返回
 }
 
 static std::string set_dim() {
-    return "\033[2m";
+    return "\033[2m";  // 返回
 }
 
 // Style scheme for different confidence levels
@@ -319,4 +319,4 @@ const std::vector<std::string> k_styles = {
 //
 
 // check if file exists using ifstream
-bool is_file_exist(const char * filename);
+bool is_file_exist(const char * filename);  // is_file_exist

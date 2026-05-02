@@ -1,10 +1,10 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include <sycl/sycl.hpp>
-#include <cstdint>
-#include <limits>
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <limits>  // 引入 limits 头文件
 
-inline uint8_t float_to_e4m3(float f)
+inline uint8_t float_to_e4m3(float f)  // float_to_e4m3
 {
     if (sycl::isnan(f)) {
         return 0x7F;                    // Canonical NaN (positive)
@@ -58,10 +58,10 @@ inline uint8_t float_to_e4m3(float f)
     }
 
     uint8_t result = static_cast<uint8_t>((sign << 7) | (m & 0x7F));
-    return result;
+    return result;  // 返回
 }
 
-inline float e4m3_to_float(uint8_t x)
+inline float e4m3_to_float(uint8_t x)  // e4m3_to_float
 {
     if (x == 0) return 0.0f;
 
@@ -87,11 +87,11 @@ inline float e4m3_to_float(uint8_t x)
         val = (1.0f + mant / 8.0f) * sycl::pow(2.0f, static_cast<float>(exp) - 7.0f);
     }
 
-    return sign ? -val : val;
+    return sign ? -val : val;  // 返回
 }
 
 // The actual type definition
-struct __nv_fp8_e4m3 {
+struct __nv_fp8_e4m3 {  // 结构体定义
     uint8_t raw;
 
     __nv_fp8_e4m3() = default;
@@ -107,6 +107,6 @@ struct __nv_fp8_e4m3 {
     operator uint8_t() const { return raw; }
 };
 
-using __nv_fp8x2_e4m3 = sycl::vec<__nv_fp8_e4m3, 2>;
-using __nv_fp8x4_e4m3 = sycl::vec<__nv_fp8_e4m3, 4>;
+using __nv_fp8x2_e4m3 = sycl::vec<__nv_fp8_e4m3, 2>;  // using 声明
+using __nv_fp8x4_e4m3 = sycl::vec<__nv_fp8_e4m3, 4>;  // using 声明
 

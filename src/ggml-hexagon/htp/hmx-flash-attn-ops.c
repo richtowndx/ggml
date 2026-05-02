@@ -5,28 +5,28 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <assert.h>
-#include <HAP_compute_res.h>
-#include <HAP_farf.h>
-#include <math.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#include <assert.h>  // 引入 assert.h 头文件
+#include <HAP_compute_res.h>  // 引入 HAP_compute_res.h 头文件
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <math.h>  // 引入 math.h 头文件
+#include <stdbool.h>  // 引入 stdbool.h 头文件
+#include <stddef.h>  // 引入 stddef.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "hex-dma.h"
-#include "hmx-profile.h"
-#include "hmx-queue.h"
-#include "hmx-utils.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "hvx-dump.h"
-#include "hvx-reduce.h"
-#include "hvx-utils.h"
-#include "vtcm-utils.h"
-#include "worker-pool.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
+#include "hmx-profile.h"  // 引入 hmx-profile.h 头文件
+#include "hmx-queue.h"  // 引入 hmx-queue.h 头文件
+#include "hmx-utils.h"  // 引入 hmx-utils.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "hvx-dump.h"  // 引入 hvx-dump.h 头文件
+#include "hvx-reduce.h"  // 引入 hvx-reduce.h 头文件
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
+#include "vtcm-utils.h"  // 引入 vtcm-utils.h 头文件
+#include "worker-pool.h"  // 引入 worker-pool.h 头文件
 
 // ============================================================================
 // Constants
@@ -62,7 +62,7 @@ static size_t hmx_fa_compute_vtcm_usage(size_t gqa_factor, size_t DK, size_t DV,
     const size_t m_buf_size   = hex_align_up(Br * m_line_size, 4096);
     const size_t slopes_size  = hex_align_up(g_br * sizeof(__fp16), 128);
 
-    return   q_tile_size * 1               // Q tiles
+    return   q_tile_size * 1               // Q tiles  // 返回
            + o_tile_size * 2               // O ping-pong
            + k_dma_size  * 2               // K DMA x2
            + v_dma_size  * 2               // V DMA x2
@@ -115,10 +115,10 @@ static inline HVX_Vector hvx_exp2_hf(HVX_Vector x_v) {
     y_exp                      = Q6_Vh_vadd_VhVh(k_v, y_exp);
     HVX_VectorPred q_underflow = Q6_Q_vcmp_gt_VhVh(zero_v, y_exp);
     y                          = Q6_Vh_vaslacc_VhVhR(y, k_v, 10);
-    return Q6_V_vmux_QVV(q_underflow, zero_v, y);
+    return Q6_V_vmux_QVV(q_underflow, zero_v, y);  // Q6_V_vmux_QVV
 }
 
-#define FA_MIN_KV_BLOCKS 3
+#define FA_MIN_KV_BLOCKS 3  // 宏定义 FA_MIN_KV_BLOCKS
 
 // Cost-based (Br, Bc) search for flash attention with pipeline constraint.
 //
@@ -155,7 +155,7 @@ static int hmx_fa_find_chunk_size(size_t * Br_out,
     const size_t overhead = 256 * 2 + 13 * 4096;
 
     if (vtcm_budget <= overhead) {
-        return -1;
+        return -1;  // 返回
     }
     const size_t usable = vtcm_budget - overhead;
 
@@ -228,12 +228,12 @@ static int hmx_fa_find_chunk_size(size_t * Br_out,
     }
 
     if (best_Br == 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     *Br_out = best_Br;
     *Bc_out = best_Bc;
-    return 0;
+    return 0;  // 返回
 }
 
 // ============================================================================
@@ -285,7 +285,7 @@ static const int16_t d_tile_scatter_offsets[64] __attribute__((aligned(128))) = 
 // HMX Flash Attention context (GQA-merged)
 // ============================================================================
 
-struct hmx_fa_context {
+struct hmx_fa_context {  // 结构体定义
     const struct htp_ops_context * octx;
     bool         use_pipeline;  // true when n_kv_blocks >= FA_MIN_KV_BLOCKS && n_threads >= 2
     uint32_t     n_threads;
@@ -343,7 +343,7 @@ struct hmx_fa_context {
 // Multi-thread K interleave phase
 // ============================================================================
 
-typedef struct {
+typedef struct {  // 类型定义
     struct hmx_fa_context * factx;
     int                     kv_rows;
     size_t                  src_stride;
@@ -360,7 +360,7 @@ static void fa_k_interleave_thread(unsigned int n, unsigned int i, void * data) 
     const int end        = hex_smin(start + rows_per_t, total_rows);
 
     if (start >= total_rows) {
-        return;
+        return;  // 返回
     }
 
     hmx_interleave_rows_to_tiles(factx->vtcm_k_tiles, factx->vtcm_k_fp16[args->buf_idx], total_rows, (int) factx->DK,
@@ -381,7 +381,7 @@ static void fa_phase_k_interleave(struct hmx_fa_context * factx, int kv_rows, si
 // Multi-thread V interleave phase
 // ============================================================================
 
-typedef struct {
+typedef struct {  // 类型定义
     struct hmx_fa_context * factx;
     int                     kv_rows;
     size_t                  src_stride;
@@ -399,7 +399,7 @@ static void fa_v_interleave_thread(unsigned int n, unsigned int i, void * data) 
     const int end        = hex_smin(start + rows_per_t, total_rows);
 
     if (start >= total_rows) {
-        return;
+        return;  // 返回
     }
 
     hmx_interleave_cols_to_tiles(factx->vtcm_v_tiles, factx->vtcm_v_fp16[args->buf_idx], total_rows, (int) factx->DV,
@@ -429,7 +429,7 @@ static void fa_phase_v_interleave(struct hmx_fa_context * factx,
 // by the caller before dispatching.
 // ============================================================================
 
-typedef struct {
+typedef struct {  // 类型定义
     struct hmx_fa_context *   factx;
     const struct htp_tensor * q;
     uint32_t                  q_start;
@@ -453,7 +453,7 @@ static void fa_q_load_thread(unsigned int n, unsigned int i, void * data) {
     const size_t end        = hex_smin(start + rows_per_t, n_rows_g);
 
     if (start >= n_rows_g) {
-        return;
+        return;  // 返回
     }
 
     const struct htp_tensor * q       = args->q;
@@ -534,7 +534,7 @@ static void fa_phase_q_load(struct hmx_fa_context *   factx,
 // pairs produced by r/G and r%G), so there is no write conflict.
 // ============================================================================
 
-typedef struct {
+typedef struct {  // 类型定义
     struct hmx_fa_context *   factx;
     const struct htp_tensor * dst;
     const __fp16 *            o_tile_src;
@@ -557,7 +557,7 @@ static void fa_o_store_thread(unsigned int n, unsigned int i, void * data) {
     const size_t end        = hex_smin(start + rows_per_t, n_rows_g);
 
     if (start >= n_rows_g) {
-        return;
+        return;  // 返回
     }
 
     const struct htp_tensor * dst        = args->dst;
@@ -627,7 +627,7 @@ static void fa_phase_o_store(struct hmx_fa_context *   factx,
 // Multi-thread softmax phase + serial m/l update + build_D
 // ============================================================================
 
-typedef struct {
+typedef struct {  // 类型定义
     struct hmx_fa_context *   factx;
     size_t                    kv_rows;
     size_t                    n_rows_g;
@@ -671,7 +671,7 @@ static void fa_softmax_thread(unsigned int n, unsigned int i, void * data) {
     const size_t vec_end    = hex_smin(vec_start + vecs_per_t, n_row_vec_cnt);
 
     if (vec_start >= n_row_vec_cnt) {
-        return;
+        return;  // 返回
     }
 
     // Per-thread row scratch: thread i uses bufs at offset i * 2 * stride
@@ -724,9 +724,9 @@ static void fa_softmax_thread(unsigned int n, unsigned int i, void * data) {
                 // of qk_scale in this configuration (see scale setup) so tanh sees
                 // the physical QK/(√d·c) argument.
                 float cap = factx->logit_softcap;
-#ifdef HMX_FA_USE_EXP2_HF
+#ifdef HMX_FA_USE_EXP2_HF  // 如果定义了 HMX_FA_USE_EXP2_HF 则编译
                 cap *= 1.44269504f;  // log2(e)
-#endif
+#endif  // 条件编译结束
                 const HVX_Vector v_cap = hvx_vec_splat_f32(cap);
                 for (size_t c = 0; c < kv_rows; c += 64) {
                     size_t ci = c / 64;
@@ -877,7 +877,7 @@ static void fa_softmax_thread(unsigned int n, unsigned int i, void * data) {
             HVX_Vector       v_p_rowsum0 = v_zero;
             HVX_Vector       v_p_rowsum1 = v_zero;
 
-#ifdef HMX_FA_USE_EXP2_HF
+#ifdef HMX_FA_USE_EXP2_HF  // 如果定义了 HMX_FA_USE_EXP2_HF 则编译
             // FP16 exp2 polynomial path (matches htp-ops-lib flash_attn.c):
             // P = exp2(S - m_new)
             for (size_t c = 0; c < kv_rows; c += 64) {
@@ -887,7 +887,7 @@ static void fa_softmax_thread(unsigned int n, unsigned int i, void * data) {
 
                 HVX_Vector v_p_row0_hf  = hvx_exp2_hf(Q6_Vhf_equals_Vqf16(v_s_minus_m0));
                 HVX_Vector v_p_row1_hf  = hvx_exp2_hf(Q6_Vhf_equals_Vqf16(v_s_minus_m1));
-#else
+#else  // 否则
             // F32 exp path: qf16 → f32 → exp → f32 → f16.  Higher precision,
             for (size_t c = 0; c < kv_rows; c += 64) {
                 size_t     ci           = c / 64;
@@ -903,7 +903,7 @@ static void fa_softmax_thread(unsigned int n, unsigned int i, void * data) {
                 HVX_Vector     p1_lo       = hvx_vec_exp_f32(Q6_V_lo_W(vp1));
                 HVX_Vector     p1_hi       = hvx_vec_exp_f32(Q6_V_hi_W(vp1));
                 HVX_Vector     v_p_row1_hf = hvx_vec_f32_to_f16_shuff(p1_lo, p1_hi);
-#endif
+#endif  // 条件编译结束
                 // Write P to tile format.  Dual-tile pattern assumes Bc is a
                 // multiple of 64 (enforced by bc_unit=64 in hmx_fa_find_chunk_size),
                 // so both tile halves are always in the current r0 block.
@@ -951,7 +951,7 @@ static void fa_softmax_thread(unsigned int n, unsigned int i, void * data) {
 // matmul gets for free via worker_pool function-pointer dispatch.  Without this, the compiler
 // can reorder the scatter past the subsequent hmx_queue_push and the HMX-queue worker thread
 // reads stale VTCM (PPL → ~vocab-size).
-static __attribute__((noinline)) void fa_ml_update_and_build_d(struct hmx_fa_context * factx,
+static __attribute__((noinline)) void fa_ml_update_and_build_d(struct hmx_fa_context * factx,  // __attribute__
                                                                size_t                  n_rows_g,
                                                                size_t                  n_row_tiles,
                                                                size_t                  n_row_tiles_g_br) {
@@ -964,15 +964,15 @@ static __attribute__((noinline)) void fa_ml_update_and_build_d(struct hmx_fa_con
         HVX_Vector v_m_curr = Q6_Vhf_vmax_VhfVhf(v_m_prev, factx->vtcm_s_rowmax[i]);
         HVX_Vector v_m_diff = Q6_Vqf16_vsub_VhfVhf(v_m_prev, v_m_curr);
 
-#ifdef HMX_FA_USE_EXP2_HF
+#ifdef HMX_FA_USE_EXP2_HF  // 如果定义了 HMX_FA_USE_EXP2_HF 则编译
         // Base-2 path: must match P = exp2(S - m_new) in fa_softmax_thread.
         HVX_Vector v_exp_m_diff      = hvx_exp2_hf(Q6_Vhf_equals_Vqf16(v_m_diff));
-#else
+#else  // 否则
         HVX_VectorPair vp_diff       = hvx_vec_f16_to_f32_shuff(Q6_Vhf_equals_Vqf16(v_m_diff));
         HVX_Vector     exp_lo        = hvx_vec_exp_f32(Q6_V_lo_W(vp_diff));
         HVX_Vector     exp_hi        = hvx_vec_exp_f32(Q6_V_hi_W(vp_diff));
         HVX_Vector     v_exp_m_diff  = hvx_vec_f32_to_f16_shuff(exp_lo, exp_hi);
-#endif
+#endif  // 条件编译结束
 
         HVX_Vector v_l_curr = Q6_Vqf16_vmpy_Vqf16Vhf(factx->vtcm_l_vec[i], v_exp_m_diff);
         v_l_curr            = Q6_Vqf16_vadd_Vqf16Vhf(v_l_curr, factx->vtcm_p_rowsum[i]);
@@ -992,7 +992,7 @@ static __attribute__((noinline)) void fa_ml_update_and_build_d(struct hmx_fa_con
         // Compiler barrier — Q6_vscatter takes (size_t)addr; without this the
         // compiler may not recognize the volatile read below as aliasing and
         // could reorder it before the scatter, defeating the HW drain.
-        __asm__ __volatile__("" ::: "memory");
+        __asm__ __volatile__("" ::: "memory");  // __volatile__
         // Per-tile drain: scatter regions are disjoint (stride > tile size),
         // so a single drain at tile 0 does NOT retire later tiles' entries.
         (void) *(volatile HVX_Vector *) out_base;
@@ -1003,7 +1003,7 @@ static __attribute__((noinline)) void fa_ml_update_and_build_d(struct hmx_fa_con
 //
 // noinline: same rationale as fa_ml_update_and_build_d — keeps Q6_vscatter from
 // being hoisted past the subsequent hmx_queue_push at the o_norm call site.
-static __attribute__((noinline)) void fa_build_d_diag_inv_l(struct hmx_fa_context * factx,
+static __attribute__((noinline)) void fa_build_d_diag_inv_l(struct hmx_fa_context * factx,  // __attribute__
                                                             size_t                  n_row_tiles,
                                                             size_t                  n_row_tiles_g_br) {
     const HVX_Vector     v_offsets = *(const HVX_Vector *) d_tile_scatter_offsets;
@@ -1025,7 +1025,7 @@ static __attribute__((noinline)) void fa_build_d_diag_inv_l(struct hmx_fa_contex
         __fp16 * out_base = factx->vtcm_d_tiles + i * (n_row_tiles_g_br + 1) * HMX_FP16_TILE_N_ELMS;
         Q6_vscatter_QRMVhV(q_32_mask, (size_t) out_base, HMX_FP16_TILE_SIZE - 1, v_offsets, v_content);
         // Compiler barrier — see fa_ml_update_and_build_d for rationale.
-        __asm__ __volatile__("" ::: "memory");
+        __asm__ __volatile__("" ::: "memory");  // __volatile__
         (void) *(volatile HVX_Vector *) out_base;
     }
 }
@@ -1053,7 +1053,7 @@ static void fa_phase_softmax_and_build_d(struct hmx_fa_context * factx,
 // HMX job structs and worker functions
 // ============================================================================
 
-typedef struct {
+typedef struct {  // 类型定义
     const __fp16 * q_tiles;
     const __fp16 * k_tiles;
     __fp16 *       s_tiles;
@@ -1095,7 +1095,7 @@ static void hmx_fa_qk_dot_worker(void * data) {
     }
 }
 
-typedef struct {
+typedef struct {  // 类型定义
     __fp16 *       o_curr;
     const __fp16 * o_prev;
     const __fp16 * p_tiles;
@@ -1150,7 +1150,7 @@ static void hmx_fa_o_update_worker(void * data) {
     }
 }
 
-typedef struct {
+typedef struct {  // 类型定义
     __fp16 *       o_curr;   // output (row-major tile layout)
     const __fp16 * o_prev;   // input (column-major tile layout)
     const __fp16 * d_tiles;  // diag(1/l) tiles
@@ -1189,7 +1189,7 @@ static void hmx_fa_o_norm_worker(void * data) {
 // Row r in the GQA-merged block maps to Q head h = kv_head * G + r % G.
 // slope(h) = m0^(h+1) when h < n_head_log2, else m1^(2*(h-n_head_log2)+1).
 // When max_bias == 0, all slopes are 1.0 (no ALiBi).
-static __attribute__((noinline)) void fa_compute_slopes(fa_softmax_args_t * sargs,
+static __attribute__((noinline)) void fa_compute_slopes(fa_softmax_args_t * sargs,  // __attribute__
                               const struct hmx_fa_context * factx,
                               uint32_t                      kv_head,
                               size_t                        n_rows_g) {
@@ -1197,7 +1197,7 @@ static __attribute__((noinline)) void fa_compute_slopes(fa_softmax_args_t * sarg
         for (size_t r = 0; r < n_rows_g; ++r) {
             sargs->slopes[r] = 1.0f;
         }
-        return;
+        return;  // 返回
     }
 
     const uint32_t G           = factx->G;
@@ -1225,7 +1225,7 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
     struct htp_context * const ctx = octx->ctx;
 
     if (!ctx->hmx_enabled) {
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     // Dimensions
@@ -1244,10 +1244,10 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
 
     // HMX requires head_dim to be multiple of 32
     if (DK % 32 != 0 || DV % 32 != 0) {
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
     if (neq1 < 32) {
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     // GQA factor
@@ -1261,7 +1261,7 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
     size_t       Br, Bc;
     const size_t vtcm_budget = ctx->vtcm_size;
     if (hmx_fa_find_chunk_size(&Br, &Bc, G, DK, DV, neq1, nek1, vtcm_budget, n_threads) != 0) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        return HTP_STATUS_VTCM_TOO_SMALL;  // 返回
     }
 
     const size_t g_br = hex_align_up(G * Br, HMX_FP16_TILE_N_ROWS);
@@ -1303,7 +1303,7 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
         scale /= logit_softcap;
     }
 
-#ifdef HMX_FA_USE_EXP2_HF
+#ifdef HMX_FA_USE_EXP2_HF  // 如果定义了 HMX_FA_USE_EXP2_HF 则编译
     // Pre-bake log2(e) into qk_scale so HMX-produced S tiles are in log2(e)-scaled
     // space.  Then exp2(S - m) in the softmax equals base-e exp((S - m) / log2(e)),
     // preserving ggml's base-e softmax semantics.  Matches htp-ops-lib flash_attn.c.
@@ -1315,7 +1315,7 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
     if (logit_softcap == 0.0f) {
         scale *= 1.44269504f;  // log2(e)
     }
-#endif
+#endif  // 条件编译结束
 
     factx.scale         = scale;
     factx.max_bias      = max_bias;
@@ -1367,7 +1367,7 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
     factx.vtcm_slopes         = (__fp16 *) vtcm_seq_alloc(&vtcm_cur, slopes_bytes);
 
     if ((size_t) (vtcm_cur - ctx->vtcm_base) > ctx->vtcm_size) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        return HTP_STATUS_VTCM_TOO_SMALL;  // 返回
     }
 
     // ======== Initialize HMX output scales ========
@@ -1379,7 +1379,7 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
 
     // ======== Skip compute if profiling ========
     if (octx->flags & HTP_OPFLAGS_SKIP_COMPUTE) {
-        return HTP_STATUS_OK;
+        return HTP_STATUS_OK;  // 返回
     }
 
     // Profiling timers
@@ -1829,12 +1829,12 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
 
     TIMER_STOP(total);
 
-#if defined(ENABLE_PROFILE_TIMERS)
+#if defined(ENABLE_PROFILE_TIMERS)  // 条件编译
     FARF(HIGH, "hmx-fa: %lld us, q_load=%lld kv_dma=%lld k_interleave=%lld v_interleave=%lld", TIMER_US(total),
          TIMER_US(q_load), TIMER_US(kv_dma), TIMER_US(k_interleave), TIMER_US(v_interleave));
     FARF(HIGH, "  qk_dot=%lld softmax=%lld o_update=%lld o_norm=%lld o_store=%lld", TIMER_US(qk_dot), TIMER_US(softmax),
          TIMER_US(o_update), TIMER_US(o_norm), TIMER_US(o_store));
-#endif
+#endif  // 条件编译结束
 
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }

@@ -1,10 +1,10 @@
-#include "../../include/ggml-virtgpu.h"
-#include "ggml-remoting.h"
+#include "../../include/ggml-virtgpu.h"  // 引入 ../../include/ggml-virtgpu.h 头文件
+#include "ggml-remoting.h"  // 引入 ggml-remoting.h 头文件
 
 static const char * ggml_backend_remoting_get_name(ggml_backend_t backend) {
     UNUSED(backend);
 
-    return "API Remoting backend";
+    return "API Remoting backend";  // 返回
 }
 
 static void ggml_backend_remoting_free(ggml_backend_t backend) {
@@ -14,19 +14,19 @@ static void ggml_backend_remoting_free(ggml_backend_t backend) {
 static ggml_status ggml_backend_remoting_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
     virtgpu * gpu = DEV_TO_GPU(backend->device);
 
-    return apir_backend_graph_compute(gpu, cgraph);
+    return apir_backend_graph_compute(gpu, cgraph);  // apir_backend_graph_compute
 }
 
 static void ggml_backend_remoting_graph_optimize(ggml_backend_t backend, ggml_cgraph * cgraph) {
     virtgpu * gpu = DEV_TO_GPU(backend->device);
-#if true
+#if true  // 条件编译
     UNUSED(gpu);
     UNUSED(cgraph);
-#else
+#else  // 否则
     // not working yet
 
     apir_backend_graph_optimize(gpu, cgraph);
-#endif
+#endif  // 条件编译结束
 }
 
 static ggml_backend_i ggml_backend_remoting_interface = {
@@ -52,7 +52,7 @@ static ggml_guid_t ggml_backend_remoting_guid() {
     static ggml_guid guid = { 0xb8, 0xf7, 0x4f, 0x86, 0x14, 0x03, 0x86, 0x02,
                               0x91, 0xc8, 0xdd, 0xe9, 0x02, 0x3f, 0xc0, 0x2b };
 
-    return &guid;
+    return &guid;  // 返回
 }
 
 ggml_backend_t ggml_backend_remoting_device_init(ggml_backend_dev_t dev, const char * params) {
@@ -67,5 +67,5 @@ ggml_backend_t ggml_backend_remoting_device_init(ggml_backend_dev_t dev, const c
         /* .context   = */ ctx,
     };
 
-    return remoting_backend;
+    return remoting_backend;  // 返回
 }

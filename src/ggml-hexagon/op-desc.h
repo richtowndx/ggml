@@ -1,14 +1,14 @@
-#ifndef OP_DESC_H
-#define OP_DESC_H
+#ifndef OP_DESC_H  // 如果未定义 OP_DESC_H 则编译
+#define OP_DESC_H  // 宏定义 OP_DESC_H
 
-#define GGML_COMMON_IMPL_CPP
-#include "ggml-backend-impl.h"
-#include "ggml-common.h"
+#define GGML_COMMON_IMPL_CPP  // 宏定义 GGML_COMMON_IMPL_CPP
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
 
-#include <string>
-#include <stdio.h>
+#include <string>  // 引入 string 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
 
-struct op_desc {
+struct op_desc {  // 结构体定义
     char strides[64 * GGML_MAX_SRC];
     char dims[64 * GGML_MAX_SRC];
     char types[16 * GGML_MAX_SRC];
@@ -17,9 +17,9 @@ struct op_desc {
 
     int format_tensor_dims(char * str, const struct ggml_tensor * t) {
         if (t->ne[2] == 1 && t->ne[3] == 1) {
-            return sprintf(str, "%d:%d", (int) t->ne[0], (int) t->ne[1]);
+            return sprintf(str, "%d:%d", (int) t->ne[0], (int) t->ne[1]);  // sprintf
         } else {
-            return sprintf(str, "%d:%d:%d:%d", (int) t->ne[0], (int) t->ne[1], (int) t->ne[2], (int) t->ne[3]);
+            return sprintf(str, "%d:%d:%d:%d", (int) t->ne[0], (int) t->ne[1], (int) t->ne[2], (int) t->ne[3]);  // sprintf
         }
     }
 
@@ -49,9 +49,9 @@ struct op_desc {
         const char * c = ggml_is_contiguous(t) ? "" : "!";
 
         if (t->ne[2] == 1 && t->ne[3] == 1) {
-            return sprintf(str, "%zu:%zu%s", (size_t) t->nb[0], (size_t) t->nb[1], c);
+            return sprintf(str, "%zu:%zu%s", (size_t) t->nb[0], (size_t) t->nb[1], c);  // sprintf
         } else {
-            return sprintf(str, "%zu:%zu:%zu:%zu%s", (size_t) t->nb[0], (size_t) t->nb[1], (size_t) t->nb[2], (size_t) t->nb[3], c);
+            return sprintf(str, "%zu:%zu:%zu:%zu%s", (size_t) t->nb[0], (size_t) t->nb[1], (size_t) t->nb[2], (size_t) t->nb[3], c);  // sprintf
         }
     }
 
@@ -97,9 +97,9 @@ struct op_desc {
 
     const char * tensor_buff_name(const struct ggml_tensor * t) {
         if (t->buffer) {
-            return ggml_backend_buffer_name(t->buffer);
+            return ggml_backend_buffer_name(t->buffer);  // ggml_backend_buffer_name
         }
-        return "NONE";
+        return "NONE";  // 返回
     }
 
     void format_op_buffs(char * str, const struct ggml_tensor * t) {
@@ -150,4 +150,4 @@ struct op_desc {
     op_desc(const ggml_tensor * op) { format(op); }
 };
 
-#endif // OP_DESC_H
+#endif // OP_DESC_H  // 条件编译结束

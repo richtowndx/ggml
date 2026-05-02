@@ -1,41 +1,41 @@
-#define GGML_COMMON_IMPL_CPP
-#define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
-#include "ggml-backend-impl.h"
+#define GGML_COMMON_IMPL_CPP  // 宏定义 GGML_COMMON_IMPL_CPP
+#define GGML_COMMON_DECL_CPP  // 宏定义 GGML_COMMON_DECL_CPP
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
 
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "ggml-cpu-impl.h"
-#include "simd-mappings.h"
-#include "traits.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-cpu-impl.h"  // 引入 ggml-cpu-impl.h 头文件
+#include "simd-mappings.h"  // 引入 simd-mappings.h 头文件
+#include "traits.h"  // 引入 traits.h 头文件
 
-#include <cmath>
-#include <cstring>
-#include <cassert>
-#include <cstdlib> // for qsort
-#include <cstdio>  // for GGML_ASSERT
+#include <cmath>  // 引入 cmath 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <cassert>  // 引入 cassert 头文件
+#include <cstdlib> // for qsort  // 引入 cstdlib 头文件
+#include <cstdio>  // for GGML_ASSERT  // 引入 cstdio 头文件
 
-#define GGML_CPU_CLANG_WORKAROUND
-#include "../../repack.h"
+#define GGML_CPU_CLANG_WORKAROUND  // 宏定义 GGML_CPU_CLANG_WORKAROUND
+#include "../../repack.h"  // 引入 ../../repack.h 头文件
 
-#if defined(__GNUC__)
+#if defined(__GNUC__)  // 条件编译
 #pragma GCC diagnostic ignored "-Woverlength-strings"
-#endif
+#endif  // 条件编译结束
 
-#define UNUSED GGML_UNUSED
+#define UNUSED GGML_UNUSED  // 宏定义 UNUSED
 
-#if defined(__AVX__)
-#if defined(__F16C__)
-#if defined(__AVX512F__)
-#define GGML_F32Cx8x2_LOAD(x, y)     _mm512_cvtph_ps(_mm256_set_m128i(_mm_loadu_si128((const __m128i *)(y)), _mm_loadu_si128((const __m128i *)(x))))
-#define GGML_F32Cx16_REPEAT_LOAD(x)  _mm512_cvtph_ps(_mm256_set_m128i(x, x))
-#endif
+#if defined(__AVX__)  // 条件编译
+#if defined(__F16C__)  // 条件编译
+#if defined(__AVX512F__)  // 条件编译
+#define GGML_F32Cx8x2_LOAD(x, y)     _mm512_cvtph_ps(_mm256_set_m128i(_mm_loadu_si128((const __m128i *)(y)), _mm_loadu_si128((const __m128i *)(x))))  // 宏定义 GGML_F32Cx8x2_LOAD
+#define GGML_F32Cx16_REPEAT_LOAD(x)  _mm512_cvtph_ps(_mm256_set_m128i(x, x))  // 宏定义 GGML_F32Cx16_REPEAT_LOAD
+#endif  // 条件编译结束
 // the  _mm256_cvt intrinsics require F16C
-#define GGML_F32Cx8_LOAD(x)     _mm256_cvtph_ps(_mm_loadu_si128((const __m128i *)(x)))
-#define GGML_F32Cx8_REPEAT_LOAD(x, loadMask)     _mm256_cvtph_ps(_mm_shuffle_epi32(_mm_maskload_epi32((int const*)(x), loadMask), 68))
-#define GGML_F32Cx8_REARRANGE_LOAD(x, arrangeMask)     _mm256_cvtph_ps(_mm_shuffle_epi8(_mm_loadu_si128((const __m128i *) x), arrangeMask))
-#else
-#if defined(__AVX512F__)
+#define GGML_F32Cx8_LOAD(x)     _mm256_cvtph_ps(_mm_loadu_si128((const __m128i *)(x)))  // 宏定义 GGML_F32Cx8_LOAD
+#define GGML_F32Cx8_REPEAT_LOAD(x, loadMask)     _mm256_cvtph_ps(_mm_shuffle_epi32(_mm_maskload_epi32((int const*)(x), loadMask), 68))  // 宏定义 GGML_F32Cx8_REPEAT_LOAD
+#define GGML_F32Cx8_REARRANGE_LOAD(x, arrangeMask)     _mm256_cvtph_ps(_mm_shuffle_epi8(_mm_loadu_si128((const __m128i *) x), arrangeMask))  // 宏定义 GGML_F32Cx8_REARRANGE_LOAD
+#else  // 否则
+#if defined(__AVX512F__)  // 条件编译
 static inline __m512 __avx512_f32cx8x2_load(ggml_fp16_t *x, ggml_fp16_t *y) {
     float tmp[16];
 
@@ -47,7 +47,7 @@ static inline __m512 __avx512_f32cx8x2_load(ggml_fp16_t *x, ggml_fp16_t *y) {
         tmp[i + 8] = GGML_CPU_FP16_TO_FP32(y[i]);
     }
 
-    return _mm512_loadu_ps(tmp);
+    return _mm512_loadu_ps(tmp);  // _mm512_loadu_ps
 }
 static inline __m512 __avx512_repeat_f32cx16_load(__m128i x) {
     float tmp[16];
@@ -61,9 +61,9 @@ static inline __m512 __avx512_repeat_f32cx16_load(__m128i x) {
         tmp[i + 12] = GGML_CPU_FP16_TO_FP32(tmphalf[i]);
     }
 
-    return _mm512_loadu_ps(tmp);
+    return _mm512_loadu_ps(tmp);  // _mm512_loadu_ps
 }
-#endif
+#endif  // 条件编译结束
 static inline __m256 __avx_f32cx8_load(ggml_fp16_t *x) {
     float tmp[8];
 
@@ -71,7 +71,7 @@ static inline __m256 __avx_f32cx8_load(ggml_fp16_t *x) {
         tmp[i] = GGML_CPU_FP16_TO_FP32(x[i]);
     }
 
-    return _mm256_loadu_ps(tmp);
+    return _mm256_loadu_ps(tmp);  // _mm256_loadu_ps
 }
 static inline __m256 __avx_repeat_f32cx8_load(ggml_fp16_t *x) {
     float tmp[8];
@@ -81,7 +81,7 @@ static inline __m256 __avx_repeat_f32cx8_load(ggml_fp16_t *x) {
         tmp[i + 4] = GGML_CPU_FP16_TO_FP32(x[i]);
     }
 
-    return _mm256_loadu_ps(tmp);
+    return _mm256_loadu_ps(tmp);  // _mm256_loadu_ps
 }
 static inline __m256 __avx_rearranged_f32cx8_load(ggml_fp16_t *x, __m128i arrangeMask) {
     uint16_t tmphalf[8];
@@ -92,18 +92,18 @@ static inline __m256 __avx_rearranged_f32cx8_load(ggml_fp16_t *x, __m128i arrang
         tmp[i] = GGML_CPU_FP16_TO_FP32(tmphalf[i]);
     }
 
-    return _mm256_loadu_ps(tmp);
+    return _mm256_loadu_ps(tmp);  // _mm256_loadu_ps
 }
 
-#define GGML_F32Cx8_LOAD(x)     __avx_f32cx8_load(x)
-#define GGML_F32Cx8_REPEAT_LOAD(x, loadMask)     __avx_repeat_f32cx8_load(x)
-#define GGML_F32Cx8_REARRANGE_LOAD(x, arrangeMask)     __avx_rearranged_f32cx8_load(x, arrangeMask)
-#if defined(__AVX512F__)
-#define GGML_F32Cx8x2_LOAD(x, y)     __avx512_f32cx8x2_load(x, y)
-#define GGML_F32Cx16_REPEAT_LOAD(x)  __avx512_repeat_f32cx16_load(x)
-#endif
-#endif
-#endif
+#define GGML_F32Cx8_LOAD(x)     __avx_f32cx8_load(x)  // 宏定义 GGML_F32Cx8_LOAD
+#define GGML_F32Cx8_REPEAT_LOAD(x, loadMask)     __avx_repeat_f32cx8_load(x)  // 宏定义 GGML_F32Cx8_REPEAT_LOAD
+#define GGML_F32Cx8_REARRANGE_LOAD(x, arrangeMask)     __avx_rearranged_f32cx8_load(x, arrangeMask)  // 宏定义 GGML_F32Cx8_REARRANGE_LOAD
+#if defined(__AVX512F__)  // 条件编译
+#define GGML_F32Cx8x2_LOAD(x, y)     __avx512_f32cx8x2_load(x, y)  // 宏定义 GGML_F32Cx8x2_LOAD
+#define GGML_F32Cx16_REPEAT_LOAD(x)  __avx512_repeat_f32cx16_load(x)  // 宏定义 GGML_F32Cx16_REPEAT_LOAD
+#endif  // 条件编译结束
+#endif  // 条件编译结束
+#endif  // 条件编译结束
 
 static inline int nearest_int(float fval) {
     assert(fabsf(fval) <= 4194303.f);
@@ -112,22 +112,22 @@ static inline int nearest_int(float fval) {
     return (i & 0x007fffff) - 0x00400000;
 }
 
-#if defined(__AVX2__) || defined(__AVX512F__)
-#if defined(__AVX512F__)
+#if defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
+#if defined(__AVX512F__)  // 条件编译
 // add int16_t pairwise and return as 512 bit int vector, then add the accumulator
 static inline __m512i sum_i16_pairs_acc_int32x16(const __m512i acc, const __m512i x) {
     const __m512i ones = _mm512_set1_epi16(1);
-    return _mm512_add_epi32(acc, _mm512_madd_epi16(ones, x));
+    return _mm512_add_epi32(acc, _mm512_madd_epi16(ones, x));  // _mm512_add_epi32
 }
 
 static inline __m512i mul_sum_us8_pairs_acc_int32x16(const __m512i acc, const __m512i ax, const __m512i sy) {
-#if defined(__AVX512VNNI__)
-    return _mm512_dpbusd_epi32(acc, ax, sy);
-#else
+#if defined(__AVX512VNNI__)  // 条件编译
+    return _mm512_dpbusd_epi32(acc, ax, sy);  // _mm512_dpbusd_epi32
+#else  // 否则
     // Perform multiplication and create 16-bit values
     const __m512i dot = _mm512_maddubs_epi16(ax, sy);
-    return sum_i16_pairs_acc_int32x16(acc, dot);
-#endif
+    return sum_i16_pairs_acc_int32x16(acc, dot);  // sum_i16_pairs_acc_int32x16
+#endif  // 条件编译结束
 }
 
 // multiply int8_t, add results pairwise twice and return as 512 bit int vector，then add the accumulator
@@ -138,42 +138,42 @@ static inline __m512i mul_sum_i8_pairs_acc_int32x16(const __m512i acc, const __m
     // Sign the values of the y vectors
     __mmask64 blt0 = _mm512_movepi8_mask(x);
     const __m512i sy = _mm512_mask_sub_epi8(y, blt0, zero, y);
-    return mul_sum_us8_pairs_acc_int32x16(acc, ax, sy);
+    return mul_sum_us8_pairs_acc_int32x16(acc, ax, sy);  // mul_sum_us8_pairs_acc_int32x16
 }
-#endif
+#endif  // 条件编译结束
 
 // add int16_t pairwise and return as 256 bit int vector, then add the accumulator
 static inline __m256i sum_i16_pairs_acc_int32x8(const __m256i acc, const __m256i x) {
     const __m256i ones = _mm256_set1_epi16(1);
-    return _mm256_add_epi32(acc, _mm256_madd_epi16(ones, x));
+    return _mm256_add_epi32(acc, _mm256_madd_epi16(ones, x));  // _mm256_add_epi32
 }
 
 static inline __m256i mul_sum_us8_pairs_acc_int32x8(const __m256i acc, const __m256i ax, const __m256i sy) {
-#if defined(__AVX512VNNI__) && defined(__AVX512VL__)
-    return _mm256_dpbusd_epi32(acc, ax, sy);
-#elif defined(__AVXVNNI__)
-    return _mm256_dpbusd_avx_epi32(acc, ax, sy);
-#else
+#if defined(__AVX512VNNI__) && defined(__AVX512VL__)  // 条件编译
+    return _mm256_dpbusd_epi32(acc, ax, sy);  // _mm256_dpbusd_epi32
+#elif defined(__AVXVNNI__)  // 否则如果
+    return _mm256_dpbusd_avx_epi32(acc, ax, sy);  // _mm256_dpbusd_avx_epi32
+#else  // 否则
     // Perform multiplication and create 16-bit values
     const __m256i dot = _mm256_maddubs_epi16(ax, sy);
-    return sum_i16_pairs_acc_int32x8(acc, dot);
-#endif
+    return sum_i16_pairs_acc_int32x8(acc, dot);  // sum_i16_pairs_acc_int32x8
+#endif  // 条件编译结束
 }
 
 // Integer variant of the function defined in ggml-quants.c
 // multiply int8_t, add results pairwise twice and return as 256 bit int vector, then add the accumulator
 static inline __m256i mul_sum_i8_pairs_acc_int32x8(const __m256i acc, const __m256i x, const __m256i y) {
-#if defined(__AVXVNNIINT8__)
-    return _mm256_dpbssd_epi32(acc, x, y);
-#else
+#if defined(__AVXVNNIINT8__)  // 条件编译
+    return _mm256_dpbssd_epi32(acc, x, y);  // _mm256_dpbssd_epi32
+#else  // 否则
     // Get absolute values of x vectors
     const __m256i ax = _mm256_sign_epi8(x, x);
     // Sign the values of the y vectors
     const __m256i sy = _mm256_sign_epi8(y, x);
-    return mul_sum_us8_pairs_acc_int32x8(acc, ax, sy);
-#endif
+    return mul_sum_us8_pairs_acc_int32x8(acc, ax, sy);  // mul_sum_us8_pairs_acc_int32x8
+#endif  // 条件编译结束
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
@@ -182,7 +182,7 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
 
     block_q8_0x4 * GGML_RESTRICT y = (block_q8_0x4 *) vy;
 
-#if defined(__AVX2__) || defined(__AVX__)
+#if defined(__AVX2__) || defined(__AVX__)  // 条件编译
     float id[4];
     __m256 srcv[4][4];
     __m256 idvec[4];
@@ -242,7 +242,7 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
             __m256i i2 = _mm256_cvtps_epi32( v2 );
             __m256i i3 = _mm256_cvtps_epi32( v3 );
 
-#if defined(__AVX2__)
+#if defined(__AVX2__)  // 条件编译
             // Convert int32 to int16
             i0 = _mm256_packs_epi32( i0, i1 );
             i2 = _mm256_packs_epi32( i2, i3 );
@@ -254,7 +254,7 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
             i0 = _mm256_permutevar8x32_epi32( i0, perm );
 
             _mm256_storeu_si256((__m256i *)(y[i].qs + 32 * j), i0);
-#else
+#else  // 否则
             // Since we don't have in AVX some necessary functions,
             // we split the registers in half and call AVX2 analogs from SSE
             __m128i ni0 = _mm256_castsi256_si128( i0 );
@@ -276,15 +276,15 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
             ni4 = _mm_packs_epi16( ni4, ni6 );
             _mm_storeu_si128((__m128i *)(y[i].qs + 32 * j), ni0);
             _mm_storeu_si128((__m128i *)(y[i].qs + 32 * j + 16), ni4);
-#endif
+#endif  // 条件编译结束
         }
     }
 
-#else
+#else  // 否则
     UNUSED(nb);
     UNUSED(y);
     ggml_quantize_mat_q8_0_4x8_generic(x, vy, k);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_quantize_mat_q8_K_4x8(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
@@ -294,7 +294,7 @@ void ggml_quantize_mat_q8_K_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
 
     block_q8_Kx4 * GGML_RESTRICT y = (block_q8_Kx4 *) vy;
 
-#if defined(__AVX2__)
+#if defined(__AVX2__)  // 条件编译
     float iscale[4];
     __m256 srcv[4][32];
     __m256 iscale_vec[4];
@@ -504,21 +504,21 @@ void ggml_quantize_mat_q8_K_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
         }
     }
 
-#else
+#else  // 否则
     UNUSED(nb);
     UNUSED(y);
     ggml_quantize_mat_q8_K_4x8_generic(x, vy, k);
-#endif
+#endif  // 条件编译结束
 }
 
 //
 // GEMV/GEMM templates
 //
 
-#if defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
 
 // GEMV for 8x blocks of 32 4-bit quants with a single scale factor per block
-template<typename block_tx8>
+template<typename block_tx8>  // 模板
 static void gemv_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc, __m256i signextendlut) {
     static_assert(
             std::is_same_v<block_tx8, block_q4_0x8> ||
@@ -637,7 +637,7 @@ static void gemv_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
 }
 
 // GEMM for 8x blocks of 32 4-bit quants with a single scale factor per block
-template<typename block_tx8>
+template<typename block_tx8>  // 模板
 static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc, __m256i signextendlut) {
     static_assert(
             std::is_same_v<block_tx8, block_q4_0x8> ||
@@ -660,7 +660,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
     __m256i requiredOrder = _mm256_set_epi32(3, 2, 1, 0, 7, 6, 5, 4);
     int64_t xstart = 0;
     int anr = nr - nr%16; // Used to align nr with boundary of 16
-#if defined(__AVX512BW__) && defined(__AVX512DQ__)
+#if defined(__AVX512BW__) && defined(__AVX512DQ__)  // 条件编译
     int anc = nc - nc%16; // Used to align nc with boundary of 16
                           // Mask to mask out nibbles from packed bytes expanded to 512 bit length
     const __m512i m4bexpanded = _mm512_set1_epi8(0x0F);
@@ -1093,7 +1093,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
         xstart = anc/8;
         y = 0;
     }
-#endif // __AVX512BW__ && __AVX512DQ__
+#endif // __AVX512BW__ && __AVX512DQ__  // 条件编译结束
 
     // Take group of four block_q8_0x4 structures at each pass of the loop and perform dot product operation
 
@@ -1443,10 +1443,10 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
     }
 }
 
-#endif // defined(__AVX2__) || defined(__AVX512F__)
+#endif // defined(__AVX2__) || defined(__AVX512F__)  // 条件编译结束
 
 void ggml_gemv_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-#if defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
     {
         // Lookup table to convert signed nibbles to signed bytes
         __m256i signextendlut = _mm256_castsi128_si256(_mm_set_epi8(-1, -2, -3, -4, -5, -6, -7, -8, 7, 6, 5, 4, 3, 2, 1, 0));
@@ -1454,9 +1454,9 @@ void ggml_gemv_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
         gemv_q4_b32_8x8_q8_0_lut_avx<block_q4_0x8>(n, s, bs, vx, vy, nr, nc, signextendlut);
 
-        return;
+        return;  // 返回
     }
-#endif
+#endif  // 条件编译结束
 
     ggml_gemv_q4_0_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
@@ -1483,7 +1483,7 @@ void ggml_gemv_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__AVX2__)
+#if defined(__AVX2__)  // 条件编译
     // Lookup table to convert signed nibbles to signed bytes
     __m256i signextendlut = _mm256_castsi128_si256(_mm_set_epi8(-1, -2, -3, -4, -5, -6, -7, -8, 7, 6, 5, 4, 3, 2, 1, 0));
     signextendlut = _mm256_permute2f128_si256(signextendlut, signextendlut, 0);
@@ -1676,36 +1676,36 @@ void ggml_gemv_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
         }
     }
 
-#else
+#else  // 否则
     UNUSED(kmask1);
     UNUSED(kmask2);
     UNUSED(kmask3);
     ggml_gemv_q4_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_gemv_iq4_nl_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-#if defined(__AVX2__)
+#if defined(__AVX2__)  // 条件编译
     __m256i signextendlut = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i*)kvalues_iq4nl));
     signextendlut = _mm256_permute2f128_si256(signextendlut, signextendlut, 0);
 
     gemv_q4_b32_8x8_q8_0_lut_avx<block_iq4_nlx8>(n, s, bs, vx, vy, nr, nc, signextendlut);
 
-    return;
-#endif
+    return;  // 返回
+#endif  // 条件编译结束
 
     ggml_gemv_iq4_nl_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
 void ggml_gemv_mxfp4_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-#if defined(__AVX2__)
+#if defined(__AVX2__)  // 条件编译
     __m256i signextendlut = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i*)kvalues_mxfp4));
     signextendlut = _mm256_permute2f128_si256(signextendlut, signextendlut, 0);
 
     gemv_q4_b32_8x8_q8_0_lut_avx<block_mxfp4x8>(n, s, bs, vx, vy, nr, nc, signextendlut);
 
-    return;
-#endif
+    return;  // 返回
+#endif  // 条件编译结束
 
     ggml_gemv_mxfp4_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
@@ -1729,7 +1729,7 @@ void ggml_gemv_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__AVX2__)
+#if defined(__AVX2__)  // 条件编译
     // Lookup table to convert signed nibbles to signed bytes
     __m256i signextendlut = _mm256_castsi128_si256(_mm_set_epi8(-1, -2, -3, -4, -5, -6, -7, -8, 7, 6, 5, 4, 3, 2, 1, 0));
     signextendlut = _mm256_permute2f128_si256(signextendlut, signextendlut, 0);
@@ -2016,15 +2016,15 @@ void ggml_gemv_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             _mm256_storeu_ps(s + (y * nr + x * 8), _mm256_sub_ps(acc_row, acc_min_rows));
         }
     }
-#else
+#else  // 否则
 
     ggml_gemv_q2_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-#if defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
     {
         // Lookup table to convert signed nibbles to signed bytes
         __m256i signextendlut = _mm256_castsi128_si256(_mm_set_epi8(-1, -2, -3, -4, -5, -6, -7, -8, 7, 6, 5, 4, 3, 2, 1, 0));
@@ -2032,9 +2032,9 @@ void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
         gemm_q4_b32_8x8_q8_0_lut_avx<block_q4_0x8>(n, s, bs, vx, vy, nr, nc, signextendlut);
 
-        return;
+        return;  // 返回
     }
-#endif // defined(__AVX2__) || defined(__AVX512F__)
+#endif // defined(__AVX2__) || defined(__AVX512F__)  // 条件编译结束
 
     ggml_gemm_q4_0_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
@@ -2062,7 +2062,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
     const block_q4_Kx8 * b_ptr_start = (const block_q4_Kx8 * ) vx;
     const block_q8_Kx4 * a_ptr_start = (const block_q8_Kx4 * ) vy;
     int64_t b_nb = n / QK_K;
@@ -2074,7 +2074,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     __m256i requiredOrder = _mm256_set_epi32(3, 2, 1, 0, 7, 6, 5, 4);
     int64_t xstart = 0;
     int anr = nr - nr % 16;; // Used to align nr with boundary of 16
-#if defined(__AVX512BW__) && defined(__AVX512DQ__)
+#if defined(__AVX512BW__) && defined(__AVX512DQ__)  // 条件编译
     int anc = nc - nc % 16; // Used to align nc with boundary of 16
     // Mask to mask out nibbles from packed bytes expanded to 512 bit length
     const __m512i m4bexpanded = _mm512_set1_epi8(0x0F);
@@ -2812,7 +2812,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
         xstart = anc/8;
         y = 0;
     }
-#endif // __AVX512BW__ && __AVX512DQ__
+#endif // __AVX512BW__ && __AVX512DQ__  // 条件编译结束
 
     // Take group of four block_q8_Kx4 structures at each pass of the loop and perform dot product operation
     for (; y < anr / 4; y += 4) {
@@ -3485,40 +3485,40 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
         }
     }
 
-#else
+#else  // 否则
     UNUSED(kmask1);
     UNUSED(kmask2);
     UNUSED(kmask3);
     ggml_gemm_q4_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_gemm_iq4_nl_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-#if defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
     {
         __m256i signextendlut = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i*)kvalues_iq4nl));
         signextendlut = _mm256_permute2f128_si256(signextendlut, signextendlut, 0);
 
         gemm_q4_b32_8x8_q8_0_lut_avx<block_iq4_nlx8>(n, s, bs, vx, vy, nr, nc, signextendlut);
 
-        return;
+        return;  // 返回
     }
-#endif // defined(__AVX2__) || defined(__AVX512F__)
+#endif // defined(__AVX2__) || defined(__AVX512F__)  // 条件编译结束
 
     ggml_gemm_iq4_nl_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
 void ggml_gemm_mxfp4_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-#if defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
     {
         __m256i signextendlut = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i*)kvalues_mxfp4));
         signextendlut = _mm256_permute2f128_si256(signextendlut, signextendlut, 0);
 
         gemm_q4_b32_8x8_q8_0_lut_avx<block_mxfp4x8>(n, s, bs, vx, vy, nr, nc, signextendlut);
 
-        return;
+        return;  // 返回
     }
-#endif // defined(__AVX2__) || defined(__AVX512F__)
+#endif // defined(__AVX2__) || defined(__AVX512F__)  // 条件编译结束
 
     ggml_gemm_mxfp4_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
@@ -3543,7 +3543,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
     const block_q2_Kx8 * b_ptr_start = (const block_q2_Kx8 * ) vx;
     const block_q8_Kx4 * a_ptr_start = (const block_q8_Kx4 * ) vy;
     int64_t b_nb = n / QK_K;
@@ -3567,7 +3567,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     __m256i scalesmask2 = _mm256_castsi128_si256(scalesmask2_sse);
     scalesmask2 = _mm256_permute2f128_si256(scalesmask2, scalesmask2, 0);
 
-#if defined(__AVX512BW__) && defined(__AVX512DQ__)
+#if defined(__AVX512BW__) && defined(__AVX512DQ__)  // 条件编译
 
     int anc = nc - nc % 16; // Used to align nc with boundary of 16
 
@@ -5047,7 +5047,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
         y = 0;
     }
 
-#endif // __AVX512BW__ && __AVX512DQ__
+#endif // __AVX512BW__ && __AVX512DQ__  // 条件编译结束
 
     // Take group of four block_q8_Kx4 structures at each pass of the loop and perform dot product operation
     for (; y < anr / 4; y += 4) {
@@ -6398,10 +6398,10 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             }
         }
     }
-#else
+#else  // 否则
 
     ggml_gemm_q2_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 
 
-#endif
+#endif  // 条件编译结束
 }

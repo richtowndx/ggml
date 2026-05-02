@@ -1,6 +1,6 @@
-#include <sycl/sycl.hpp>
-#include "common.hpp"
-#include "add-id.hpp"
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
+#include "common.hpp"  // 引入 common.hpp 头文件
+#include "add-id.hpp"  // 引入 add-id.hpp 头文件
 
 static void add_id_kernel(
     const float* src0,

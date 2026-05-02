@@ -1,26 +1,26 @@
-#pragma once
+#pragma once  // 防止重复包含
 
 // Computes C[M x N] += A[M x K] * B[K x N]
 
-#include "simd-mappings.h"
+#include "simd-mappings.h"  // 引入 simd-mappings.h 头文件
 
 // TODO: add support for sizeless vector types
-#if defined(GGML_SIMD) && !defined(__ARM_FEATURE_SVE) && !defined(__riscv_v_intrinsic)
+#if defined(GGML_SIMD) && !defined(__ARM_FEATURE_SVE) && !defined(__riscv_v_intrinsic)  // 条件编译
 
 // TODO: untested on avx512
 // These are in units of GGML_F32_EPR
-#if defined(__AVX512F__) || defined (__ARM_NEON__)
+#if defined(__AVX512F__) || defined (__ARM_NEON__)  // 条件编译
     static constexpr int GEMM_RM = 4;
     static constexpr int GEMM_RN = 4; // 16+4+1 = 25/32
-#elif defined(__AVX2__) || defined(__AVX__)
+#elif defined(__AVX2__) || defined(__AVX__)  // 否则如果
     static constexpr int GEMM_RM = 6;
     static constexpr int GEMM_RN = 2; // 12+2+1 = 15/16
-#else
+#else  // 否则
     static constexpr int GEMM_RM = 2;
     static constexpr int GEMM_RN = 2;
-#endif
+#endif  // 条件编译结束
 
-template <int RM, int RN>
+template <int RM, int RN>  // 模板
 static inline void simd_gemm_ukernel(
     float       * GGML_RESTRICT C,
     const float * GGML_RESTRICT A,
@@ -109,10 +109,10 @@ static void simd_gemm(
         C += N;
     }
 }
-#elif defined(GGML_SIMD) && defined(__riscv_v_intrinsic)
+#elif defined(GGML_SIMD) && defined(__riscv_v_intrinsic)  // 否则如果
 // RM accumulators + 1 B vector = RM + 1 <= 8  =>  RM <= 7
 // Microkernel: C[RM x vl] += A[RM x K] * B[K x N]
-template <int RM>
+template <int RM>  // 模板
 static inline void rvv_simd_gemm_ukernel(
     float       * GGML_RESTRICT C,
     const float * GGML_RESTRICT A,
@@ -123,35 +123,35 @@ static inline void rvv_simd_gemm_ukernel(
 
     vfloat32m4_t acc_0 = __riscv_vle32_v_f32m4(C + 0 * N, vl);
     vfloat32m4_t acc_1, acc_2, acc_3, acc_4, acc_5, acc_6;
-    if constexpr (RM > 1) acc_1 = __riscv_vle32_v_f32m4(C + 1 * N, vl);
-    if constexpr (RM > 2) acc_2 = __riscv_vle32_v_f32m4(C + 2 * N, vl);
-    if constexpr (RM > 3) acc_3 = __riscv_vle32_v_f32m4(C + 3 * N, vl);
-    if constexpr (RM > 4) acc_4 = __riscv_vle32_v_f32m4(C + 4 * N, vl);
-    if constexpr (RM > 5) acc_5 = __riscv_vle32_v_f32m4(C + 5 * N, vl);
-    if constexpr (RM > 6) acc_6 = __riscv_vle32_v_f32m4(C + 6 * N, vl);
+    if constexpr (RM > 1) acc_1 = __riscv_vle32_v_f32m4(C + 1 * N, vl);  // constexpr
+    if constexpr (RM > 2) acc_2 = __riscv_vle32_v_f32m4(C + 2 * N, vl);  // constexpr
+    if constexpr (RM > 3) acc_3 = __riscv_vle32_v_f32m4(C + 3 * N, vl);  // constexpr
+    if constexpr (RM > 4) acc_4 = __riscv_vle32_v_f32m4(C + 4 * N, vl);  // constexpr
+    if constexpr (RM > 5) acc_5 = __riscv_vle32_v_f32m4(C + 5 * N, vl);  // constexpr
+    if constexpr (RM > 6) acc_6 = __riscv_vle32_v_f32m4(C + 6 * N, vl);  // constexpr
 
     for (int kk = 0; kk < K; kk++) {
         vfloat32m4_t b_0 = __riscv_vle32_v_f32m4(B + kk * N, vl);
 
                               acc_0 = __riscv_vfmacc_vf_f32m4(acc_0, A[0 * K + kk], b_0, vl);
-        if constexpr (RM > 1) acc_1 = __riscv_vfmacc_vf_f32m4(acc_1, A[1 * K + kk], b_0, vl);
-        if constexpr (RM > 2) acc_2 = __riscv_vfmacc_vf_f32m4(acc_2, A[2 * K + kk], b_0, vl);
-        if constexpr (RM > 3) acc_3 = __riscv_vfmacc_vf_f32m4(acc_3, A[3 * K + kk], b_0, vl);
-        if constexpr (RM > 4) acc_4 = __riscv_vfmacc_vf_f32m4(acc_4, A[4 * K + kk], b_0, vl);
-        if constexpr (RM > 5) acc_5 = __riscv_vfmacc_vf_f32m4(acc_5, A[5 * K + kk], b_0, vl);
-        if constexpr (RM > 6) acc_6 = __riscv_vfmacc_vf_f32m4(acc_6, A[6 * K + kk], b_0, vl);
+        if constexpr (RM > 1) acc_1 = __riscv_vfmacc_vf_f32m4(acc_1, A[1 * K + kk], b_0, vl);  // constexpr
+        if constexpr (RM > 2) acc_2 = __riscv_vfmacc_vf_f32m4(acc_2, A[2 * K + kk], b_0, vl);  // constexpr
+        if constexpr (RM > 3) acc_3 = __riscv_vfmacc_vf_f32m4(acc_3, A[3 * K + kk], b_0, vl);  // constexpr
+        if constexpr (RM > 4) acc_4 = __riscv_vfmacc_vf_f32m4(acc_4, A[4 * K + kk], b_0, vl);  // constexpr
+        if constexpr (RM > 5) acc_5 = __riscv_vfmacc_vf_f32m4(acc_5, A[5 * K + kk], b_0, vl);  // constexpr
+        if constexpr (RM > 6) acc_6 = __riscv_vfmacc_vf_f32m4(acc_6, A[6 * K + kk], b_0, vl);  // constexpr
     }
 
                           __riscv_vse32_v_f32m4(C + 0 * N, acc_0, vl);
-    if constexpr (RM > 1) __riscv_vse32_v_f32m4(C + 1 * N, acc_1, vl);
-    if constexpr (RM > 2) __riscv_vse32_v_f32m4(C + 2 * N, acc_2, vl);
-    if constexpr (RM > 3) __riscv_vse32_v_f32m4(C + 3 * N, acc_3, vl);
-    if constexpr (RM > 4) __riscv_vse32_v_f32m4(C + 4 * N, acc_4, vl);
-    if constexpr (RM > 5) __riscv_vse32_v_f32m4(C + 5 * N, acc_5, vl);
-    if constexpr (RM > 6) __riscv_vse32_v_f32m4(C + 6 * N, acc_6, vl);
+    if constexpr (RM > 1) __riscv_vse32_v_f32m4(C + 1 * N, acc_1, vl);  // constexpr
+    if constexpr (RM > 2) __riscv_vse32_v_f32m4(C + 2 * N, acc_2, vl);  // constexpr
+    if constexpr (RM > 3) __riscv_vse32_v_f32m4(C + 3 * N, acc_3, vl);  // constexpr
+    if constexpr (RM > 4) __riscv_vse32_v_f32m4(C + 4 * N, acc_4, vl);  // constexpr
+    if constexpr (RM > 5) __riscv_vse32_v_f32m4(C + 5 * N, acc_5, vl);  // constexpr
+    if constexpr (RM > 6) __riscv_vse32_v_f32m4(C + 6 * N, acc_6, vl);  // constexpr
 }
 
-template <int RM>
+template <int RM>  // 模板
 static inline void rvv_simd_gemm_dispatch_tail(
     float       * GGML_RESTRICT C,
     const float * GGML_RESTRICT A,
@@ -200,11 +200,11 @@ static void simd_gemm(
     rvv_simd_gemm_dispatch_tail<GEMM_RM - 1>(C, A, B, K, N, KN, remaining_rows);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && !defined(__clang__)  // 条件编译
 #pragma GCC diagnostic pop
-#endif
+#endif  // 条件编译结束
 
-#else // scalar path
+#else // scalar path  // 否则
 
 static void simd_gemm(
     float       * GGML_RESTRICT C,
@@ -223,4 +223,4 @@ static void simd_gemm(
     }
 }
 
-#endif // GGML_SIMD
+#endif // GGML_SIMD  // 条件编译结束

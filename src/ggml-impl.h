@@ -1,61 +1,61 @@
-#pragma once
+#pragma once  // 防止重复包含
 
 // GGML internal header
 
-#include "ggml.h"
-#include "gguf.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "gguf.h"  // 引入 gguf.h 头文件
 
-#include <assert.h>
-#include <math.h>
-#include <stdlib.h> // load `stdlib.h` before other headers to work around MinGW bug: https://sourceforge.net/p/mingw-w64/bugs/192/
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
+#include <assert.h>  // 引入 assert.h 头文件
+#include <math.h>  // 引入 math.h 头文件
+#include <stdlib.h> // load `stdlib.h` before other headers to work around MinGW bug: https://sourceforge.net/p/mingw-w64/bugs/192/  // 引入 stdlib.h 头文件
+#include <stdbool.h>  // 引入 stdbool.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#ifdef __ARM_FEATURE_SVE
-#include <arm_sve.h>
-#endif // __ARM_FEATURE_SVE
+#ifdef __ARM_FEATURE_SVE  // 如果定义了 __ARM_FEATURE_SVE 则编译
+#include <arm_sve.h>  // 引入 arm_sve.h 头文件
+#endif // __ARM_FEATURE_SVE  // 条件编译结束
 
-#if defined(__ARM_NEON) && !defined(__CUDACC__) && !defined(__MUSACC__)
+#if defined(__ARM_NEON) && !defined(__CUDACC__) && !defined(__MUSACC__)  // 条件编译
 // if YCM cannot find <arm_neon.h>, make a symbolic link to it, for example:
 //
 //   $ ln -sfn /Library/Developer/CommandLineTools/usr/lib/clang/13.1.6/include/arm_neon.h ./src/
 //
-#include <arm_neon.h>
-#endif
+#include <arm_neon.h>  // 引入 arm_neon.h 头文件
+#endif  // 条件编译结束
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
-void ggml_print_backtrace(void);
+void ggml_print_backtrace(void);  // ggml_print_backtrace
 
-uint64_t ggml_graph_next_uid(void);
+uint64_t ggml_graph_next_uid(void);  // ggml_graph_next_uid
 
-#ifndef MIN
-#    define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
+#ifndef MIN  // 如果未定义 MIN 则编译
+#    define MIN(a, b) ((a) < (b) ? (a) : (b))  // 宏定义 MIN
+#endif  // 条件编译结束
 
-#ifndef MAX
-#    define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
+#ifndef MAX  // 如果未定义 MAX 则编译
+#    define MAX(a, b) ((a) > (b) ? (a) : (b))  // 宏定义 MAX
+#endif  // 条件编译结束
 
 // required for mmap as gguf only guarantees 32-byte alignment
-#define TENSOR_ALIGNMENT 32
+#define TENSOR_ALIGNMENT 32  // 宏定义 TENSOR_ALIGNMENT
 
 // static_assert should be a #define, but if it's not,
 // fall back to the _Static_assert C11 keyword.
 // if C99 - static_assert is noop
 // ref: https://stackoverflow.com/a/53923785/4039976
-#ifndef __cplusplus
-    #ifndef static_assert
-        #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
-            #define static_assert(cond, msg) _Static_assert(cond, msg)
-        #else
-            #define static_assert(cond, msg) struct global_scope_noop_trick
-        #endif
-    #endif
-#endif
+#ifndef __cplusplus  // 如果未定义 __cplusplus 则编译
+    #ifndef static_assert  // 如果未定义 static_assert 则编译
+        #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)  // 条件编译
+            #define static_assert(cond, msg) _Static_assert(cond, msg)  // 宏定义 static_assert
+        #else  // 否则
+            #define static_assert(cond, msg) struct global_scope_noop_trick  // 宏定义 static_assert
+        #endif  // 条件编译结束
+    #endif  // 条件编译结束
+#endif  // 条件编译结束
 
 static inline int ggml_up32(int n) {
     return (n + 31) & ~31;
@@ -74,17 +74,17 @@ static inline int ggml_up(int n, int m) {
 // TODO: move to ggml.h? (won't be able to inline)
 static bool ggml_are_same_layout(const struct ggml_tensor * a, const struct ggml_tensor * b) {
     if (a->type != b->type) {
-        return false;
+        return false;  // 返回
     }
     for (int i = 0; i < GGML_MAX_DIMS; i++) {
         if (a->ne[i] != b->ne[i]) {
-            return false;
+            return false;  // 返回
         }
         if (a->nb[i] != b->nb[i]) {
-            return false;
+            return false;  // 返回
         }
     }
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_op_is_empty(enum ggml_op op) {
@@ -94,14 +94,14 @@ static bool ggml_op_is_empty(enum ggml_op op) {
         case GGML_OP_TRANSPOSE:
         case GGML_OP_VIEW:
         case GGML_OP_PERMUTE:
-            return true;
+            return true;  // 返回
         default:
-            return false;
+            return false;  // 返回
     }
 }
 
 static inline bool ggml_impl_is_view(const struct ggml_tensor * t) {
-    return t->view_src != NULL;
+    return t->view_src != NULL;  // 返回
 }
 
 static inline float ggml_compute_softplus_f32(float input) {
@@ -115,32 +115,32 @@ GGML_ATTRIBUTE_FORMAT(2, 3)
 GGML_API void ggml_log_internal        (enum ggml_log_level level, const char * format, ...);
 GGML_API void ggml_log_callback_default(enum ggml_log_level level, const char * text, void * user_data);
 
-#define GGML_LOG(...)       ggml_log_internal(GGML_LOG_LEVEL_NONE , __VA_ARGS__)
-#define GGML_LOG_INFO(...)  ggml_log_internal(GGML_LOG_LEVEL_INFO , __VA_ARGS__)
-#define GGML_LOG_WARN(...)  ggml_log_internal(GGML_LOG_LEVEL_WARN , __VA_ARGS__)
-#define GGML_LOG_ERROR(...) ggml_log_internal(GGML_LOG_LEVEL_ERROR, __VA_ARGS__)
-#define GGML_LOG_DEBUG(...) ggml_log_internal(GGML_LOG_LEVEL_DEBUG, __VA_ARGS__)
-#define GGML_LOG_CONT(...)  ggml_log_internal(GGML_LOG_LEVEL_CONT , __VA_ARGS__)
+#define GGML_LOG(...)       ggml_log_internal(GGML_LOG_LEVEL_NONE , __VA_ARGS__)  // 宏定义 GGML_LOG
+#define GGML_LOG_INFO(...)  ggml_log_internal(GGML_LOG_LEVEL_INFO , __VA_ARGS__)  // 宏定义 GGML_LOG_INFO
+#define GGML_LOG_WARN(...)  ggml_log_internal(GGML_LOG_LEVEL_WARN , __VA_ARGS__)  // 宏定义 GGML_LOG_WARN
+#define GGML_LOG_ERROR(...) ggml_log_internal(GGML_LOG_LEVEL_ERROR, __VA_ARGS__)  // 宏定义 GGML_LOG_ERROR
+#define GGML_LOG_DEBUG(...) ggml_log_internal(GGML_LOG_LEVEL_DEBUG, __VA_ARGS__)  // 宏定义 GGML_LOG_DEBUG
+#define GGML_LOG_CONT(...)  ggml_log_internal(GGML_LOG_LEVEL_CONT , __VA_ARGS__)  // 宏定义 GGML_LOG_CONT
 
-#define GGML_DEBUG 0
+#define GGML_DEBUG 0  // 宏定义 GGML_DEBUG
 
-#if (GGML_DEBUG >= 1)
-#define GGML_PRINT_DEBUG(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
-#define GGML_PRINT_DEBUG(...)
-#endif
+#if (GGML_DEBUG >= 1)  // 条件编译
+#define GGML_PRINT_DEBUG(...) GGML_LOG_DEBUG(__VA_ARGS__)  // 宏定义 GGML_PRINT_DEBUG
+#else  // 否则
+#define GGML_PRINT_DEBUG(...)  // 宏定义 GGML_PRINT_DEBUG
+#endif  // 条件编译结束
 
-#if (GGML_DEBUG >= 5)
-#define GGML_PRINT_DEBUG_5(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
-#define GGML_PRINT_DEBUG_5(...)
-#endif
+#if (GGML_DEBUG >= 5)  // 条件编译
+#define GGML_PRINT_DEBUG_5(...) GGML_LOG_DEBUG(__VA_ARGS__)  // 宏定义 GGML_PRINT_DEBUG_5
+#else  // 否则
+#define GGML_PRINT_DEBUG_5(...)  // 宏定义 GGML_PRINT_DEBUG_5
+#endif  // 条件编译结束
 
-#if (GGML_DEBUG >= 10)
-#define GGML_PRINT_DEBUG_10(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
-#define GGML_PRINT_DEBUG_10(...)
-#endif
+#if (GGML_DEBUG >= 10)  // 条件编译
+#define GGML_PRINT_DEBUG_10(...) GGML_LOG_DEBUG(__VA_ARGS__)  // 宏定义 GGML_PRINT_DEBUG_10
+#else  // 否则
+#define GGML_PRINT_DEBUG_10(...)  // 宏定义 GGML_PRINT_DEBUG_10
+#endif  // 条件编译结束
 
 // tensor params
 
@@ -170,25 +170,25 @@ static void ggml_set_op_params_f32(struct ggml_tensor * tensor, uint32_t i, floa
     ((float *)(tensor->op_params))[i] = value;
 }
 
-struct ggml_map_custom1_op_params {
+struct ggml_map_custom1_op_params {  // 结构体定义
     ggml_custom1_op_t  fun;
     int                n_tasks;
     void             * userdata;
 };
 
-struct ggml_map_custom2_op_params {
+struct ggml_map_custom2_op_params {  // 结构体定义
     ggml_custom2_op_t   fun;
     int                 n_tasks;
     void              * userdata;
 };
 
-struct ggml_map_custom3_op_params {
+struct ggml_map_custom3_op_params {  // 结构体定义
     ggml_custom3_op_t fun;
     int               n_tasks;
     void            * userdata;
 };
 
-struct ggml_custom_op_params {
+struct ggml_custom_op_params {  // 结构体定义
     ggml_custom_op_t fun;
     int              n_tasks;
     void           * userdata;
@@ -196,11 +196,11 @@ struct ggml_custom_op_params {
 
 // bitset
 
-typedef uint32_t ggml_bitset_t;
+typedef uint32_t ggml_bitset_t;  // 类型定义
 
 static_assert(sizeof(ggml_bitset_t) == 4, "bitset_t constants must be updated");
-#define BITSET_SHR 5 // log2(sizeof(ggml_bitset_t)*8)
-#define BITSET_MASK (sizeof(ggml_bitset_t)*8 - 1)
+#define BITSET_SHR 5 // log2(sizeof(ggml_bitset_t)*8)  // 宏定义 BITSET_SHR
+#define BITSET_MASK (sizeof(ggml_bitset_t)*8 - 1)  // 宏定义 BITSET_MASK
 
 static size_t ggml_bitset_size(size_t n) {
     return (n + BITSET_MASK) >> BITSET_SHR;
@@ -220,35 +220,35 @@ static inline void ggml_bitset_clear(ggml_bitset_t * bitset, size_t i) {
 
 // hash set
 
-#define GGML_HASHSET_FULL ((size_t)-1)
-#define GGML_HASHSET_ALREADY_EXISTS ((size_t)-2)
+#define GGML_HASHSET_FULL ((size_t)-1)  // 宏定义 GGML_HASHSET_FULL
+#define GGML_HASHSET_ALREADY_EXISTS ((size_t)-2)  // 宏定义 GGML_HASHSET_ALREADY_EXISTS
 
-struct ggml_hash_set {
+struct ggml_hash_set {  // 结构体定义
     size_t size;
     ggml_bitset_t * used;       // whether or not the keys are in use i.e. set
     struct ggml_tensor ** keys; // actual tensors in the set, keys[i] is only defined if ggml_bitset_get(used, i)
 };
 
-struct ggml_hash_set ggml_hash_set_new(size_t size);
-void                 ggml_hash_set_free(struct ggml_hash_set * hash_set);
+struct ggml_hash_set ggml_hash_set_new(size_t size);  // ggml_hash_set_new
+void                 ggml_hash_set_free(struct ggml_hash_set * hash_set);  // ggml_hash_set_free
 
 // returns the minimum size for a hash set that can hold min_sz elements
-size_t ggml_hash_size(size_t min_sz);
+size_t ggml_hash_size(size_t min_sz);  // ggml_hash_size
 
 // remove all elements from the hash set
-void ggml_hash_set_reset(struct ggml_hash_set * hash_set);
+void ggml_hash_set_reset(struct ggml_hash_set * hash_set);  // ggml_hash_set_reset
 
 // returns true if key is in the hash set
-static bool ggml_hash_contains(const struct ggml_hash_set * hash_set, struct ggml_tensor * key);
+static bool ggml_hash_contains(const struct ggml_hash_set * hash_set, struct ggml_tensor * key);  // ggml_hash_contains
 
 // returns GGML_HASHSET_FULL if table is full, otherwise the current index of the key or where it should be inserted
-static size_t ggml_hash_find(const struct ggml_hash_set * hash_set, const struct ggml_tensor * key);
+static size_t ggml_hash_find(const struct ggml_hash_set * hash_set, const struct ggml_tensor * key);  // ggml_hash_find
 
 // returns GGML_HASHSET_ALREADY_EXISTS if key already exists, index otherwise, asserts if table is full
-static size_t ggml_hash_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key);
+static size_t ggml_hash_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key);  // ggml_hash_insert
 
 // return index, asserts if table is full
-static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key);
+static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key);  // ggml_hash_find_or_insert
 
 // hash function for ggml_tensor
 static inline size_t ggml_hash(const struct ggml_tensor * p) {
@@ -265,10 +265,10 @@ static size_t ggml_hash_find(const struct ggml_hash_set * hash_set, const struct
         i = (i + 1) % hash_set->size;
         if (i == h) {
             // visited all hash table entries -> not found
-            return GGML_HASHSET_FULL;
+            return GGML_HASHSET_FULL;  // 返回
         }
     }
-    return i;
+    return i;  // 返回
 }
 
 static bool ggml_hash_contains(const struct ggml_hash_set * hash_set, struct ggml_tensor * key) {
@@ -285,10 +285,10 @@ static size_t ggml_hash_insert(struct ggml_hash_set * hash_set, struct ggml_tens
         if (!ggml_bitset_get(hash_set->used, i)) {
             ggml_bitset_set(hash_set->used, i);
             hash_set->keys[i] = key;
-            return i;
+            return i;  // 返回
         }
         if (hash_set->keys[i] == key) {
-            return GGML_HASHSET_ALREADY_EXISTS;
+            return GGML_HASHSET_ALREADY_EXISTS;  // 返回
         }
         i = (i + 1) % hash_set->size;
     } while (i != h);
@@ -306,10 +306,10 @@ static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct g
         if (!ggml_bitset_get(hash_set->used, i)) {
             ggml_bitset_set(hash_set->used, i);
             hash_set->keys[i] = key;
-            return i;
+            return i;  // 返回
         }
         if (hash_set->keys[i] == key) {
-            return i;
+            return i;  // 返回
         }
         i = (i + 1) % hash_set->size;
     } while (i != h);
@@ -320,13 +320,13 @@ static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct g
 
 // computation graph
 
-enum ggml_cgraph_eval_order {
+enum ggml_cgraph_eval_order {  // 枚举定义
     GGML_CGRAPH_EVAL_ORDER_LEFT_TO_RIGHT = 0,
     GGML_CGRAPH_EVAL_ORDER_RIGHT_TO_LEFT,
     GGML_CGRAPH_EVAL_ORDER_COUNT
 };
 
-struct ggml_cgraph {
+struct ggml_cgraph {  // 结构体定义
     int size;    // maximum number of nodes/leafs/grads/grad_accs
     int n_nodes; // number of nodes currently in use
     int n_leafs; // number of leafs currently in use
@@ -349,7 +349,7 @@ struct ggml_cgraph {
 // returns a slice of cgraph with nodes [i0, i1)
 // the slice does not have leafs or gradients
 // if you need the gradients, get them from the original graph
-struct ggml_cgraph ggml_graph_view(struct ggml_cgraph * cgraph, int i0, int i1);
+struct ggml_cgraph ggml_graph_view(struct ggml_cgraph * cgraph, int i0, int i1);  // ggml_graph_view
 
 // ggml-alloc.c: true if the operation can reuse memory from its sources
 GGML_API bool ggml_op_can_inplace(enum ggml_op op);
@@ -369,7 +369,7 @@ static inline float fp32_from_bits(uint32_t w) {
         float as_value;
     } fp32;
     fp32.as_bits = w;
-    return fp32.as_value;
+    return fp32.as_value;  // 返回
 }
 
 static inline uint32_t fp32_to_bits(float f) {
@@ -378,7 +378,7 @@ static inline uint32_t fp32_to_bits(float f) {
         uint32_t as_bits;
     } fp32;
     fp32.as_value = f;
-    return fp32.as_bits;
+    return fp32.as_bits;  // 返回
 }
 
 static inline float ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
@@ -387,11 +387,11 @@ static inline float ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
     const uint32_t two_w = w + w;
 
     const uint32_t exp_offset = UINT32_C(0xE0) << 23;
-#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
+#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)  // 条件编译
     const float exp_scale = 0x1.0p-112f;
-#else
+#else  // 否则
     const float exp_scale = fp32_from_bits(UINT32_C(0x7800000));
-#endif
+#endif  // 条件编译结束
     const float normalized_value = fp32_from_bits((two_w >> 4) + exp_offset) * exp_scale;
 
     const uint32_t magic_mask = UINT32_C(126) << 23;
@@ -401,17 +401,17 @@ static inline float ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
     const uint32_t denormalized_cutoff = UINT32_C(1) << 27;
     const uint32_t result = sign |
         (two_w < denormalized_cutoff ? fp32_to_bits(denormalized_value) : fp32_to_bits(normalized_value));
-    return fp32_from_bits(result);
+    return fp32_from_bits(result);  // fp32_from_bits
 }
 
 static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
-#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
+#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)  // 条件编译
     const float scale_to_inf = 0x1.0p+112f;
     const float scale_to_zero = 0x1.0p-110f;
-#else
+#else  // 否则
     const float scale_to_inf = fp32_from_bits(UINT32_C(0x77800000));
     const float scale_to_zero = fp32_from_bits(UINT32_C(0x08800000));
-#endif
+#endif  // 条件编译结束
     float base = (fabsf(f) * scale_to_inf) * scale_to_zero;
 
     const uint32_t w = fp32_to_bits(f);
@@ -430,11 +430,11 @@ static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
     return (sign >> 16) | (shl1_w > UINT32_C(0xFF000000) ? UINT16_C(0x7E00) : nonsign);
 }
 
-#define GGML_COMPUTE_FP16_TO_FP32(x) ggml_compute_fp16_to_fp32(x)
-#define GGML_COMPUTE_FP32_TO_FP16(x) ggml_compute_fp32_to_fp16(x)
+#define GGML_COMPUTE_FP16_TO_FP32(x) ggml_compute_fp16_to_fp32(x)  // 宏定义 GGML_COMPUTE_FP16_TO_FP32
+#define GGML_COMPUTE_FP32_TO_FP16(x) ggml_compute_fp32_to_fp16(x)  // 宏定义 GGML_COMPUTE_FP32_TO_FP16
 
-#define GGML_FP16_TO_FP32(x) GGML_COMPUTE_FP16_TO_FP32(x)
-#define GGML_FP32_TO_FP16(x) GGML_COMPUTE_FP32_TO_FP16(x)
+#define GGML_FP16_TO_FP32(x) GGML_COMPUTE_FP16_TO_FP32(x)  // 宏定义 GGML_FP16_TO_FP32
+#define GGML_FP32_TO_FP16(x) GGML_COMPUTE_FP32_TO_FP16(x)  // 宏定义 GGML_FP32_TO_FP16
 
 static inline float ggml_e8m0_to_fp32(uint8_t x) {
     uint32_t bits;  // Stores the raw bit representation of the float
@@ -469,7 +469,7 @@ static inline float ggml_e8m0_to_fp32(uint8_t x) {
     float result;  // Final float value
                    // Safely reinterpret bit pattern as float without type-punning issues
     memcpy(&result, &bits, sizeof(float));
-    return result;
+    return result;  // 返回
 }
 
 // Equal to ggml_e8m0_to_fp32/2
@@ -491,17 +491,17 @@ static inline float ggml_e8m0_to_fp32_half(uint8_t x) {
 
     float result;
     memcpy(&result, &bits, sizeof(float));
-    return result;
+    return result;  // 返回
 }
 
-#define GGML_E8M0_TO_FP32(x) ggml_e8m0_to_fp32(x)
-#define GGML_E8M0_TO_FP32_HALF(x) ggml_e8m0_to_fp32_half(x)
+#define GGML_E8M0_TO_FP32(x) ggml_e8m0_to_fp32(x)  // 宏定义 GGML_E8M0_TO_FP32
+#define GGML_E8M0_TO_FP32_HALF(x) ggml_e8m0_to_fp32_half(x)  // 宏定义 GGML_E8M0_TO_FP32_HALF
 
 // UE4M3: unsigned, 4 exp bits (bias=7), 3 mantissa bits
 // Returns value * 0.5 to match kvalues_mxfp4 convention (kvalues = 2 * E2M1_float)
 static inline float ggml_ue4m3_to_fp32(uint8_t x) {
     if (x == 0 || x == 0x7F) {
-        return 0.0f;
+        return 0.0f;  // 返回
     }
     int   exp = (x >> 3) & 0xF;
     int   man = x & 0x7;
@@ -511,12 +511,12 @@ static inline float ggml_ue4m3_to_fp32(uint8_t x) {
     } else {
         raw = ldexpf(1.0f + (float) man / 8.0f, exp - 7);
     }
-    return raw * 0.5f;
+    return raw * 0.5f;  // 返回
 }
 
 static inline uint8_t ggml_fp32_to_ue4m3(float x) {
     if (!(x > 0.0f)) {
-        return 0;
+        return 0;  // 返回
     }
     if (x > 448.0f) {
         x = 448.0f;
@@ -533,12 +533,12 @@ static inline uint8_t ggml_fp32_to_ue4m3(float x) {
             man = 7;
         }
         if (man < 1) {
-            return 0;
+            return 0;  // 返回
         }
         return (uint8_t) man;
     }
     if (ue4m3_exp >= 15) {
-        return 0x7E;
+        return 0x7E;  // 返回
     }
     int round_bit = (bits >> 19) & 1;
     int ue4m3_man = fp32_man + round_bit;
@@ -546,7 +546,7 @@ static inline uint8_t ggml_fp32_to_ue4m3(float x) {
         ue4m3_man = 0;
         ue4m3_exp++;
         if (ue4m3_exp >= 15) {
-            return 0x7E;
+            return 0x7E;  // 返回
         }
     }
     return (uint8_t) ((ue4m3_exp << 3) | ue4m3_man);
@@ -597,7 +597,7 @@ static inline float ggml_compute_bf16_to_fp32(ggml_bf16_t h) {
         uint32_t i;
     } u;
     u.i = (uint32_t)h.bits << 16;
-    return u.f;
+    return u.f;  // 返回
 }
 
 /**
@@ -617,23 +617,23 @@ static inline ggml_bf16_t ggml_compute_fp32_to_bf16(float s) {
     u.f = s;
     if ((u.i & 0x7fffffff) > 0x7f800000) { /* nan */
         h.bits = (u.i >> 16) | 64; /* force to quiet */
-        return h;
+        return h;  // 返回
     }
     h.bits = (u.i + (0x7fff + ((u.i >> 16) & 1))) >> 16;
-    return h;
+    return h;  // 返回
 }
 
-#define GGML_FP32_TO_BF16(x) ggml_compute_fp32_to_bf16(x)
-#define GGML_BF16_TO_FP32(x) ggml_compute_bf16_to_fp32(x)
+#define GGML_FP32_TO_BF16(x) ggml_compute_fp32_to_bf16(x)  // 宏定义 GGML_FP32_TO_BF16
+#define GGML_BF16_TO_FP32(x) ggml_compute_bf16_to_fp32(x)  // 宏定义 GGML_BF16_TO_FP32
 
 static inline int32_t ggml_node_get_use_count(const struct ggml_cgraph * cgraph, int node_idx) {
     const struct ggml_tensor * node = cgraph->nodes[node_idx];
 
     size_t hash_pos = ggml_hash_find(&cgraph->visited_hash_set, node);
     if (!ggml_bitset_get(cgraph->visited_hash_set.used, hash_pos)) {
-        return 0;
+        return 0;  // 返回
     }
-    return cgraph->use_counts[hash_pos];
+    return cgraph->use_counts[hash_pos];  // 返回
 }
 
 // return true if the node's results are only used by N other nodes
@@ -643,21 +643,21 @@ static inline bool ggml_node_has_n_uses(const struct ggml_cgraph * cgraph, int n
 
     // check the use count against how many we're replacing
     if (ggml_node_get_use_count(cgraph, node_idx) != n_uses) {
-        return false;
+        return false;  // 返回
     }
 
     // if node is a view, some other node might be using the intermediate result
     // via the view source.
     if (node->view_src) {
-        return false;
+        return false;  // 返回
     }
 
     // If the user requested output for the node, can't fuse
     if (node->flags & GGML_TENSOR_FLAG_OUTPUT) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 // Returns true if nodes with indices { node_idxs } are the sequence of ggml_ops in ops[]
@@ -669,30 +669,30 @@ static inline bool ggml_node_has_n_uses(const struct ggml_cgraph * cgraph, int n
 static inline bool ggml_can_fuse_ext(const struct ggml_cgraph * cgraph, const int * node_idxs, const enum ggml_op * ops, int num_ops) {
     for (int i = 0; i < num_ops; ++i) {
         if (node_idxs[i] >= cgraph->n_nodes) {
-            return false;
+            return false;  // 返回
         }
 
         struct ggml_tensor * node = cgraph->nodes[node_idxs[i]];
         if (node->op != ops[i]) {
-            return false;
+            return false;  // 返回
         }
         if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            return false;
+            return false;  // 返回
         }
         if (i < num_ops - 1 && !ggml_node_has_n_uses(cgraph, node_idxs[i], 1)) {
-            return false;
+            return false;  // 返回
         }
         if (i > 0) {
             struct ggml_tensor * prev = cgraph->nodes[node_idxs[i - 1]];
             if (node->src[0] != prev && node->src[1] != prev) {
-                return false;
+                return false;  // 返回
             }
             if (!ggml_are_same_shape(node, prev)) {
-                return false;
+                return false;  // 返回
             }
         }
     }
-    return true;
+    return true;  // 返回
 }
 
 // same as above, for sequential indices starting at node_idx
@@ -700,7 +700,7 @@ static inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, int node_idx
     assert(num_ops < 32);
 
     if (node_idx + num_ops > cgraph->n_nodes) {
-        return false;
+        return false;  // 返回
     }
 
     int idxs[32];
@@ -708,7 +708,7 @@ static inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, int node_idx
         idxs[i] = node_idx + i;
     }
 
-    return ggml_can_fuse_ext(cgraph, idxs, ops, num_ops);
+    return ggml_can_fuse_ext(cgraph, idxs, ops, num_ops);  // ggml_can_fuse_ext
 }
 
 GGML_API bool ggml_can_fuse_subgraph_ext(const struct ggml_cgraph * cgraph,
@@ -729,7 +729,7 @@ static inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph * cgraph,
                                           int                        num_outputs) {
     GGML_ASSERT(count < 32);
     if (node_idx + count > cgraph->n_nodes) {
-        return false;
+        return false;  // 返回
     }
 
     int idxs[32];
@@ -738,28 +738,28 @@ static inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph * cgraph,
         idxs[i] = node_idx + i;
     }
 
-    return ggml_can_fuse_subgraph_ext(cgraph, idxs, count, ops, outputs, num_outputs);
+    return ggml_can_fuse_subgraph_ext(cgraph, idxs, count, ops, outputs, num_outputs);  // ggml_can_fuse_subgraph_ext
 }
 
-#ifdef __cplusplus
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束
 
-#ifdef __cplusplus
-#include <array>
-#include <initializer_list>
-#include <vector>
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+#include <array>  // 引入 array 头文件
+#include <initializer_list>  // 引入 initializer_list 头文件
+#include <vector>  // 引入 vector 头文件
 
 // nicer C++ syntax for ggml_can_fuse
 inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops) {
-    return ggml_can_fuse(cgraph, node_idx, ops.begin(), (int)ops.size());
+    return ggml_can_fuse(cgraph, node_idx, ops.begin(), (int)ops.size());  // ggml_can_fuse
 }
 
 inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph *          cgraph,
                                    int                                 start_idx,
                                    std::initializer_list<enum ggml_op> ops,
                                    std::initializer_list<int>          outputs = {}) {
-    return ggml_can_fuse_subgraph(cgraph, start_idx, ops.size(), ops.begin(), outputs.begin(), outputs.size());
+    return ggml_can_fuse_subgraph(cgraph, start_idx, ops.size(), ops.begin(), outputs.begin(), outputs.size());  // ggml_can_fuse_subgraph
 }
 
 // Return true if the edges in the graph match expectations.
@@ -771,13 +771,13 @@ inline bool ggml_check_edges(const struct ggml_cgraph *                cgraph,
         int src_idx  = edge[1];
         int src_node = edge[2];
         if (cgraph->nodes[start_idx + dst_node]->src[src_idx] != cgraph->nodes[start_idx + src_node]) {
-            return false;
+            return false;  // 返回
         }
     }
-    return true;
+    return true;  // 返回
 }
 
 // expose GGUF internals for test code
 GGML_API size_t gguf_type_size(enum gguf_type type);
 GGML_API void gguf_write_to_buf(const struct gguf_context * ctx, std::vector<int8_t> & buf, bool only_meta);
-#endif // __cplusplus
+#endif // __cplusplus  // 条件编译结束

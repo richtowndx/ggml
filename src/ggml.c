@@ -1,101 +1,101 @@
-#define _CRT_SECURE_NO_DEPRECATE // Disables "unsafe" warnings on Windows
-#define _USE_MATH_DEFINES // For M_PI on MSVC
+#define _CRT_SECURE_NO_DEPRECATE // Disables "unsafe" warnings on Windows  // 宏定义 _CRT_SECURE_NO_DEPRECATE
+#define _USE_MATH_DEFINES // For M_PI on MSVC  // 宏定义 _USE_MATH_DEFINES
 
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "ggml-threading.h"
-#include "ggml-cpu.h"
-#include "ggml.h"
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-threading.h"  // 引入 ggml-threading.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
 
 // FIXME: required here for quantization functions
-#include "ggml-quants.h"
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
 
-#ifdef GGML_USE_CPU_HBM
-#include <hbwmalloc.h>
-#endif
+#ifdef GGML_USE_CPU_HBM  // 如果定义了 GGML_USE_CPU_HBM 则编译
+#include <hbwmalloc.h>  // 引入 hbwmalloc.h 头文件
+#endif  // 条件编译结束
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#include <malloc.h> // using malloc.h with MSC/MINGW
-#elif !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__)
-#include <alloca.h>
-#endif
+#if defined(_MSC_VER) || defined(__MINGW32__)  // 条件编译
+#include <malloc.h> // using malloc.h with MSC/MINGW  // 引入 malloc.h 头文件
+#elif !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__)  // 否则如果
+#include <alloca.h>  // 引入 alloca.h 头文件
+#endif  // 条件编译结束
 
-#include <assert.h>
-#include <errno.h>
-#include <time.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <float.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <signal.h>
-#if defined(__gnu_linux__)
-#include <syscall.h>
-#endif
+#include <assert.h>  // 引入 assert.h 头文件
+#include <errno.h>  // 引入 errno.h 头文件
+#include <time.h>  // 引入 time.h 头文件
+#include <math.h>  // 引入 math.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
+#include <string.h>  // 引入 string.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
+#include <inttypes.h>  // 引入 inttypes.h 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <float.h>  // 引入 float.h 头文件
+#include <limits.h>  // 引入 limits.h 头文件
+#include <stdarg.h>  // 引入 stdarg.h 头文件
+#include <signal.h>  // 引入 signal.h 头文件
+#if defined(__gnu_linux__)  // 条件编译
+#include <syscall.h>  // 引入 syscall.h 头文件
+#endif  // 条件编译结束
 
-#if defined(__APPLE__)
-#include <unistd.h>
-#include <mach/mach.h>
-#include <TargetConditionals.h>
-#endif
+#if defined(__APPLE__)  // 条件编译
+#include <unistd.h>  // 引入 unistd.h 头文件
+#include <mach/mach.h>  // 引入 mach/mach.h 头文件
+#include <TargetConditionals.h>  // 引入 TargetConditionals.h 头文件
+#endif  // 条件编译结束
 
-#if defined(_WIN32)
-#define WIN32_LEAN_AND_MEAN
-#ifndef NOMINMAX
-    #define NOMINMAX
-#endif
-#include <windows.h>
-#endif
+#if defined(_WIN32)  // 条件编译
+#define WIN32_LEAN_AND_MEAN  // 宏定义 WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX  // 如果未定义 NOMINMAX 则编译
+    #define NOMINMAX  // 宏定义 NOMINMAX
+#endif  // 条件编译结束
+#include <windows.h>  // 引入 windows.h 头文件
+#endif  // 条件编译结束
 
-#define UNUSED GGML_UNUSED
+#define UNUSED GGML_UNUSED  // 宏定义 UNUSED
 
 uint64_t ggml_graph_next_uid(void) {
-#ifdef _MSC_VER
-#if defined(_WIN32)
+#ifdef _MSC_VER  // 如果定义了 _MSC_VER 则编译
+#if defined(_WIN32)  // 条件编译
     static volatile LONG counter = 1;
     return (uint64_t) InterlockedIncrement(&counter) - 1;
-#else
+#else  // 否则
     static volatile long long counter = 1;
     return (uint64_t) _InterlockedIncrement64(&counter) - 1;
-#endif
-#else
+#endif  // 条件编译结束
+#else  // 否则
     static uint64_t counter = 1;
-    return __atomic_fetch_add(&counter, 1, __ATOMIC_RELAXED);
-#endif
+    return __atomic_fetch_add(&counter, 1, __ATOMIC_RELAXED);  // __atomic_fetch_add
+#endif  // 条件编译结束
 }
 
 // Needed for ggml_fp32_to_bf16_row()
-#if defined(__AVX512BF16__)
-#if defined(_MSC_VER)
-#define m512i(p) p
-#else
-#include <immintrin.h>
-#define m512i(p) (__m512i)(p)
-#endif // defined(_MSC_VER)
-#endif // defined(__AVX512BF16__)
+#if defined(__AVX512BF16__)  // 条件编译
+#if defined(_MSC_VER)  // 条件编译
+#define m512i(p) p  // 宏定义 m512i
+#else  // 否则
+#include <immintrin.h>  // 引入 immintrin.h 头文件
+#define m512i(p) (__m512i)(p)  // 宏定义 m512i
+#endif // defined(_MSC_VER)  // 条件编译结束
+#endif // defined(__AVX512BF16__)  // 条件编译结束
 
 #if defined(__linux__) || \
     defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
     (defined(__APPLE__) && !TARGET_OS_TV && !TARGET_OS_WATCH)
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#if defined(__linux__)
-#include <sys/prctl.h>
-#endif
+#include <unistd.h>  // 引入 unistd.h 头文件
+#include <sys/types.h>  // 引入 sys/types.h 头文件
+#include <sys/stat.h>  // 引入 sys/stat.h 头文件
+#include <sys/wait.h>  // 引入 sys/wait.h 头文件
+#if defined(__linux__)  // 条件编译
+#include <sys/prctl.h>  // 引入 sys/prctl.h 头文件
+#endif  // 条件编译结束
 
-#if defined(__ANDROID__)
-#include <unwind.h>
-#include <dlfcn.h>
-#include <stdio.h>
+#if defined(__ANDROID__)  // 条件编译
+#include <unwind.h>  // 引入 unwind.h 头文件
+#include <dlfcn.h>  // 引入 dlfcn.h 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
 
-struct backtrace_state {
+struct backtrace_state {  // 结构体定义
     void ** current;
     void ** end;
 };
@@ -105,19 +105,19 @@ static _Unwind_Reason_Code unwind_callback(struct _Unwind_Context* context, void
     uintptr_t pc = _Unwind_GetIP(context);
     if (pc) {
         if (state->current == state->end) {
-            return _URC_END_OF_STACK;
+            return _URC_END_OF_STACK;  // 返回
         } else {
             *state->current++ = (void*)pc;
         }
     }
-    return _URC_NO_REASON;
+    return _URC_NO_REASON;  // 返回
 }
 
 static void ggml_print_backtrace_symbols(void) {
     const int max = 100;
     void* buffer[max];
 
-    struct backtrace_state state = {buffer, buffer + max};
+    struct backtrace_state state = {buffer, buffer + max};  // 结构体定义
     _Unwind_Backtrace(unwind_callback, &state);
 
     int count = state.current - buffer;
@@ -134,32 +134,32 @@ static void ggml_print_backtrace_symbols(void) {
         fprintf(stderr, "%d: %p %s\n", idx, addr, symbol);
     }
 }
-#elif defined(__linux__) && defined(__GLIBC__)
-#include <execinfo.h>
+#elif defined(__linux__) && defined(__GLIBC__)  // 否则如果
+#include <execinfo.h>  // 引入 execinfo.h 头文件
 static void ggml_print_backtrace_symbols(void) {
     void * trace[100];
     int nptrs = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
     backtrace_symbols_fd(trace, nptrs, STDERR_FILENO);
 }
-#elif defined(__APPLE__)
-#include <execinfo.h>
+#elif defined(__APPLE__)  // 否则如果
+#include <execinfo.h>  // 引入 execinfo.h 头文件
 static void ggml_print_backtrace_symbols(void) {
     void * trace[100];
     int nptrs = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
     backtrace_symbols_fd(trace, nptrs, STDERR_FILENO);
 }
-#else
+#else  // 否则
 static void ggml_print_backtrace_symbols(void) {
     // platform not supported
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_print_backtrace(void) {
     const char * GGML_NO_BACKTRACE = getenv("GGML_NO_BACKTRACE");
     if (GGML_NO_BACKTRACE) {
-        return;
+        return;  // 返回
     }
-#if defined(__APPLE__)
+#if defined(__APPLE__)  // 条件编译
     // On macOS, fork+debugger attachment is problematic due to:
     // 1. libdispatch "poisons" forked child processes
     // 2. lldb has issues attaching to parent from forked child
@@ -170,10 +170,10 @@ void ggml_print_backtrace(void) {
         fprintf(stderr, "WARNING: GGML_BACKTRACE_LLDB may cause native MacOS Terminal.app to crash.\n");
         fprintf(stderr, "See: https://github.com/ggml-org/llama.cpp/pull/17869\n");
         ggml_print_backtrace_symbols();
-        return;
+        return;  // 返回
     }
-#endif
-#if defined(__linux__)
+#endif  // 条件编译结束
+#if defined(__linux__)  // 条件编译
     FILE * f = fopen("/proc/self/status", "r");
     size_t size = 0;
     char * line = NULL;
@@ -184,30 +184,30 @@ void ggml_print_backtrace(void) {
             // Already being debugged, and the breakpoint is the later abort()
             free(line);
             fclose(f);
-            return;
+            return;  // 返回
         }
     }
     free(line);
     fclose(f);
     int lock[2] = { -1, -1 };
     (void) !pipe(lock); // Don't start gdb until after PR_SET_PTRACER
-#endif
+#endif  // 条件编译结束
     const int parent_pid = getpid();
     const int child_pid = fork();
     if (child_pid < 0) { // error
-#if defined(__linux__)
+#if defined(__linux__)  // 条件编译
         close(lock[1]);
         close(lock[0]);
-#endif
-        return;
+#endif  // 条件编译结束
+        return;  // 返回
     } else if (child_pid == 0) { // child
         char attach[32];
         snprintf(attach, sizeof(attach), "attach %d", parent_pid);
-#if defined(__linux__)
+#if defined(__linux__)  // 条件编译
         close(lock[1]);
         (void) !read(lock[0], lock, 1);
         close(lock[0]);
-#endif
+#endif  // 条件编译结束
         // try gdb
         execlp("gdb", "gdb", "--batch",
             "-ex", "set style enabled on",
@@ -226,19 +226,19 @@ void ggml_print_backtrace(void) {
         ggml_print_backtrace_symbols();
         _Exit(0);
     } else { // parent
-#if defined(__linux__)
+#if defined(__linux__)  // 条件编译
         prctl(PR_SET_PTRACER, child_pid);
         close(lock[1]);
         close(lock[0]);
-#endif
+#endif  // 条件编译结束
         waitpid(child_pid, NULL, 0);
     }
 }
-#else
+#else  // 否则
 void ggml_print_backtrace(void) {
     // platform not supported
 }
-#endif
+#endif  // 条件编译结束
 
 static ggml_abort_callback_t g_abort_callback = NULL;
 
@@ -246,7 +246,7 @@ static ggml_abort_callback_t g_abort_callback = NULL;
 GGML_API ggml_abort_callback_t ggml_set_abort_callback(ggml_abort_callback_t callback) {
     ggml_abort_callback_t ret_val = g_abort_callback;
     g_abort_callback = callback;
-    return ret_val;
+    return ret_val;  // 返回
 }
 
 void ggml_abort(const char * file, int line, const char * fmt, ...) {
@@ -277,7 +277,7 @@ void ggml_abort(const char * file, int line, const char * fmt, ...) {
 // logging
 //
 
-struct ggml_logger_state {
+struct ggml_logger_state {  // 结构体定义
     ggml_log_callback log_callback;
     void * log_callback_user_data;
 };
@@ -285,7 +285,7 @@ static struct ggml_logger_state g_logger_state = {ggml_log_callback_default, NUL
 
 static void ggml_log_internal_v(enum ggml_log_level level, const char * format, va_list args) {
     if (format == NULL) {
-        return;
+        return;  // 返回
     }
     va_list args_copy;
     va_copy(args_copy, args);
@@ -321,31 +321,31 @@ void ggml_log_callback_default(enum ggml_log_level level, const char * text, voi
 // end of logging block
 //
 
-#ifdef GGML_USE_ACCELERATE
+#ifdef GGML_USE_ACCELERATE  // 如果定义了 GGML_USE_ACCELERATE 则编译
 // uncomment to use vDSP for soft max computation
 // note: not sure if it is actually faster
 //#define GGML_SOFT_MAX_ACCELERATE
-#endif
+#endif  // 条件编译结束
 
 
 void * ggml_aligned_malloc(size_t size) {
-#if defined(__s390x__)
+#if defined(__s390x__)  // 条件编译
     const int alignment = 256;
-#else
+#else  // 否则
     const int alignment = 64;
-#endif
+#endif  // 条件编译结束
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-    return _aligned_malloc(size, alignment);
-#else
+#if defined(_MSC_VER) || defined(__MINGW32__)  // 条件编译
+    return _aligned_malloc(size, alignment);  // _aligned_malloc
+#else  // 否则
     if (size == 0) {
         GGML_LOG_WARN("Behavior may be unexpected when allocating 0 bytes for ggml_aligned_malloc!\n");
-        return NULL;
+        return NULL;  // 返回
     }
     void * aligned_memory = NULL;
-  #ifdef GGML_USE_CPU_HBM
+  #ifdef GGML_USE_CPU_HBM  // 如果定义了 GGML_USE_CPU_HBM 则编译
     int result = hbw_posix_memalign(&aligned_memory, alignment, size);
-  #elif TARGET_OS_OSX
+  #elif TARGET_OS_OSX  // 否则如果
     GGML_UNUSED(alignment);
     kern_return_t alloc_status = vm_allocate((vm_map_t) mach_task_self(), (vm_address_t *) &aligned_memory, size, VM_FLAGS_ANYWHERE);
     int result = EFAULT;
@@ -363,9 +363,9 @@ void * ggml_aligned_malloc(size_t size) {
             result = EFAULT;
             break;
     }
-  #else
+  #else  // 否则
     int result = posix_memalign(&aligned_memory, alignment, size);
-  #endif
+  #endif  // 条件编译结束
     if (result != 0) {
         // Handle allocation failure
         const char *error_desc = "unknown allocation error";
@@ -378,61 +378,61 @@ void * ggml_aligned_malloc(size_t size) {
                 break;
         }
         GGML_LOG_ERROR("%s: %s (attempted to allocate %6.2f MB)\n", __func__, error_desc, size/(1024.0*1024.0));
-        return NULL;
+        return NULL;  // 返回
     }
-    return aligned_memory;
-#endif
+    return aligned_memory;  // 返回
+#endif  // 条件编译结束
 }
 
 void ggml_aligned_free(void * ptr, size_t size) {
     GGML_UNUSED(size);
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(_MSC_VER) || defined(__MINGW32__)  // 条件编译
     _aligned_free(ptr);
-#elif GGML_USE_CPU_HBM
+#elif GGML_USE_CPU_HBM  // 否则如果
     if (ptr != NULL) {
         hbw_free(ptr);
     }
-#elif TARGET_OS_OSX
+#elif TARGET_OS_OSX  // 否则如果
     if (ptr != NULL) {
         vm_deallocate((vm_map_t)mach_task_self(), (vm_address_t)ptr, size);
     }
-#else
+#else  // 否则
     free(ptr);
-#endif
+#endif  // 条件编译结束
 }
 
 
 inline static void * ggml_malloc(size_t size) {
     if (size == 0) {
         GGML_LOG_WARN("Behavior may be unexpected when allocating 0 bytes for ggml_malloc!\n");
-        return NULL;
+        return NULL;  // 返回
     }
     void * result = malloc(size);
     if (result == NULL) {
         GGML_LOG_ERROR("%s: failed to allocate %6.2f MB\n", __func__, size/(1024.0*1024.0));
         GGML_ABORT("fatal error");
     }
-    return result;
+    return result;  // 返回
 }
 
 // calloc
 inline static void * ggml_calloc(size_t num, size_t size) {
     if (num == 0 || size == 0) {
         GGML_LOG_WARN("Behavior may be unexpected when allocating 0 bytes for ggml_calloc!\n");
-        return NULL;
+        return NULL;  // 返回
     }
     void * result = calloc(num, size);
     if (result == NULL) {
         GGML_LOG_ERROR("%s: failed to allocate %6.2f MB\n", __func__, size/(1024.0*1024.0));
         GGML_ABORT("fatal error");
     }
-    return result;
+    return result;  // 返回
 }
 
-#define GGML_MALLOC(size)      ggml_malloc(size)
-#define GGML_CALLOC(num, size) ggml_calloc(num, size)
+#define GGML_MALLOC(size)      ggml_malloc(size)  // 宏定义 GGML_MALLOC
+#define GGML_CALLOC(num, size) ggml_calloc(num, size)  // 宏定义 GGML_CALLOC
 
-#define GGML_FREE(ptr) free(ptr)
+#define GGML_FREE(ptr) free(ptr)  // 宏定义 GGML_FREE
 
 const char * ggml_status_to_string(enum ggml_status status) {
     switch (status) {
@@ -442,27 +442,27 @@ const char * ggml_status_to_string(enum ggml_status status) {
         case GGML_STATUS_ABORTED:      return "GGML status: warning (operation aborted)";
     }
 
-    return "GGML status: unknown";
+    return "GGML status: unknown";  // 返回
 }
 
 float ggml_fp16_to_fp32(ggml_fp16_t x) {
-#define ggml_fp16_to_fp32 do_not_use__ggml_fp16_to_fp32__in_ggml
-    return GGML_FP16_TO_FP32(x);
+#define ggml_fp16_to_fp32 do_not_use__ggml_fp16_to_fp32__in_ggml  // 宏定义 ggml_fp16_to_fp32
+    return GGML_FP16_TO_FP32(x);  // GGML_FP16_TO_FP32
 }
 
 ggml_fp16_t ggml_fp32_to_fp16(float x) {
-#define ggml_fp32_to_fp16 do_not_use__ggml_fp32_to_fp16__in_ggml
-    return GGML_FP32_TO_FP16(x);
+#define ggml_fp32_to_fp16 do_not_use__ggml_fp32_to_fp16__in_ggml  // 宏定义 ggml_fp32_to_fp16
+    return GGML_FP32_TO_FP16(x);  // GGML_FP32_TO_FP16
 }
 
 float ggml_bf16_to_fp32(ggml_bf16_t x) {
-#define ggml_bf16_to_fp32 do_not_use__ggml_bf16_to_fp32__in_ggml
-    return GGML_BF16_TO_FP32(x);  // it just left shifts
+#define ggml_bf16_to_fp32 do_not_use__ggml_bf16_to_fp32__in_ggml  // 宏定义 ggml_bf16_to_fp32
+    return GGML_BF16_TO_FP32(x);  // it just left shifts  // GGML_BF16_TO_FP32
 }
 
 ggml_bf16_t ggml_fp32_to_bf16(float x) {
-#define ggml_fp32_to_bf16 do_not_use__ggml_fp32_to_bf16__in_ggml
-    return GGML_FP32_TO_BF16(x);
+#define ggml_fp32_to_bf16 do_not_use__ggml_fp32_to_bf16__in_ggml  // 宏定义 ggml_fp32_to_bf16
+    return GGML_FP32_TO_BF16(x);  // GGML_FP32_TO_BF16
 }
 
 void ggml_fp16_to_fp32_row(const ggml_fp16_t * x, float * y, int64_t n) {
@@ -493,7 +493,7 @@ void ggml_fp32_to_bf16_row_ref(const float * x, ggml_bf16_t * y, int64_t n) {
 
 void ggml_fp32_to_bf16_row(const float * x, ggml_bf16_t * y, int64_t n) {
   int i = 0;
-#if defined(__AVX512BF16__)
+#if defined(__AVX512BF16__)  // 条件编译
   // subnormals are flushed to zero on this platform
   for (; i + 32 <= n; i += 32) {
         _mm512_storeu_si512(
@@ -501,29 +501,29 @@ void ggml_fp32_to_bf16_row(const float * x, ggml_bf16_t * y, int64_t n) {
             m512i(_mm512_cvtne2ps_pbh(_mm512_loadu_ps(x + i + 16),
                                 _mm512_loadu_ps(x + i))));
   }
-#endif
+#endif  // 条件编译结束
     for (; i < n; i++) {
         y[i] = GGML_FP32_TO_BF16(x[i]);
     }
 }
 
 bool ggml_guid_matches(ggml_guid_t guid_a, ggml_guid_t guid_b) {
-    return memcmp(guid_a, guid_b, sizeof(ggml_guid)) == 0;
+    return memcmp(guid_a, guid_b, sizeof(ggml_guid)) == 0;  // memcmp
 }
 
 const char * ggml_version(void) {
-    return GGML_VERSION;
+    return GGML_VERSION;  // 返回
 }
 
 const char * ggml_commit(void) {
-    return GGML_COMMIT;
+    return GGML_COMMIT;  // 返回
 }
 
 //
 // timing
 //
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(_MSC_VER) || defined(__MINGW32__)  // 条件编译
 static int64_t timer_freq, timer_start;
 void ggml_time_init(void) {
     LARGE_INTEGER t;
@@ -546,7 +546,7 @@ int64_t ggml_time_us(void) {
     QueryPerformanceCounter(&t);
     return ((t.QuadPart-timer_start) * 1000000) / timer_freq;
 }
-#else
+#else  // 否则
 void ggml_time_init(void) {}
 int64_t ggml_time_ms(void) {
     struct timespec ts;
@@ -559,26 +559,26 @@ int64_t ggml_time_us(void) {
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (int64_t)ts.tv_sec*1000000 + (int64_t)ts.tv_nsec/1000;
 }
-#endif
+#endif  // 条件编译结束
 
 int64_t ggml_cycles(void) {
-    return clock();
+    return clock();  // clock
 }
 
 int64_t ggml_cycles_per_ms(void) {
-    return CLOCKS_PER_SEC/1000;
+    return CLOCKS_PER_SEC/1000;  // 返回
 }
 
 //
 // cross-platform UTF-8 file paths
 //
 
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
 static wchar_t * ggml_mbstowcs(const char * mbs) {
     int wlen = MultiByteToWideChar(CP_UTF8, 0, mbs, -1, NULL, 0);
     if (!wlen) {
         errno = EINVAL;
-        return NULL;
+        return NULL;  // 返回
     }
 
     wchar_t * wbuf = GGML_MALLOC(wlen * sizeof(wchar_t));
@@ -586,15 +586,15 @@ static wchar_t * ggml_mbstowcs(const char * mbs) {
     if (!wlen) {
         GGML_FREE(wbuf);
         errno = EINVAL;
-        return NULL;
+        return NULL;  // 返回
     }
 
-    return wbuf;
+    return wbuf;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 FILE * ggml_fopen(const char * fname, const char * mode) {
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
     FILE * file = NULL;
 
     // convert fname (UTF-8)
@@ -614,10 +614,10 @@ FILE * ggml_fopen(const char * fname, const char * mode) {
         GGML_FREE(wmode);
     }
 
-    return file;
-#else
-    return fopen(fname, mode);
-#endif
+    return file;  // 返回
+#else  // 否则
+    return fopen(fname, mode);  // fopen
+#endif  // 条件编译结束
 
 }
 
@@ -932,14 +932,14 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
 const struct ggml_type_traits * ggml_get_type_traits(enum ggml_type type) {
     assert(type >= 0);
     assert(type < GGML_TYPE_COUNT);
-    return &type_traits[type];
+    return &type_traits[type];  // 返回
 }
 
 //
 // ggml object
 //
 
-struct ggml_object {
+struct ggml_object {  // 结构体定义
     size_t offs;
     size_t size;
 
@@ -956,7 +956,7 @@ static const size_t GGML_OBJECT_SIZE = sizeof(struct ggml_object);
 // ggml context
 //
 
-struct ggml_context {
+struct ggml_context {  // 结构体定义
     size_t mem_size;
     void * mem_buffer;
     bool   mem_buffer_owned;
@@ -1240,7 +1240,7 @@ static_assert(sizeof(struct ggml_tensor)%GGML_MEM_ALIGN == 0, "ggml_tensor size 
 ////////////////////////////////////////////////////////////////////////////////
 
 void ggml_print_object(const struct ggml_object * obj) {
-    GGML_LOG_INFO(" - ggml_object: type = %d, offset = %zu, size = %zu, next = %p\n",
+    GGML_LOG_INFO(" - ggml_object: type = %d, offset = %zu, size = %zu, next = %p\n",  // 打印信息日志
             obj->type, obj->offs, obj->size, (const void *) obj->next);
 }
 
@@ -1260,19 +1260,19 @@ void ggml_print_objects(const struct ggml_context * ctx) {
 int64_t ggml_nelements(const struct ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[0]*tensor->ne[1]*tensor->ne[2]*tensor->ne[3];
+    return tensor->ne[0]*tensor->ne[1]*tensor->ne[2]*tensor->ne[3];  // 返回
 }
 
 int64_t ggml_nrows(const struct ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[1]*tensor->ne[2]*tensor->ne[3];
+    return tensor->ne[1]*tensor->ne[2]*tensor->ne[3];  // 返回
 }
 
 size_t ggml_nbytes(const struct ggml_tensor * tensor) {
     for (int i = 0; i < GGML_MAX_DIMS; ++i) {
         if (tensor->ne[i] <= 0) {
-            return 0;
+            return 0;  // 返回
         }
     }
 
@@ -1291,30 +1291,30 @@ size_t ggml_nbytes(const struct ggml_tensor * tensor) {
         }
     }
 
-    return nbytes;
+    return nbytes;  // 返回
 }
 
 size_t ggml_nbytes_pad(const struct ggml_tensor * tensor) {
-    return GGML_PAD(ggml_nbytes(tensor), GGML_MEM_ALIGN);
+    return GGML_PAD(ggml_nbytes(tensor), GGML_MEM_ALIGN);  // GGML_PAD
 }
 
 int64_t ggml_blck_size(enum ggml_type type) {
     assert(type >= 0);
     assert(type < GGML_TYPE_COUNT);
-    return type_traits[type].blck_size;
+    return type_traits[type].blck_size;  // 返回
 }
 
 size_t ggml_type_size(enum ggml_type type) {
     assert(type >= 0);
     assert(type < GGML_TYPE_COUNT);
-    return type_traits[type].type_size;
+    return type_traits[type].type_size;  // 返回
 }
 
 size_t ggml_row_size(enum ggml_type type, int64_t ne) {
     assert(type >= 0);
     assert(type < GGML_TYPE_COUNT);
     assert(ne % ggml_blck_size(type) == 0);
-    return ggml_type_size(type)*ne/ggml_blck_size(type);
+    return ggml_type_size(type)*ne/ggml_blck_size(type);  // ggml_type_size
 }
 
 double ggml_type_sizef(enum ggml_type type) {
@@ -1326,79 +1326,79 @@ double ggml_type_sizef(enum ggml_type type) {
 const char * ggml_type_name(enum ggml_type type) {
     assert(type >= 0);
     assert(type < GGML_TYPE_COUNT);
-    return type_traits[type].type_name;
+    return type_traits[type].type_name;  // 返回
 }
 
 bool ggml_is_quantized(enum ggml_type type) {
     assert(type >= 0);
     assert(type < GGML_TYPE_COUNT);
-    return type_traits[type].is_quantized;
+    return type_traits[type].is_quantized;  // 返回
 }
 
 const char * ggml_op_name(enum ggml_op op) {
-    return GGML_OP_NAME[op];
+    return GGML_OP_NAME[op];  // 返回
 }
 
 const char * ggml_op_symbol(enum ggml_op op) {
-    return GGML_OP_SYMBOL[op];
+    return GGML_OP_SYMBOL[op];  // 返回
 }
 
 const char * ggml_unary_op_name(enum ggml_unary_op op) {
-    return GGML_UNARY_OP_NAME[op];
+    return GGML_UNARY_OP_NAME[op];  // 返回
 }
 
 const char * ggml_glu_op_name(enum ggml_glu_op op) {
-    return GGML_GLU_OP_NAME[op];
+    return GGML_GLU_OP_NAME[op];  // 返回
 }
 
 const char * ggml_op_desc(const struct ggml_tensor * t) {
     if (t->op == GGML_OP_UNARY) {
         enum ggml_unary_op uop = ggml_get_unary_op(t);
-        return ggml_unary_op_name(uop);
+        return ggml_unary_op_name(uop);  // ggml_unary_op_name
     }
     if (t->op == GGML_OP_GLU) {
         enum ggml_glu_op gop = ggml_get_glu_op(t);
-        return ggml_glu_op_name(gop);
+        return ggml_glu_op_name(gop);  // ggml_glu_op_name
     }
-    return ggml_op_name(t->op);
+    return ggml_op_name(t->op);  // ggml_op_name
 }
 
 size_t ggml_element_size(const struct ggml_tensor * tensor) {
-    return ggml_type_size(tensor->type);
+    return ggml_type_size(tensor->type);  // ggml_type_size
 }
 
 bool ggml_is_scalar(const struct ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[0] == 1 && tensor->ne[1] == 1 && tensor->ne[2] == 1 && tensor->ne[3] == 1;
+    return tensor->ne[0] == 1 && tensor->ne[1] == 1 && tensor->ne[2] == 1 && tensor->ne[3] == 1;  // 返回
 }
 
 bool ggml_is_vector(const struct ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[1] == 1 && tensor->ne[2] == 1 && tensor->ne[3] == 1;
+    return tensor->ne[1] == 1 && tensor->ne[2] == 1 && tensor->ne[3] == 1;  // 返回
 }
 
 bool ggml_is_matrix(const struct ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->ne[2] == 1 && tensor->ne[3] == 1;
+    return tensor->ne[2] == 1 && tensor->ne[3] == 1;  // 返回
 }
 
 bool ggml_is_3d(const struct ggml_tensor * tensor) {
-    return tensor->ne[3] == 1;
+    return tensor->ne[3] == 1;  // 返回
 }
 
 int ggml_n_dims(const struct ggml_tensor * tensor) {
     for (int i = GGML_MAX_DIMS - 1; i >= 1; --i) {
         if (tensor->ne[i] > 1) {
-            return i + 1;
+            return i + 1;  // 返回
         }
     }
-    return 1;
+    return 1;  // 返回
 }
 
-enum ggml_type ggml_ftype_to_ggml_type(enum ggml_ftype ftype) {
+enum ggml_type ggml_ftype_to_ggml_type(enum ggml_ftype ftype) {  // 枚举定义
     enum ggml_type wtype = GGML_TYPE_COUNT;
 
     switch (ftype) {
@@ -1433,27 +1433,27 @@ enum ggml_type ggml_ftype_to_ggml_type(enum ggml_ftype ftype) {
 
     GGML_ASSERT(wtype != GGML_TYPE_COUNT);
 
-    return wtype;
+    return wtype;  // 返回
 }
 
 size_t ggml_tensor_overhead(void) {
-    return GGML_OBJECT_SIZE + GGML_TENSOR_SIZE;
+    return GGML_OBJECT_SIZE + GGML_TENSOR_SIZE;  // 返回
 }
 
 bool ggml_is_transposed(const struct ggml_tensor * tensor) {
-    return tensor->nb[0] > tensor->nb[1];
+    return tensor->nb[0] > tensor->nb[1];  // 返回
 }
 
 static bool ggml_is_contiguous_n(const struct ggml_tensor * tensor, int n) {
     size_t next_nb = ggml_type_size(tensor->type);
     if (tensor->ne[0] != ggml_blck_size(tensor->type) && tensor->nb[0] != next_nb) {
-        return false;
+        return false;  // 返回
     }
     next_nb *= tensor->ne[0]/ggml_blck_size(tensor->type);
     for (int i = 1; i < GGML_MAX_DIMS; i++) {
         if (i > n) {
             if (tensor->ne[i] != 1 && tensor->nb[i] != next_nb) {
-                return false;
+                return false;  // 返回
             }
             next_nb *= tensor->ne[i];
         } else {
@@ -1461,33 +1461,33 @@ static bool ggml_is_contiguous_n(const struct ggml_tensor * tensor, int n) {
             next_nb = tensor->ne[i]*tensor->nb[i];
         }
     }
-    return true;
+    return true;  // 返回
 }
 
 bool ggml_is_contiguous(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_0(tensor);
+    return ggml_is_contiguous_0(tensor);  // ggml_is_contiguous_0
 }
 
 bool ggml_is_contiguous_0(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_n(tensor, 0);
+    return ggml_is_contiguous_n(tensor, 0);  // ggml_is_contiguous_n
 }
 
 bool ggml_is_contiguous_1(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_n(tensor, 1);
+    return ggml_is_contiguous_n(tensor, 1);  // ggml_is_contiguous_n
 }
 
 bool ggml_is_contiguous_2(const struct ggml_tensor * tensor) {
-    return ggml_is_contiguous_n(tensor, 2);
+    return ggml_is_contiguous_n(tensor, 2);  // ggml_is_contiguous_n
 }
 
 bool ggml_is_contiguously_allocated(const struct ggml_tensor * tensor) {
-    return ggml_nbytes(tensor) == ggml_nelements(tensor) * ggml_type_size(tensor->type)/ggml_blck_size(tensor->type);
+    return ggml_nbytes(tensor) == ggml_nelements(tensor) * ggml_type_size(tensor->type)/ggml_blck_size(tensor->type);  // ggml_nbytes
 }
 
 bool ggml_is_permuted(const struct ggml_tensor * tensor) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return tensor->nb[0] > tensor->nb[1] || tensor->nb[1] > tensor->nb[2] || tensor->nb[2] > tensor->nb[3];
+    return tensor->nb[0] > tensor->nb[1] || tensor->nb[1] > tensor->nb[2] || tensor->nb[2] > tensor->nb[3];  // 返回
 }
 
 bool ggml_is_contiguous_channels(const struct ggml_tensor * tensor) {
@@ -1516,10 +1516,10 @@ bool ggml_is_empty(const struct ggml_tensor * tensor) {
     for (int i = 0; i < GGML_MAX_DIMS; ++i) {
         if (tensor->ne[i] == 0) {
             // empty if any dimension has no elements
-            return true;
+            return true;  // 返回
         }
     }
-    return false;
+    return false;  // 返回
 }
 
 bool ggml_are_same_shape(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
@@ -1543,14 +1543,14 @@ bool ggml_are_same_stride(const struct ggml_tensor * t0, const struct ggml_tenso
 }
 
 bool ggml_is_view(const struct ggml_tensor * t) {
-    return ggml_impl_is_view(t);
+    return ggml_impl_is_view(t);  // ggml_impl_is_view
 }
 
 // check if t1 can be represented as a repetition of t0
 bool ggml_can_repeat(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return ggml_is_empty(t0) ? ggml_is_empty(t1) :
+    return ggml_is_empty(t0) ? ggml_is_empty(t1) :  // ggml_is_empty
         (t1->ne[0]%t0->ne[0] == 0) &&
         (t1->ne[1]%t0->ne[1] == 0) &&
         (t1->ne[2]%t0->ne[2] == 0) &&
@@ -1569,7 +1569,7 @@ static inline bool ggml_can_repeat_rows(const struct ggml_tensor * t0, const str
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct ggml_context * ggml_init(struct ggml_init_params params) {
+struct ggml_context * ggml_init(struct ggml_init_params params) {  // 结构体定义
     static bool is_first_call = true;
 
     ggml_critical_section_start();
@@ -1608,12 +1608,12 @@ struct ggml_context * ggml_init(struct ggml_init_params params) {
 
     GGML_PRINT_DEBUG("%s: context initialized\n", __func__);
 
-    return ctx;
+    return ctx;  // 返回
 }
 
 void ggml_reset(struct ggml_context * ctx) {
     if (ctx == NULL) {
-        return;
+        return;  // 返回
     }
 
     ctx->n_objects     = 0;
@@ -1623,7 +1623,7 @@ void ggml_reset(struct ggml_context * ctx) {
 
 void ggml_free(struct ggml_context * ctx) {
     if (ctx == NULL) {
-        return;
+        return;  // 返回
     }
 
     if (ctx->mem_buffer_owned) {
@@ -1634,11 +1634,11 @@ void ggml_free(struct ggml_context * ctx) {
 }
 
 size_t ggml_used_mem(const struct ggml_context * ctx) {
-    return ctx->objects_end == NULL ? 0 : ctx->objects_end->offs + ctx->objects_end->size;
+    return ctx->objects_end == NULL ? 0 : ctx->objects_end->offs + ctx->objects_end->size;  // 返回
 }
 
 bool ggml_get_no_alloc(struct ggml_context * ctx) {
-    return ctx->no_alloc;
+    return ctx->no_alloc;  // 返回
 }
 
 void ggml_set_no_alloc(struct ggml_context * ctx, bool no_alloc) {
@@ -1646,11 +1646,11 @@ void ggml_set_no_alloc(struct ggml_context * ctx, bool no_alloc) {
 }
 
 void * ggml_get_mem_buffer(const struct ggml_context * ctx) {
-    return ctx->mem_buffer;
+    return ctx->mem_buffer;  // 返回
 }
 
 size_t ggml_get_mem_size(const struct ggml_context * ctx) {
-    return ctx->mem_size;
+    return ctx->mem_size;  // 返回
 }
 
 size_t ggml_get_max_tensor_size(const struct ggml_context * ctx) {
@@ -1661,7 +1661,7 @@ size_t ggml_get_max_tensor_size(const struct ggml_context * ctx) {
         max_size = MAX(max_size, bytes);
     }
 
-    return max_size;
+    return max_size;  // 返回
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1684,21 +1684,21 @@ static struct ggml_object * ggml_new_object(struct ggml_context * ctx, enum ggml
     // integer overflow checks
     if (cur_end > SIZE_MAX - size_needed) {
         GGML_LOG_WARN("%s: overflow detected in cur_end (%zu) + size_needed (%zu)\n", __func__, cur_end, size_needed);
-        return NULL;
+        return NULL;  // 返回
     }
     if (cur_end + size_needed > SIZE_MAX - GGML_OBJECT_SIZE) {
         GGML_LOG_WARN("%s: overflow detected in cur_end (%zu) + size_needed (%zu) + GGML_OBJECT_SIZE (%zu)\n", __func__,
                 cur_end, size_needed, (size_t) GGML_OBJECT_SIZE);
-        return NULL;
+        return NULL;  // 返回
     }
 
     if (cur_end + size_needed + GGML_OBJECT_SIZE > ctx->mem_size) {
         GGML_LOG_WARN("%s: not enough space in the context's memory pool (needed %zu, available %zu)\n",
                 __func__, cur_end + size_needed + GGML_OBJECT_SIZE, ctx->mem_size);
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         GGML_ABORT("not enough space in the context's memory pool");
-#endif
-        return NULL;
+#endif  // 条件编译结束
+        return NULL;  // 返回
     }
 
     *obj_new = (struct ggml_object) {
@@ -1721,7 +1721,7 @@ static struct ggml_object * ggml_new_object(struct ggml_context * ctx, enum ggml
 
     //printf("%s: inserted new object at %zu, size = %zu\n", __func__, cur_end, obj_new->size);
 
-    return obj_new;
+    return obj_new;  // 返回
 }
 
 static struct ggml_tensor * ggml_new_tensor_impl(
@@ -1799,7 +1799,7 @@ static struct ggml_tensor * ggml_new_tensor_impl(
 
     ctx->n_objects++;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_new_tensor(
@@ -1807,14 +1807,14 @@ struct ggml_tensor * ggml_new_tensor(
         enum   ggml_type      type,
         int                   n_dims,
         const int64_t       * ne) {
-    return ggml_new_tensor_impl(ctx, type, n_dims, ne, NULL, 0);
+    return ggml_new_tensor_impl(ctx, type, n_dims, ne, NULL, 0);  // ggml_new_tensor_impl
 }
 
 struct ggml_tensor * ggml_new_tensor_1d(
         struct ggml_context * ctx,
         enum   ggml_type      type,
         int64_t ne0) {
-    return ggml_new_tensor(ctx, type, 1, &ne0);
+    return ggml_new_tensor(ctx, type, 1, &ne0);  // ggml_new_tensor
 }
 
 struct ggml_tensor * ggml_new_tensor_2d(
@@ -1823,7 +1823,7 @@ struct ggml_tensor * ggml_new_tensor_2d(
         int64_t ne0,
         int64_t ne1) {
     const int64_t ne[2] = { ne0, ne1 };
-    return ggml_new_tensor(ctx, type, 2, ne);
+    return ggml_new_tensor(ctx, type, 2, ne);  // ggml_new_tensor
 }
 
 struct ggml_tensor * ggml_new_tensor_3d(
@@ -1833,7 +1833,7 @@ struct ggml_tensor * ggml_new_tensor_3d(
         int64_t ne1,
         int64_t ne2) {
     const int64_t ne[3] = { ne0, ne1, ne2 };
-    return ggml_new_tensor(ctx, type, 3, ne);
+    return ggml_new_tensor(ctx, type, 3, ne);  // ggml_new_tensor
 }
 
 struct ggml_tensor * ggml_new_tensor_4d(
@@ -1844,7 +1844,7 @@ struct ggml_tensor * ggml_new_tensor_4d(
         int64_t ne2,
         int64_t ne3) {
     const int64_t ne[4] = { ne0, ne1, ne2, ne3 };
-    return ggml_new_tensor(ctx, type, 4, ne);
+    return ggml_new_tensor(ctx, type, 4, ne);  // ggml_new_tensor
 }
 
 void * ggml_new_buffer(struct ggml_context * ctx, size_t nbytes) {
@@ -1853,8 +1853,8 @@ void * ggml_new_buffer(struct ggml_context * ctx, size_t nbytes) {
     return (uint8_t *)ctx->mem_buffer + obj->offs;
 }
 
-struct ggml_tensor * ggml_dup_tensor(struct ggml_context * ctx, const struct ggml_tensor * src) {
-    return ggml_new_tensor(ctx, src->type, GGML_MAX_DIMS, src->ne);
+struct ggml_tensor * ggml_dup_tensor(struct ggml_context * ctx, const struct ggml_tensor * src) {  // 结构体定义
+    return ggml_new_tensor(ctx, src->type, GGML_MAX_DIMS, src->ne);  // ggml_new_tensor
 }
 
 void ggml_unravel_index(const struct ggml_tensor * tensor, int64_t i, int64_t * i0, int64_t * i1, int64_t * i2, int64_t * i3) {
@@ -1882,7 +1882,7 @@ void ggml_unravel_index(const struct ggml_tensor * tensor, int64_t i, int64_t * 
 }
 
 void * ggml_get_data(const struct ggml_tensor * tensor) {
-    return tensor->data;
+    return tensor->data;  // 返回
 }
 
 float * ggml_get_data_f32(const struct ggml_tensor * tensor) {
@@ -1890,40 +1890,40 @@ float * ggml_get_data_f32(const struct ggml_tensor * tensor) {
     return (float *)(tensor->data);
 }
 
-enum ggml_unary_op ggml_get_unary_op(const struct ggml_tensor * tensor) {
+enum ggml_unary_op ggml_get_unary_op(const struct ggml_tensor * tensor) {  // 枚举定义
     GGML_ASSERT(tensor->op == GGML_OP_UNARY);
     return (enum ggml_unary_op) ggml_get_op_params_i32(tensor, 0);
 }
 
-enum ggml_glu_op ggml_get_glu_op(const struct ggml_tensor * tensor) {
+enum ggml_glu_op ggml_get_glu_op(const struct ggml_tensor * tensor) {  // 枚举定义
     GGML_ASSERT(tensor->op == GGML_OP_GLU);
     return (enum ggml_glu_op) ggml_get_op_params_i32(tensor, 0);
 }
 
 const char * ggml_get_name(const struct ggml_tensor * tensor) {
-    return tensor->name;
+    return tensor->name;  // 返回
 }
 
-struct ggml_tensor * ggml_set_name(struct ggml_tensor * tensor, const char * name) {
+struct ggml_tensor * ggml_set_name(struct ggml_tensor * tensor, const char * name) {  // 结构体定义
     size_t i;
     for (i = 0; i < sizeof(tensor->name) - 1 && name[i] != '\0'; i++) {
         tensor->name[i] = name[i];
     }
     tensor->name[i] = '\0';
-    return tensor;
+    return tensor;  // 返回
 }
 
-struct ggml_tensor * ggml_format_name(struct ggml_tensor * tensor, const char * fmt, ...) {
+struct ggml_tensor * ggml_format_name(struct ggml_tensor * tensor, const char * fmt, ...) {  // 结构体定义
     va_list args;
     va_start(args, fmt);
     vsnprintf(tensor->name, sizeof(tensor->name), fmt, args);
     va_end(args);
-    return tensor;
+    return tensor;  // 返回
 }
 
 struct ggml_tensor * ggml_view_tensor(
         struct ggml_context * ctx,
-        struct ggml_tensor  * src) {
+        struct ggml_tensor  * src) {  // 结构体定义
     struct ggml_tensor * result = ggml_new_tensor_impl(ctx, src->type, GGML_MAX_DIMS, src->ne, src, 0);
     ggml_format_name(result, "%s (view)", src->name);
 
@@ -1931,10 +1931,10 @@ struct ggml_tensor * ggml_view_tensor(
         result->nb[i] = src->nb[i];
     }
 
-    return result;
+    return result;  // 返回
 }
 
-struct ggml_tensor * ggml_get_first_tensor(const struct ggml_context * ctx) {
+struct ggml_tensor * ggml_get_first_tensor(const struct ggml_context * ctx) {  // 结构体定义
     struct ggml_object * obj = ctx->objects_begin;
 
     char * const mem_buffer = ctx->mem_buffer;
@@ -1947,10 +1947,10 @@ struct ggml_tensor * ggml_get_first_tensor(const struct ggml_context * ctx) {
         obj = obj->next;
     }
 
-    return NULL;
+    return NULL;  // 返回
 }
 
-struct ggml_tensor * ggml_get_next_tensor(const struct ggml_context * ctx, struct ggml_tensor * tensor) {
+struct ggml_tensor * ggml_get_next_tensor(const struct ggml_context * ctx, struct ggml_tensor * tensor) {  // 结构体定义
     struct ggml_object * obj = (struct ggml_object *) ((char *)tensor - GGML_OBJECT_SIZE);
     obj = obj->next;
 
@@ -1964,10 +1964,10 @@ struct ggml_tensor * ggml_get_next_tensor(const struct ggml_context * ctx, struc
         obj = obj->next;
     }
 
-    return NULL;
+    return NULL;  // 返回
 }
 
-struct ggml_tensor * ggml_get_tensor(struct ggml_context * ctx, const char * name) {
+struct ggml_tensor * ggml_get_tensor(struct ggml_context * ctx, const char * name) {  // 结构体定义
     struct ggml_object * obj = ctx->objects_begin;
 
     char * const mem_buffer = ctx->mem_buffer;
@@ -1976,14 +1976,14 @@ struct ggml_tensor * ggml_get_tensor(struct ggml_context * ctx, const char * nam
         if (obj->type == GGML_OBJECT_TYPE_TENSOR) {
             struct ggml_tensor * cur = (struct ggml_tensor *)(mem_buffer + obj->offs);
             if (strcmp(cur->name, name) == 0) {
-                return cur;
+                return cur;  // 返回
             }
         }
 
         obj = obj->next;
     }
 
-    return NULL;
+    return NULL;  // 返回
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1999,19 +1999,19 @@ static struct ggml_tensor * ggml_dup_impl(
     result->op     = GGML_OP_DUP;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_dup(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_dup_impl(ctx, a, false);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_dup_impl(ctx, a, false);  // ggml_dup_impl
 }
 
 struct ggml_tensor * ggml_dup_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_dup_impl(ctx, a, true);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_dup_impl(ctx, a, true);  // ggml_dup_impl
 }
 
 // ggml_add
@@ -2029,21 +2029,21 @@ static struct ggml_tensor * ggml_add_impl(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_add(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_add_impl(ctx, a, b, false);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_add_impl(ctx, a, b, false);  // ggml_add_impl
 }
 
 struct ggml_tensor * ggml_add_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_add_impl(ctx, a, b, true);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_add_impl(ctx, a, b, true);  // ggml_add_impl
 }
 
 // ggml_add_cast
@@ -2052,7 +2052,7 @@ static struct ggml_tensor * ggml_add_cast_impl(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         struct ggml_tensor  * b,
-        enum   ggml_type      type) {
+        enum   ggml_type      type) {  // 枚举定义
     // TODO: support less-strict constraint
     //       GGML_ASSERT(ggml_can_repeat(b, a));
     GGML_ASSERT(ggml_can_repeat_rows(b, a));
@@ -2068,22 +2068,22 @@ static struct ggml_tensor * ggml_add_cast_impl(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_add_cast(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         struct ggml_tensor  * b,
-        enum   ggml_type      type) {
-    return ggml_add_cast_impl(ctx, a, b, type);
+        enum   ggml_type      type) {  // 枚举定义
+    return ggml_add_cast_impl(ctx, a, b, type);  // ggml_add_cast_impl
 }
 
 struct ggml_tensor * ggml_add_id(
             struct ggml_context * ctx,
             struct ggml_tensor  * a,
             struct ggml_tensor  * b,
-            struct ggml_tensor  * ids) {
+            struct ggml_tensor  * ids) {  // 结构体定义
 
     GGML_ASSERT(a->ne[0] == b->ne[0]);
     GGML_ASSERT(a->ne[1] == ids->ne[0]);
@@ -2097,7 +2097,7 @@ struct ggml_tensor * ggml_add_id(
     result->src[1] = b;
     result->src[2] = ids;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_add1
@@ -2116,21 +2116,21 @@ static struct ggml_tensor * ggml_add1_impl(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_add1(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_add1_impl(ctx, a, b, false);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_add1_impl(ctx, a, b, false);  // ggml_add1_impl
 }
 
 struct ggml_tensor * ggml_add1_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_add1_impl(ctx, a, b, true);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_add1_impl(ctx, a, b, true);  // ggml_add1_impl
 }
 
 // ggml_acc
@@ -2158,7 +2158,7 @@ static struct ggml_tensor * ggml_acc_impl(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_acc(
@@ -2169,7 +2169,7 @@ struct ggml_tensor * ggml_acc(
         size_t                nb2,
         size_t                nb3,
         size_t                offset) {
-    return ggml_acc_impl(ctx, a, b, nb1, nb2, nb3, offset, false);
+    return ggml_acc_impl(ctx, a, b, nb1, nb2, nb3, offset, false);  // ggml_acc_impl
 }
 
 struct ggml_tensor * ggml_acc_inplace(
@@ -2180,7 +2180,7 @@ struct ggml_tensor * ggml_acc_inplace(
         size_t                nb2,
         size_t                nb3,
         size_t                offset) {
-    return ggml_acc_impl(ctx, a, b, nb1, nb2, nb3, offset, true);
+    return ggml_acc_impl(ctx, a, b, nb1, nb2, nb3, offset, true);  // ggml_acc_impl
 }
 
 // ggml_sub
@@ -2198,21 +2198,21 @@ static struct ggml_tensor * ggml_sub_impl(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_sub(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_sub_impl(ctx, a, b, false);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_sub_impl(ctx, a, b, false);  // ggml_sub_impl
 }
 
 struct ggml_tensor * ggml_sub_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_sub_impl(ctx, a, b, true);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_sub_impl(ctx, a, b, true);  // ggml_sub_impl
 }
 
 // ggml_mul
@@ -2230,21 +2230,21 @@ static struct ggml_tensor * ggml_mul_impl(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_mul(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_mul_impl(ctx, a, b, false);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_mul_impl(ctx, a, b, false);  // ggml_mul_impl
 }
 
 struct ggml_tensor * ggml_mul_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_mul_impl(ctx, a, b, true);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_mul_impl(ctx, a, b, true);  // ggml_mul_impl
 }
 
 // ggml_div
@@ -2262,21 +2262,21 @@ static struct ggml_tensor * ggml_div_impl(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_div(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_div_impl(ctx, a, b, false);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_div_impl(ctx, a, b, false);  // ggml_div_impl
 }
 
 struct ggml_tensor * ggml_div_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_div_impl(ctx, a, b, true);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_div_impl(ctx, a, b, true);  // ggml_div_impl
 }
 
 // ggml_sqr
@@ -2290,19 +2290,19 @@ static struct ggml_tensor * ggml_sqr_impl(
     result->op     = GGML_OP_SQR;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_sqr(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sqr_impl(ctx, a, false);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_sqr_impl(ctx, a, false);  // ggml_sqr_impl
 }
 
 struct ggml_tensor * ggml_sqr_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sqr_impl(ctx, a, true);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_sqr_impl(ctx, a, true);  // ggml_sqr_impl
 }
 
 // ggml_sqrt
@@ -2316,19 +2316,19 @@ static struct ggml_tensor * ggml_sqrt_impl(
     result->op     = GGML_OP_SQRT;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_sqrt(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sqrt_impl(ctx, a, false);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_sqrt_impl(ctx, a, false);  // ggml_sqrt_impl
 }
 
 struct ggml_tensor * ggml_sqrt_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sqrt_impl(ctx, a, true);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_sqrt_impl(ctx, a, true);  // ggml_sqrt_impl
 }
 
 // ggml_log
@@ -2342,43 +2342,43 @@ static struct ggml_tensor * ggml_log_impl(
     result->op     = GGML_OP_LOG;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_log(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_log_impl(ctx, a, false);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_log_impl(ctx, a, false);  // ggml_log_impl
 }
 
 struct ggml_tensor * ggml_log_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_log_impl(ctx, a, true);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_log_impl(ctx, a, true);  // ggml_log_impl
 }
 
 struct ggml_tensor * ggml_expm1(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_EXPM1);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_EXPM1);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_expm1_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXPM1);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXPM1);  // ggml_unary_inplace
 }
 
 struct ggml_tensor * ggml_softplus(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_SOFTPLUS);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_SOFTPLUS);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_softplus_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SOFTPLUS);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SOFTPLUS);  // ggml_unary_inplace
 }
 
 // ggml_sin
@@ -2392,19 +2392,19 @@ static struct ggml_tensor * ggml_sin_impl(
     result->op     = GGML_OP_SIN;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_sin(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sin_impl(ctx, a, false);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_sin_impl(ctx, a, false);  // ggml_sin_impl
 }
 
 struct ggml_tensor * ggml_sin_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_sin_impl(ctx, a, true);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_sin_impl(ctx, a, true);  // ggml_sin_impl
 }
 
 // ggml_cos
@@ -2418,39 +2418,39 @@ static struct ggml_tensor * ggml_cos_impl(
     result->op     = GGML_OP_COS;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_cos(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_cos_impl(ctx, a, false);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_cos_impl(ctx, a, false);  // ggml_cos_impl
 }
 
 struct ggml_tensor * ggml_cos_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_cos_impl(ctx, a, true);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_cos_impl(ctx, a, true);  // ggml_cos_impl
 }
 
 // ggml_sum
 
 struct ggml_tensor * ggml_sum(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+        struct ggml_tensor  * a) {  // 结构体定义
     struct ggml_tensor * result = ggml_new_tensor_1d(ctx, a->type, 1);
 
     result->op     = GGML_OP_SUM;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_sum_rows
 
 struct ggml_tensor * ggml_sum_rows(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+        struct ggml_tensor  * a) {  // 结构体定义
     int64_t ne[GGML_MAX_DIMS] = { 1 };
     for (int i = 1; i < GGML_MAX_DIMS; ++i) {
         ne[i] = a->ne[i];
@@ -2461,14 +2461,14 @@ struct ggml_tensor * ggml_sum_rows(
     result->op     = GGML_OP_SUM_ROWS;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_cumsum
 
 struct ggml_tensor * ggml_cumsum(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+        struct ggml_tensor  * a) {  // 结构体定义
     GGML_ASSERT(a->type == GGML_TYPE_F32);
 
     struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
@@ -2476,28 +2476,28 @@ struct ggml_tensor * ggml_cumsum(
     result->op     = GGML_OP_CUMSUM;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_mean
 
 struct ggml_tensor * ggml_mean(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+        struct ggml_tensor  * a) {  // 结构体定义
     int64_t ne[4] = { 1, a->ne[1], a->ne[2], a->ne[3] };
     struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
 
     result->op     = GGML_OP_MEAN;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_argmax
 
 struct ggml_tensor * ggml_argmax(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+        struct ggml_tensor  * a) {  // 结构体定义
     GGML_ASSERT(ggml_is_matrix(a));
     GGML_ASSERT(a->ne[0] <= INT32_MAX);
 
@@ -2506,7 +2506,7 @@ struct ggml_tensor * ggml_argmax(
     result->op     = GGML_OP_ARGMAX;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_count_equal
@@ -2514,7 +2514,7 @@ struct ggml_tensor * ggml_argmax(
 struct ggml_tensor * ggml_count_equal(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+        struct ggml_tensor  * b) {  // 结构体定义
     GGML_ASSERT(ggml_are_same_shape(a, b));
 
     struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I64, 1);
@@ -2523,7 +2523,7 @@ struct ggml_tensor * ggml_count_equal(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_repeat
@@ -2531,7 +2531,7 @@ struct ggml_tensor * ggml_count_equal(
 struct ggml_tensor * ggml_repeat(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+        struct ggml_tensor  * b) {  // 结构体定义
     GGML_ASSERT(ggml_can_repeat(a, b));
 
     struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, b->ne);
@@ -2539,7 +2539,7 @@ struct ggml_tensor * ggml_repeat(
     result->op     = GGML_OP_REPEAT;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_repeat_4d(
@@ -2559,7 +2559,7 @@ struct ggml_tensor * ggml_repeat_4d(
     result->op     = GGML_OP_REPEAT;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_repeat_back
@@ -2567,7 +2567,7 @@ struct ggml_tensor * ggml_repeat_4d(
 struct ggml_tensor * ggml_repeat_back(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+        struct ggml_tensor  * b) {  // 结构体定义
     GGML_ASSERT(ggml_can_repeat(b, a));
 
     struct ggml_tensor * result = ggml_new_tensor(ctx, a->type, GGML_MAX_DIMS, b->ne);
@@ -2575,7 +2575,7 @@ struct ggml_tensor * ggml_repeat_back(
     result->op     = GGML_OP_REPEAT_BACK;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_concat
@@ -2606,105 +2606,105 @@ struct ggml_tensor * ggml_concat(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_abs
 
 struct ggml_tensor * ggml_abs(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_ABS);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_ABS);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_abs_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ABS);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ABS);  // ggml_unary_inplace
 }
 
 // ggml_sgn
 
 struct ggml_tensor * ggml_sgn(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_SGN);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_SGN);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_sgn_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SGN);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SGN);  // ggml_unary_inplace
 }
 
 // ggml_neg
 
 struct ggml_tensor * ggml_neg(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_NEG);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_NEG);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_neg_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_NEG);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_NEG);  // ggml_unary_inplace
 }
 
 // ggml_step
 
 struct ggml_tensor * ggml_step(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_STEP);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_STEP);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_step_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_STEP);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_STEP);  // ggml_unary_inplace
 }
 
 // ggml_tanh
 
 struct ggml_tensor * ggml_tanh(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_TANH);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_TANH);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_tanh_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_TANH);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_TANH);  // ggml_unary_inplace
 }
 
 // ggml_elu
 
 struct ggml_tensor * ggml_elu(
     struct ggml_context * ctx,
-    struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_ELU);
+    struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_ELU);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_elu_inplace(
     struct ggml_context * ctx,
-    struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ELU);
+    struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ELU);  // ggml_unary_inplace
 }
 
 // ggml_relu
 
 struct ggml_tensor * ggml_relu(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_RELU);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_RELU);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_relu_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_RELU);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_RELU);  // ggml_unary_inplace
 }
 
 // ggml_leaky_relu
@@ -2721,77 +2721,77 @@ struct ggml_tensor * ggml_leaky_relu(
     result->op     = GGML_OP_LEAKY_RELU;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_sigmoid
 
 struct ggml_tensor * ggml_sigmoid(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_SIGMOID);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_SIGMOID);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_sigmoid_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SIGMOID);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SIGMOID);  // ggml_unary_inplace
 }
 
 // ggml_gelu
 
 struct ggml_tensor * ggml_gelu(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_GELU);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_GELU);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_gelu_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU);  // ggml_unary_inplace
 }
 
 // ggml_gelu_erf
 
 struct ggml_tensor * ggml_gelu_erf(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_GELU_ERF);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_GELU_ERF);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_gelu_erf_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU_ERF);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU_ERF);  // ggml_unary_inplace
 }
 
 // ggml_gelu_quick
 
 struct ggml_tensor * ggml_gelu_quick(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_GELU_QUICK);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_GELU_QUICK);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_gelu_quick_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU_QUICK);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_GELU_QUICK);  // ggml_unary_inplace
 }
 
 // ggml_silu
 
 struct ggml_tensor * ggml_silu(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_SILU);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_SILU);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_silu_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SILU);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_SILU);  // ggml_unary_inplace
 }
 
 // ggml_xielu
@@ -2814,7 +2814,7 @@ struct ggml_tensor * ggml_xielu(
     result->op     = GGML_OP_UNARY;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_silu_back
@@ -2822,44 +2822,44 @@ struct ggml_tensor * ggml_xielu(
 struct ggml_tensor * ggml_silu_back(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+        struct ggml_tensor  * b) {  // 结构体定义
     struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
 
     result->op     = GGML_OP_SILU_BACK;
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml hardswish
 
 struct ggml_tensor * ggml_hardswish(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_HARDSWISH);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_HARDSWISH);  // ggml_unary
 }
 
 // ggml hardsigmoid
 
 struct ggml_tensor * ggml_hardsigmoid(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_HARDSIGMOID);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_HARDSIGMOID);  // ggml_unary
 }
 
 // ggml exp
 
 struct ggml_tensor * ggml_exp(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_EXP);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_EXP);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_exp_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXP);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_EXP);  // ggml_unary_inplace
 }
 
 // ggml_glu
@@ -2888,63 +2888,63 @@ static struct ggml_tensor * ggml_glu_impl(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_floor
 
 struct ggml_tensor * ggml_floor(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_FLOOR);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_FLOOR);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_floor_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_FLOOR);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_FLOOR);  // ggml_unary_inplace
 }
 
 // ggml_ceil
 
 struct ggml_tensor * ggml_ceil(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_CEIL);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_CEIL);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_ceil_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_CEIL);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_CEIL);  // ggml_unary_inplace
 }
 
 //ggml_round
 
 struct ggml_tensor * ggml_round(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_ROUND);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_ROUND);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_round_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ROUND);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_ROUND);  // ggml_unary_inplace
 }
 
 //ggml_trunc
 
 struct ggml_tensor * ggml_trunc(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary(ctx, a, GGML_UNARY_OP_TRUNC);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary(ctx, a, GGML_UNARY_OP_TRUNC);  // ggml_unary
 }
 
 struct ggml_tensor * ggml_trunc_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_TRUNC);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_unary_inplace(ctx, a, GGML_UNARY_OP_TRUNC);  // ggml_unary_inplace
 }
 
 struct ggml_tensor * ggml_glu(
@@ -2952,120 +2952,120 @@ struct ggml_tensor * ggml_glu(
         struct ggml_tensor  * a,
         enum ggml_glu_op      op,
         bool                  swapped) {
-    return ggml_glu_impl(ctx, a, NULL, op, swapped);
+    return ggml_glu_impl(ctx, a, NULL, op, swapped);  // ggml_glu_impl
 }
 
 struct ggml_tensor * ggml_glu_split(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         struct ggml_tensor  * b,
-        enum ggml_glu_op      op) {
-    return ggml_glu_impl(ctx, a, b, op, false);
+        enum ggml_glu_op      op) {  // 枚举定义
+    return ggml_glu_impl(ctx, a, b, op, false);  // ggml_glu_impl
 }
 
 // ggml_reglu
 
 struct ggml_tensor * ggml_reglu(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_REGLU, false);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_REGLU, false);  // ggml_glu_impl
 }
 
 struct ggml_tensor * ggml_reglu_swapped(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_REGLU, true);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_REGLU, true);  // ggml_glu_impl
 }
 
 struct ggml_tensor * ggml_reglu_split(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_REGLU, false);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_REGLU, false);  // ggml_glu_impl
 }
 
 // ggml_geglu
 
 struct ggml_tensor * ggml_geglu(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU, false);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU, false);  // ggml_glu_impl
 }
 
 struct ggml_tensor * ggml_geglu_swapped(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU, true);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU, true);  // ggml_glu_impl
 }
 
 struct ggml_tensor * ggml_geglu_split(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU, false);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU, false);  // ggml_glu_impl
 }
 
 // ggml_swiglu
 
 struct ggml_tensor * ggml_swiglu(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_SWIGLU, false);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_SWIGLU, false);  // ggml_glu_impl
 }
 
 struct ggml_tensor * ggml_swiglu_swapped(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_SWIGLU, true);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_SWIGLU, true);  // ggml_glu_impl
 }
 
 struct ggml_tensor * ggml_swiglu_split(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU, false);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_SWIGLU, false);  // ggml_glu_impl
 }
 
 // ggml_geglu_erf
 
 struct ggml_tensor * ggml_geglu_erf(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_ERF, false);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_ERF, false);  // ggml_glu_impl
 }
 
 struct ggml_tensor * ggml_geglu_erf_swapped(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_ERF, true);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_ERF, true);  // ggml_glu_impl
 }
 
 struct ggml_tensor * ggml_geglu_erf_split(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU_ERF, false);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU_ERF, false);  // ggml_glu_impl
 }
 
 // ggml_geglu_quick
 
 struct ggml_tensor * ggml_geglu_quick(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_QUICK, false);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_QUICK, false);  // ggml_glu_impl
 }
 
 struct ggml_tensor * ggml_geglu_quick_swapped(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_QUICK, true);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, NULL, GGML_GLU_OP_GEGLU_QUICK, true);  // ggml_glu_impl
 }
 
 struct ggml_tensor * ggml_geglu_quick_split(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU_QUICK, false);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_glu_impl(ctx, a, b, GGML_GLU_OP_GEGLU_QUICK, false);  // ggml_glu_impl
 }
 
 struct ggml_tensor * ggml_swiglu_oai(
@@ -3078,7 +3078,7 @@ struct ggml_tensor * ggml_swiglu_oai(
     ggml_set_op_params_f32(result, 2, alpha);
     ggml_set_op_params_f32(result, 3, limit);
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_norm
@@ -3095,21 +3095,21 @@ static struct ggml_tensor * ggml_norm_impl(
     result->op     = GGML_OP_NORM;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_norm(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         float                 eps) {
-    return ggml_norm_impl(ctx, a, eps, false);
+    return ggml_norm_impl(ctx, a, eps, false);  // ggml_norm_impl
 }
 
 struct ggml_tensor * ggml_norm_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         float                 eps) {
-    return ggml_norm_impl(ctx, a, eps, true);
+    return ggml_norm_impl(ctx, a, eps, true);  // ggml_norm_impl
 }
 
 // ggml_rms_norm
@@ -3126,21 +3126,21 @@ static struct ggml_tensor * ggml_rms_norm_impl(
     result->op     = GGML_OP_RMS_NORM;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_rms_norm(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         float                 eps) {
-    return ggml_rms_norm_impl(ctx, a, eps, false);
+    return ggml_rms_norm_impl(ctx, a, eps, false);  // ggml_rms_norm_impl
 }
 
 struct ggml_tensor * ggml_rms_norm_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         float                 eps) {
-    return ggml_rms_norm_impl(ctx, a, eps, true);
+    return ggml_rms_norm_impl(ctx, a, eps, true);  // ggml_rms_norm_impl
 }
 
 // ggml_rms_norm_back
@@ -3158,7 +3158,7 @@ struct ggml_tensor * ggml_rms_norm_back(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_group_norm
@@ -3177,7 +3177,7 @@ static struct ggml_tensor * ggml_group_norm_impl(
     result->op     = GGML_OP_GROUP_NORM;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_group_norm(
@@ -3185,7 +3185,7 @@ struct ggml_tensor * ggml_group_norm(
         struct ggml_tensor  * a,
         int                   n_groups,
         float                 eps) {
-    return ggml_group_norm_impl(ctx, a, n_groups, eps, false);
+    return ggml_group_norm_impl(ctx, a, n_groups, eps, false);  // ggml_group_norm_impl
 }
 
 struct ggml_tensor * ggml_group_norm_inplace(
@@ -3193,7 +3193,7 @@ struct ggml_tensor * ggml_group_norm_inplace(
         struct ggml_tensor  * a,
         int                   n_groups,
         float                 eps) {
-    return ggml_group_norm_impl(ctx, a, n_groups, eps, true);
+    return ggml_group_norm_impl(ctx, a, n_groups, eps, true);  // ggml_group_norm_impl
 }
 
 // ggml_l2_norm
@@ -3210,21 +3210,21 @@ static struct ggml_tensor * ggml_l2_norm_impl(
     result->op     = GGML_OP_L2_NORM;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_l2_norm(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         float                 eps) {
-    return ggml_l2_norm_impl(ctx, a, eps, false);
+    return ggml_l2_norm_impl(ctx, a, eps, false);  // ggml_l2_norm_impl
 }
 
 struct ggml_tensor * ggml_l2_norm_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         float                 eps) {
-    return ggml_l2_norm_impl(ctx, a, eps, true);
+    return ggml_l2_norm_impl(ctx, a, eps, true);  // ggml_l2_norm_impl
 }
 
 // ggml_mul_mat
@@ -3240,7 +3240,7 @@ static inline bool ggml_can_mul_mat(const struct ggml_tensor * t0, const struct 
 struct ggml_tensor * ggml_mul_mat(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+        struct ggml_tensor  * b) {  // 结构体定义
     GGML_ASSERT(ggml_can_mul_mat(a, b));
     GGML_ASSERT(!ggml_is_transposed(a));
 
@@ -3251,12 +3251,12 @@ struct ggml_tensor * ggml_mul_mat(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 void ggml_mul_mat_set_prec(
         struct ggml_tensor * a,
-        enum ggml_prec       prec) {
+        enum ggml_prec       prec) {  // 枚举定义
     GGML_ASSERT(a->op == GGML_OP_MUL_MAT);
 
     const int32_t prec_i32 = (int32_t) prec;
@@ -3282,7 +3282,7 @@ struct ggml_tensor * ggml_mul_mat_id(
         struct ggml_context * ctx,
         struct ggml_tensor  * as,
         struct ggml_tensor  * b,
-        struct ggml_tensor  * ids) {
+        struct ggml_tensor  * ids) {  // 结构体定义
     GGML_ASSERT(!ggml_is_transposed(as));
     GGML_ASSERT(ids->type == GGML_TYPE_I32);
 
@@ -3301,7 +3301,7 @@ struct ggml_tensor * ggml_mul_mat_id(
     result->src[1] = b;
     result->src[2] = ids;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_out_prod
@@ -3317,7 +3317,7 @@ static inline bool ggml_can_out_prod(const struct ggml_tensor * t0, const struct
 struct ggml_tensor * ggml_out_prod(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+        struct ggml_tensor  * b) {  // 结构体定义
     GGML_ASSERT(ggml_can_out_prod(a, b));
     GGML_ASSERT(!ggml_is_transposed(a));
 
@@ -3329,7 +3329,7 @@ struct ggml_tensor * ggml_out_prod(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_scale
@@ -3350,21 +3350,21 @@ static struct ggml_tensor * ggml_scale_impl(
     result->op     = GGML_OP_SCALE;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_scale(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         float                 s) {
-    return ggml_scale_impl(ctx, a, s, 0.0, false);
+    return ggml_scale_impl(ctx, a, s, 0.0, false);  // ggml_scale_impl
 }
 
 struct ggml_tensor * ggml_scale_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         float                 s) {
-    return ggml_scale_impl(ctx, a, s, 0.0, true);
+    return ggml_scale_impl(ctx, a, s, 0.0, true);  // ggml_scale_impl
 }
 
 struct ggml_tensor * ggml_scale_bias(
@@ -3372,7 +3372,7 @@ struct ggml_tensor * ggml_scale_bias(
         struct ggml_tensor  * a,
         float                 s,
         float                 b) {
-    return ggml_scale_impl(ctx, a, s, b, false);
+    return ggml_scale_impl(ctx, a, s, b, false);  // ggml_scale_impl
 }
 
 struct ggml_tensor * ggml_scale_bias_inplace(
@@ -3380,7 +3380,7 @@ struct ggml_tensor * ggml_scale_bias_inplace(
         struct ggml_tensor  * a,
         float                 s,
         float                 b) {
-    return ggml_scale_impl(ctx, a, s, b, true);
+    return ggml_scale_impl(ctx, a, s, b, true);  // ggml_scale_impl
 }
 
 // ggml_set
@@ -3407,7 +3407,7 @@ static struct ggml_tensor * ggml_set_impl(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_set(
@@ -3418,7 +3418,7 @@ struct ggml_tensor * ggml_set(
         size_t                nb2,
         size_t                nb3,
         size_t                offset) {
-    return ggml_set_impl(ctx, a, b, nb1, nb2, nb3, offset, false);
+    return ggml_set_impl(ctx, a, b, nb1, nb2, nb3, offset, false);  // ggml_set_impl
 }
 
 struct ggml_tensor * ggml_set_inplace(
@@ -3429,7 +3429,7 @@ struct ggml_tensor * ggml_set_inplace(
         size_t                nb2,
         size_t                nb3,
         size_t                offset) {
-    return ggml_set_impl(ctx, a, b, nb1, nb2, nb3, offset, true);
+    return ggml_set_impl(ctx, a, b, nb1, nb2, nb3, offset, true);  // ggml_set_impl
 }
 
 struct ggml_tensor * ggml_set_1d(
@@ -3437,7 +3437,7 @@ struct ggml_tensor * ggml_set_1d(
         struct ggml_tensor  * a,
         struct ggml_tensor  * b,
         size_t                offset) {
-    return ggml_set_impl(ctx, a, b, a->nb[1], a->nb[2], a->nb[3], offset, false);
+    return ggml_set_impl(ctx, a, b, a->nb[1], a->nb[2], a->nb[3], offset, false);  // ggml_set_impl
 }
 
 struct ggml_tensor * ggml_set_1d_inplace(
@@ -3445,7 +3445,7 @@ struct ggml_tensor * ggml_set_1d_inplace(
         struct ggml_tensor  * a,
         struct ggml_tensor  * b,
         size_t                offset) {
-    return ggml_set_impl(ctx, a, b, a->nb[1], a->nb[2], a->nb[3], offset, true);
+    return ggml_set_impl(ctx, a, b, a->nb[1], a->nb[2], a->nb[3], offset, true);  // ggml_set_impl
 }
 
 struct ggml_tensor * ggml_set_2d(
@@ -3454,7 +3454,7 @@ struct ggml_tensor * ggml_set_2d(
         struct ggml_tensor  * b,
         size_t                nb1,
         size_t                offset) {
-    return ggml_set_impl(ctx, a, b, nb1, a->nb[2], a->nb[3], offset, false);
+    return ggml_set_impl(ctx, a, b, nb1, a->nb[2], a->nb[3], offset, false);  // ggml_set_impl
 }
 
 struct ggml_tensor * ggml_set_2d_inplace(
@@ -3463,7 +3463,7 @@ struct ggml_tensor * ggml_set_2d_inplace(
         struct ggml_tensor  * b,
         size_t                nb1,
         size_t                offset) {
-    return ggml_set_impl(ctx, a, b, nb1, a->nb[2], a->nb[3], offset, true);
+    return ggml_set_impl(ctx, a, b, nb1, a->nb[2], a->nb[3], offset, true);  // ggml_set_impl
 }
 
 // ggml_cpy
@@ -3471,7 +3471,7 @@ struct ggml_tensor * ggml_set_2d_inplace(
 static struct ggml_tensor * ggml_cpy_impl(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+        struct ggml_tensor  * b) {  // 结构体定义
     GGML_ASSERT(ggml_nelements(a) == ggml_nelements(b));
 
     // make a view of the destination
@@ -3486,20 +3486,20 @@ static struct ggml_tensor * ggml_cpy_impl(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_cpy(
         struct ggml_context * ctx,
         struct ggml_tensor * a,
-        struct ggml_tensor * b) {
-    return ggml_cpy_impl(ctx, a, b);
+        struct ggml_tensor * b) {  // 结构体定义
+    return ggml_cpy_impl(ctx, a, b);  // ggml_cpy_impl
 }
 
 struct ggml_tensor * ggml_cast(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        enum   ggml_type      type) {
+        enum   ggml_type      type) {  // 枚举定义
     struct ggml_tensor * result = ggml_new_tensor(ctx, type, GGML_MAX_DIMS, a->ne);
     ggml_format_name(result, "%s (copy)", a->name);
 
@@ -3508,27 +3508,27 @@ struct ggml_tensor * ggml_cast(
     result->src[1] = result; // note: this self-reference might seem redundant, but it's actually needed by some
                              //       backends for consistency with ggml_cpy_impl() above
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_cont
 
 static struct ggml_tensor * ggml_cont_impl(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+        struct ggml_tensor  * a) {  // 结构体定义
     struct ggml_tensor * result = ggml_dup_tensor(ctx, a);
     ggml_format_name(result, "%s (cont)", a->name);
 
     result->op     = GGML_OP_CONT;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_cont(
         struct ggml_context * ctx,
-        struct ggml_tensor * a) {
-    return ggml_cont_impl(ctx, a);
+        struct ggml_tensor * a) {  // 结构体定义
+    return ggml_cont_impl(ctx, a);  // ggml_cont_impl
 }
 
 // make contiguous, with new shape
@@ -3536,7 +3536,7 @@ GGML_API struct ggml_tensor * ggml_cont_1d(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         int64_t               ne0) {
-    return ggml_cont_4d(ctx, a, ne0, 1, 1, 1);
+    return ggml_cont_4d(ctx, a, ne0, 1, 1, 1);  // ggml_cont_4d
 }
 
 GGML_API struct ggml_tensor * ggml_cont_2d(
@@ -3544,7 +3544,7 @@ GGML_API struct ggml_tensor * ggml_cont_2d(
         struct ggml_tensor  * a,
         int64_t               ne0,
         int64_t               ne1) {
-    return ggml_cont_4d(ctx, a, ne0, ne1, 1, 1);
+    return ggml_cont_4d(ctx, a, ne0, ne1, 1, 1);  // ggml_cont_4d
 }
 
 GGML_API struct ggml_tensor * ggml_cont_3d(
@@ -3553,7 +3553,7 @@ GGML_API struct ggml_tensor * ggml_cont_3d(
         int64_t               ne0,
         int64_t               ne1,
         int64_t               ne2) {
-    return ggml_cont_4d(ctx, a, ne0, ne1, ne2, 1);
+    return ggml_cont_4d(ctx, a, ne0, ne1, ne2, 1);  // ggml_cont_4d
 }
 
 struct ggml_tensor * ggml_cont_4d(
@@ -3571,7 +3571,7 @@ struct ggml_tensor * ggml_cont_4d(
     result->op     = GGML_OP_CONT;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_reshape
@@ -3579,7 +3579,7 @@ struct ggml_tensor * ggml_cont_4d(
 struct ggml_tensor * ggml_reshape(
         struct ggml_context * ctx,
         struct ggml_tensor * a,
-        struct ggml_tensor * b) {
+        struct ggml_tensor * b) {  // 结构体定义
     GGML_ASSERT(ggml_is_contiguous(a));
     // as only the shape of b is relevant, and not its memory layout, b is allowed to be non contiguous.
     GGML_ASSERT(ggml_nelements(a) == ggml_nelements(b));
@@ -3590,7 +3590,7 @@ struct ggml_tensor * ggml_reshape(
     result->op     = GGML_OP_RESHAPE;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_reshape_1d(
@@ -3607,7 +3607,7 @@ struct ggml_tensor * ggml_reshape_1d(
     result->op     = GGML_OP_RESHAPE;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_reshape_2d(
@@ -3625,7 +3625,7 @@ struct ggml_tensor * ggml_reshape_2d(
     result->op     = GGML_OP_RESHAPE;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_reshape_3d(
@@ -3644,7 +3644,7 @@ struct ggml_tensor * ggml_reshape_3d(
     result->op     = GGML_OP_RESHAPE;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_reshape_4d(
@@ -3664,7 +3664,7 @@ struct ggml_tensor * ggml_reshape_4d(
     result->op     = GGML_OP_RESHAPE;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 static struct ggml_tensor * ggml_view_impl(
@@ -3681,7 +3681,7 @@ static struct ggml_tensor * ggml_view_impl(
     result->op     = GGML_OP_VIEW;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_view_1d
@@ -3693,7 +3693,7 @@ struct ggml_tensor * ggml_view_1d(
         size_t                offset) {
     struct ggml_tensor * result = ggml_view_impl(ctx, a, 1, &ne0, offset);
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_view_2d
@@ -3713,7 +3713,7 @@ struct ggml_tensor * ggml_view_2d(
     result->nb[2] = result->nb[1]*ne1;
     result->nb[3] = result->nb[2];
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_view_3d
@@ -3735,7 +3735,7 @@ struct ggml_tensor * ggml_view_3d(
     result->nb[2] = nb2;
     result->nb[3] = result->nb[2]*ne2;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_view_4d
@@ -3759,7 +3759,7 @@ struct ggml_tensor * ggml_view_4d(
     result->nb[2] = nb2;
     result->nb[3] = nb3;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_permute
@@ -3815,14 +3815,14 @@ struct ggml_tensor * ggml_permute(
     int32_t params[] = { axis0, axis1, axis2, axis3 };
     ggml_set_op_params(result, params, sizeof(params));
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_transpose
 
 struct ggml_tensor * ggml_transpose(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+        struct ggml_tensor  * a) {  // 结构体定义
     struct ggml_tensor * result = ggml_view_tensor(ctx, a);
     ggml_format_name(result, "%s (transposed)", a->name);
 
@@ -3835,7 +3835,7 @@ struct ggml_tensor * ggml_transpose(
     result->op     = GGML_OP_TRANSPOSE;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_get_rows
@@ -3843,7 +3843,7 @@ struct ggml_tensor * ggml_transpose(
 struct ggml_tensor * ggml_get_rows(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+        struct ggml_tensor  * b) {  // 结构体定义
     GGML_ASSERT(a->ne[2] == b->ne[1]);
     GGML_ASSERT(a->ne[3] == b->ne[2]);
     GGML_ASSERT(b->ne[3] == 1);
@@ -3860,7 +3860,7 @@ struct ggml_tensor * ggml_get_rows(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_get_rows_back
@@ -3869,7 +3869,7 @@ struct ggml_tensor * ggml_get_rows_back(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         struct ggml_tensor  * b,
-        struct ggml_tensor  * c) {
+        struct ggml_tensor  * c) {  // 结构体定义
     GGML_ASSERT(ggml_is_matrix(a) && ggml_is_vector(b) && b->type == GGML_TYPE_I32);
     GGML_ASSERT(ggml_is_matrix(c) && (a->ne[0] == c->ne[0]));
 
@@ -3881,7 +3881,7 @@ struct ggml_tensor * ggml_get_rows_back(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_set_rows
@@ -3890,7 +3890,7 @@ struct ggml_tensor * ggml_set_rows(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         struct ggml_tensor  * b,
-        struct ggml_tensor  * c) {
+        struct ggml_tensor  * c) {  // 结构体定义
     GGML_ASSERT(a->ne[0] == b->ne[0]);
     GGML_ASSERT(a->ne[2] == b->ne[2]);
     GGML_ASSERT(a->ne[3] == b->ne[3]);
@@ -3911,14 +3911,14 @@ struct ggml_tensor * ggml_set_rows(
     result->src[1] = c;
     result->src[2] = a; // note: order is weird due to legacy reasons (https://github.com/ggml-org/llama.cpp/pull/16063#discussion_r2385795931)
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_diag
 
 struct ggml_tensor * ggml_diag(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
+        struct ggml_tensor  * a) {  // 结构体定义
     GGML_ASSERT(a->ne[1] == 1);
 
     const int64_t ne[4] = { a->ne[0], a->ne[0], a->ne[2], a->ne[3] };
@@ -3927,7 +3927,7 @@ struct ggml_tensor * ggml_diag(
     result->op     = GGML_OP_DIAG;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_diag_mask_inf
@@ -3945,21 +3945,21 @@ static struct ggml_tensor * ggml_diag_mask_inf_impl(
     result->op     = GGML_OP_DIAG_MASK_INF;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_diag_mask_inf(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         int                   n_past) {
-    return ggml_diag_mask_inf_impl(ctx, a, n_past, false);
+    return ggml_diag_mask_inf_impl(ctx, a, n_past, false);  // ggml_diag_mask_inf_impl
 }
 
 struct ggml_tensor * ggml_diag_mask_inf_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         int                   n_past) {
-    return ggml_diag_mask_inf_impl(ctx, a, n_past, true);
+    return ggml_diag_mask_inf_impl(ctx, a, n_past, true);  // ggml_diag_mask_inf_impl
 }
 
 // ggml_diag_mask_zero
@@ -3977,21 +3977,21 @@ static struct ggml_tensor * ggml_diag_mask_zero_impl(
     result->op     = GGML_OP_DIAG_MASK_ZERO;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_diag_mask_zero(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         int                   n_past) {
-    return ggml_diag_mask_zero_impl(ctx, a, n_past, false);
+    return ggml_diag_mask_zero_impl(ctx, a, n_past, false);  // ggml_diag_mask_zero_impl
 }
 
 struct ggml_tensor * ggml_diag_mask_zero_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         int                   n_past) {
-    return ggml_diag_mask_zero_impl(ctx, a, n_past, true);
+    return ggml_diag_mask_zero_impl(ctx, a, n_past, true);  // ggml_diag_mask_zero_impl
 }
 
 // ggml_soft_max
@@ -4027,19 +4027,19 @@ static struct ggml_tensor * ggml_soft_max_impl(
     result->src[0] = a;
     result->src[1] = mask;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_soft_max(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_soft_max_impl(ctx, a, NULL, 1.0f, 0.0f, false);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_soft_max_impl(ctx, a, NULL, 1.0f, 0.0f, false);  // ggml_soft_max_impl
 }
 
 struct ggml_tensor * ggml_soft_max_inplace(
         struct ggml_context * ctx,
-        struct ggml_tensor  * a) {
-    return ggml_soft_max_impl(ctx, a, NULL, 1.0f, 0.0f, true);
+        struct ggml_tensor  * a) {  // 结构体定义
+    return ggml_soft_max_impl(ctx, a, NULL, 1.0f, 0.0f, true);  // ggml_soft_max_impl
 }
 
 struct ggml_tensor * ggml_soft_max_ext(
@@ -4048,7 +4048,7 @@ struct ggml_tensor * ggml_soft_max_ext(
         struct ggml_tensor  * mask,
         float                 scale,
         float                 max_bias) {
-    return ggml_soft_max_impl(ctx, a, mask, scale, max_bias, false);
+    return ggml_soft_max_impl(ctx, a, mask, scale, max_bias, false);  // ggml_soft_max_impl
 }
 
 struct ggml_tensor * ggml_soft_max_ext_inplace(
@@ -4057,15 +4057,15 @@ struct ggml_tensor * ggml_soft_max_ext_inplace(
         struct ggml_tensor  * mask,
         float                 scale,
         float                 max_bias) {
-    return ggml_soft_max_impl(ctx, a, mask, scale, max_bias, true);
+    return ggml_soft_max_impl(ctx, a, mask, scale, max_bias, true);  // ggml_soft_max_impl
 }
 
 void ggml_soft_max_add_sinks(
         struct ggml_tensor * a,
-        struct ggml_tensor * sinks) {
+        struct ggml_tensor * sinks) {  // 结构体定义
     if (!sinks) {
         a->src[2] = NULL;
-        return;
+        return;  // 返回
     }
 
     GGML_ASSERT(a->op == GGML_OP_SOFT_MAX);
@@ -4094,7 +4094,7 @@ static struct ggml_tensor * ggml_soft_max_ext_back_impl(
     memcpy((float *) result->op_params + 0, &scale,    sizeof(float));
     memcpy((float *) result->op_params + 1, &max_bias, sizeof(float));
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_soft_max_ext_back(
@@ -4103,7 +4103,7 @@ struct ggml_tensor * ggml_soft_max_ext_back(
         struct ggml_tensor  * b,
         float                 scale,
         float                 max_bias) {
-    return ggml_soft_max_ext_back_impl(ctx, a, b, scale, max_bias, false);
+    return ggml_soft_max_ext_back_impl(ctx, a, b, scale, max_bias, false);  // ggml_soft_max_ext_back_impl
 }
 
 struct ggml_tensor * ggml_soft_max_ext_back_inplace(
@@ -4112,7 +4112,7 @@ struct ggml_tensor * ggml_soft_max_ext_back_inplace(
         struct ggml_tensor  * b,
         float                 scale,
         float                 max_bias) {
-    return ggml_soft_max_ext_back_impl(ctx, a, b, scale, max_bias, true);
+    return ggml_soft_max_ext_back_impl(ctx, a, b, scale, max_bias, true);  // ggml_soft_max_ext_back_impl
 }
 
 // ggml_rope
@@ -4171,7 +4171,7 @@ static struct ggml_tensor * ggml_rope_impl(
     result->src[1] = b;
     result->src[2] = c;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_rope(
@@ -4180,7 +4180,7 @@ struct ggml_tensor * ggml_rope(
         struct ggml_tensor  * b,
         int                   n_dims,
         int                   mode) {
-    return ggml_rope_impl(
+    return ggml_rope_impl(  // 返回
         ctx, a, b, NULL, n_dims, NULL, mode, 0, 10000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, false
     );
 }
@@ -4200,7 +4200,7 @@ struct ggml_tensor * ggml_rope_multi(
         float                 attn_factor,
         float                 beta_fast,
         float                 beta_slow) {
-    return ggml_rope_impl(
+    return ggml_rope_impl(  // 返回
         ctx, a, b, c, n_dims, sections, mode, n_ctx_orig, freq_base, freq_scale,
         ext_factor, attn_factor, beta_fast, beta_slow, false
     );
@@ -4221,7 +4221,7 @@ struct ggml_tensor * ggml_rope_multi_inplace(
         float                 attn_factor,
         float                 beta_fast,
         float                 beta_slow) {
-    return ggml_rope_impl(
+    return ggml_rope_impl(  // 返回
         ctx, a, b, c, n_dims, sections, mode, n_ctx_orig, freq_base, freq_scale,
         ext_factor, attn_factor, beta_fast, beta_slow, true
     );
@@ -4233,7 +4233,7 @@ struct ggml_tensor * ggml_rope_inplace(
         struct ggml_tensor  * b,
         int                   n_dims,
         int                   mode) {
-    return ggml_rope_impl(
+    return ggml_rope_impl(  // 返回
         ctx, a, b, NULL, n_dims, NULL, mode, 0, 10000.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, true
     );
 }
@@ -4252,7 +4252,7 @@ struct ggml_tensor * ggml_rope_ext(
         float                 attn_factor,
         float                 beta_fast,
         float                 beta_slow) {
-    return ggml_rope_impl(
+    return ggml_rope_impl(  // 返回
         ctx, a, b, c, n_dims, NULL, mode, n_ctx_orig, freq_base, freq_scale,
         ext_factor, attn_factor, beta_fast, beta_slow, false
     );
@@ -4272,7 +4272,7 @@ struct ggml_tensor * ggml_rope_ext_inplace(
         float                 attn_factor,
         float                 beta_fast,
         float                 beta_slow) {
-    return ggml_rope_impl(
+    return ggml_rope_impl(  // 返回
         ctx, a, b, c, n_dims, NULL, mode, n_ctx_orig, freq_base, freq_scale,
         ext_factor, attn_factor, beta_fast, beta_slow, true
     );
@@ -4291,7 +4291,7 @@ struct ggml_tensor * ggml_rope_custom(
         float                 attn_factor,
         float                 beta_fast,
         float                 beta_slow) {
-    return ggml_rope_impl(
+    return ggml_rope_impl(  // 返回
         ctx, a, b, NULL, n_dims, NULL, mode, n_ctx_orig, freq_base, freq_scale,
         ext_factor, attn_factor, beta_fast, beta_slow, false
     );
@@ -4310,7 +4310,7 @@ struct ggml_tensor * ggml_rope_custom_inplace(
         float                 attn_factor,
         float                 beta_fast,
         float                 beta_slow) {
-    return ggml_rope_impl(
+    return ggml_rope_impl(  // 返回
         ctx, a, b, NULL, n_dims, NULL, mode, n_ctx_orig, freq_base, freq_scale,
         ext_factor, attn_factor, beta_fast, beta_slow, true
     );
@@ -4351,7 +4351,7 @@ struct ggml_tensor * ggml_rope_ext_back(
     struct ggml_tensor * result = ggml_rope_ext(
         ctx, a, b, c, n_dims, mode, n_ctx_orig, freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow);
     result->op = GGML_OP_ROPE_BACK;
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_rope_multi_back(
@@ -4372,7 +4372,7 @@ struct ggml_tensor * ggml_rope_multi_back(
     struct ggml_tensor * result = ggml_rope_multi(
         ctx, a, b, c, n_dims, sections, mode, n_ctx_orig, freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow);
     result->op = GGML_OP_ROPE_BACK;
-    return result;
+    return result;  // 返回
 }
 // ggml_clamp
 
@@ -4390,7 +4390,7 @@ struct ggml_tensor * ggml_clamp(
     result->op     = GGML_OP_CLAMP;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 static int64_t ggml_calc_conv_output_size(int64_t ins, int64_t ks, int s, int p, int d) {
@@ -4412,7 +4412,7 @@ struct ggml_tensor * ggml_im2col(
         int                   d0,
         int                   d1,
         bool                  is_2D,
-        enum ggml_type        dst_type) {
+        enum ggml_type        dst_type) {  // 枚举定义
     if (is_2D) {
         GGML_ASSERT(a->ne[2] == b->ne[2]);
     } else {
@@ -4442,7 +4442,7 @@ struct ggml_tensor * ggml_im2col(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_im2col_back(
@@ -4465,7 +4465,7 @@ struct ggml_tensor * ggml_im2col_back(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_conv_1d
@@ -4486,7 +4486,7 @@ struct ggml_tensor * ggml_conv_1d(
 
     result = ggml_reshape_3d(ctx, result, im2col->ne[1], a->ne[2], im2col->ne[2]); // [N, OC, OL]
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_conv_1d_ph
@@ -4497,7 +4497,7 @@ struct ggml_tensor* ggml_conv_1d_ph(
         struct ggml_tensor  * b,
         int                   s,
         int                   d) {
-    return ggml_conv_1d(ctx, a, b, s, a->ne[0] / 2, d);
+    return ggml_conv_1d(ctx, a, b, s, a->ne[0] / 2, d);  // ggml_conv_1d
 }
 
 // ggml_conv_1d_dw
@@ -4517,7 +4517,7 @@ struct ggml_tensor * ggml_conv_1d_dw(
 
     result = ggml_reshape_3d(ctx, result, result->ne[0], result->ne[2], 1);
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_conv_1d_dw_ph
@@ -4528,7 +4528,7 @@ struct ggml_tensor * ggml_conv_1d_dw_ph(
         struct ggml_tensor  * b,
         int                   s0,
         int                   d0) {
-    return ggml_conv_1d_dw(ctx, a, b, s0, a->ne[0] / 2, d0);
+    return ggml_conv_1d_dw(ctx, a, b, s0, a->ne[0] / 2, d0);  // ggml_conv_1d_dw
 }
 
 // ggml_conv_transpose_1d
@@ -4564,7 +4564,7 @@ GGML_API struct ggml_tensor * ggml_conv_transpose_1d(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_conv_2d
@@ -4593,7 +4593,7 @@ struct ggml_tensor * ggml_conv_2d(
     result = ggml_cont(ctx, ggml_permute(ctx, result, 0, 1, 3, 2)); // [N, OC, OH, OW]
 
 
-    return result;
+    return result;  // 返回
 }
 
 // a: [OC*IC, KD, KH, KW]
@@ -4613,7 +4613,7 @@ struct ggml_tensor * ggml_im2col_3d(
         int                   d0, // dilation width
         int                   d1, // dilation height
         int                   d2, // dilation depth
-        enum ggml_type        dst_type) {
+        enum ggml_type        dst_type) {  // 枚举定义
     const int64_t N = b->ne[3] / IC;
     const int64_t ID = b->ne[2];
     const int64_t IH = b->ne[1];
@@ -4643,7 +4643,7 @@ struct ggml_tensor * ggml_im2col_3d(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // a: [OC*IC, KD, KH, KW]
@@ -4678,7 +4678,7 @@ struct ggml_tensor * ggml_conv_3d(
     result = ggml_cont(ctx, ggml_permute(ctx, result, 0, 1, 3, 2)); // [N, OC, OD, OH*OW]
     result = ggml_reshape_4d(ctx, result, im2col->ne[1], im2col->ne[2], OD, OC * N); // [N*OC, OD, OH, OW]
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_conv_2d_sk_p0
@@ -4686,8 +4686,8 @@ struct ggml_tensor * ggml_conv_3d(
 struct ggml_tensor * ggml_conv_2d_sk_p0(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_conv_2d(ctx, a, b, a->ne[0], a->ne[1], 0, 0, 1, 1);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_conv_2d(ctx, a, b, a->ne[0], a->ne[1], 0, 0, 1, 1);  // ggml_conv_2d
 }
 
 // ggml_conv_2d_s1_ph
@@ -4695,8 +4695,8 @@ struct ggml_tensor * ggml_conv_2d_sk_p0(
 struct ggml_tensor * ggml_conv_2d_s1_ph(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
-    return ggml_conv_2d(ctx, a, b, 1, 1, a->ne[0] / 2, a->ne[1] / 2, 1, 1);
+        struct ggml_tensor  * b) {  // 结构体定义
+    return ggml_conv_2d(ctx, a, b, 1, 1, a->ne[0] / 2, a->ne[1] / 2, 1, 1);  // ggml_conv_2d
 }
 
 // ggml_conv_2d_dw
@@ -4721,7 +4721,7 @@ struct ggml_tensor * ggml_conv_2d_dw(
     struct ggml_tensor * result = ggml_mul_mat(ctx, new_a, new_b);
     result = ggml_reshape_4d(ctx, result, im2col->ne[1], im2col->ne[2], b->ne[2], b->ne[3]); // [N, OC, OH, OW]
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_conv_2d_dw_direct
@@ -4761,7 +4761,7 @@ struct ggml_tensor * ggml_conv_2d_dw_direct(
     result->op     = GGML_OP_CONV_2D_DW;
     result->src[0] = a;
     result->src[1] = b;
-    return result;
+    return result;  // 返回
 }
 
 // ggml_conv_2d_direct
@@ -4799,7 +4799,7 @@ struct ggml_tensor * ggml_conv_2d_direct(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_conv_3d_direct
@@ -4849,7 +4849,7 @@ struct ggml_tensor * ggml_conv_3d_direct(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_conv_transpose_2d_p0
@@ -4879,7 +4879,7 @@ struct ggml_tensor * ggml_conv_transpose_2d_p0(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_pool_*
@@ -4913,7 +4913,7 @@ struct ggml_tensor * ggml_pool_1d(
     result->op     = GGML_OP_POOL_1D;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_pool_2d
@@ -4946,7 +4946,7 @@ struct ggml_tensor * ggml_pool_2d(
     result->op     = GGML_OP_POOL_2D;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_pool_2d_back(
@@ -4970,7 +4970,7 @@ struct ggml_tensor * ggml_pool_2d_back(
     result->src[0] = a;
     result->src[1] = af;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_upscale / ggml_interpolate
@@ -4995,16 +4995,16 @@ static struct ggml_tensor * ggml_interpolate_impl(
     result->op     = GGML_OP_UPSCALE;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_upscale(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         int                   scale_factor,
-        enum ggml_scale_mode  mode) {
+        enum ggml_scale_mode  mode) {  // 枚举定义
     GGML_ASSERT(scale_factor > 1);
-    return ggml_interpolate_impl(ctx, a, a->ne[0] * scale_factor, a->ne[1] * scale_factor, a->ne[2], a->ne[3], mode);
+    return ggml_interpolate_impl(ctx, a, a->ne[0] * scale_factor, a->ne[1] * scale_factor, a->ne[2], a->ne[3], mode);  // ggml_interpolate_impl
 }
 
 struct ggml_tensor * ggml_upscale_ext(
@@ -5014,8 +5014,8 @@ struct ggml_tensor * ggml_upscale_ext(
         int                   ne1,
         int                   ne2,
         int                   ne3,
-        enum ggml_scale_mode  mode) {
-    return ggml_interpolate_impl(ctx, a, ne0, ne1, ne2, ne3, mode);
+        enum ggml_scale_mode  mode) {  // 枚举定义
+    return ggml_interpolate_impl(ctx, a, ne0, ne1, ne2, ne3, mode);  // ggml_interpolate_impl
 }
 
 struct ggml_tensor * ggml_interpolate(
@@ -5026,7 +5026,7 @@ struct ggml_tensor * ggml_interpolate(
         int64_t               ne2,
         int64_t               ne3,
         uint32_t              mode) {
-    return ggml_interpolate_impl(ctx, a, ne0, ne1, ne2, ne3, mode);
+    return ggml_interpolate_impl(ctx, a, ne0, ne1, ne2, ne3, mode);  // ggml_interpolate_impl
 }
 
 // ggml_pad
@@ -5038,7 +5038,7 @@ struct ggml_tensor * ggml_pad(
         int                   p1,
         int                   p2,
         int                   p3) {
-    return ggml_pad_ext(ctx, a, 0, p0, 0, p1, 0, p2, 0, p3);
+    return ggml_pad_ext(ctx, a, 0, p0, 0, p1, 0, p2, 0, p3);  // ggml_pad_ext
 }
 
 // ggml_pad_circular
@@ -5050,7 +5050,7 @@ struct ggml_tensor * ggml_pad_circular(
         int                   p1,
         int                   p2,
         int                   p3) {
-    return ggml_pad_ext_circular(ctx, a, 0, p0, 0, p1, 0, p2, 0, p3);
+    return ggml_pad_ext_circular(ctx, a, 0, p0, 0, p1, 0, p2, 0, p3);  // ggml_pad_ext_circular
 }
 
 struct ggml_tensor * ggml_pad_ext(
@@ -5085,7 +5085,7 @@ struct ggml_tensor * ggml_pad_ext(
     result->op     = GGML_OP_PAD;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_pad_ext_circular
@@ -5104,7 +5104,7 @@ struct ggml_tensor * ggml_pad_ext_circular(
         ) {
     struct ggml_tensor * result = ggml_pad_ext(ctx, a, lp0, rp0, lp1, rp1, lp2, rp2, lp3, rp3);
     ggml_set_op_params_i32(result, 8, 1); // circular
-    return result;
+    return result;  // 返回
 }
 
 // ggml_pad_reflect_1d
@@ -5135,7 +5135,7 @@ struct ggml_tensor * ggml_pad_reflect_1d(
     result->op     = GGML_OP_PAD_REFLECT_1D;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_roll
@@ -5163,7 +5163,7 @@ struct ggml_tensor * ggml_roll(
     result->op     = GGML_OP_ROLL;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_timestep_embedding
@@ -5182,7 +5182,7 @@ struct ggml_tensor * ggml_timestep_embedding(
     result->op     = GGML_OP_TIMESTEP_EMBEDDING;
     result->src[0] = timesteps;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_tri
@@ -5190,7 +5190,7 @@ struct ggml_tensor * ggml_timestep_embedding(
 struct ggml_tensor * ggml_tri(
     struct ggml_context * ctx,
     struct ggml_tensor  * a,
-    enum ggml_tri_type    type) {
+    enum ggml_tri_type    type) {  // 枚举定义
     GGML_ASSERT(a->type == GGML_TYPE_F32);
 
     GGML_ASSERT(ggml_is_contiguous(a));
@@ -5203,7 +5203,7 @@ struct ggml_tensor * ggml_tri(
     result->op = GGML_OP_TRI;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_fill
@@ -5223,21 +5223,21 @@ static struct ggml_tensor * ggml_fill_impl(
     result->op = GGML_OP_FILL;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_fill(
     struct ggml_context * ctx,
     struct ggml_tensor  * a,
     float                 c) {
-    return ggml_fill_impl(ctx, a, c, false);
+    return ggml_fill_impl(ctx, a, c, false);  // ggml_fill_impl
 }
 
 struct ggml_tensor * ggml_fill_inplace(
     struct ggml_context * ctx,
     struct ggml_tensor  * a,
     float                 c) {
-    return ggml_fill_impl(ctx, a, c, true);
+    return ggml_fill_impl(ctx, a, c, true);  // ggml_fill_impl
 }
 
 // ggml_argsort
@@ -5245,7 +5245,7 @@ struct ggml_tensor * ggml_fill_inplace(
 struct ggml_tensor * ggml_argsort(
         struct ggml_context  * ctx,
         struct ggml_tensor   * a,
-        enum ggml_sort_order   order) {
+        enum ggml_sort_order   order) {  // 枚举定义
     GGML_ASSERT(a->ne[0] <= INT32_MAX);
 
     struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_I32, GGML_MAX_DIMS, a->ne);
@@ -5255,7 +5255,7 @@ struct ggml_tensor * ggml_argsort(
     result->op     = GGML_OP_ARGSORT;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_argsort_top_k
@@ -5273,7 +5273,7 @@ struct ggml_tensor * ggml_argsort_top_k(
                    result->nb[1], result->nb[2], result->nb[3],
                 0);
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_top_k
@@ -5289,7 +5289,7 @@ struct ggml_tensor * ggml_top_k(
     result->op     = GGML_OP_TOP_K;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_arange
@@ -5311,7 +5311,7 @@ struct ggml_tensor * ggml_arange(
 
     result->op = GGML_OP_ARANGE;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_flash_attn_ext
@@ -5357,12 +5357,12 @@ struct ggml_tensor * ggml_flash_attn_ext(
     result->src[2] = v;
     result->src[3] = mask;
 
-    return result;
+    return result;  // 返回
 }
 
 void ggml_flash_attn_ext_set_prec(
         struct ggml_tensor * a,
-        enum ggml_prec       prec) {
+        enum ggml_prec       prec) {  // 枚举定义
     GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
 
     const int32_t prec_i32 = (int32_t) prec;
@@ -5381,10 +5381,10 @@ enum ggml_prec ggml_flash_attn_ext_get_prec(
 
 void ggml_flash_attn_ext_add_sinks(
         struct ggml_tensor * a,
-        struct ggml_tensor * sinks) {
+        struct ggml_tensor * sinks) {  // 结构体定义
     if (!sinks) {
         a->src[4] = NULL;
-        return;
+        return;  // 返回
     }
 
     GGML_ASSERT(a->op == GGML_OP_FLASH_ATTN_EXT);
@@ -5463,7 +5463,7 @@ struct ggml_tensor * ggml_flash_attn_back(
     result->src[2] = v;
     result->src[3] = d;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_ssm_conv
@@ -5471,7 +5471,7 @@ struct ggml_tensor * ggml_flash_attn_back(
 struct ggml_tensor * ggml_ssm_conv(
         struct ggml_context * ctx,
         struct ggml_tensor  * sx,
-        struct ggml_tensor  * c) {
+        struct ggml_tensor  * c) {  // 结构体定义
     GGML_ASSERT(ggml_is_3d(sx));
     GGML_ASSERT(ggml_is_matrix(c));
 
@@ -5491,7 +5491,7 @@ struct ggml_tensor * ggml_ssm_conv(
     result->src[0] = sx;
     result->src[1] = c;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_ssm_scan
@@ -5504,7 +5504,7 @@ struct ggml_tensor * ggml_ssm_scan(
         struct ggml_tensor  * A,
         struct ggml_tensor  * B,
         struct ggml_tensor  * C,
-        struct ggml_tensor  * ids) {
+        struct ggml_tensor  * ids) {  // 结构体定义
     GGML_ASSERT(ggml_is_contiguous(s));
     GGML_ASSERT(ggml_is_contiguous(dt));
     GGML_ASSERT(ggml_is_contiguous(A));
@@ -5556,7 +5556,7 @@ struct ggml_tensor * ggml_ssm_scan(
     result->src[5] = C;
     result->src[6] = ids;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_win_part
@@ -5585,7 +5585,7 @@ struct ggml_tensor * ggml_win_part(
     result->op     = GGML_OP_WIN_PART;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_win_unpart
@@ -5607,7 +5607,7 @@ struct ggml_tensor * ggml_win_unpart(
     result->op     = GGML_OP_WIN_UNPART;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_get_rel_pos
@@ -5626,7 +5626,7 @@ struct ggml_tensor * ggml_get_rel_pos(
     result->op     = GGML_OP_GET_REL_POS;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_add_rel_pos
@@ -5655,23 +5655,23 @@ static struct ggml_tensor * ggml_add_rel_pos_impl(
     result->src[1] = pw;
     result->src[2] = ph;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_add_rel_pos(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         struct ggml_tensor  * pw,
-        struct ggml_tensor  * ph) {
-    return ggml_add_rel_pos_impl(ctx, a, pw, ph, false);
+        struct ggml_tensor  * ph) {  // 结构体定义
+    return ggml_add_rel_pos_impl(ctx, a, pw, ph, false);  // ggml_add_rel_pos_impl
 }
 
 struct ggml_tensor * ggml_add_rel_pos_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         struct ggml_tensor  * pw,
-        struct ggml_tensor  * ph) {
-    return ggml_add_rel_pos_impl(ctx, a, pw, ph, true);
+        struct ggml_tensor  * ph) {  // 结构体定义
+    return ggml_add_rel_pos_impl(ctx, a, pw, ph, true);  // ggml_add_rel_pos_impl
 }
 
 // ggml_rwkv_wkv6
@@ -5683,7 +5683,7 @@ struct ggml_tensor * ggml_rwkv_wkv6(
         struct ggml_tensor  * r,
         struct ggml_tensor  * tf,
         struct ggml_tensor  * td,
-        struct ggml_tensor  * state) {
+        struct ggml_tensor  * state) {  // 结构体定义
     GGML_ASSERT(ggml_is_contiguous(k));
     GGML_ASSERT(ggml_is_contiguous(v));
     GGML_ASSERT(ggml_is_contiguous(r));
@@ -5714,7 +5714,7 @@ struct ggml_tensor * ggml_rwkv_wkv6(
     result->src[4] = td;
     result->src[5] = state;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_gated_linear_attn
@@ -5757,7 +5757,7 @@ struct ggml_tensor * ggml_gated_linear_attn(
     result->src[3] = g;
     result->src[4] = state;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_rwkv_wkv7
@@ -5770,7 +5770,7 @@ struct ggml_tensor * ggml_rwkv_wkv7(
         struct ggml_tensor  * v,
         struct ggml_tensor  * a,
         struct ggml_tensor  * b,
-        struct ggml_tensor  * state) {
+        struct ggml_tensor  * state) {  // 结构体定义
     GGML_ASSERT(ggml_is_contiguous(r));
     GGML_ASSERT(ggml_is_contiguous(w));
     GGML_ASSERT(ggml_is_contiguous(k));
@@ -5805,7 +5805,7 @@ struct ggml_tensor * ggml_rwkv_wkv7(
     result->src[5] = b;
     result->src[6] = state;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_unary
@@ -5824,21 +5824,21 @@ static struct ggml_tensor * ggml_unary_impl(
     result->op     = GGML_OP_UNARY;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_unary(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        enum ggml_unary_op    op) {
-    return ggml_unary_impl(ctx, a, op, false);
+        enum ggml_unary_op    op) {  // 枚举定义
+    return ggml_unary_impl(ctx, a, op, false);  // ggml_unary_impl
 }
 
 struct ggml_tensor * ggml_unary_inplace(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        enum ggml_unary_op    op) {
-    return ggml_unary_impl(ctx, a, op, true);
+        enum ggml_unary_op    op) {  // 枚举定义
+    return ggml_unary_impl(ctx, a, op, true);  // ggml_unary_impl
 }
 
 // ggml_map_custom1
@@ -5854,7 +5854,7 @@ static struct ggml_tensor * ggml_map_custom1_impl(
 
     struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    struct ggml_map_custom1_op_params params = {
+    struct ggml_map_custom1_op_params params = {  // 结构体定义
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
@@ -5864,7 +5864,7 @@ static struct ggml_tensor * ggml_map_custom1_impl(
     result->op     = GGML_OP_MAP_CUSTOM1;
     result->src[0] = a;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_map_custom1(
@@ -5873,7 +5873,7 @@ struct ggml_tensor * ggml_map_custom1(
         const  ggml_custom1_op_t   fun,
         int                        n_tasks,
         void                     * userdata) {
-    return ggml_map_custom1_impl(ctx, a, fun, n_tasks, userdata, false);
+    return ggml_map_custom1_impl(ctx, a, fun, n_tasks, userdata, false);  // ggml_map_custom1_impl
 }
 
 struct ggml_tensor * ggml_map_custom1_inplace(
@@ -5882,7 +5882,7 @@ struct ggml_tensor * ggml_map_custom1_inplace(
         const  ggml_custom1_op_t   fun,
         int                        n_tasks,
         void                     * userdata) {
-    return ggml_map_custom1_impl(ctx, a, fun, n_tasks, userdata, true);
+    return ggml_map_custom1_impl(ctx, a, fun, n_tasks, userdata, true);  // ggml_map_custom1_impl
 }
 
 // ggml_map_custom2
@@ -5899,7 +5899,7 @@ static struct ggml_tensor * ggml_map_custom2_impl(
 
     struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    struct ggml_map_custom2_op_params params = {
+    struct ggml_map_custom2_op_params params = {  // 结构体定义
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
@@ -5910,7 +5910,7 @@ static struct ggml_tensor * ggml_map_custom2_impl(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_map_custom2(
@@ -5920,7 +5920,7 @@ struct ggml_tensor * ggml_map_custom2(
         const  ggml_custom2_op_t   fun,
         int                        n_tasks,
         void                     * userdata) {
-    return ggml_map_custom2_impl(ctx, a, b, fun, n_tasks, userdata, false);
+    return ggml_map_custom2_impl(ctx, a, b, fun, n_tasks, userdata, false);  // ggml_map_custom2_impl
 }
 
 struct ggml_tensor * ggml_map_custom2_inplace(
@@ -5930,7 +5930,7 @@ struct ggml_tensor * ggml_map_custom2_inplace(
         const  ggml_custom2_op_t   fun,
         int                        n_tasks,
         void                     * userdata) {
-    return ggml_map_custom2_impl(ctx, a, b, fun, n_tasks, userdata, true);
+    return ggml_map_custom2_impl(ctx, a, b, fun, n_tasks, userdata, true);  // ggml_map_custom2_impl
 }
 
 // ggml_map_custom3
@@ -5948,7 +5948,7 @@ static struct ggml_tensor * ggml_map_custom3_impl(
 
     struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
 
-    struct ggml_map_custom3_op_params params = {
+    struct ggml_map_custom3_op_params params = {  // 结构体定义
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
@@ -5960,7 +5960,7 @@ static struct ggml_tensor * ggml_map_custom3_impl(
     result->src[1] = b;
     result->src[2] = c;
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_map_custom3(
@@ -5971,7 +5971,7 @@ struct ggml_tensor * ggml_map_custom3(
         const  ggml_custom3_op_t   fun,
         int                        n_tasks,
         void                     * userdata) {
-    return ggml_map_custom3_impl(ctx, a, b, c, fun, n_tasks, userdata, false);
+    return ggml_map_custom3_impl(ctx, a, b, c, fun, n_tasks, userdata, false);  // ggml_map_custom3_impl
 }
 
 struct ggml_tensor * ggml_map_custom3_inplace(
@@ -5982,7 +5982,7 @@ struct ggml_tensor * ggml_map_custom3_inplace(
         const  ggml_custom3_op_t   fun,
         int                        n_tasks,
         void                     * userdata) {
-    return ggml_map_custom3_impl(ctx, a, b, c, fun, n_tasks, userdata, true);
+    return ggml_map_custom3_impl(ctx, a, b, c, fun, n_tasks, userdata, true);  // ggml_map_custom3_impl
 }
 
 struct ggml_tensor * ggml_custom_4d(
@@ -6002,7 +6002,7 @@ struct ggml_tensor * ggml_custom_4d(
 
     struct ggml_tensor * result = ggml_new_tensor_4d(ctx, type, ne0, ne1, ne2, ne3);
 
-    struct ggml_custom_op_params params = {
+    struct ggml_custom_op_params params = {  // 结构体定义
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
@@ -6014,7 +6014,7 @@ struct ggml_tensor * ggml_custom_4d(
         result->src[i] = args[i];
     }
 
-    return result;
+    return result;  // 返回
 }
 
 struct ggml_tensor * ggml_custom_inplace(
@@ -6030,7 +6030,7 @@ struct ggml_tensor * ggml_custom_inplace(
 
     struct ggml_tensor * result = ggml_view_tensor(ctx, a);
 
-    struct ggml_custom_op_params params = {
+    struct ggml_custom_op_params params = {  // 结构体定义
         /*.fun      =*/ fun,
         /*.n_tasks  =*/ n_tasks,
         /*.userdata =*/ userdata
@@ -6043,14 +6043,14 @@ struct ggml_tensor * ggml_custom_inplace(
         result->src[i + 1] = args[i];
     }
 
-    return result;
+    return result;  // 返回
 }
 // ggml_cross_entropy_loss
 
 struct ggml_tensor * ggml_cross_entropy_loss(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
-        struct ggml_tensor  * b) {
+        struct ggml_tensor  * b) {  // 结构体定义
     GGML_ASSERT(ggml_are_same_shape(a, b));
 
     struct ggml_tensor * result = ggml_new_tensor_1d(ctx, a->type, 1);
@@ -6059,7 +6059,7 @@ struct ggml_tensor * ggml_cross_entropy_loss(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_cross_entropy_loss_back
@@ -6068,7 +6068,7 @@ struct ggml_tensor * ggml_cross_entropy_loss_back(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         struct ggml_tensor  * b,
-        struct ggml_tensor  * c) {
+        struct ggml_tensor  * c) {  // 结构体定义
     GGML_ASSERT(ggml_is_scalar(a));
     GGML_ASSERT(ggml_are_same_shape(b, c));
 
@@ -6079,7 +6079,7 @@ struct ggml_tensor * ggml_cross_entropy_loss_back(
     result->src[1] = b;
     result->src[2] = c;
 
-    return result;
+    return result;  // 返回
 }
 
 // opt_step_adamw
@@ -6090,7 +6090,7 @@ struct ggml_tensor * ggml_opt_step_adamw(
         struct ggml_tensor  * grad,
         struct ggml_tensor  * m,
         struct ggml_tensor  * v,
-        struct ggml_tensor  * adamw_params) {
+        struct ggml_tensor  * adamw_params) {  // 结构体定义
     GGML_ASSERT(a->flags & GGML_TENSOR_FLAG_PARAM);
     GGML_ASSERT(ggml_are_same_shape(a, grad));
     GGML_ASSERT(ggml_are_same_shape(a, m));
@@ -6107,7 +6107,7 @@ struct ggml_tensor * ggml_opt_step_adamw(
     result->src[3] = v;
     result->src[4] = adamw_params;
 
-    return result;
+    return result;  // 返回
 }
 
 // opt_step_sgd
@@ -6116,7 +6116,7 @@ struct ggml_tensor * ggml_opt_step_sgd(
         struct ggml_context * ctx,
         struct ggml_tensor  * a,
         struct ggml_tensor  * grad,
-        struct ggml_tensor  * params) {
+        struct ggml_tensor  * params) {  // 结构体定义
     GGML_ASSERT(a->flags & GGML_TENSOR_FLAG_PARAM);
     GGML_ASSERT(ggml_are_same_shape(a, grad));
     GGML_ASSERT(params->type == GGML_TYPE_F32);
@@ -6129,7 +6129,7 @@ struct ggml_tensor * ggml_opt_step_sgd(
     result->src[1] = grad;
     result->src[2] = params;
 
-    return result;
+    return result;  // 返回
 }
 
 // solve_tri
@@ -6164,7 +6164,7 @@ struct ggml_tensor * ggml_solve_tri(
     result->src[0] = a;
     result->src[1] = b;
 
-    return result;
+    return result;  // 返回
 }
 
 // ggml_gated_delta_net
@@ -6176,7 +6176,7 @@ struct ggml_tensor * ggml_gated_delta_net(
         struct ggml_tensor  * v,
         struct ggml_tensor  * g,
         struct ggml_tensor  * beta,
-        struct ggml_tensor  * state) {
+        struct ggml_tensor  * state) {  // 结构体定义
     GGML_ASSERT(ggml_is_contiguous_rows(q));
     GGML_ASSERT(ggml_is_contiguous_rows(k));
     GGML_ASSERT(ggml_is_contiguous_rows(v));
@@ -6215,18 +6215,18 @@ struct ggml_tensor * ggml_gated_delta_net(
     result->src[4] = beta;
     result->src[5] = state;
 
-    return result;
+    return result;  // 返回
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct ggml_hash_set ggml_hash_set_new(size_t size) {
+struct ggml_hash_set ggml_hash_set_new(size_t size) {  // 结构体定义
     size = ggml_hash_size(size);
     struct ggml_hash_set result;
     result.size = size;
     result.keys = GGML_MALLOC(sizeof(struct ggml_tensor *) * size);
     result.used = GGML_CALLOC(ggml_bitset_size(size), sizeof(ggml_bitset_t));
-    return result;
+    return result;  // 返回
 }
 
 void ggml_hash_set_reset(struct ggml_hash_set * hash_set) {
@@ -6261,10 +6261,10 @@ size_t ggml_hash_size(size_t min_sz) {
         }
     }
     size_t sz = l < n_primes ? primes[l] : min_sz | 1;
-    return sz;
+    return sz;  // 返回
 }
 
-struct hash_map {
+struct hash_map {  // 结构体定义
     struct ggml_hash_set set;
     struct ggml_tensor ** vals;
 };
@@ -6273,7 +6273,7 @@ static struct hash_map * ggml_new_hash_map(size_t size) {
     struct hash_map * result = GGML_MALLOC(sizeof(struct hash_map));
     result->set = ggml_hash_set_new(size);
     result->vals = GGML_CALLOC(result->set.size, sizeof(struct ggml_tensor *));
-    return result;
+    return result;  // 返回
 }
 
 static void ggml_hash_map_free(struct hash_map * map) {
@@ -6293,7 +6293,7 @@ static void ggml_add_or_set(
         struct ggml_context * ctx,
         struct ggml_cgraph  * cgraph,
         size_t                isrc,
-        struct ggml_tensor  * tensor) {
+        struct ggml_tensor  * tensor) {  // 结构体定义
     struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
     GGML_ASSERT(src);
     if (cgraph->grads[isrc]) {
@@ -6330,7 +6330,7 @@ static void ggml_add1_or_set(
         struct ggml_context * ctx,
         struct ggml_cgraph  * cgraph,
         size_t                isrc,
-        struct ggml_tensor  * tensor) {
+        struct ggml_tensor  * tensor) {  // 结构体定义
     struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
     GGML_ASSERT(src);
     if (cgraph->grads[isrc]) {
@@ -6346,7 +6346,7 @@ static void ggml_sub_or_set(
         struct ggml_context * ctx,
         struct ggml_cgraph  * cgraph,
         size_t                isrc,
-        struct ggml_tensor  * tensor) {
+        struct ggml_tensor  * tensor) {  // 结构体定义
     struct ggml_tensor * src = cgraph->visited_hash_set.keys[isrc];
     GGML_ASSERT(src);
     if (cgraph->grads[isrc]) {
@@ -6359,12 +6359,12 @@ static void ggml_sub_or_set(
 }
 
 static void ggml_compute_backward(
-        struct ggml_context * ctx, struct ggml_cgraph * cgraph, int i, const bool * grads_needed) {
+        struct ggml_context * ctx, struct ggml_cgraph * cgraph, int i, const bool * grads_needed) {  // 结构体定义
     struct ggml_tensor * tensor = cgraph->nodes[i];
     struct ggml_tensor * grad   = ggml_graph_get_grad(cgraph, tensor);
 
     if (!grad) {
-        return;
+        return;  // 返回
     }
 
     struct ggml_tensor * src0 = tensor->src[0];
@@ -6864,7 +6864,7 @@ static size_t ggml_visit_parents_graph(struct ggml_cgraph * cgraph, struct ggml_
             }
         }
 
-        return node_hash_pos;
+        return node_hash_pos;  // 返回
     }
 
     // This is the first time we see this node in the current graph.
@@ -6908,7 +6908,7 @@ static size_t ggml_visit_parents_graph(struct ggml_cgraph * cgraph, struct ggml_
         cgraph->n_nodes++;
     }
 
-    return node_hash_pos;
+    return node_hash_pos;  // 返回
 }
 
 static void ggml_build_forward_impl(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor, bool expand, bool compute) {
@@ -6941,7 +6941,7 @@ struct ggml_tensor * ggml_build_forward_select(
         ggml_build_forward_impl(cgraph, tensors[i], true, i == idx ? true : false);
     }
 
-    return tensors[idx];
+    return tensors[idx];  // 返回
 }
 
 void ggml_build_forward_expand(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor) {
@@ -6951,7 +6951,7 @@ void ggml_build_forward_expand(struct ggml_cgraph * cgraph, struct ggml_tensor *
 void ggml_build_backward_expand(
         struct ggml_context *  ctx,
         struct ggml_cgraph  *  cgraph,
-        struct ggml_tensor  ** grad_accs) {
+        struct ggml_tensor  ** grad_accs) {  // 结构体定义
     GGML_ASSERT(cgraph->n_nodes > 0);
     GGML_ASSERT(cgraph->grads);
     GGML_ASSERT(cgraph->grad_accs);
@@ -7021,7 +7021,7 @@ void ggml_build_backward_expand(
         }
 
         // inplace operations are currently not supported
-        GGML_ASSERT(!node->view_src || node->op == GGML_OP_CPY || node->op == GGML_OP_VIEW ||
+        GGML_ASSERT(!node->view_src || node->op == GGML_OP_CPY || node->op == GGML_OP_VIEW ||  // 断言检查
             node->op == GGML_OP_RESHAPE || node->op == GGML_OP_PERMUTE || node->op == GGML_OP_TRANSPOSE);
 
         const size_t ihash = ggml_hash_find(&cgraph->visited_hash_set, node);
@@ -7051,7 +7051,7 @@ static void * incr_ptr_aligned(void ** p, size_t size, size_t align) {
     void * ptr = *p;
     ptr = (void *) GGML_PAD((uintptr_t) ptr, align);
     *p = (void *) ((char *) ptr + size);
-    return ptr;
+    return ptr;  // 返回
 }
 
 static size_t ggml_graph_nbytes(size_t size, bool grads) {
@@ -7069,7 +7069,7 @@ static size_t ggml_graph_nbytes(size_t size, bool grads) {
     incr_ptr_aligned(&p, ggml_bitset_size(hash_size) * sizeof(ggml_bitset_t), sizeof(ggml_bitset_t));
 
     size_t nbytes = (size_t) p;
-    return nbytes;
+    return nbytes;  // 返回
 }
 
 size_t ggml_graph_overhead_custom(size_t size, bool grads) {
@@ -7077,10 +7077,10 @@ size_t ggml_graph_overhead_custom(size_t size, bool grads) {
 }
 
 size_t ggml_graph_overhead(void) {
-    return ggml_graph_overhead_custom(GGML_DEFAULT_GRAPH_SIZE, false);
+    return ggml_graph_overhead_custom(GGML_DEFAULT_GRAPH_SIZE, false);  // ggml_graph_overhead_custom
 }
 
-struct ggml_cgraph * ggml_new_graph_custom(struct ggml_context * ctx, size_t size, bool grads) {
+struct ggml_cgraph * ggml_new_graph_custom(struct ggml_context * ctx, size_t size, bool grads) {  // 结构体定义
     const size_t obj_size = ggml_graph_nbytes(size, grads);
     struct ggml_object * obj = ggml_new_object(ctx, GGML_OBJECT_TYPE_GRAPH, obj_size);
     struct ggml_cgraph * cgraph = (struct ggml_cgraph *) ((char *) ctx->mem_buffer + obj->offs);
@@ -7122,15 +7122,15 @@ struct ggml_cgraph * ggml_new_graph_custom(struct ggml_context * ctx, size_t siz
         memset(cgraph->grad_accs, 0, hash_size*sizeof(struct ggml_tensor *));
     }
 
-    return cgraph;
+    return cgraph;  // 返回
 }
 
-struct ggml_cgraph * ggml_new_graph(struct ggml_context * ctx) {
-    return ggml_new_graph_custom(ctx, GGML_DEFAULT_GRAPH_SIZE, false);
+struct ggml_cgraph * ggml_new_graph(struct ggml_context * ctx) {  // 结构体定义
+    return ggml_new_graph_custom(ctx, GGML_DEFAULT_GRAPH_SIZE, false);  // ggml_new_graph_custom
 }
 
-struct ggml_cgraph ggml_graph_view(struct ggml_cgraph * cgraph0, int i0, int i1) {
-    struct ggml_cgraph cgraph = {
+struct ggml_cgraph ggml_graph_view(struct ggml_cgraph * cgraph0, int i0, int i1) {  // 结构体定义
+    struct ggml_cgraph cgraph = {  // 结构体定义
         /*.size             =*/ 0,
         /*.n_nodes          =*/ i1 - i0,
         /*.n_leafs          =*/ 0,
@@ -7144,7 +7144,7 @@ struct ggml_cgraph ggml_graph_view(struct ggml_cgraph * cgraph0, int i0, int i1)
         /*.uid              =*/ 0
     };
 
-    return cgraph;
+    return cgraph;  // 返回
 }
 
 void ggml_graph_cpy(struct ggml_cgraph * src, struct ggml_cgraph * dst) {
@@ -7194,15 +7194,15 @@ void ggml_graph_cpy(struct ggml_cgraph * src, struct ggml_cgraph * dst) {
     }
 }
 
-struct ggml_cgraph * ggml_graph_dup(struct ggml_context * ctx, struct ggml_cgraph * cgraph, bool force_grads) {
+struct ggml_cgraph * ggml_graph_dup(struct ggml_context * ctx, struct ggml_cgraph * cgraph, bool force_grads) {  // 结构体定义
     struct ggml_cgraph * result = ggml_new_graph_custom(ctx, cgraph->size, cgraph->grads || force_grads);
     ggml_graph_cpy(cgraph, result);
-    return result;
+    return result;  // 返回
 }
 
-struct ggml_tensor * ggml_set_zero(struct ggml_tensor * tensor) {
+struct ggml_tensor * ggml_set_zero(struct ggml_tensor * tensor) {  // 结构体定义
     if (ggml_is_empty(tensor)) {
-        return tensor;
+        return tensor;  // 返回
     }
     if (tensor->buffer) {
         ggml_backend_tensor_memset(tensor, 0, 0, ggml_nbytes(tensor));
@@ -7210,12 +7210,12 @@ struct ggml_tensor * ggml_set_zero(struct ggml_tensor * tensor) {
         GGML_ASSERT(tensor->data);
         memset(tensor->data, 0, ggml_nbytes(tensor));
     }
-    return tensor;
+    return tensor;  // 返回
 }
 
 void ggml_graph_reset(struct ggml_cgraph * cgraph) {
     if (!cgraph) {
-        return;
+        return;  // 返回
     }
     GGML_ASSERT(cgraph->grads != NULL);
 
@@ -7256,25 +7256,25 @@ void ggml_graph_clear(struct ggml_cgraph * cgraph) {
 }
 
 int ggml_graph_size(struct ggml_cgraph * cgraph) {
-    return cgraph->size;
+    return cgraph->size;  // 返回
 }
 
-struct ggml_tensor * ggml_graph_node(struct ggml_cgraph * cgraph, int i) {
+struct ggml_tensor * ggml_graph_node(struct ggml_cgraph * cgraph, int i) {  // 结构体定义
     if (i < 0) {
         GGML_ASSERT(cgraph->n_nodes + i >= 0);
-        return cgraph->nodes[cgraph->n_nodes + i];
+        return cgraph->nodes[cgraph->n_nodes + i];  // 返回
     }
 
     GGML_ASSERT(i < cgraph->n_nodes);
-    return cgraph->nodes[i];
+    return cgraph->nodes[i];  // 返回
 }
 
-struct ggml_tensor ** ggml_graph_nodes(struct ggml_cgraph * cgraph) {
-    return cgraph->nodes;
+struct ggml_tensor ** ggml_graph_nodes(struct ggml_cgraph * cgraph) {  // 结构体定义
+    return cgraph->nodes;  // 返回
 }
 
 int ggml_graph_n_nodes(struct ggml_cgraph * cgraph) {
-    return cgraph->n_nodes;
+    return cgraph->n_nodes;  // 返回
 }
 
 void ggml_graph_add_node(struct ggml_cgraph * cgraph, struct ggml_tensor * tensor) {
@@ -7283,12 +7283,12 @@ void ggml_graph_add_node(struct ggml_cgraph * cgraph, struct ggml_tensor * tenso
     cgraph->n_nodes++;
 }
 
-struct ggml_tensor * ggml_graph_get_tensor(const struct ggml_cgraph * cgraph, const char * name) {
+struct ggml_tensor * ggml_graph_get_tensor(const struct ggml_cgraph * cgraph, const char * name) {  // 结构体定义
     for (int i = 0; i < cgraph->n_leafs; i++) {
         struct ggml_tensor * leaf = cgraph->leafs[i];
 
         if (strcmp(leaf->name, name) == 0) {
-            return leaf;
+            return leaf;  // 返回
         }
     }
 
@@ -7296,19 +7296,19 @@ struct ggml_tensor * ggml_graph_get_tensor(const struct ggml_cgraph * cgraph, co
         struct ggml_tensor * node = cgraph->nodes[i];
 
         if (strcmp(node->name, name) == 0) {
-            return node;
+            return node;  // 返回
         }
     }
 
-    return NULL;
+    return NULL;  // 返回
 }
 
-struct ggml_tensor * ggml_graph_get_grad(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
+struct ggml_tensor * ggml_graph_get_grad(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {  // 结构体定义
     const size_t igrad = ggml_hash_find(&cgraph->visited_hash_set, node);
     return igrad != GGML_HASHSET_FULL && ggml_bitset_get(cgraph->visited_hash_set.used, igrad) && cgraph->grads ? cgraph->grads[igrad] : NULL;
 }
 
-struct ggml_tensor * ggml_graph_get_grad_acc(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
+struct ggml_tensor * ggml_graph_get_grad_acc(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {  // 结构体定义
     const size_t igrad = ggml_hash_find(&cgraph->visited_hash_set, node);
     return igrad != GGML_HASHSET_FULL && ggml_bitset_get(cgraph->visited_hash_set.used, igrad) && cgraph->grad_accs ? cgraph->grad_accs[igrad] : NULL;
 }
@@ -7320,7 +7320,7 @@ void ggml_graph_print(const struct ggml_cgraph * cgraph) {
     for (int i = 0; i < cgraph->n_nodes; i++) {
         struct ggml_tensor * node = cgraph->nodes[i];
 
-        GGML_LOG_INFO(" - %3d: [ %5" PRId64 ", %5" PRId64 ", %5" PRId64 "] %16s %s\n",
+        GGML_LOG_INFO(" - %3d: [ %5" PRId64 ", %5" PRId64 ", %5" PRId64 "] %16s %s\n",  // 打印信息日志
                 i,
                 node->ne[0], node->ne[1], node->ne[2],
                 ggml_op_name(node->op), (node->flags & GGML_TENSOR_FLAG_PARAM) ? "x" :
@@ -7331,7 +7331,7 @@ void ggml_graph_print(const struct ggml_cgraph * cgraph) {
     for (int i = 0; i < cgraph->n_leafs; i++) {
         struct ggml_tensor * node = cgraph->leafs[i];
 
-        GGML_LOG_INFO(" - %3d: [ %5" PRId64 ", %5" PRId64 "] %8s %16s\n",
+        GGML_LOG_INFO(" - %3d: [ %5" PRId64 ", %5" PRId64 "] %8s %16s\n",  // 打印信息日志
                 i,
                 node->ne[0], node->ne[1],
                 ggml_op_name(node->op),
@@ -7350,13 +7350,13 @@ static int ggml_node_list_find_tensor(const struct ggml_cgraph * cgraph,
         const int node_idx = idxs[i];
 
         if (node_idx >= cgraph->n_nodes) {
-            return -1;
+            return -1;  // 返回
         }
         if (cgraph->nodes[node_idx] == tensor) {
-            return i;
+            return i;  // 返回
         }
     }
-    return -1;
+    return -1;  // 返回
 }
 
 bool ggml_can_fuse_subgraph_ext(const struct ggml_cgraph * cgraph,
@@ -7369,17 +7369,17 @@ bool ggml_can_fuse_subgraph_ext(const struct ggml_cgraph * cgraph,
 
     for (int i = 0; i < count; ++i) {
         if (node_idxs[i] >= cgraph->n_nodes) {
-            return false;
+            return false;  // 返回
         }
 
         const struct ggml_tensor * node = cgraph->nodes[node_idxs[i]];
 
         if (node->op != ops[i]) {
-            return false;
+            return false;  // 返回
         }
 
         if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            return false;
+            return false;  // 返回
         }
 
         if (ggml_node_list_find_tensor(cgraph, outputs, num_outputs, node) != -1) {
@@ -7387,7 +7387,7 @@ bool ggml_can_fuse_subgraph_ext(const struct ggml_cgraph * cgraph,
         }
 
         if (node->flags & GGML_TENSOR_FLAG_OUTPUT) {
-            return false;
+            return false;  // 返回
         }
 
         int subgraph_uses = 0;
@@ -7401,35 +7401,35 @@ bool ggml_can_fuse_subgraph_ext(const struct ggml_cgraph * cgraph,
         }
 
         if (subgraph_uses != ggml_node_get_use_count(cgraph, node_idxs[i])) {
-            return false;
+            return false;  // 返回
         }
 
         // if node is a view, check if the view_src and all it's parent view_srcs are within the subgraph
         struct ggml_tensor * view_src = node->view_src;
         while (view_src) {
             if (ggml_node_list_find_tensor(cgraph, node_idxs, count, view_src) == -1) {
-                return false;
+                return false;  // 返回
             }
             view_src = view_src->view_src;
         }
     }
 
-    return true;
+    return true;  // 返回
 }
 
 // check if node is part of the graph
 static bool ggml_graph_find(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
     if (cgraph == NULL) {
-        return true;
+        return true;  // 返回
     }
 
     for (int i = 0; i < cgraph->n_nodes; i++) {
         if (cgraph->nodes[i] == node) {
-            return true;
+            return true;  // 返回
         }
     }
 
-    return false;
+    return false;  // 返回
 }
 
 static struct ggml_tensor * ggml_graph_get_parent(const struct ggml_cgraph * cgraph, const struct ggml_tensor * node) {
@@ -7438,11 +7438,11 @@ static struct ggml_tensor * ggml_graph_get_parent(const struct ggml_cgraph * cgr
         struct ggml_tensor * grad = ggml_graph_get_grad(cgraph, parent);
 
         if (grad == node) {
-            return parent;
+            return parent;  // 返回
         }
     }
 
-    return NULL;
+    return NULL;  // 返回
 }
 
 static void ggml_graph_dump_dot_node_edge(FILE * fp, const struct ggml_cgraph * gb, struct ggml_tensor * node, struct ggml_tensor * parent, const char * label)  {
@@ -7726,7 +7726,7 @@ size_t ggml_quantize_chunk(
 
     GGML_ASSERT(result == nrows * row_size);
 
-    return result;
+    return result;  // 返回
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -7750,10 +7750,10 @@ void ggml_threadpool_params_init(struct ggml_threadpool_params * p, int n_thread
     memset(p->cpumask, 0, GGML_MAX_N_THREADS); // all-zero means use the default affinity (usually inherited)
 }
 
-struct ggml_threadpool_params ggml_threadpool_params_default(int n_threads) {
+struct ggml_threadpool_params ggml_threadpool_params_default(int n_threads) {  // 结构体定义
     struct ggml_threadpool_params p;
     ggml_threadpool_params_init(&p, n_threads);
-    return p;
+    return p;  // 返回
 }
 
 bool ggml_threadpool_params_match(const struct ggml_threadpool_params * p0, const struct ggml_threadpool_params * p1) {
@@ -7761,5 +7761,5 @@ bool ggml_threadpool_params_match(const struct ggml_threadpool_params * p0, cons
     if (p0->prio       != p1->prio       ) return false;
     if (p0->poll       != p1->poll       ) return false;
     if (p0->strict_cpu != p1->strict_cpu ) return false;
-    return memcmp(p0->cpumask, p1->cpumask, GGML_MAX_N_THREADS) == 0;
+    return memcmp(p0->cpumask, p1->cpumask, GGML_MAX_N_THREADS) == 0;  // memcmp
 }

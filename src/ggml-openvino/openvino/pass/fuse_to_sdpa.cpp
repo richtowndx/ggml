@@ -1,22 +1,22 @@
-#include "fuse_to_sdpa.h"
+#include "fuse_to_sdpa.h"  // 引入 fuse_to_sdpa.h 头文件
 
-#include <openvino/core/graph_util.hpp>
-#include <openvino/core/rt_info.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/scaled_dot_product_attention.hpp>
-#include <openvino/op/softmax.hpp>
-#include <openvino/op/transpose.hpp>
-#include <openvino/pass/pattern/op/label.hpp>
-#include <openvino/pass/pattern/op/pattern.hpp>
-#include <openvino/pass/pattern/op/wrap_type.hpp>
+#include <openvino/core/graph_util.hpp>  // 引入 openvino/core/graph_util.hpp 头文件
+#include <openvino/core/rt_info.hpp>  // 引入 openvino/core/rt_info.hpp 头文件
+#include <openvino/op/add.hpp>  // 引入 openvino/op/add.hpp 头文件
+#include <openvino/op/convert.hpp>  // 引入 openvino/op/convert.hpp 头文件
+#include <openvino/op/matmul.hpp>  // 引入 openvino/op/matmul.hpp 头文件
+#include <openvino/op/multiply.hpp>  // 引入 openvino/op/multiply.hpp 头文件
+#include <openvino/op/scaled_dot_product_attention.hpp>  // 引入 openvino/op/scaled_dot_product_attention.hpp 头文件
+#include <openvino/op/softmax.hpp>  // 引入 openvino/op/softmax.hpp 头文件
+#include <openvino/op/transpose.hpp>  // 引入 openvino/op/transpose.hpp 头文件
+#include <openvino/pass/pattern/op/label.hpp>  // 引入 openvino/pass/pattern/op/label.hpp 头文件
+#include <openvino/pass/pattern/op/pattern.hpp>  // 引入 openvino/pass/pattern/op/pattern.hpp 头文件
+#include <openvino/pass/pattern/op/wrap_type.hpp>  // 引入 openvino/pass/pattern/op/wrap_type.hpp 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace pass {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
+namespace pass {  // 命名空间
 
 FuseToSDPA::FuseToSDPA() {
     // Not maintained since FLASH_ATTN_EXT has replaced this pattern
@@ -48,7 +48,7 @@ FuseToSDPA::FuseToSDPA() {
         ov::replace_node(m.get_match_root(), sdpa);
         ov::copy_runtime_info(m.get_matched_nodes(), sdpa);
 
-        return true;
+        return true;  // 返回
     };
     register_matcher(std::make_shared<ov::pass::pattern::Matcher>(m_qkv, "ov::frontend::ggml::pass::FuseToSDPA"),
                      callback);

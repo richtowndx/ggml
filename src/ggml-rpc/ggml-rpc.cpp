@@ -1,22 +1,22 @@
-#include "ggml-rpc.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
-#include "ggml-cpp.h"
-#include "transport.h"
+#include "ggml-rpc.h"  // 引入 ggml-rpc.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-cpp.h"  // 引入 ggml-cpp.h 头文件
+#include "transport.h"  // 引入 transport.h 头文件
 
-#include <array>
-#include <cinttypes>
-#include <optional>
-#include <string>
-#include <vector>
-#include <memory>
-#include <mutex>
-#include <unordered_map>
-#include <unordered_set>
-#include <cstring>
-#include <fstream>
-#include <filesystem>
-#include <algorithm>
+#include <array>  // 引入 array 头文件
+#include <cinttypes>  // 引入 cinttypes 头文件
+#include <optional>  // 引入 optional 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
+#include <memory>  // 引入 memory 头文件
+#include <mutex>  // 引入 mutex 头文件
+#include <unordered_map>  // 引入 unordered_map 头文件
+#include <unordered_set>  // 引入 unordered_set 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <filesystem>  // 引入 filesystem 头文件
+#include <algorithm>  // 引入 algorithm 头文件
 
 static const char * RPC_DEBUG = std::getenv("GGML_RPC_DEBUG");
 
@@ -24,15 +24,15 @@ static const char * RPC_DEBUG = std::getenv("GGML_RPC_DEBUG");
     do { if (RPC_DEBUG) GGML_LOG_DEBUG(__VA_ARGS__); } while (0)
 
 
-namespace fs = std::filesystem;
+namespace fs = std::filesystem;  // 命名空间
 
 // macro for nicer error messages on server crash
-#define RPC_STATUS_ASSERT(x) if (!(x)) GGML_ABORT("Remote RPC server crashed or returned malformed response")
+#define RPC_STATUS_ASSERT(x) if (!(x)) GGML_ABORT("Remote RPC server crashed or returned malformed response")  // 宏定义 RPC_STATUS_ASSERT
 
 // all RPC structures must be packed
 #pragma pack(push, 1)
 // ggml_tensor is serialized into rpc_tensor
-struct rpc_tensor {
+struct rpc_tensor {  // 结构体定义
     uint64_t id;
     uint32_t type;
     uint64_t buffer;
@@ -53,7 +53,7 @@ struct rpc_tensor {
 static_assert(sizeof(rpc_tensor) % 8 == 0, "rpc_tensor size must be multiple of 8");
 
 // RPC commands
-enum rpc_cmd {
+enum rpc_cmd {  // 枚举定义
     RPC_CMD_ALLOC_BUFFER = 0,
     RPC_CMD_GET_ALIGNMENT,
     RPC_CMD_GET_MAX_SIZE,
@@ -79,11 +79,11 @@ static_assert(RPC_CMD_HELLO == 14, "RPC_CMD_HELLO must be always 14");
 // Try RPC_CMD_SET_TENSOR_HASH first when data size is larger than this threshold
 const size_t HASH_THRESHOLD = 10 * 1024 * 1024;
 
-struct rpc_msg_hello_req {
+struct rpc_msg_hello_req {  // 结构体定义
     uint8_t conn_caps[RPC_CONN_CAPS_SIZE];
 };
 
-struct rpc_msg_hello_rsp {
+struct rpc_msg_hello_rsp {  // 结构体定义
     uint8_t major;
     uint8_t minor;
     uint8_t patch;
@@ -91,102 +91,102 @@ struct rpc_msg_hello_rsp {
     uint8_t conn_caps[RPC_CONN_CAPS_SIZE];
 };
 
-struct rpc_msg_device_count_rsp {
+struct rpc_msg_device_count_rsp {  // 结构体定义
     uint32_t device_count;
 };
 
-struct rpc_msg_get_alloc_size_req {
+struct rpc_msg_get_alloc_size_req {  // 结构体定义
     uint32_t   device;
     rpc_tensor tensor;
     rpc_tensor srcs[GGML_MAX_SRC];
 };
 
-struct rpc_msg_get_alloc_size_rsp {
+struct rpc_msg_get_alloc_size_rsp {  // 结构体定义
     uint64_t alloc_size;
 };
 
-struct rpc_msg_init_tensor_req {
+struct rpc_msg_init_tensor_req {  // 结构体定义
     rpc_tensor tensor;
 };
 
-struct rpc_msg_alloc_buffer_req {
+struct rpc_msg_alloc_buffer_req {  // 结构体定义
     uint32_t device;
     uint64_t size;
 };
 
-struct rpc_msg_alloc_buffer_rsp {
+struct rpc_msg_alloc_buffer_rsp {  // 结构体定义
     uint64_t remote_ptr;
     uint64_t remote_size;
 };
 
-struct rpc_msg_get_alignment_req {
+struct rpc_msg_get_alignment_req {  // 结构体定义
     uint32_t device;
 };
 
-struct rpc_msg_get_alignment_rsp {
+struct rpc_msg_get_alignment_rsp {  // 结构体定义
     uint64_t alignment;
 };
 
-struct rpc_msg_get_max_size_req {
+struct rpc_msg_get_max_size_req {  // 结构体定义
     uint32_t device;
 };
 
-struct rpc_msg_get_max_size_rsp {
+struct rpc_msg_get_max_size_rsp {  // 结构体定义
     uint64_t max_size;
 };
 
-struct rpc_msg_buffer_get_base_req {
+struct rpc_msg_buffer_get_base_req {  // 结构体定义
     uint64_t remote_ptr;
 };
 
-struct rpc_msg_buffer_get_base_rsp {
+struct rpc_msg_buffer_get_base_rsp {  // 结构体定义
     uint64_t base_ptr;
 };
 
-struct rpc_msg_free_buffer_req {
+struct rpc_msg_free_buffer_req {  // 结构体定义
     uint64_t remote_ptr;
 };
 
-struct rpc_msg_buffer_clear_req {
+struct rpc_msg_buffer_clear_req {  // 结构体定义
     uint64_t remote_ptr;
     uint8_t value;
 };
 
-struct rpc_msg_set_tensor_hash_req {
+struct rpc_msg_set_tensor_hash_req {  // 结构体定义
     rpc_tensor tensor;
     uint64_t offset;
     uint64_t hash;
 };
 
-struct rpc_msg_set_tensor_hash_rsp {
+struct rpc_msg_set_tensor_hash_rsp {  // 结构体定义
     uint8_t result;
 };
 
-struct rpc_msg_get_tensor_req {
+struct rpc_msg_get_tensor_req {  // 结构体定义
     rpc_tensor tensor;
     uint64_t offset;
     uint64_t size;
 };
 
-struct rpc_msg_copy_tensor_req {
+struct rpc_msg_copy_tensor_req {  // 结构体定义
     rpc_tensor src;
     rpc_tensor dst;
 };
 
-struct rpc_msg_copy_tensor_rsp {
+struct rpc_msg_copy_tensor_rsp {  // 结构体定义
     uint8_t result;
 };
 
-struct rpc_msg_get_device_memory_req {
+struct rpc_msg_get_device_memory_req {  // 结构体定义
     uint32_t device;
 };
 
-struct rpc_msg_get_device_memory_rsp {
+struct rpc_msg_get_device_memory_rsp {  // 结构体定义
     uint64_t free_mem;
     uint64_t total_mem;
 };
 
-struct rpc_msg_graph_recompute_req {
+struct rpc_msg_graph_recompute_req {  // 结构体定义
     uint32_t device;
 };
 
@@ -196,10 +196,10 @@ struct rpc_msg_graph_recompute_req {
 
 static ggml_guid_t ggml_backend_rpc_guid() {
     static ggml_guid guid = {0x99, 0x68, 0x5b, 0x6c, 0xd2, 0x83, 0x3d, 0x24, 0x25, 0x36, 0x72, 0xe1, 0x5b, 0x0e, 0x14, 0x03};
-    return &guid;
+    return &guid;  // 返回
 }
 
-struct ggml_backend_rpc_buffer_type_context {
+struct ggml_backend_rpc_buffer_type_context {  // 结构体定义
     std::string endpoint;
     uint32_t    device;
     std::string name;
@@ -207,18 +207,18 @@ struct ggml_backend_rpc_buffer_type_context {
     size_t      max_size;
 };
 
-struct graph_cache {
+struct graph_cache {  // 结构体定义
 
     bool is_cached(const ggml_cgraph * cgraph) {
         if ((int)last_graph.size() != cgraph->n_nodes) {
-            return false;
+            return false;  // 返回
         }
         for (int i = 0; i < cgraph->n_nodes; i++) {
             if (memcmp(&last_graph[i], cgraph->nodes[i], sizeof(ggml_tensor)) != 0) {
-                return false;
+                return false;  // 返回
             }
         }
-        return true;
+        return true;  // 返回
     }
 
     void add(const ggml_cgraph * cgraph) {
@@ -231,14 +231,14 @@ struct graph_cache {
     std::vector<ggml_tensor> last_graph;
 };
 
-struct ggml_backend_rpc_context {
+struct ggml_backend_rpc_context {  // 结构体定义
     std::string endpoint;
     uint32_t    device;
     std::string name;
     graph_cache gc;
 };
 
-struct ggml_backend_rpc_buffer_context {
+struct ggml_backend_rpc_buffer_context {  // 结构体定义
     std::shared_ptr<socket_t> sock;
     void * base_ptr;
     uint64_t remote_ptr;
@@ -255,12 +255,12 @@ static uint64_t fnv_hash(const uint8_t * data, size_t len) {
         hash ^= data[i];
         hash *= fnv_prime;
     }
-    return hash;
+    return hash;  // 返回
 }
 
 static bool send_msg(socket_ptr sock, const void * msg, size_t msg_size) {
     if (!sock->send_data(&msg_size, sizeof(msg_size))) {
-        return false;
+        return false;  // 返回
     }
     return sock->send_data(msg, msg_size);
 }
@@ -268,10 +268,10 @@ static bool send_msg(socket_ptr sock, const void * msg, size_t msg_size) {
 static bool recv_msg(socket_ptr sock, void * msg, size_t msg_size) {
     uint64_t size;
     if (!sock->recv_data(&size, sizeof(size))) {
-        return false;
+        return false;  // 返回
     }
     if (size != msg_size) {
-        return false;
+        return false;  // 返回
     }
     return sock->recv_data(msg, msg_size);
 }
@@ -279,13 +279,13 @@ static bool recv_msg(socket_ptr sock, void * msg, size_t msg_size) {
 static bool recv_msg(socket_ptr sock, std::vector<uint8_t> & input) {
     uint64_t size;
     if (!sock->recv_data(&size, sizeof(size))) {
-        return false;
+        return false;  // 返回
     }
     try {
         input.resize(size);
     } catch (const std::bad_alloc & e) {
         GGML_LOG_ERROR("Failed to allocate input buffer of size %" PRIu64 "\n", size);
-        return false;
+        return false;  // 返回
     }
     return sock->recv_data(input.data(), size);
 }
@@ -293,15 +293,15 @@ static bool recv_msg(socket_ptr sock, std::vector<uint8_t> & input) {
 static bool parse_endpoint(const std::string & endpoint, std::string & host, int & port) {
     size_t pos = endpoint.find(':');
     if (pos == std::string::npos) {
-        return false;
+        return false;  // 返回
     }
     host = endpoint.substr(0, pos);
     try {
         port = std::stoi(endpoint.substr(pos + 1));
     } catch (...) {
-        return false;
+        return false;  // 返回
     }
-    return true;
+    return true;  // 返回
 }
 
 // RPC request : | rpc_cmd (1 byte) | request_size (8 bytes) | request_data (request_size bytes) |
@@ -309,34 +309,34 @@ static bool parse_endpoint(const std::string & endpoint, std::string & host, int
 static bool send_rpc_cmd(socket_ptr sock, enum rpc_cmd cmd, const void * input, size_t input_size) {
     uint8_t cmd_byte = cmd;
     if (!sock->send_data(&cmd_byte, sizeof(cmd_byte))) {
-        return false;
+        return false;  // 返回
     }
     if (!sock->send_data(&input_size, sizeof(input_size))) {
-        return false;
+        return false;  // 返回
     }
     if (!sock->send_data(input, input_size)) {
-        return false;
+        return false;  // 返回
     }
-    return true;
+    return true;  // 返回
 }
 
 // RPC request : | rpc_cmd (1 byte) | request_size (8 bytes) | request_data (request_size bytes) |
 // RPC response: | response_size (8 bytes) | response_data (response_size bytes) |
 static bool send_rpc_cmd(socket_ptr sock, enum rpc_cmd cmd, const void * input, size_t input_size, void * output, size_t output_size) {
     if (!send_rpc_cmd(sock, cmd, input, input_size)) {
-        return false;
+        return false;  // 返回
     }
     uint64_t out_size;
     if (!sock->recv_data(&out_size, sizeof(out_size))) {
-        return false;
+        return false;  // 返回
     }
     if (out_size != output_size) {
-        return false;
+        return false;  // 返回
     }
     if (!sock->recv_data(output, output_size)) {
-        return false;
+        return false;  // 返回
     }
-    return true;
+    return true;  // 返回
 }
 
 // RPC client-side implementation
@@ -354,13 +354,13 @@ static bool negotiate_hello(const std::shared_ptr<socket_t> & sock) {
     RPC_STATUS_ASSERT(status);
 
     if (response.major != RPC_PROTO_MAJOR_VERSION || response.minor > RPC_PROTO_MINOR_VERSION) {
-        GGML_LOG_ERROR("RPC server version mismatch: %d.%d.%d\n",
+        GGML_LOG_ERROR("RPC server version mismatch: %d.%d.%d\n",  // 打印错误日志
                        response.major, response.minor, response.patch);
-        return false;
+        return false;  // 返回
     }
 
     sock->update_caps(response.conn_caps);
-    return true;
+    return true;  // 返回
 }
 
 static std::shared_ptr<socket_t> get_socket(const std::string & endpoint) {
@@ -371,29 +371,29 @@ static std::shared_ptr<socket_t> get_socket(const std::string & endpoint) {
     auto it = sockets.find(endpoint);
     if (it != sockets.end()) {
         if (auto sock = it->second.lock()) {
-            return sock;
+            return sock;  // 返回
         }
     }
     std::string host;
     int port;
     if (!parse_endpoint(endpoint, host, port)) {
         GGML_LOG_ERROR("Failed to parse endpoint: %s\n", endpoint.c_str());
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     if (!rpc_transport_init()) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     auto sock = socket_t::connect(host.c_str(), port);
     if (sock == nullptr) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     if (!negotiate_hello(sock)) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     LOG_DBG("[%s] connected to %s\n", __func__, endpoint.c_str());
     sockets[endpoint] = sock;
-    return sock;
+    return sock;  // 返回
 }
 
 static void ggml_backend_rpc_buffer_free_buffer(ggml_backend_buffer_t buffer) {
@@ -407,25 +407,25 @@ static void ggml_backend_rpc_buffer_free_buffer(ggml_backend_buffer_t buffer) {
 static void * ggml_backend_rpc_buffer_get_base(ggml_backend_buffer_t buffer) {
     ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
     if (ctx->base_ptr != nullptr) {
-        return ctx->base_ptr;
+        return ctx->base_ptr;  // 返回
     }
     rpc_msg_buffer_get_base_req request = {ctx->remote_ptr};
     rpc_msg_buffer_get_base_rsp response;
     bool status = send_rpc_cmd(ctx->sock, RPC_CMD_BUFFER_GET_BASE, &request, sizeof(request), &response, sizeof(response));
     RPC_STATUS_ASSERT(status);
     ctx->base_ptr = reinterpret_cast<void *>(response.base_ptr);
-    return ctx->base_ptr;
+    return ctx->base_ptr;  // 返回
 }
 
 static bool ggml_backend_buffer_is_rpc(ggml_backend_buffer_t buffer) {
-    return buffer->iface.free_buffer == ggml_backend_rpc_buffer_free_buffer;
+    return buffer->iface.free_buffer == ggml_backend_rpc_buffer_free_buffer;  // 返回
 }
 
 static rpc_tensor serialize_tensor(const ggml_tensor * tensor) {
     rpc_tensor result;
     if (!tensor) {
         memset(&result, 0, sizeof(result));
-        return result;
+        return result;  // 返回
     }
 
     result.id = reinterpret_cast<uint64_t>(tensor);
@@ -459,7 +459,7 @@ static rpc_tensor serialize_tensor(const ggml_tensor * tensor) {
     memset(result.padding, 0, sizeof(result.padding));
 
     snprintf(result.name, GGML_MAX_NAME, "%s", tensor->name);
-    return result;
+    return result;  // 返回
 }
 
 static enum ggml_status ggml_backend_rpc_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
@@ -476,7 +476,7 @@ static enum ggml_status ggml_backend_rpc_buffer_init_tensor(ggml_backend_buffer_
         bool status = send_rpc_cmd(ctx->sock, RPC_CMD_INIT_TENSOR, &request, sizeof(request), nullptr, 0);
         RPC_STATUS_ASSERT(status);
     }
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 static void ggml_backend_rpc_buffer_set_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
@@ -492,7 +492,7 @@ static void ggml_backend_rpc_buffer_set_tensor(ggml_backend_buffer_t buffer, ggm
         RPC_STATUS_ASSERT(status);
         if (response.result) {
             // the server has the same data, no need to send it
-            return;
+            return;  // 返回
         }
     }
     // input serialization format: | rpc_tensor | offset (8 bytes) | data (size bytes)
@@ -523,7 +523,7 @@ static bool ggml_backend_rpc_buffer_cpy_tensor(ggml_backend_buffer_t buffer, con
         ggml_backend_buffer_t dst_buffer = dst->buffer;
         ggml_backend_rpc_buffer_context * dst_ctx = (ggml_backend_rpc_buffer_context *)dst_buffer->context;
         if (src_ctx->sock != dst_ctx->sock) {
-            return false;
+            return false;  // 返回
         }
         ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
         rpc_msg_copy_tensor_req request;
@@ -532,9 +532,9 @@ static bool ggml_backend_rpc_buffer_cpy_tensor(ggml_backend_buffer_t buffer, con
         rpc_msg_copy_tensor_rsp response;
         bool status = send_rpc_cmd(ctx->sock, RPC_CMD_COPY_TENSOR, &request, sizeof(request), &response, sizeof(response));
         RPC_STATUS_ASSERT(status);
-        return response.result;
+        return response.result;  // 返回
     }
-    return false;
+    return false;  // 返回
 }
 
 static void ggml_backend_rpc_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
@@ -575,9 +575,9 @@ static ggml_backend_buffer_t ggml_backend_rpc_buffer_type_alloc_buffer(ggml_back
             ggml_backend_rpc_buffer_interface,
             new ggml_backend_rpc_buffer_context{sock, nullptr, response.remote_ptr},
             response.remote_size);
-        return buffer;
+        return buffer;  // 返回
     } else {
-        return nullptr;
+        return nullptr;  // 返回
     }
 }
 
@@ -586,12 +586,12 @@ static size_t get_alignment(const std::shared_ptr<socket_t> & sock, uint32_t dev
     rpc_msg_get_alignment_rsp response;
     bool status = send_rpc_cmd(sock, RPC_CMD_GET_ALIGNMENT, &request, sizeof(request), &response, sizeof(response));
     RPC_STATUS_ASSERT(status);
-    return response.alignment;
+    return response.alignment;  // 返回
 }
 
 static size_t ggml_backend_rpc_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
     ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
-    return buft_ctx->alignment;
+    return buft_ctx->alignment;  // 返回
 }
 
 static size_t get_max_size(const std::shared_ptr<socket_t> & sock, uint32_t device) {
@@ -599,12 +599,12 @@ static size_t get_max_size(const std::shared_ptr<socket_t> & sock, uint32_t devi
     rpc_msg_get_max_size_rsp response;
     bool status = send_rpc_cmd(sock, RPC_CMD_GET_MAX_SIZE, &request, sizeof(request), &response, sizeof(response));
     RPC_STATUS_ASSERT(status);
-    return response.max_size;
+    return response.max_size;  // 返回
 }
 
 static size_t ggml_backend_rpc_get_max_size(ggml_backend_buffer_type_t buft) {
     ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
-    return buft_ctx->max_size;
+    return buft_ctx->max_size;  // 返回
 }
 
 static size_t ggml_backend_rpc_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
@@ -639,10 +639,10 @@ static size_t ggml_backend_rpc_buffer_type_get_alloc_size(ggml_backend_buffer_ty
         bool status = send_rpc_cmd(sock, RPC_CMD_GET_ALLOC_SIZE, &request, sizeof(request), &response, sizeof(response));
         RPC_STATUS_ASSERT(status);
 
-        return response.alloc_size;
+        return response.alloc_size;  // 返回
     }
 
-    return ggml_nbytes(tensor);
+    return ggml_nbytes(tensor);  // ggml_nbytes
 }
 
 static ggml_backend_buffer_type_i ggml_backend_rpc_buffer_type_interface = {
@@ -673,10 +673,10 @@ static void ggml_backend_rpc_synchronize(ggml_backend_t backend) {
 
 static void add_tensor(ggml_tensor * tensor, std::vector<rpc_tensor> & tensors, std::unordered_set<ggml_tensor*> & visited) {
     if (tensor == nullptr) {
-        return;
+        return;  // 返回
     }
     if (visited.find(tensor) != visited.end()) {
-        return;
+        return;  // 返回
     }
     visited.insert(tensor);
     for (int i = 0; i < GGML_MAX_SRC; i++) {
@@ -732,7 +732,7 @@ static enum ggml_status ggml_backend_rpc_graph_compute(ggml_backend_t backend, g
         bool status = send_rpc_cmd(sock, RPC_CMD_GRAPH_COMPUTE, input.data(), input.size());
         RPC_STATUS_ASSERT(status);
     }
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 static ggml_backend_i ggml_backend_rpc_interface = {
@@ -762,12 +762,12 @@ ggml_backend_buffer_type_t ggml_backend_rpc_buffer_type(const char * endpoint, u
     static std::unordered_map<std::string, ggml_backend_buffer_type_t> buft_map;
     auto it = buft_map.find(buft_name);
     if (it != buft_map.end()) {
-        return it->second;
+        return it->second;  // 返回
     }
     auto sock = get_socket(endpoint);
     if (sock == nullptr) {
         GGML_LOG_ERROR("Failed to connect to %s\n", endpoint);
-        return nullptr;
+        return nullptr;  // 返回
     }
     size_t alignment = get_alignment(sock, device);
     size_t max_size = get_max_size(sock, device);
@@ -785,7 +785,7 @@ ggml_backend_buffer_type_t ggml_backend_rpc_buffer_type(const char * endpoint, u
         /* .context = */ buft_ctx
     };
     buft_map[buft_name] = buft;
-    return buft;
+    return buft;  // 返回
 }
 
 ggml_backend_t ggml_backend_rpc_init(const char * endpoint, uint32_t device) {
@@ -803,7 +803,7 @@ ggml_backend_t ggml_backend_rpc_init(const char * endpoint, uint32_t device) {
         /* .device  = */ ggml_backend_reg_dev_get(reg, device),
         /* .context = */ ctx
     };
-    return backend;
+    return backend;  // 返回
 }
 
 bool ggml_backend_is_rpc(ggml_backend_t backend) {
@@ -825,14 +825,14 @@ void ggml_backend_rpc_get_device_memory(const char * endpoint, uint32_t device, 
     if (sock == nullptr) {
         *free = 0;
         *total = 0;
-        return;
+        return;  // 返回
     }
     get_device_memory(sock, device, free, total);
 }
 
 // RPC server-side implementation
 
-class rpc_server {
+class rpc_server {  // 类定义
 public:
     rpc_server(std::vector<ggml_backend_t> all_backends, const char * cache_dir)
         : backends(std::move(all_backends)), cache_dir(cache_dir) {
@@ -840,31 +840,31 @@ public:
     }
     ~rpc_server();
 
-    void hello(rpc_msg_hello_rsp & response);
-    bool alloc_buffer(const rpc_msg_alloc_buffer_req & request, rpc_msg_alloc_buffer_rsp & response);
-    bool get_alignment(const rpc_msg_get_alignment_req & request, rpc_msg_get_alignment_rsp & response);
-    bool get_max_size(const rpc_msg_get_max_size_req & request, rpc_msg_get_max_size_rsp & response);
-    bool buffer_get_base(const rpc_msg_buffer_get_base_req & request, rpc_msg_buffer_get_base_rsp & response);
-    bool free_buffer(const rpc_msg_free_buffer_req & request);
-    bool buffer_clear(const rpc_msg_buffer_clear_req & request);
-    bool set_tensor(const std::vector<uint8_t> & input);
-    bool set_tensor_hash(const rpc_msg_set_tensor_hash_req & request, rpc_msg_set_tensor_hash_rsp & response);
-    bool get_tensor(const rpc_msg_get_tensor_req & request, std::vector<uint8_t> & response);
-    bool copy_tensor(const rpc_msg_copy_tensor_req & request, rpc_msg_copy_tensor_rsp & response);
-    bool graph_compute(const std::vector<uint8_t> & input);
-    bool graph_recompute(const rpc_msg_graph_recompute_req & request);
-    bool init_tensor(const rpc_msg_init_tensor_req & request);
-    bool get_alloc_size(const rpc_msg_get_alloc_size_req & request, rpc_msg_get_alloc_size_rsp & response);
-    bool get_device_memory(const rpc_msg_get_device_memory_req & request, rpc_msg_get_device_memory_rsp & response);
+    void hello(rpc_msg_hello_rsp & response);  // hello
+    bool alloc_buffer(const rpc_msg_alloc_buffer_req & request, rpc_msg_alloc_buffer_rsp & response);  // alloc_buffer
+    bool get_alignment(const rpc_msg_get_alignment_req & request, rpc_msg_get_alignment_rsp & response);  // get_alignment
+    bool get_max_size(const rpc_msg_get_max_size_req & request, rpc_msg_get_max_size_rsp & response);  // get_max_size
+    bool buffer_get_base(const rpc_msg_buffer_get_base_req & request, rpc_msg_buffer_get_base_rsp & response);  // buffer_get_base
+    bool free_buffer(const rpc_msg_free_buffer_req & request);  // free_buffer
+    bool buffer_clear(const rpc_msg_buffer_clear_req & request);  // buffer_clear
+    bool set_tensor(const std::vector<uint8_t> & input);  // set_tensor
+    bool set_tensor_hash(const rpc_msg_set_tensor_hash_req & request, rpc_msg_set_tensor_hash_rsp & response);  // set_tensor_hash
+    bool get_tensor(const rpc_msg_get_tensor_req & request, std::vector<uint8_t> & response);  // get_tensor
+    bool copy_tensor(const rpc_msg_copy_tensor_req & request, rpc_msg_copy_tensor_rsp & response);  // copy_tensor
+    bool graph_compute(const std::vector<uint8_t> & input);  // graph_compute
+    bool graph_recompute(const rpc_msg_graph_recompute_req & request);  // graph_recompute
+    bool init_tensor(const rpc_msg_init_tensor_req & request);  // init_tensor
+    bool get_alloc_size(const rpc_msg_get_alloc_size_req & request, rpc_msg_get_alloc_size_rsp & response);  // get_alloc_size
+    bool get_device_memory(const rpc_msg_get_device_memory_req & request, rpc_msg_get_device_memory_rsp & response);  // get_device_memory
 
-    struct stored_graph {
+    struct stored_graph {  // 结构体定义
         std::vector<uint8_t>   buffer;
         ggml_cgraph          * graph;
     };
 
 private:
-    bool get_cached_file(uint64_t hash, std::vector<uint8_t> & data);
-    ggml_tensor * deserialize_tensor(struct ggml_context * ctx, const rpc_tensor * tensor);
+    bool get_cached_file(uint64_t hash, std::vector<uint8_t> & data);  // get_cached_file
+    ggml_tensor * deserialize_tensor(struct ggml_context * ctx, const rpc_tensor * tensor);  // deserialize_tensor
     ggml_tensor * create_node(uint64_t id,
                               struct ggml_context * ctx,
                               const std::unordered_map<uint64_t, const rpc_tensor*> & tensor_ptrs,
@@ -888,10 +888,10 @@ void rpc_server::hello(rpc_msg_hello_rsp & response) {
 bool rpc_server::get_alloc_size(const rpc_msg_get_alloc_size_req & request, rpc_msg_get_alloc_size_rsp & response) {
     uint32_t dev_id = request.device;
     if (dev_id >= backends.size()) {
-        return false;
+        return false;  // 返回
     }
     ggml_backend_buffer_type_t buft;
-    struct ggml_init_params params {
+    struct ggml_init_params params {  // 结构体定义
         /*.mem_size   =*/ ggml_tensor_overhead()*(1 + GGML_MAX_SRC),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -904,7 +904,7 @@ bool rpc_server::get_alloc_size(const rpc_msg_get_alloc_size_req & request, rpc_
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
     if (tensor == nullptr) {
         GGML_LOG_ERROR("Null tensor pointer passed to server get_alloc_size function.\n");
-        return false;
+        return false;  // 返回
     }
     for (int i = 0; i < GGML_MAX_SRC; i++) {
         if (request.srcs[i].id != 0) {
@@ -922,13 +922,13 @@ bool rpc_server::get_alloc_size(const rpc_msg_get_alloc_size_req & request, rpc_
 
     response.alloc_size = ggml_backend_buft_get_alloc_size(buft, tensor);
 
-    return true;
+    return true;  // 返回
 }
 
 bool rpc_server::alloc_buffer(const rpc_msg_alloc_buffer_req & request, rpc_msg_alloc_buffer_rsp & response) {
     uint32_t dev_id = request.device;
     if (dev_id >= backends.size()) {
-        return false;
+        return false;  // 返回
     }
     ggml_backend_buffer_type_t buft = ggml_backend_get_default_buffer_type(backends[dev_id]);
     ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer(buft, request.size);
@@ -943,31 +943,31 @@ bool rpc_server::alloc_buffer(const rpc_msg_alloc_buffer_req & request, rpc_msg_
     } else {
         LOG_DBG("[%s] device: %d, size: %" PRIu64 " -> failed\n", __func__, dev_id, request.size);
     }
-    return true;
+    return true;  // 返回
 }
 
 bool rpc_server::get_alignment(const rpc_msg_get_alignment_req & request, rpc_msg_get_alignment_rsp & response) {
     uint32_t dev_id = request.device;
     if (dev_id >= backends.size()) {
-        return false;
+        return false;  // 返回
     }
     ggml_backend_buffer_type_t buft = ggml_backend_get_default_buffer_type(backends[dev_id]);
     size_t alignment = ggml_backend_buft_get_alignment(buft);
     LOG_DBG("[%s] device: %d, alignment: %lu\n", __func__, dev_id, alignment);
     response.alignment = alignment;
-    return true;
+    return true;  // 返回
 }
 
 bool rpc_server::get_max_size(const rpc_msg_get_max_size_req & request, rpc_msg_get_max_size_rsp & response) {
     uint32_t dev_id = request.device;
     if (dev_id >= backends.size()) {
-        return false;
+        return false;  // 返回
     }
     ggml_backend_buffer_type_t buft = ggml_backend_get_default_buffer_type(backends[dev_id]);
     size_t max_size = ggml_backend_buft_get_max_size(buft);
     LOG_DBG("[%s] device: %d, max_size: %lu\n", __func__, dev_id, max_size);
     response.max_size = max_size;
-    return true;
+    return true;  // 返回
 }
 
 bool rpc_server::buffer_get_base(const rpc_msg_buffer_get_base_req & request, rpc_msg_buffer_get_base_rsp & response) {
@@ -975,11 +975,11 @@ bool rpc_server::buffer_get_base(const rpc_msg_buffer_get_base_req & request, rp
     ggml_backend_buffer_t buffer = reinterpret_cast<ggml_backend_buffer_t>(request.remote_ptr);
     if (buffers.find(buffer) == buffers.end()) {
         GGML_LOG_ERROR("[%s] buffer not found\n", __func__);
-        return false;
+        return false;  // 返回
     }
     void * base = ggml_backend_buffer_get_base(buffer);
     response.base_ptr = reinterpret_cast<uint64_t>(base);
-    return true;
+    return true;  // 返回
 }
 
 bool rpc_server::free_buffer(const rpc_msg_free_buffer_req & request) {
@@ -987,11 +987,11 @@ bool rpc_server::free_buffer(const rpc_msg_free_buffer_req & request) {
     ggml_backend_buffer_t buffer = reinterpret_cast<ggml_backend_buffer_t>(request.remote_ptr);
     if (buffers.find(buffer) == buffers.end()) {
         GGML_LOG_ERROR("[%s] buffer not found\n", __func__);
-        return false;
+        return false;  // 返回
     }
     ggml_backend_buffer_free(buffer);
     buffers.erase(buffer);
-    return true;
+    return true;  // 返回
 }
 
 bool rpc_server::buffer_clear(const rpc_msg_buffer_clear_req & request) {
@@ -999,23 +999,23 @@ bool rpc_server::buffer_clear(const rpc_msg_buffer_clear_req & request) {
     ggml_backend_buffer_t buffer = reinterpret_cast<ggml_backend_buffer_t>(request.remote_ptr);
     if (buffers.find(buffer) == buffers.end()) {
         GGML_LOG_ERROR("[%s] buffer not found\n", __func__);
-        return false;
+        return false;  // 返回
     }
     ggml_backend_buffer_clear(buffer, request.value);
-    return true;
+    return true;  // 返回
 }
 
 ggml_tensor * rpc_server::deserialize_tensor(struct ggml_context * ctx, const rpc_tensor * tensor) {
     // Validate tensor type before using it
     if (tensor->type >= GGML_TYPE_COUNT) {
         GGML_LOG_ERROR("[%s] invalid tensor type received: %u\n", __func__, tensor->type);
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     // Fix: Prevent division by zero if blck_size is 0 (e.g., deprecated types)
     if (ggml_blck_size((enum ggml_type)tensor->type) == 0) {
         GGML_LOG_ERROR("[%s] invalid tensor type received (blck_size is 0): %u\n", __func__, tensor->type);
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     ggml_tensor * result = ggml_new_tensor_4d(ctx, (ggml_type) tensor->type,
@@ -1024,7 +1024,7 @@ ggml_tensor * rpc_server::deserialize_tensor(struct ggml_context * ctx, const rp
     // ggml_new_tensor_4d might fail if dimensions are invalid, although less likely to crash than invalid type
     if (result == nullptr) {
         GGML_LOG_ERROR("[%s] ggml_new_tensor_4d failed for type %u\n", __func__, tensor->type);
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     for (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
@@ -1051,21 +1051,21 @@ ggml_tensor * rpc_server::deserialize_tensor(struct ggml_context * ctx, const rp
     result->flags = tensor->flags;
     result->data = reinterpret_cast<void *>(tensor->data);
     ggml_set_name(result, tensor->name);
-    return result;
+    return result;  // 返回
 }
 
 
 bool rpc_server::set_tensor(const std::vector<uint8_t> & input) {
     // serialization format: | rpc_tensor | offset (8 bytes) | data (size bytes) |
     if (input.size() < sizeof(rpc_tensor) + sizeof(uint64_t)) {
-        return false;
+        return false;  // 返回
     }
     const rpc_tensor * in_tensor = (const rpc_tensor *)input.data();
     uint64_t offset;
     memcpy(&offset, input.data() + sizeof(rpc_tensor), sizeof(offset));
     const size_t size = input.size() - sizeof(rpc_tensor) - sizeof(offset);
 
-    struct ggml_init_params params {
+    struct ggml_init_params params {  // 结构体定义
         /*.mem_size   =*/ ggml_tensor_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -1076,7 +1076,7 @@ bool rpc_server::set_tensor(const std::vector<uint8_t> & input) {
     ggml_tensor * tensor = deserialize_tensor(ctx, in_tensor);
     if (tensor == nullptr || tensor->buffer == nullptr) {
         GGML_LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        return false;  // 返回
     }
     LOG_DBG("[%s] buffer: %p, data: %p, offset: %" PRIu64 ", size: %zu\n", __func__, (void*)tensor->buffer, tensor->data, offset, size);
 
@@ -1088,7 +1088,7 @@ bool rpc_server::set_tensor(const std::vector<uint8_t> & input) {
         if (in_tensor->data + offset < p0 || in_tensor->data + offset >= p1 || size > (p1 - in_tensor->data - offset)) {
             GGML_LOG_ERROR("[%s] tensor data region (data=0x%" PRIx64 ", offset=%" PRIu64 ", size=%zu) out of buffer bounds [0x%zx, 0x%zx)\n",
                            __func__, in_tensor->data, offset, size, p0, p1);
-            return false;
+            return false;  // 返回
         }
     }
 
@@ -1104,19 +1104,19 @@ bool rpc_server::set_tensor(const std::vector<uint8_t> & input) {
         GGML_LOG_INFO("[%s] saved to '%s'\n", __func__, cache_file.string().c_str());
     }
     ggml_backend_tensor_set(tensor, data, offset, size);
-    return true;
+    return true;  // 返回
 }
 
 bool rpc_server::get_cached_file(uint64_t hash, std::vector<uint8_t> & data) {
     if (!cache_dir) {
-        return false;
+        return false;  // 返回
     }
     char hash_str[17];
     snprintf(hash_str, sizeof(hash_str), "%016" PRIx64, hash);
     fs::path cache_file = fs::path(cache_dir) / hash_str;
     std::error_code ec;
     if (!fs::exists(cache_file, ec)) {
-        return false;
+        return false;  // 返回
     }
     std::ifstream ifs(cache_file, std::ios::binary);
     ifs.seekg(0, std::ios::end);
@@ -1124,7 +1124,7 @@ bool rpc_server::get_cached_file(uint64_t hash, std::vector<uint8_t> & data) {
     ifs.seekg(0, std::ios::beg);
     data.resize(size);
     ifs.read((char *)data.data(), size);
-    return true;
+    return true;  // 返回
 }
 
 bool rpc_server::set_tensor_hash(const rpc_msg_set_tensor_hash_req & request, rpc_msg_set_tensor_hash_rsp & response)
@@ -1132,10 +1132,10 @@ bool rpc_server::set_tensor_hash(const rpc_msg_set_tensor_hash_req & request, rp
     std::vector<uint8_t> cached_file;
     if (!get_cached_file(request.hash, cached_file)) {
         response.result = 0;
-        return true;
+        return true;  // 返回
     }
     size_t size = cached_file.size();
-    struct ggml_init_params params {
+    struct ggml_init_params params {  // 结构体定义
         /*.mem_size   =*/ ggml_tensor_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -1146,7 +1146,7 @@ bool rpc_server::set_tensor_hash(const rpc_msg_set_tensor_hash_req & request, rp
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
     if (tensor == nullptr || tensor->buffer == nullptr) {
         GGML_LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        return false;  // 返回
     }
     LOG_DBG("[%s] buffer: %p, data: %p, offset: %" PRIu64 ", size: %zu, hash: %" PRIx64 "\n",
             __func__, (void*)tensor->buffer, tensor->data, request.offset, size, request.hash);
@@ -1161,16 +1161,16 @@ bool rpc_server::set_tensor_hash(const rpc_msg_set_tensor_hash_req & request, rp
          || size > (p1 - request.tensor.data - request.offset)) {
             GGML_LOG_ERROR("[%s] tensor data region (data=0x%" PRIx64 ", offset=%" PRIu64 ", size=%zu, hash=0x%" PRIx64 ") out of buffer bounds [0x%zx, 0x%zx)\n",
                            __func__, request.tensor.data, request.offset, size, request.hash, p0, p1);
-            return false;
+            return false;  // 返回
         }
     }
     ggml_backend_tensor_set(tensor, cached_file.data(), request.offset, size);
     response.result = 1;
-    return true;
+    return true;  // 返回
 }
 
 bool rpc_server::init_tensor(const rpc_msg_init_tensor_req & request) {
-    struct ggml_init_params params {
+    struct ggml_init_params params {  // 结构体定义
         /*.mem_size   =*/ ggml_tensor_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -1181,7 +1181,7 @@ bool rpc_server::init_tensor(const rpc_msg_init_tensor_req & request) {
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
     if (tensor == nullptr) {
         GGML_LOG_ERROR("Null tensor pointer passed to server init_tensor function.\n");
-        return false;
+        return false;  // 返回
     }
     LOG_DBG("[%s] buffer: %p, data: %p\n", __func__, (void*)tensor->buffer, tensor->data);
     // Call the backend's buffer_init_tensor function
@@ -1198,14 +1198,14 @@ bool rpc_server::init_tensor(const rpc_msg_init_tensor_req & request) {
         // This pointer can either be passed around client/server, or probably better stored server-side and kept track of.
         // Currently unimplemented.
         GGML_LOG_ERROR("tensor->extra populated by the backend, this is currently unsupported.\n");
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 bool rpc_server::get_tensor(const rpc_msg_get_tensor_req & request, std::vector<uint8_t> & response) {
-    struct ggml_init_params params {
+    struct ggml_init_params params {  // 结构体定义
         /*.mem_size   =*/ ggml_tensor_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -1216,7 +1216,7 @@ bool rpc_server::get_tensor(const rpc_msg_get_tensor_req & request, std::vector<
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
     if (tensor == nullptr || tensor->buffer == nullptr) {
         GGML_LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        return false;  // 返回
     }
     LOG_DBG("[%s] buffer: %p, data: %p, offset: %" PRIu64 ", size: %" PRIu64 "\n", __func__, (void*)tensor->buffer, tensor->data, request.offset, request.size);
 
@@ -1230,17 +1230,17 @@ bool rpc_server::get_tensor(const rpc_msg_get_tensor_req & request, std::vector<
             request.size > (p1 - request.tensor.data - request.offset)) {
                 GGML_LOG_ERROR("[%s] requested tensor region (data=0x%" PRIx64 ", offset=%" PRIu64 ", size=%" PRIu64 ") out of buffer bounds [0x%zx, 0x%zx)\n",
                                __func__, request.tensor.data, request.offset, request.size, p0, p1);
-                return false;
+                return false;  // 返回
         }
     }
 
     response.resize(request.size, 0);
     ggml_backend_tensor_get(tensor, response.data(), request.offset, request.size);
-    return true;
+    return true;  // 返回
 }
 
 bool rpc_server::copy_tensor(const rpc_msg_copy_tensor_req & request, rpc_msg_copy_tensor_rsp & response) {
-    struct ggml_init_params params {
+    struct ggml_init_params params {  // 结构体定义
         /*.mem_size   =*/ 2*ggml_tensor_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -1253,7 +1253,7 @@ bool rpc_server::copy_tensor(const rpc_msg_copy_tensor_req & request, rpc_msg_co
     ggml_tensor * dst = deserialize_tensor(ctx, &request.dst);
     if (src == nullptr || dst == nullptr || src->buffer == nullptr || dst->buffer == nullptr) {
         GGML_LOG_ERROR("[%s] error deserializing tensors\n", __func__);
-        return false;
+        return false;  // 返回
     }
 
     uint64_t src_size   = (uint64_t) ggml_nbytes(src);
@@ -1262,7 +1262,7 @@ bool rpc_server::copy_tensor(const rpc_msg_copy_tensor_req & request, rpc_msg_co
     uint64_t dst_buf_sz = (uint64_t) ggml_backend_buffer_get_size(dst->buffer);
 
     if (dst_data + src_size > dst_base + dst_buf_sz) {
-        GGML_LOG_ERROR("[%s] out-of-bounds write in rpc_server::copy_tensor:\n"
+        GGML_LOG_ERROR("[%s] out-of-bounds write in rpc_server::copy_tensor:\n"  // 打印错误日志
                          "    write range : [0x%" PRIx64 ", 0x%" PRIx64 "]\n"
                          "    buffer base: [0x%" PRIx64 ", 0x%" PRIx64 "]\n",
                          __func__,
@@ -1270,14 +1270,14 @@ bool rpc_server::copy_tensor(const rpc_msg_copy_tensor_req & request, rpc_msg_co
                          dst_data + src_size,
                          dst_base,
                          dst_base + dst_buf_sz);
-        return false;
+        return false;  // 返回
     }
 
     LOG_DBG("[%s] src->buffer: %p, dst->buffer: %p\n",
             __func__, (void*) src->buffer, (void*) dst->buffer);
 
     response.result = ggml_backend_buffer_copy_tensor(src, dst);
-    return true;
+    return true;  // 返回
 }
 
 ggml_tensor * rpc_server::create_node(uint64_t id,
@@ -1285,22 +1285,22 @@ ggml_tensor * rpc_server::create_node(uint64_t id,
                                       const std::unordered_map<uint64_t, const rpc_tensor*> & tensor_ptrs,
                                       std::unordered_map<uint64_t, struct ggml_tensor*> & tensor_map) {
     if (tensor_map.find(id) != tensor_map.end()) {
-        return tensor_map[id];
+        return tensor_map[id];  // 返回
     }
     // Safely find the tensor pointer
     auto it_ptr = tensor_ptrs.find(id);
     if (it_ptr == tensor_ptrs.end()) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     const rpc_tensor * tensor = it_ptr->second;
 
     struct ggml_tensor * result = deserialize_tensor(ctx, tensor);
     if (result == nullptr) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     if (result->buffer == nullptr && result->data != nullptr) {
         GGML_LOG_ERROR("[%s] invalid data ptr", __func__);
-        return nullptr;
+        return nullptr;  // 返回
     }
     tensor_map[id] = result;
     for (int i = 0; i < GGML_MAX_SRC; i++) {
@@ -1314,7 +1314,7 @@ ggml_tensor * rpc_server::create_node(uint64_t id,
                 GGML_LOG_ERROR("[%s] failed to create source node %d (src_id=%" PRIu64 ") for node id %" PRIu64 "\n",
                                __func__, i, tensor->src[i], id);
                 // Must return nullptr to signal failure up the call stack
-                return nullptr;
+                return nullptr;  // 返回
             }
         }
     }
@@ -1329,31 +1329,31 @@ ggml_tensor * rpc_server::create_node(uint64_t id,
             GGML_LOG_ERROR("[%s] failed to create view_src node (view_src_id=%" PRIu64 ") for node id %" PRIu64 "\n",
                            __func__, tensor->view_src, id);
             // Must return nullptr to signal failure up the call stack
-            return nullptr;
+            return nullptr;  // 返回
         }
     }
     result->view_offs = tensor->view_offs;
-    return result;
+    return result;  // 返回
 }
 
 bool rpc_server::graph_compute(const std::vector<uint8_t> & input) {
     // serialization format:
     // | device (4 bytes) | n_nodes (4 bytes) | nodes (n_nodes * sizeof(uint64_t) | n_tensors (4 bytes) | tensors (n_tensors * sizeof(rpc_tensor)) |
     if (input.size() < 2*sizeof(uint32_t)) {
-        return false;
+        return false;  // 返回
     }
     const uint8_t * src = input.data();
     uint32_t device;
     memcpy(&device, src, sizeof(device));
     src += sizeof(device);
     if (device >= backends.size()) {
-        return false;
+        return false;  // 返回
     }
     uint32_t n_nodes;
     memcpy(&n_nodes, src, sizeof(n_nodes));
     src += sizeof(n_nodes);
     if (input.size() < 2*sizeof(uint32_t) + n_nodes*sizeof(uint64_t) + sizeof(uint32_t)) {
-        return false;
+        return false;  // 返回
     }
     const uint64_t * nodes = (const uint64_t *)src;
     src += n_nodes*sizeof(uint64_t);
@@ -1361,7 +1361,7 @@ bool rpc_server::graph_compute(const std::vector<uint8_t> & input) {
     memcpy(&n_tensors, src, sizeof(n_tensors));
     src += sizeof(n_tensors);
     if (input.size() < 2*sizeof(uint32_t) + n_nodes*sizeof(uint64_t) + sizeof(uint32_t) + n_tensors*sizeof(rpc_tensor)) {
-        return false;
+        return false;  // 返回
     }
     const rpc_tensor * tensors = (const rpc_tensor *)src;
     LOG_DBG("[%s] device: %u, n_nodes: %u, n_tensors: %u\n", __func__, device, n_nodes, n_tensors);
@@ -1370,7 +1370,7 @@ bool rpc_server::graph_compute(const std::vector<uint8_t> & input) {
     if (stored_graphs[device].buffer.size() < buf_size) {
         stored_graphs[device].buffer.resize(buf_size);
     }
-    struct ggml_init_params params = {
+    struct ggml_init_params params = {  // 结构体定义
         /*.mem_size   =*/ buf_size,
         /*.mem_buffer =*/ stored_graphs[device].buffer.data(),
         /*.no_alloc   =*/ true,
@@ -1397,34 +1397,34 @@ bool rpc_server::graph_compute(const std::vector<uint8_t> & input) {
         // If id was non-zero and create_node returned nullptr, it indicates a deserialization error.
         if (graph->nodes[i] == nullptr && id != 0) {
             GGML_LOG_ERROR("[%s] failed to create graph node %d (id=%" PRId64 ")\n", __func__, i, id);
-            return false;
+            return false;  // 返回
         }
     }
     ggml_status status = ggml_backend_graph_compute(backends[device], graph);
     GGML_ASSERT(status == GGML_STATUS_SUCCESS && "Unsuccessful graph computations are not supported with RPC");
     stored_graphs[device].graph = graph;
-    return true;
+    return true;  // 返回
 }
 
 bool rpc_server::graph_recompute(const rpc_msg_graph_recompute_req & request) {
     uint32_t device = request.device;
     if (device >= backends.size()) {
-        return false;
+        return false;  // 返回
     }
     if (stored_graphs[device].graph == nullptr) {
-        return false;
+        return false;  // 返回
     }
     ggml_cgraph * graph = stored_graphs[device].graph;
     LOG_DBG("[%s] device: %u\n", __func__, device);
     ggml_status status = ggml_backend_graph_compute(backends[device], graph);
     GGML_ASSERT(status == GGML_STATUS_SUCCESS && "Unsuccessful graph computations are not supported with RPC");
-    return true;
+    return true;  // 返回
 }
 
 bool rpc_server::get_device_memory(const rpc_msg_get_device_memory_req & request, rpc_msg_get_device_memory_rsp & response) {
     uint32_t dev_id = request.device;
     if (dev_id >= backends.size()) {
-        return false;
+        return false;  // 返回
     }
     size_t free, total;
     ggml_backend_dev_t dev = ggml_backend_get_device(backends[dev_id]);
@@ -1432,7 +1432,7 @@ bool rpc_server::get_device_memory(const rpc_msg_get_device_memory_req & request
     response.free_mem = free;
     response.total_mem = total;
     LOG_DBG("[%s] device: %u, free_mem: %" PRIu64 ", total_mem: %" PRIu64 "\n", __func__, dev_id, response.free_mem, response.total_mem);
-    return true;
+    return true;  // 返回
 }
 
 rpc_server::~rpc_server() {
@@ -1443,31 +1443,31 @@ rpc_server::~rpc_server() {
 
 static void rpc_serve_client(const std::vector<ggml_backend_t> & backends, const char * cache_dir,
                              socket_ptr sock) {
-    rpc_server server(backends, cache_dir);
+    rpc_server server(backends, cache_dir);  // server
     uint8_t cmd;
     if (!sock->recv_data(&cmd, 1)) {
-        return;
+        return;  // 返回
     }
     if (cmd != RPC_CMD_HELLO) {
         GGML_LOG_ERROR("Expected HELLO command, update client\n");
-        return;
+        return;  // 返回
     }
 
     // Read input_size and validate protocol version
     uint64_t hello_input_size;
     if (!sock->recv_data(&hello_input_size, sizeof(hello_input_size))) {
-        return;
+        return;  // 返回
     }
 
     if (hello_input_size != sizeof(rpc_msg_hello_req)) {
         GGML_LOG_ERROR("HELLO request size mismatch (%zu vs %zu) — client needs upgrade to protocol v%d.x\n",
                        (size_t)hello_input_size, sizeof(rpc_msg_hello_req), RPC_PROTO_MAJOR_VERSION);
-        return;
+        return;  // 返回
     }
 
     rpc_msg_hello_req req = {};
     if (!sock->recv_data(&req, sizeof(req))) {
-        return;
+        return;  // 返回
     }
 
     rpc_msg_hello_rsp rsp = {};
@@ -1475,7 +1475,7 @@ static void rpc_serve_client(const std::vector<ggml_backend_t> & backends, const
     // Advertise server transport capabilities based on client's caps
     sock->get_caps(rsp.conn_caps);
     if (!send_msg(sock, &rsp, sizeof(rsp))) {
-        return;
+        return;  // 返回
     }
 
     // Activate transport upgrade using client's caps
@@ -1492,217 +1492,217 @@ static void rpc_serve_client(const std::vector<ggml_backend_t> & backends, const
         switch (cmd) {
             case RPC_CMD_HELLO: {
                 // HELLO command is handled above
-                return;
+                return;  // 返回
             }
             case RPC_CMD_DEVICE_COUNT: {
                 if (!recv_msg(sock, nullptr, 0)) {
-                    return;
+                    return;  // 返回
                 }
                 rpc_msg_device_count_rsp response;
                 response.device_count = backends.size();
                 if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_ALLOC_BUFFER: {
                 rpc_msg_alloc_buffer_req request;
                 if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                    return;  // 返回
                 }
                 rpc_msg_alloc_buffer_rsp response;
                 if (!server.alloc_buffer(request, response)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_GET_ALLOC_SIZE: {
                 rpc_msg_get_alloc_size_req request;
                 if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                    return;  // 返回
                 }
                 rpc_msg_get_alloc_size_rsp response;
                 if (!server.get_alloc_size(request, response)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_GET_ALIGNMENT: {
                 rpc_msg_get_alignment_req request;
                 if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                    return;  // 返回
                 }
                 rpc_msg_get_alignment_rsp response;
                 if (!server.get_alignment(request, response)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_GET_MAX_SIZE: {
                 rpc_msg_get_max_size_req request;
                 if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                    return;  // 返回
                 }
                 rpc_msg_get_max_size_rsp response;
                 if (!server.get_max_size(request, response)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_BUFFER_GET_BASE: {
                 rpc_msg_buffer_get_base_req request;
                 if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                    return;  // 返回
                 }
                 rpc_msg_buffer_get_base_rsp response;
                 if (!server.buffer_get_base(request, response)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_FREE_BUFFER: {
                 rpc_msg_free_buffer_req request;
                 if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                    return;  // 返回
                 }
                 if (!server.free_buffer(request)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!send_msg(sock, nullptr, 0)) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_BUFFER_CLEAR: {
                 rpc_msg_buffer_clear_req request;
                 if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                    return;  // 返回
                 }
                 if (!server.buffer_clear(request)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!send_msg(sock, nullptr, 0)) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_SET_TENSOR: {
                 std::vector<uint8_t> input;
                 if (!recv_msg(sock, input)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!server.set_tensor(input)) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_SET_TENSOR_HASH: {
                 rpc_msg_set_tensor_hash_req request;
                 if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                    return;  // 返回
                 }
                 rpc_msg_set_tensor_hash_rsp response;
                 if (!server.set_tensor_hash(request, response)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_INIT_TENSOR: {
                 rpc_msg_init_tensor_req request;
                 if (!recv_msg(sock, &request,sizeof(request))) {
-                    return;
+                    return;  // 返回
                 }
                 if (!server.init_tensor(request)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!send_msg(sock, nullptr, 0)) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_GET_TENSOR: {
                 rpc_msg_get_tensor_req request;
                 if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                    return;  // 返回
                 }
                 std::vector<uint8_t> response;
                 if (!server.get_tensor(request, response)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!send_msg(sock, response.data(), response.size())) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_COPY_TENSOR: {
                 rpc_msg_copy_tensor_req request;
                 if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                    return;  // 返回
                 }
                 rpc_msg_copy_tensor_rsp response;
                 if (!server.copy_tensor(request, response)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_GRAPH_COMPUTE: {
                 std::vector<uint8_t> input;
                 if (!recv_msg(sock, input)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!server.graph_compute(input)) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_GRAPH_RECOMPUTE: {
                 rpc_msg_graph_recompute_req request;
                 if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                    return;  // 返回
                 }
                 if (!server.graph_recompute(request)) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             case RPC_CMD_GET_DEVICE_MEMORY: {
                 rpc_msg_get_device_memory_req request;
                 if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                    return;  // 返回
                 }
                 rpc_msg_get_device_memory_rsp response;
                 if (!server.get_device_memory(request, response)) {
-                    return;
+                    return;  // 返回
                 }
                 if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                    return;  // 返回
                 }
                 break;
             }
             default: {
                 GGML_LOG_ERROR("Unknown command: %d\n", cmd);
-                return;
+                return;  // 返回
             }
         }
     }
@@ -1712,7 +1712,7 @@ void ggml_backend_rpc_start_server(const char * endpoint, const char * cache_dir
                                    size_t n_threads, size_t n_devices, ggml_backend_dev_t * devices) {
     if (n_devices == 0 || devices == nullptr) {
         fprintf(stderr, "Invalid arguments to ggml_backend_rpc_start_server\n");
-        return;
+        return;  // 返回
     }
     std::vector<ggml_backend_t> backends;
     printf("Starting RPC server v%d.%d.%d\n",
@@ -1731,7 +1731,7 @@ void ggml_backend_rpc_start_server(const char * endpoint, const char * cache_dir
         auto backend = ggml_backend_dev_init(dev, nullptr);
         if (!backend) {
             fprintf(stderr, "Failed to create backend for device %s\n", dev->iface.get_name(dev));
-            return;
+            return;  // 返回
         }
         backends.push_back(backend);
         ggml_backend_reg_t reg = dev ? ggml_backend_dev_backend_reg(dev) : nullptr;
@@ -1746,28 +1746,28 @@ void ggml_backend_rpc_start_server(const char * endpoint, const char * cache_dir
     std::string host;
     int port;
     if (!parse_endpoint(endpoint, host, port)) {
-        return;
+        return;  // 返回
     }
 
-#ifdef GGML_RPC_RDMA
+#ifdef GGML_RPC_RDMA  // 如果定义了 GGML_RPC_RDMA 则编译
     printf("  transport      : TCP (RDMA auto-negotiate enabled)\n");
-#else
+#else  // 否则
     printf("  transport      : TCP\n");
-#endif // GGML_RPC_RDMA
+#endif // GGML_RPC_RDMA  // 条件编译结束
     if (!rpc_transport_init()) {
         fprintf(stderr, "Failed to initialize RPC transport\n");
-        return;
+        return;  // 返回
     }
     auto server_socket = socket_t::create_server(host.c_str(), port);
     if (server_socket == nullptr) {
         fprintf(stderr, "Failed to create server socket\n");
-        return;
+        return;  // 返回
     }
     while (true) {
         auto client_socket = server_socket->accept();
         if (client_socket == nullptr) {
             fprintf(stderr, "Failed to accept client connection\n");
-            return;
+            return;  // 返回
         }
         printf("Accepted client connection\n");
         fflush(stdout);
@@ -1783,7 +1783,7 @@ void ggml_backend_rpc_start_server(const char * endpoint, const char * cache_dir
 
 // device interface
 
-struct ggml_backend_rpc_device_context {
+struct ggml_backend_rpc_device_context {  // 结构体定义
     std::string endpoint;
     uint32_t    device;
     std::string name;
@@ -1810,7 +1810,7 @@ static void ggml_backend_rpc_device_get_memory(ggml_backend_dev_t dev, size_t * 
 
 static enum ggml_backend_dev_type ggml_backend_rpc_device_get_type(ggml_backend_dev_t dev) {
     // TODO: obtain value from the server
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+    return GGML_BACKEND_DEVICE_TYPE_GPU;  // 返回
 
     GGML_UNUSED(dev);
 }
@@ -1831,7 +1831,7 @@ static void ggml_backend_rpc_device_get_props(ggml_backend_dev_t dev, struct ggm
 static ggml_backend_t ggml_backend_rpc_device_init(ggml_backend_dev_t dev, const char * params) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
 
-    return ggml_backend_rpc_init(ctx->endpoint.c_str(), ctx->device);
+    return ggml_backend_rpc_init(ctx->endpoint.c_str(), ctx->device);  // ggml_backend_rpc_init
 
     GGML_UNUSED(params);
 }
@@ -1839,7 +1839,7 @@ static ggml_backend_t ggml_backend_rpc_device_init(ggml_backend_dev_t dev, const
 static ggml_backend_buffer_type_t ggml_backend_rpc_device_get_buffer_type(ggml_backend_dev_t dev) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
 
-    return ggml_backend_rpc_buffer_type(ctx->endpoint.c_str(), ctx->device);
+    return ggml_backend_rpc_buffer_type(ctx->endpoint.c_str(), ctx->device);  // ggml_backend_rpc_buffer_type
 
     GGML_UNUSED(dev);
 }
@@ -1848,16 +1848,16 @@ static bool ggml_backend_rpc_device_supports_op(ggml_backend_dev_t dev, const st
     GGML_UNUSED(dev);
     GGML_UNUSED(op);
     //TODO: call the remote backend and cache the results
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_backend_rpc_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
     if (!buft || buft->iface.get_name != ggml_backend_rpc_buffer_type_name) {
-        return false;
+        return false;  // 返回
     }
     ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
     ggml_backend_rpc_device_context * dev_ctx = (ggml_backend_rpc_device_context *)dev->context;
-    return buft_ctx->endpoint == dev_ctx->endpoint && buft_ctx->device == dev_ctx->device;
+    return buft_ctx->endpoint == dev_ctx->endpoint && buft_ctx->device == dev_ctx->device;  // 返回
 }
 
 static const struct ggml_backend_device_i ggml_backend_rpc_device_i = {
@@ -1880,7 +1880,7 @@ static const struct ggml_backend_device_i ggml_backend_rpc_device_i = {
 
 // backend reg interface
 
-struct ggml_backend_rpc_reg_context {
+struct ggml_backend_rpc_reg_context {  // 结构体定义
     std::string                     name;
     std::vector<ggml_backend_dev_t> devices;
 };
@@ -1901,7 +1901,7 @@ static ggml_backend_dev_t ggml_backend_rpc_reg_get_device(ggml_backend_reg_t reg
         GGML_ABORT("The RPC backend does not have enumerated devices - use ggml_backend_rpc_add_server instead");
     } else {
         GGML_ASSERT(index < ctx->devices.size());
-        return ctx->devices[index];
+        return ctx->devices[index];  // 返回
     }
 }
 
@@ -1912,7 +1912,7 @@ static void * ggml_backend_rpc_get_proc_address(ggml_backend_reg_t reg, const ch
     if (std::strcmp(name, "ggml_backend_rpc_start_server") == 0) {
         return (void *)ggml_backend_rpc_start_server;
     }
-    return NULL;
+    return NULL;  // 返回
 
     GGML_UNUSED(reg);
 }
@@ -1931,19 +1931,19 @@ ggml_backend_reg_t ggml_backend_rpc_reg(void) {
         /* .context     = */ NULL,
     };
 
-    return &ggml_backend_rpc_reg;
+    return &ggml_backend_rpc_reg;  // 返回
 }
 
 static uint32_t ggml_backend_rpc_get_device_count(const char * endpoint) {
     auto sock = get_socket(endpoint);
     if (sock == nullptr) {
         GGML_LOG_ERROR("Failed to connect to %s\n", endpoint);
-        return 0;
+        return 0;  // 返回
     }
     rpc_msg_device_count_rsp response;
     bool status = send_rpc_cmd(sock, RPC_CMD_DEVICE_COUNT, nullptr, 0, &response, sizeof(response));
     RPC_STATUS_ASSERT(status);
-    return response.device_count;
+    return response.device_count;  // 返回
 }
 
 static const ggml_backend_reg_i ggml_backend_rpc_reg_interface = {
@@ -1959,11 +1959,11 @@ ggml_backend_reg_t ggml_backend_rpc_add_server(const char * endpoint) {
     static uint32_t dev_id = 0;
     std::lock_guard<std::mutex> lock(mutex);
     if (reg_map.find(endpoint) != reg_map.end()) {
-        return reg_map[endpoint];
+        return reg_map[endpoint];  // 返回
     }
     uint32_t dev_count = ggml_backend_rpc_get_device_count(endpoint);
     if (dev_count == 0) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     ggml_backend_rpc_reg_context * ctx = new ggml_backend_rpc_reg_context;
     ctx->name = "RPC[" + std::string(endpoint) + "]";
@@ -1991,7 +1991,7 @@ ggml_backend_reg_t ggml_backend_rpc_add_server(const char * endpoint) {
         /* .context     = */ ctx
     };
     reg_map[endpoint] = reg;
-    return reg;
+    return reg;  // 返回
 }
 
 

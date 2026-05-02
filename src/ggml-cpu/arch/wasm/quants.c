@@ -1,42 +1,42 @@
-#define GGML_COMMON_IMPL_C
-#include "ggml-common.h"
-#include "ggml-quants.h"
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "simd-mappings.h"
+#define GGML_COMMON_IMPL_C  // 宏定义 GGML_COMMON_IMPL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "simd-mappings.h"  // 引入 simd-mappings.h 头文件
 
-#include "../../quants.h"
-#include "../../ggml-cpu-impl.h"
+#include "../../quants.h"  // 引入 ../../quants.h 头文件
+#include "../../ggml-cpu-impl.h"  // 引入 ../../ggml-cpu-impl.h 头文件
 
-#include <math.h>
-#include <string.h>
-#include <assert.h>
-#include <float.h>
-#include <stdlib.h> // for qsort
-#include <stdio.h>  // for GGML_ASSERT
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
+#include <assert.h>  // 引入 assert.h 头文件
+#include <float.h>  // 引入 float.h 头文件
+#include <stdlib.h> // for qsort  // 引入 stdlib.h 头文件
+#include <stdio.h>  // for GGML_ASSERT  // 引入 stdio.h 头文件
 
-#define GROUP_MAX_EPS 1e-15f
-#define GROUP_MAX_EPS_IQ3_XXS 1e-8f
-#define GROUP_MAX_EPS_IQ2_S 1e-8f
-#define GROUP_MAX_EPS_IQ1_M 1e-7f
-#define GROUP_MAX_EPS_IQ1_S 1e-12f
+#define GROUP_MAX_EPS 1e-15f  // 宏定义 GROUP_MAX_EPS
+#define GROUP_MAX_EPS_IQ3_XXS 1e-8f  // 宏定义 GROUP_MAX_EPS_IQ3_XXS
+#define GROUP_MAX_EPS_IQ2_S 1e-8f  // 宏定义 GROUP_MAX_EPS_IQ2_S
+#define GROUP_MAX_EPS_IQ1_M 1e-7f  // 宏定义 GROUP_MAX_EPS_IQ1_M
+#define GROUP_MAX_EPS_IQ1_S 1e-12f  // 宏定义 GROUP_MAX_EPS_IQ1_S
 
-#define UNUSED GGML_UNUSED
+#define UNUSED GGML_UNUSED  // 宏定义 UNUSED
 
-#if defined(__wasm_simd128__)
-#define B1(c,s,n)  0x ## n ## c ,  0x ## n ## s
-#define B2(c,s,n) B1(c,s,n ## c), B1(c,s,n ## s)
-#define B3(c,s,n) B2(c,s,n ## c), B2(c,s,n ## s)
-#define B4(c,s,n) B3(c,s,n ## c), B3(c,s,n ## s)
-#define B5(c,s,n) B4(c,s,n ## c), B4(c,s,n ## s)
-#define B6(c,s,n) B5(c,s,n ## c), B5(c,s,n ## s)
-#define B7(c,s,n) B6(c,s,n ## c), B6(c,s,n ## s)
-#define B8(c,s  ) B7(c,s,     c), B7(c,s,     s)
+#if defined(__wasm_simd128__)  // 条件编译
+#define B1(c,s,n)  0x ## n ## c ,  0x ## n ## s  // 宏定义 B1
+#define B2(c,s,n) B1(c,s,n ## c), B1(c,s,n ## s)  // 宏定义 B2
+#define B3(c,s,n) B2(c,s,n ## c), B2(c,s,n ## s)  // 宏定义 B3
+#define B4(c,s,n) B3(c,s,n ## c), B3(c,s,n ## s)  // 宏定义 B4
+#define B5(c,s,n) B4(c,s,n ## c), B4(c,s,n ## s)  // 宏定义 B5
+#define B6(c,s,n) B5(c,s,n ## c), B5(c,s,n ## s)  // 宏定义 B6
+#define B7(c,s,n) B6(c,s,n ## c), B6(c,s,n ## s)  // 宏定义 B7
+#define B8(c,s  ) B7(c,s,     c), B7(c,s,     s)  // 宏定义 B8
 
 // precomputed tables for expanding 8bits to 8 bytes:
 static const uint64_t table_b2b_0[1 << 8] = { B8(00, 10) }; // ( b) << 4
 static const uint64_t table_b2b_1[1 << 8] = { B8(10, 00) }; // (!b) << 4
-#endif
+#endif  // 条件编译结束
 
 void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
@@ -45,7 +45,7 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
     block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined __wasm_simd128__
+#if defined __wasm_simd128__  // 条件编译
     for (int i = 0; i < nb; i++) {
         v128_t srcv [8];
         v128_t asrcv[8];
@@ -78,11 +78,11 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
             y[i].qs[4*j + 3] = wasm_i32x4_extract_lane(vi, 3);
         }
     }
-#else
+#else  // 否则
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_0_ref(x, y, k);
-#endif
+#endif  // 条件编译结束
 }
 
 void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
@@ -90,7 +90,7 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
     const int nb = k / QK8_1;
 
     block_q8_1 * GGML_RESTRICT y = vy;
-#if defined __wasm_simd128__
+#if defined __wasm_simd128__  // 条件编译
     for (int i = 0; i < nb; i++) {
         v128_t srcv [8];
         v128_t asrcv[8];
@@ -133,17 +133,17 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
                      wasm_i32x4_extract_lane(accv, 2) +
                      wasm_i32x4_extract_lane(accv, 3)));
     }
-#else
+#else  // 否则
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_1_ref(x, y, k);
-#endif
+#endif  // 条件编译结束
 }
 
 //===================================== Q8_K ==============================================
 
 void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k) {
-#ifdef __wasm_simd128__
+#ifdef __wasm_simd128__  // 如果定义了 __wasm_simd128__ 则编译
     assert(k % QK_K == 0);
     const int64_t nb = k / QK_K;
     block_q8_K * GGML_RESTRICT yc = y; // Cast to proper type
@@ -221,9 +221,9 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
 
         yc[i].d = 1.0f / iscale;
     }
-#else
+#else  // 否则
     quantize_row_q8_K_ref(x, y, k);
-#endif
+#endif  // 条件编译结束
 }
 
 
@@ -246,7 +246,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     int ib = 0;
     float sumf = 0;
 
-#if defined __wasm_simd128__
+#if defined __wasm_simd128__  // 条件编译
     v128_t sumv = wasm_f32x4_splat(0.0f);
 
     const v128_t m4b = wasm_i8x16_splat(0x0F);
@@ -335,7 +335,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = wasm_f32x4_extract_lane(sumv, 0) + wasm_f32x4_extract_lane(sumv, 1) +
            wasm_f32x4_extract_lane(sumv, 2) + wasm_f32x4_extract_lane(sumv, 3);
 
-#endif
+#endif  // 条件编译结束
     for (; ib < nb; ++ib) {
         int sumi0 = 0;
         int sumi1 = 0;
@@ -373,7 +373,7 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined __wasm_simd128__
+#if defined __wasm_simd128__  // 条件编译
     v128_t sumv = wasm_f32x4_splat(0.0f);
 
     uint32_t qh_;
@@ -436,14 +436,14 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
            wasm_f32x4_extract_lane(sumv, 2) + wasm_f32x4_extract_lane(sumv, 3);
 
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
     UNUSED(x);
     UNUSED(y);
     ggml_vec_dot_q5_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -464,7 +464,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_1 * GGML_RESTRICT x = vx;
     const block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined __wasm_simd128__
+#if defined __wasm_simd128__  // 条件编译
     v128_t sumv = wasm_f32x4_splat(0.0f);
 
     float summs = 0.0f;
@@ -531,14 +531,14 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
            wasm_f32x4_extract_lane(sumv, 2) + wasm_f32x4_extract_lane(sumv, 3) + summs;
 
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
     UNUSED(x);
     UNUSED(y);
     ggml_vec_dot_q5_1_q8_1_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -558,7 +558,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     int ib = 0;
     float sumf = 0;
 
-#if defined __wasm_simd128__
+#if defined __wasm_simd128__  // 条件编译
     v128_t sumv = wasm_f32x4_splat(0.0f);
 
     for (; ib < nb; ++ib) {
@@ -599,14 +599,14 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
            wasm_f32x4_extract_lane(sumv, 2) + wasm_f32x4_extract_lane(sumv, 3);
 
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
     UNUSED(ib);
     UNUSED(sumf);
     ggml_vec_dot_q8_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -621,7 +621,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     const int nb = n / QK_K;
 
-#if defined __wasm_simd128__
+#if defined __wasm_simd128__  // 条件编译
     float sumf = 0;
 
     for (int i = 0; i < nb; ++i) {
@@ -721,12 +721,12 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_q2_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -745,7 +745,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     const int nb = n / QK_K;
 
-#if defined __wasm_simd128__
+#if defined __wasm_simd128__  // 条件编译
     int8_t  aux8[QK_K];
     float   sums[8] = {0};
     uint32_t auxs[4];
@@ -833,14 +833,14 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#else  // 否则
     UNUSED(kmask1);
     UNUSED(kmask2);
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_q3_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 
 }
 
@@ -863,7 +863,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined __wasm_simd128__
+#if defined __wasm_simd128__  // 条件编译
     const uint8_t * scales = (const uint8_t*)&utmp[0];
     float sumf = 0;
 
@@ -964,7 +964,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -973,7 +973,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     UNUSED(kmask3);
     UNUSED(utmp);
     ggml_vec_dot_q4_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, int nrc) {
@@ -995,7 +995,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined __wasm_simd128__
+#if defined __wasm_simd128__  // 条件编译
     //const uint8_t * scales = (const uint8_t*)&utmp[0];
     float sumf = 0;
 
@@ -1107,7 +1107,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1116,7 +1116,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     UNUSED(kmask3);
     UNUSED(utmp);
     ggml_vec_dot_q5_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1132,7 +1132,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     const int nb = n / QK_K;
 
-#if defined __wasm_simd128__
+#if defined __wasm_simd128__  // 条件编译
     int8_t aux8[QK_K] __attribute__((aligned(16)));
     int32_t aux32[8] __attribute__((aligned(16))) = {0};
     float sums[8] __attribute__((aligned(16))) = {0};
@@ -1211,10 +1211,10 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     }
     *s = sumf;
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_q6_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }

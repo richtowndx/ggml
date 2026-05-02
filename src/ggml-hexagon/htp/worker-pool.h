@@ -1,31 +1,31 @@
-#ifndef HTP_WORKER_POOL_H
-#define HTP_WORKER_POOL_H
+#ifndef HTP_WORKER_POOL_H  // 如果未定义 HTP_WORKER_POOL_H 则编译
+#define HTP_WORKER_POOL_H  // 宏定义 HTP_WORKER_POOL_H
 
 // MACRO enables function to be visible in shared-library case.
-#define WORKERPOOL_API __attribute__((visibility("default")))
+#define WORKERPOOL_API __attribute__((visibility("default")))  // 宏定义 WORKERPOOL_API
 
-#include <AEEStdDef.h>
-#include <AEEStdErr.h>
-#include <stdint.h>
+#include <AEEStdDef.h>  // 引入 AEEStdDef.h 头文件
+#include <AEEStdErr.h>  // 引入 AEEStdErr.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
 /// signature of callbacks to be invoked by worker threads
-typedef void (*worker_callback_t)(unsigned int n, unsigned int i, void *);
+typedef void (*worker_callback_t)(unsigned int n, unsigned int i, void *);  // 类型定义
 
 /// Typedef of worker_pool context
-typedef void * worker_pool_context_t;
+typedef void * worker_pool_context_t;  // 类型定义
 
 /// descriptor for requested callback
-typedef struct {
+typedef struct {  // 类型定义
     worker_callback_t func;
     void *            data;
 } worker_pool_job_t;
 
 /// Maximum supported number of worker threads.
-#define MAX_NUM_WORKERS 10
+#define MAX_NUM_WORKERS 10  // 宏定义 MAX_NUM_WORKERS
 
 // Initialize worker pool.
 WORKERPOOL_API AEEResult worker_pool_init(worker_pool_context_t * context, uint32_t n_threads);
@@ -50,8 +50,8 @@ WORKERPOOL_API AEEResult worker_pool_set_thread_priority(worker_pool_context_t c
 WORKERPOOL_API AEEResult worker_pool_get_thread_priority(worker_pool_context_t context, unsigned int * prio);
 WORKERPOOL_API AEEResult worker_pool_retrieve_thread_id(worker_pool_context_t context, unsigned int * tids);
 
-#ifdef __cplusplus
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束
 
-#endif  // #ifndef HTP_WORKER_POOL_H
+#endif  // #ifndef HTP_WORKER_POOL_H  // 条件编译结束

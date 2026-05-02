@@ -1,7 +1,7 @@
-#include "roll.hpp"
-#include "common.hpp"
+#include "roll.hpp"  // 引入 roll.hpp 头文件
+#include "common.hpp"  // 引入 common.hpp 头文件
 
-using namespace sycl;
+using namespace sycl;  // using 声明
 
 static inline int wrap_add(int i, int shift, int n) {
 
@@ -89,14 +89,14 @@ void ggml_sycl_roll(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
         const size_t nb = ggml_nbytes(src);
         queue *q = ctx.stream();
         SYCL_CHECK(CHECK_TRY_ERROR(q->memcpy(dst->data, src->data, nb)));
-        return;
+        return;  // 返回
     }
 
     auto norm = [](int sh, int n) -> int {
         if (n <= 0) return 0;
         sh %= n;
         if (sh < 0) sh += n;
-        return sh;
+        return sh;  // 返回
     };
     shift0 = norm(shift0, ne0);
     shift1 = norm(shift1, ne1);

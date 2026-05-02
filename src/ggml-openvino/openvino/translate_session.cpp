@@ -1,47 +1,47 @@
-#include "translate_session.h"
+#include "translate_session.h"  // 引入 translate_session.h 头文件
 
-#include "ggml-openvino/openvino/node_context.h"
-#include "ggml-openvino/openvino/utils.h"
-#include "input_model.h"
-#include "pass/mark_decompression_convert_constant_folding.h"
-#include "pass/squeeze_matmul.h"
-#include "rt_info/weightless_caching_attributes.hpp"
+#include "ggml-openvino/openvino/node_context.h"  // 引入 ggml-openvino/openvino/node_context.h 头文件
+#include "ggml-openvino/openvino/utils.h"  // 引入 ggml-openvino/openvino/utils.h 头文件
+#include "input_model.h"  // 引入 input_model.h 头文件
+#include "pass/mark_decompression_convert_constant_folding.h"  // 引入 pass/mark_decompression_convert_constant_folding.h 头文件
+#include "pass/squeeze_matmul.h"  // 引入 pass/squeeze_matmul.h 头文件
+#include "rt_info/weightless_caching_attributes.hpp"  // 引入 rt_info/weightless_caching_attributes.hpp 头文件
 
-#include <cstdint>
-#include <cstdlib>
-#include <map>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/preprocess/pre_post_process.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/convert_like.hpp>
-#include <openvino/op/cos.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/parameter.hpp>
-#include <openvino/op/range.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/result.hpp>
-#include <openvino/op/sin.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/strided_slice.hpp>
-#include <openvino/op/transpose.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <openvino/pass/constant_folding.hpp>
-#include <openvino/pass/make_stateful.hpp>
+#include <cstdint>  // 引入 cstdint 头文件
+#include <cstdlib>  // 引入 cstdlib 头文件
+#include <map>  // 引入 map 头文件
+#include <memory>  // 引入 memory 头文件
+#include <openvino/core/node.hpp>  // 引入 openvino/core/node.hpp 头文件
+#include <openvino/core/preprocess/pre_post_process.hpp>  // 引入 openvino/core/preprocess/pre_post_process.hpp 头文件
+#include <openvino/op/add.hpp>  // 引入 openvino/op/add.hpp 头文件
+#include <openvino/op/broadcast.hpp>  // 引入 openvino/op/broadcast.hpp 头文件
+#include <openvino/op/concat.hpp>  // 引入 openvino/op/concat.hpp 头文件
+#include <openvino/op/convert.hpp>  // 引入 openvino/op/convert.hpp 头文件
+#include <openvino/op/convert_like.hpp>  // 引入 openvino/op/convert_like.hpp 头文件
+#include <openvino/op/cos.hpp>  // 引入 openvino/op/cos.hpp 头文件
+#include <openvino/op/divide.hpp>  // 引入 openvino/op/divide.hpp 头文件
+#include <openvino/op/gather.hpp>  // 引入 openvino/op/gather.hpp 头文件
+#include <openvino/op/multiply.hpp>  // 引入 openvino/op/multiply.hpp 头文件
+#include <openvino/op/parameter.hpp>  // 引入 openvino/op/parameter.hpp 头文件
+#include <openvino/op/range.hpp>  // 引入 openvino/op/range.hpp 头文件
+#include <openvino/op/reshape.hpp>  // 引入 openvino/op/reshape.hpp 头文件
+#include <openvino/op/result.hpp>  // 引入 openvino/op/result.hpp 头文件
+#include <openvino/op/sin.hpp>  // 引入 openvino/op/sin.hpp 头文件
+#include <openvino/op/slice.hpp>  // 引入 openvino/op/slice.hpp 头文件
+#include <openvino/op/squeeze.hpp>  // 引入 openvino/op/squeeze.hpp 头文件
+#include <openvino/op/strided_slice.hpp>  // 引入 openvino/op/strided_slice.hpp 头文件
+#include <openvino/op/transpose.hpp>  // 引入 openvino/op/transpose.hpp 头文件
+#include <openvino/op/unsqueeze.hpp>  // 引入 openvino/op/unsqueeze.hpp 头文件
+#include <openvino/pass/constant_folding.hpp>  // 引入 openvino/pass/constant_folding.hpp 头文件
+#include <openvino/pass/make_stateful.hpp>  // 引入 openvino/pass/make_stateful.hpp 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
 
-using namespace ov::op;
+using namespace ov::op;  // using 声明
 
-namespace {
+namespace {  // 命名空间
 
 ov::pass::MakeStateful::ParamResPairs get_kv_param_res_pairs(
     const std::shared_ptr<ov::Model> & model,
@@ -74,7 +74,7 @@ ov::pass::MakeStateful::ParamResPairs get_kv_param_res_pairs(
         std::shared_ptr<ov::op::v0::Result> res = *res_it;
         pairs.emplace_back(param, res);
     }
-    return pairs;
+    return pairs;  // 返回
 }
 
 void add_sliced_mask(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
@@ -122,7 +122,7 @@ void add_sliced_mask(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
 void add_rope_sin_cos(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
     int32_t * rope_params = ggml_model_decoder.get_rope_params();
     if (tensor_map.find("inp_pos") == tensor_map.end() || rope_params == nullptr) {
-        return;
+        return;  // 返回
     }
     auto inp_pos = tensor_map.at("inp_pos").get_node_shared_ptr();
     std::shared_ptr<ov::Node> rope_freqs_weight;
@@ -158,10 +158,10 @@ TranslateSession::TranslateSession(const frontend::InputModel::Ptr & input_model
 
 std::shared_ptr<Model> TranslateSession::get_converted_model() {
     if (m_ov_model) {
-        return m_ov_model;
+        return m_ov_model;  // 返回
     }
     m_ov_model = translate_graph(m_input_model);
-    return m_ov_model;
+    return m_ov_model;  // 返回
 }
 
 std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputModel::Ptr & input_model) {
@@ -192,14 +192,14 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     auto node_visitor = [&](std::shared_ptr<GgmlDecoder> decoder, int node_idx) {
         auto operation_type = decoder->get_op_type(node_idx);
         if (operation_type == "GGML_OP_NONE") {
-            return;
+            return;  // 返回
         }
 
         ov::OutputVector converted_outputs;
         auto it = m_translator_map.find(operation_type);
         FRONT_END_OP_CONVERSION_CHECK(it != m_translator_map.end(), "Translation for operation type ", operation_type,
                                       " is not implemented.");
-        NodeContext node_context(decoder, tensor_map, node_idx, this);
+        NodeContext node_context(decoder, tensor_map, node_idx, this);  // node_context
         converted_outputs = it->second(node_context);
 
         const auto & node_output_names = decoder->get_output_names(node_idx);
@@ -265,7 +265,7 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
             }
         }
     }
-    return resulting_model;
+    return resulting_model;  // 返回
 }
 
 std::shared_ptr<Model> TranslateSession::apply_transformations(std::shared_ptr<Model> model) {
@@ -309,7 +309,7 @@ std::shared_ptr<Model> TranslateSession::apply_transformations(std::shared_ptr<M
             model = ppp.build();
         }
     }
-    return model;
+    return model;  // 返回
 }
 
 }  // namespace ggml

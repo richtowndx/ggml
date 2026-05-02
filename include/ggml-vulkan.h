@@ -1,14 +1,14 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "ggml.h"
-#include "ggml-backend.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
-#define GGML_VK_NAME "Vulkan"
-#define GGML_VK_MAX_DEVICES 16
+#define GGML_VK_NAME "Vulkan"  // 宏定义 GGML_VK_NAME
+#define GGML_VK_MAX_DEVICES 16  // 宏定义 GGML_VK_MAX_DEVICES
 
 // backend API
 GGML_BACKEND_API ggml_backend_t ggml_backend_vk_init(size_t dev_num);
@@ -24,6 +24,6 @@ GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_vk_host_buffer_type(voi
 
 GGML_BACKEND_API ggml_backend_reg_t ggml_backend_vk_reg(void);
 
-#ifdef  __cplusplus
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束

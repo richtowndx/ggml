@@ -1,8 +1,8 @@
-#include "ggml.h"
-#include "ggml-cpu.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
 
 void arange(struct ggml_tensor* tensor) {
     GGML_ASSERT(ggml_is_contiguous(tensor));
@@ -23,17 +23,17 @@ bool can_dup(enum ggml_type src_type, enum ggml_type dst_type) {
     if (src_type == GGML_TYPE_F32 && ggml_get_type_traits_cpu(dst_type)->from_float) return true;
     if (dst_type == GGML_TYPE_F32 && ggml_get_type_traits    (src_type)->to_float) return true;
 
-    return false;
+    return false;  // 返回
 }
 
 int main(int argc, const char ** argv) {
-    struct ggml_init_params params = {
+    struct ggml_init_params params = {  // 结构体定义
         .mem_size   = 128*1024*1024,
         .mem_buffer = NULL,
         .no_alloc   = false,
     };
 
-    enum ggml_type type[4] = {GGML_TYPE_I16, GGML_TYPE_I32, GGML_TYPE_F16, GGML_TYPE_F32};
+    enum ggml_type type[4] = {GGML_TYPE_I16, GGML_TYPE_I32, GGML_TYPE_F16, GGML_TYPE_F32};  // 枚举定义
     for (int i = 0; i < 4; ++i) {
         enum ggml_type src_type = type[i];
         for (int j = 0; j < 4; ++j) {
@@ -107,5 +107,5 @@ int main(int argc, const char ** argv) {
         }
     }
 
-    return 0;
+    return 0;  // 返回
 }

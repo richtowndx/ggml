@@ -1,52 +1,52 @@
-#include <assert.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include <assert.h>  // 引入 assert.h 头文件
+#include <inttypes.h>  // 引入 inttypes.h 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
+#include <string.h>  // 引入 string.h 头文件
+#include <time.h>  // 引入 time.h 头文件
 
-#include <atomic>
-#include <chrono>
-#include <mutex>
-#include <thread>
-#include <cstddef>
-#include <stdexcept>
-#include <string>
-#include <sstream>
-#include <iomanip>
-#include <unordered_set>
-#include <unordered_map>
-#include <regex>
-#include <queue>
+#include <atomic>  // 引入 atomic 头文件
+#include <chrono>  // 引入 chrono 头文件
+#include <mutex>  // 引入 mutex 头文件
+#include <thread>  // 引入 thread 头文件
+#include <cstddef>  // 引入 cstddef 头文件
+#include <stdexcept>  // 引入 stdexcept 头文件
+#include <string>  // 引入 string 头文件
+#include <sstream>  // 引入 sstream 头文件
+#include <iomanip>  // 引入 iomanip 头文件
+#include <unordered_set>  // 引入 unordered_set 头文件
+#include <unordered_map>  // 引入 unordered_map 头文件
+#include <regex>  // 引入 regex 头文件
+#include <queue>  // 引入 queue 头文件
 
-#ifdef _WIN32
-#    include <sal.h>
-#else
-#    include <semaphore.h>
-#    include <unistd.h>
-#endif
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
+#    include <sal.h>  // 引入 sal.h 头文件
+#else  // 否则
+#    include <semaphore.h>  // 引入 semaphore.h 头文件
+#    include <unistd.h>  // 引入 unistd.h 头文件
+#endif  // 条件编译结束
 
 #pragma clang diagnostic ignored "-Wnested-anon-types"
 #pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
 
-#include <AEEStdErr.h>
-#include <dspqueue.h>
-#include <rpcmem.h>
+#include <AEEStdErr.h>  // 引入 AEEStdErr.h 头文件
+#include <dspqueue.h>  // 引入 dspqueue.h 头文件
+#include <rpcmem.h>  // 引入 rpcmem.h 头文件
 
-#define GGML_COMMON_IMPL_CPP
-#include "ggml-backend-impl.h"
-#include "ggml-common.h"
-#include "ggml-hexagon.h"
-#include "ggml-impl.h"
-#include "ggml-quants.h"
-#include "op-desc.h"
-#include "htp-ops.h"
-#include "htp_iface.h"
-#include "htp-drv.h"
+#define GGML_COMMON_IMPL_CPP  // 宏定义 GGML_COMMON_IMPL_CPP
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "ggml-hexagon.h"  // 引入 ggml-hexagon.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
+#include "op-desc.h"  // 引入 op-desc.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp_iface.h"  // 引入 htp_iface.h 头文件
+#include "htp-drv.h"  // 引入 htp-drv.h 头文件
 
-using intvec  = std::vector<int>;
-using uintvec = std::vector<unsigned int>;
-using u32vec  = std::vector<uint32_t>;
+using intvec  = std::vector<int>;  // using 声明
+using uintvec = std::vector<unsigned int>;  // using 声明
+using u32vec  = std::vector<uint32_t>;  // using 声明
 
 static int    opt_arch    = 0; // autodetect
 static size_t opt_ndev    = 1;
@@ -85,17 +85,17 @@ static inline size_t hex_round_up(size_t n, size_t m) {
 static const char * status_to_str(uint32_t status) {
     switch (status) {
         case HTP_STATUS_OK:
-            return "OK";
+            return "OK";  // 返回
         case HTP_STATUS_NO_SUPPORT:
-            return "NO-SUPPORT";
+            return "NO-SUPPORT";  // 返回
         case HTP_STATUS_INVAL_PARAMS:
-            return "INVAL-PARAMS";
+            return "INVAL-PARAMS";  // 返回
         case HTP_STATUS_VTCM_TOO_SMALL:
-            return "VTCM-TOO-SMALL";
+            return "VTCM-TOO-SMALL";  // 返回
         case HTP_STATUS_INTERNAL_ERR:
-            return "INTERNAL-ERROR";
+            return "INTERNAL-ERROR";  // 返回
         default:
-            return "UNKNOWN";
+            return "UNKNOWN";  // 返回
     }
 }
 
@@ -104,7 +104,7 @@ static const char * status_to_str(uint32_t status) {
 static void ggml_hexagon_dump_op_exec(const std::string &sess_name, const ggml_tensor * op, const uint32_t req_flags) {
     if (!opt_verbose) return;
 
-    op_desc desc(op);
+    op_desc desc(op);  // desc
     GGML_LOG_DEBUG("ggml-hex: %s execute-op %s: %s : %s : %s : %s : %s : flags 0x%x\n", sess_name.c_str(),
                 ggml_op_desc(op), desc.names, desc.dims, desc.types, desc.strides, desc.buffs, req_flags);
 }
@@ -112,7 +112,7 @@ static void ggml_hexagon_dump_op_exec(const std::string &sess_name, const ggml_t
 static void ggml_hexagon_dump_op_supp(const std::string &sess_name, const struct ggml_tensor * op, bool supp) {
     if (!opt_verbose) return;
 
-    op_desc desc(op);
+    op_desc desc(op);  // desc
     GGML_LOG_DEBUG("ggml-hex: %s supports-op %s: %s : %s : %s : %s : %s : %s\n", sess_name.c_str(),
                 ggml_op_desc(op), desc.names, desc.dims, desc.types, desc.strides, desc.buffs, supp ? "yes" : "no");
 }
@@ -128,7 +128,7 @@ static void ggml_hexagon_dump_op_prof(const std::string &sess_name, const ggml_t
                 pmu[0], pmu[1], pmu[2], pmu[3], pmu[4], pmu[5], pmu[6], pmu[7]);
     }
 
-    op_desc desc(op);
+    op_desc desc(op);  // desc
     GGML_LOG_DEBUG("ggml-hex: %s profile-op %s: %s : %s : %s : %s : usec %u cycles %u%s\n", sess_name.c_str(),
             ggml_op_desc(op), desc.names, desc.dims, desc.types, desc.strides, op_usec, op_cycles, pmu_str);
 }
@@ -138,7 +138,7 @@ static void ggml_hexagon_dump_op_prof(const std::string &sess_name, const ggml_t
 struct ggml_hexagon_opbatch;
 struct ggml_hexagon_opqueue;
 
-struct ggml_hexagon_session {
+struct ggml_hexagon_session {  // 结构体定义
     std::string      name;
     remote_handle64  handle;
     dspqueue_t       queue;
@@ -163,19 +163,19 @@ struct ggml_hexagon_session {
 
     const char* c_name() const { return name.c_str(); }
 
-    void allocate(int dev_id) noexcept(false);
-    void release() noexcept(true);
+    void allocate(int dev_id) noexcept(false);  // allocate
+    void release() noexcept(true);  // release
 
-    void enqueue_op(htp_op_code opcode, const ggml_tensor *op);
-    void flush(bool all = true);
+    void enqueue_op(htp_op_code opcode, const ggml_tensor *op);  // enqueue_op
+    void flush(bool all = true);  // flush
 
-    void flush_pending(bool all = false);
-    void flush_batch();
+    void flush_pending(bool all = false);  // flush_pending
+    void flush_batch();  // flush_batch
 };
 
 // ** backend buffers
 
-struct ggml_backend_hexagon_buffer_type_context {
+struct ggml_backend_hexagon_buffer_type_context {  // 结构体定义
     ggml_backend_hexagon_buffer_type_context(const std::string & name, ggml_hexagon_session * sess) {
         this->sess = sess;
         this->name = name;
@@ -185,7 +185,7 @@ struct ggml_backend_hexagon_buffer_type_context {
     std::string            name;
 };
 
-struct ggml_hexagon_shared_buffer {
+struct ggml_hexagon_shared_buffer {  // 结构体定义
     ggml_hexagon_session * sess;
     uint8_t *              base;
     size_t                 size;
@@ -286,7 +286,7 @@ static void ggml_backend_hexagon_buffer_free_buffer(ggml_backend_buffer_t buffer
 
 static void * ggml_backend_hexagon_buffer_get_base(ggml_backend_buffer_t buffer) {
     auto sbuf = static_cast<ggml_hexagon_shared_buffer *>(buffer->context);
-    return sbuf->base;
+    return sbuf->base;  // 返回
 }
 
 static enum ggml_status ggml_backend_hexagon_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
@@ -297,20 +297,20 @@ static enum ggml_status ggml_backend_hexagon_buffer_init_tensor(ggml_backend_buf
                 tensor->name, (void *) sbuf->base, tensor->data, ggml_nbytes(tensor), (int) buffer->usage);
 
     if (tensor->view_src != NULL && tensor->view_offs == 0) {
-        return GGML_STATUS_SUCCESS; // nothing to do for the view
+        return GGML_STATUS_SUCCESS; // nothing to do for the view  // 返回
     }
 
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 // ======== Q4x4x2 ====================
-struct x2_q4 {
+struct x2_q4 {  // 结构体定义
     int v[2];
 };
 
 static x2_q4 unpack_q4(uint8_t v) {
     x2_q4 x = { (int) (v & 0x0f) - 8, (int) (v >> 4) - 8 };
-    return x;
+    return x;  // 返回
 }
 
 static void dump_block_q4_0(const block_q4_0 * b, int i) {
@@ -987,7 +987,7 @@ static void repack_q8x4x2_q8_0(void * data, const ggml_tensor * t, size_t size) 
 }
 
 // ======== MXFP4x4x2 ====================
-struct x2_mxfp4 {
+struct x2_mxfp4 {  // 结构体定义
     int v[2];
 };
 
@@ -995,7 +995,7 @@ static x2_mxfp4 unpack_mxfp4(uint8_t v) {
     x2_mxfp4 x;
     x.v[0] = kvalues_mxfp4[(v & 0x0f)];
     x.v[1] = kvalues_mxfp4[(v >> 4)];
-    return x;
+    return x;  // 返回
 }
 
 static void dump_block_mxfp4(const block_mxfp4 * b, int i) {
@@ -1433,12 +1433,12 @@ static void ggml_backend_hexagon_buffer_get_tensor(ggml_backend_buffer_t buffer,
 
 static bool ggml_backend_hexagon_buffer_cpy_tensor(ggml_backend_buffer_t      buffer,
                                                    const struct ggml_tensor * src,
-                                                   struct ggml_tensor *       dst) {
+                                                   struct ggml_tensor *       dst) {  // 结构体定义
     GGML_UNUSED(buffer);
     GGML_UNUSED(src);
     GGML_UNUSED(dst);
     // we might optimize this later, for now take the slow path (ie get/set_tensor)
-    return false;
+    return false;  // 返回
 }
 
 static void ggml_backend_hexagon_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
@@ -1474,10 +1474,10 @@ static ggml_backend_buffer_t ggml_backend_hexagon_buffer_type_alloc_buffer(
     try {
         size += 4 * 1024;  // guard page
         ggml_hexagon_shared_buffer * sbuf = new ggml_hexagon_shared_buffer(sess, size);
-        return ggml_backend_buffer_init(buffer_type, ggml_backend_hexagon_buffer_interface, sbuf, size);
+        return ggml_backend_buffer_init(buffer_type, ggml_backend_hexagon_buffer_interface, sbuf, size);  // ggml_backend_buffer_init
     } catch (const std::exception & exc) {
         GGML_LOG_ERROR("ggml-hex: %s failed to allocate buffer context (host): %s\n", sess->c_name(), exc.what());
-        return nullptr;
+        return nullptr;  // 返回
     }
 }
 
@@ -1487,34 +1487,34 @@ static ggml_backend_buffer_t ggml_backend_hexagon_repack_buffer_type_alloc_buffe
     try {
         size += 4 * 1024;  // guard page
         ggml_hexagon_shared_buffer * sbuf = new ggml_hexagon_shared_buffer(sess, size);
-        return ggml_backend_buffer_init(buffer_type, ggml_backend_hexagon_buffer_interface, sbuf, size);
+        return ggml_backend_buffer_init(buffer_type, ggml_backend_hexagon_buffer_interface, sbuf, size);  // ggml_backend_buffer_init
     } catch (const std::exception & exc) {
         GGML_LOG_ERROR("ggml-hex: %s failed to allocate buffer context (repack): %s\n", sess->c_name(), exc.what());
-        return nullptr;
+        return nullptr;  // 返回
     }
 }
 
 static size_t ggml_backend_hexagon_buffer_type_get_alignment(ggml_backend_buffer_type_t buffer_type) {
-    return 128;  // HVX alignment
+    return 128;  // HVX alignment  // 返回
     GGML_UNUSED(buffer_type);
 }
 
 static size_t ggml_backend_hexagon_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const struct ggml_tensor * t) {
-    return ggml_nbytes(t);
+    return ggml_nbytes(t);  // ggml_nbytes
 }
 
 static size_t ggml_backend_hexagon_buffer_type_get_max_size(ggml_backend_buffer_type_t buffer_type) {
-    return opt_mbuf; // typically 1GB per buffer
+    return opt_mbuf; // typically 1GB per buffer  // 返回
     GGML_UNUSED(buffer_type);
 }
 
 static bool ggml_backend_hexagon_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
-    return opt_hostbuf;
+    return opt_hostbuf;  // 返回
     GGML_UNUSED(buft);
 }
 
 static bool ggml_backend_hexagon_repack_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
-    return false;
+    return false;  // 返回
     GGML_UNUSED(buft);
 }
 
@@ -1538,7 +1538,7 @@ static ggml_backend_buffer_type_i ggml_backend_hexagon_repack_buffer_type_interf
 
 // Backend session implementation
 
-struct ggml_hexagon_opbatch {
+struct ggml_hexagon_opbatch {  // 结构体定义
     ggml_hexagon_session*            sess;
 
     std::vector<const ggml_tensor*>  ops;       // pointers to original ops
@@ -1591,7 +1591,7 @@ struct ggml_hexagon_opbatch {
         t_map.reserve(n_tens_max);
         d_map.reserve(n_tens_max);
 
-        GGML_LOG_INFO("ggml-hex: %s op batching: n-bufs %u n-tensors %u n-ops %u vmem %zu\n",
+        GGML_LOG_INFO("ggml-hex: %s op batching: n-bufs %u n-tensors %u n-ops %u vmem %zu\n",  // 打印信息日志
                 sess->c_name(), n_bufs_max, n_tens_max, n_ops_max, b_vmem_max);
 
         reset();
@@ -1620,7 +1620,7 @@ struct ggml_hexagon_opbatch {
 
         HEX_VERBOSE("ggml-hex: add-buffer #%u : fd %d base %p size %zu : vmem %zu\n", bi, b.fd, (void*) sbuf->base, (size_t) b.size, b_vmem);
 
-        return bi;
+        return bi;  // 返回
     }
 
     bool same_shape(const htp_tensor * h, const ggml_tensor * t) const {
@@ -1670,7 +1670,7 @@ struct ggml_hexagon_opbatch {
                 ti, t->name, h.bi, (void*) t->data, (size_t) t_offset, t_size, h.flags,
                 (size_t) t->ne[0], (size_t) t->ne[1], (size_t) t->ne[2], (size_t) t->ne[3]);
 
-        return ti;
+        return ti;  // 返回
     }
 
     bool fit_op(const struct ggml_tensor *t) const {
@@ -1702,7 +1702,7 @@ struct ggml_hexagon_opbatch {
         if ((extra_tens + n_tens) > n_tens_max) return false;
         if ((extra_vmem + b_vmem) > b_vmem_max) return false;
 
-        return true;
+        return true;  // 返回
     }
 
     // assumes that fit_op() was called first and returned true
@@ -1732,12 +1732,12 @@ struct ggml_hexagon_opbatch {
     }
 };
 
-struct ggml_hexagon_opqueue {
+struct ggml_hexagon_opqueue {  // 结构体定义
     // Shared buffer for storing batches
     ggml_hexagon_shared_buffer *shm_buf;
     size_t                      shm_blk_size;
 
-    using opvec = std::vector<const ggml_tensor*>;
+    using opvec = std::vector<const ggml_tensor*>;  // using 声明
 
     std::queue<unsigned int>    done;       // completed batch ids
     std::vector<opvec>          op_cache;   // per batch op cache
@@ -1762,7 +1762,7 @@ struct ggml_hexagon_opqueue {
         for (unsigned int i = 0; i < depth; i++) { done.push(i); }
 
         if (opt_verbose) {
-            GGML_LOG_INFO("ggml-hex: %s allocated op-queue : batch-size %zu depth %zu shm-size %zu shm-block-size %zu\n",
+            GGML_LOG_INFO("ggml-hex: %s allocated op-queue : batch-size %zu depth %zu shm-size %zu shm-block-size %zu\n",  // 打印信息日志
                     sess->c_name(), batch_size, depth, shm_buf->size, shm_blk_size);
         }
     }
@@ -1832,7 +1832,7 @@ struct ggml_hexagon_opqueue {
             }
         }
 
-        return true;
+        return true;  // 返回
     }
 
     void pop(htp_opbatch_rsp rsp, dspqueue_buffer dbuf) {
@@ -1974,7 +1974,7 @@ static size_t ggml_hexagon_measure_max_vmem(ggml_hexagon_session *sess) {
 
     for (auto b : sbufs) { delete b; }
 
-    return vmem - step; // backoff to account for overhead from internal mappings
+    return vmem - step; // backoff to account for overhead from internal mappings  // 返回
 }
 
 void ggml_hexagon_session::allocate(int dev_id) noexcept(false) {
@@ -2025,7 +2025,7 @@ void ggml_hexagon_session::allocate(int dev_id) noexcept(false) {
         char htp_uri[256];
         snprintf(htp_uri, sizeof(htp_uri), "file:///libggml-htp-v%u.so?htp_iface_skel_handle_invoke&_modver=1.0", opt_arch);
 
-        struct remote_rpc_get_uri u = {};
+        struct remote_rpc_get_uri u = {};  // 结构体定义
         u.session_id      = this->session_id;
         u.domain_name     = const_cast<char *>(CDSP_DOMAIN_NAME);
         u.domain_name_len = strlen(CDSP_DOMAIN_NAME);
@@ -2216,14 +2216,14 @@ ggml_hexagon_session::~ggml_hexagon_session() noexcept(true) {
 // ** backend interface
 
 static bool ggml_backend_buffer_is_hexagon(const struct ggml_backend_buffer * b) {
-    return b->buft->iface.get_alignment == ggml_backend_hexagon_buffer_type_get_alignment;
+    return b->buft->iface.get_alignment == ggml_backend_hexagon_buffer_type_get_alignment;  // 返回
 }
 
 static inline bool ggml_backend_buffer_is_hexagon_repack(const struct ggml_backend_buffer * b) {
     if (!opt_hostbuf) {
-        return ggml_backend_buffer_is_hexagon(b);
+        return ggml_backend_buffer_is_hexagon(b);  // ggml_backend_buffer_is_hexagon
     }
-    return b->buft->iface.alloc_buffer == ggml_backend_hexagon_repack_buffer_type_alloc_buffer;
+    return b->buft->iface.alloc_buffer == ggml_backend_hexagon_repack_buffer_type_alloc_buffer;  // 返回
 }
 
 static bool ggml_hexagon_supported_flash_attn_ext(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2236,29 +2236,29 @@ static bool ggml_hexagon_supported_flash_attn_ext(const struct ggml_hexagon_sess
 
     // Check for F16 support only as requested
     if ((src0->type != GGML_TYPE_F16 && src0->type != GGML_TYPE_F32) || src1->type != GGML_TYPE_F16 || src2->type != GGML_TYPE_F16) {
-        return false;
+        return false;  // 返回
     }
 
     if (src3 && src3->type != GGML_TYPE_F16) {  // mask
-        return false;
+        return false;  // 返回
     }
 
     if (src4 && src4->type != GGML_TYPE_F32) {  // sinks
-        return false;
+        return false;  // 返回
     }
 
     // For now we support F32 or F16 output as htp backend often converts output on the fly if needed,
     // but the op implementation writes to F16 or F32.
     // Let's assume dst can be F32 or F16.
     if (dst->type != GGML_TYPE_F32 && dst->type != GGML_TYPE_F16) {
-        return false;
+        return false;  // 返回
     }
 
     if (dst->ne[3] != 1) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_mul_mat(const struct ggml_hexagon_session * sess, const struct ggml_tensor * dst) {
@@ -2266,11 +2266,11 @@ static bool ggml_hexagon_supported_mul_mat(const struct ggml_hexagon_session * s
     const struct ggml_tensor * src1 = dst->src[1];
 
     if (dst->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
 
     if (src1->type != GGML_TYPE_F32 && src1->type != GGML_TYPE_F16) {
-        return false;
+        return false;  // 返回
     }
 
     switch (src0->type) {
@@ -2279,11 +2279,11 @@ static bool ggml_hexagon_supported_mul_mat(const struct ggml_hexagon_session * s
         case GGML_TYPE_IQ4_NL:
         case GGML_TYPE_MXFP4:
             if (src0->ne[0] % 32) {
-                return false;
+                return false;  // 返回
             }
 
             if (ggml_nrows(src0) > 16 * 1024) {
-                return false;  // typically the lm-head which would be too large for VTCM
+                return false;  // typically the lm-head which would be too large for VTCM  // 返回
             }
 
             if (ggml_nrows(src1) > 1024 || src1->ne[2] != 1 || src1->ne[3] != 1) {
@@ -2292,14 +2292,14 @@ static bool ggml_hexagon_supported_mul_mat(const struct ggml_hexagon_session * s
 
             // src0 (weights) must be repacked
             if (src0->buffer && !ggml_backend_buffer_is_hexagon_repack(src0->buffer)) {
-                return false;
+                return false;  // 返回
             }
             break;
 
         case GGML_TYPE_F16:
             if (src0->nb[1] < src0->nb[0]) {
                 GGML_LOG_DEBUG("ggml_hexagon_supported_mul_mat: permuted F16 src0 not supported\n");
-                return false;
+                return false;  // 返回
             }
             if (ggml_nrows(src1) > 1024) {
                 return false;  // no huge batches (for now)
@@ -2307,10 +2307,10 @@ static bool ggml_hexagon_supported_mul_mat(const struct ggml_hexagon_session * s
             break;
 
         default:
-            return false;
+            return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_mul_mat_id(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2320,7 +2320,7 @@ static bool ggml_hexagon_supported_mul_mat_id(const struct ggml_hexagon_session 
     const struct ggml_tensor * dst  = op;
 
     if (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_I32) {
-        return false;
+        return false;  // 返回
     }
 
     switch (src0->type) {
@@ -2329,20 +2329,20 @@ static bool ggml_hexagon_supported_mul_mat_id(const struct ggml_hexagon_session 
         case GGML_TYPE_IQ4_NL:
         case GGML_TYPE_MXFP4:
             if ((src0->ne[0] % 32)) {
-                return false;
+                return false;  // 返回
             }
 
             // src0 (weights) must be repacked
             if (src0->buffer && !ggml_backend_buffer_is_hexagon_repack(src0->buffer)) {
-                return false;
+                return false;  // 返回
             }
             break;
 
         default:
-            return false;
+            return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_binary(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2352,32 +2352,32 @@ static bool ggml_hexagon_supported_binary(const struct ggml_hexagon_session * se
 
     if (src0->type == GGML_TYPE_F32) {
         if (src1->type != GGML_TYPE_F32) {
-            return false;
+            return false;  // 返回
         }
         if (dst->type != GGML_TYPE_F32) {
-            return false;
+            return false;  // 返回
         }
     }
     else if (src0->type == GGML_TYPE_F16) {
         if (src1->type != GGML_TYPE_F16) {
-            return false;
+            return false;  // 返回
         }
         if (dst->type != GGML_TYPE_F16) {
-            return false;
+            return false;  // 返回
         }
     }
     else {
-        return false;
+        return false;  // 返回
     }
 
     if (!ggml_are_same_shape(src0, dst)) {
-        return false;
+        return false;  // 返回
     }
     if (!ggml_can_repeat(src1, src0) || ggml_is_permuted(src1)) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_add_id(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2386,24 +2386,24 @@ static bool ggml_hexagon_supported_add_id(const struct ggml_hexagon_session * se
     const struct ggml_tensor * dst  = op;
 
     if (src0->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
     if (src1->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
     if (dst->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
     if (!ggml_are_same_shape(src0, dst)) {
-        return false;
+        return false;  // 返回
     }
 
     // REVISIT: add support for non-contigiuos tensors
     if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1) || !ggml_is_contiguous(dst)) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_unary(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2411,21 +2411,21 @@ static bool ggml_hexagon_supported_unary(const struct ggml_hexagon_session * ses
     const struct ggml_tensor * dst  = op;
 
     if (src0->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
     if (dst->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
     if (!ggml_are_same_shape(src0, dst)) {
-        return false;
+        return false;  // 返回
     }
 
     // TODO: add support for non-contiguous elements within a row
     if (!ggml_is_contiguous_rows(src0) || !ggml_is_contiguous_rows(dst)) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_sum_rows(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2433,18 +2433,18 @@ static bool ggml_hexagon_supported_sum_rows(const struct ggml_hexagon_session * 
     const struct ggml_tensor * dst  = op;
 
     if (src0->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
     if (dst->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
 
     // TODO: add support for non-contigiuos tensors
     if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(dst)) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_activations(const struct ggml_hexagon_session * sess,
@@ -2454,29 +2454,29 @@ static bool ggml_hexagon_supported_activations(const struct ggml_hexagon_session
     const struct ggml_tensor * dst  = op;
 
     if (src0->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
     if (dst->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
 
     if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(dst)) {
-        return false;
+        return false;  // 返回
     }
 
     if (src1) {
         if (src1->type != GGML_TYPE_F32) {
-            return false;
+            return false;  // 返回
         }
         if (!ggml_are_same_shape(src0, src1)) {
-            return false;
+            return false;  // 返回
         }
         if (!ggml_is_contiguous(src1)) {
-            return false;
+            return false;  // 返回
         }
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_softmax(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2486,41 +2486,41 @@ static bool ggml_hexagon_supported_softmax(const struct ggml_hexagon_session * s
     const struct ggml_tensor * dst  = op;
 
     if (src2) {
-        return false;  // FIXME: add support for sinks
+        return false;  // FIXME: add support for sinks  // 返回
     }
 
     if (src0->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
     if (dst->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
 
     if (src1) {
         if (src1->type != GGML_TYPE_F32 && src1->type != GGML_TYPE_F16) {
-            return false;
+            return false;  // 返回
         }
         if (src0->ne[0] != src1->ne[0]) {
-            return false;
+            return false;  // 返回
         }
         if (src1->ne[1] < src0->ne[1]) {
-            return false;
+            return false;  // 返回
         }
         if (src0->ne[2] % src1->ne[2] != 0) {
-            return false;
+            return false;  // 返回
         }
         if (src0->ne[3] % src1->ne[3] != 0) {
-            return false;
+            return false;  // 返回
         }
     }
 
     if (src1) {
         if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1) || !ggml_is_contiguous(dst)) {
-            return false;
+            return false;  // 返回
         }
     } else {
         if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(dst)) {
-            return false;
+            return false;  // 返回
         }
     }
 
@@ -2529,19 +2529,19 @@ static bool ggml_hexagon_supported_softmax(const struct ggml_hexagon_session * s
     // Small sizes (ne[0] <= 32) work correctly with tail-only processing
     const int64_t ne0 = src0->ne[0];
     if (ne0 > 32 && (ne0 & (32 - 1)) != 0) {
-        return false;
+        return false;  // 返回
     }
 
     // HVX vector size constraints for softmax
-    #define SOFTMAX_MAX_ROW_SIZE 131072  // 128K elements max for numerical precision
+    #define SOFTMAX_MAX_ROW_SIZE 131072  // 128K elements max for numerical precision  // 宏定义 SOFTMAX_MAX_ROW_SIZE
 
     // Reject very large row sizes to avoid numerical precision issues
     // Softmax accumulation over many elements can lead to precision loss
     if (ne0 > SOFTMAX_MAX_ROW_SIZE) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_set_rows(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2550,18 +2550,18 @@ static bool ggml_hexagon_supported_set_rows(const struct ggml_hexagon_session * 
     const struct ggml_tensor * dst  = op;
 
     if (src0->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
 
     if (src1->type != GGML_TYPE_I32 && src1->type != GGML_TYPE_I64) {
-        return false;
+        return false;  // 返回
     }
 
     if (dst->type != GGML_TYPE_F16) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_get_rows(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2570,18 +2570,18 @@ static bool ggml_hexagon_supported_get_rows(const struct ggml_hexagon_session * 
     const struct ggml_tensor * dst  = op;
 
     if (src0->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
 
     if (src1->type != GGML_TYPE_I32 && src1->type != GGML_TYPE_I64) {
-        return false;
+        return false;  // 返回
     }
 
     if (dst->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_argsort(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2589,19 +2589,19 @@ static bool ggml_hexagon_supported_argsort(const struct ggml_hexagon_session * s
     const struct ggml_tensor * dst  = op;         // indices
 
     if (src0->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
 
     if (dst->type != GGML_TYPE_I32) {
-        return false;
+        return false;  // 返回
     }
 
     if (src0->ne[0] > (16*1024)) {
         // reject tensors with huge rows for now
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_rope(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2610,10 +2610,10 @@ static bool ggml_hexagon_supported_rope(const struct ggml_hexagon_session * sess
     int mode = op_params[2];
 
     if ((mode & GGML_ROPE_TYPE_MROPE) || (mode & GGML_ROPE_TYPE_VISION)) {
-        return false;
+        return false;  // 返回
     }
     if (mode & 1) {
-        return false;
+        return false;  // 返回
     }
 
     const struct ggml_tensor * src0 = op->src[0];
@@ -2622,36 +2622,36 @@ static bool ggml_hexagon_supported_rope(const struct ggml_hexagon_session * sess
     const struct ggml_tensor * dst  = op;
 
     if (src0->type != GGML_TYPE_F32) {
-        return false;  // FIXME: add support for GGML_TYPE_F16 for src0
+        return false;  // FIXME: add support for GGML_TYPE_F16 for src0  // 返回
     }
     if (dst->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
     if (src1->type != GGML_TYPE_I32) {
-        return false;
+        return false;  // 返回
     }
     if (src2) {
         if (src2->type != GGML_TYPE_F32) {
-            return false;
+            return false;  // 返回
         }
         int n_dims = op_params[1];
         if (src2->ne[0] < (n_dims / 2)) {
-            return false;
+            return false;  // 返回
         }
     }
 
     if (src2) {
         if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1) || !ggml_is_contiguous(src2) ||
             !ggml_is_contiguous(dst)) {
-            return false;
+            return false;  // 返回
         }
     } else {
         if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1) || !ggml_is_contiguous(dst)) {
-            return false;
+            return false;  // 返回
         }
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_ssm_conv(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2661,12 +2661,12 @@ static bool ggml_hexagon_supported_ssm_conv(const struct ggml_hexagon_session * 
 
     // Only support FP32 for now
     if (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
 
     // Check IO tensor shapes and dims
     if (src0->ne[3] != 1 || src1->ne[2] != 1 || src1->ne[3] != 1 || dst->ne[3] != 1) {
-        return false; // src0 should be effectively 3D
+        return false; // src0 should be effectively 3D  // 返回
     }
 
     const int d_conv = src1->ne[0];
@@ -2675,21 +2675,21 @@ static bool ggml_hexagon_supported_ssm_conv(const struct ggml_hexagon_session * 
     const int n_s = dst->ne[2];
 
     if (src0->ne[0] != d_conv - 1 + n_t || src0->ne[1] != d_inner || src0->ne[2] != n_s) {
-        return false;
+        return false;  // 返回
     }
     if (src1->ne[0] != d_conv || src1->ne[1] != d_inner) {
-        return false;
+        return false;  // 返回
     }
     if (dst->ne[0] != d_inner || dst->ne[1] != n_t || dst->ne[2] != n_s) {
-        return false;
+        return false;  // 返回
     }
 
     // TODO: add support for non-contiguous tensors
     if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1) || !ggml_is_contiguous(dst)) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_cumsum(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2697,15 +2697,15 @@ static bool ggml_hexagon_supported_cumsum(const struct ggml_hexagon_session * se
     const struct ggml_tensor * dst  = op;
 
     if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
 
     if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(dst)) {
-        return false;
+        return false;  // 返回
     }
 
     GGML_UNUSED(sess);
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_diag(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2714,21 +2714,21 @@ static bool ggml_hexagon_supported_diag(const struct ggml_hexagon_session * sess
 
     // diag only supports F32 currently
     if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
 
     // Input must have ne[1] == 1 (vector input)
     if (src0->ne[1] != 1) {
-        return false;
+        return false;  // 返回
     }
 
     // Output must be square in first two dimensions
     if (dst->ne[0] != dst->ne[1] || dst->ne[0] != src0->ne[0]) {
-        return false;
+        return false;  // 返回
     }
 
     GGML_UNUSED(sess);
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_solve_tri(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -2737,31 +2737,31 @@ static bool ggml_hexagon_supported_solve_tri(const struct ggml_hexagon_session *
     const struct ggml_tensor * dst  = op;         // X
 
     if (!src0 || !src1) {
-        return false;
+        return false;  // 返回
     }
 
     if (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return false;
+        return false;  // 返回
     }
 
     if (src0->ne[0] != src0->ne[1]) {
-        return false;
+        return false;  // 返回
     }
 
     if (src0->ne[1] != src1->ne[1]) {
-        return false;
+        return false;  // 返回
     }
 
     if (src0->ne[2] != src1->ne[2] || src0->ne[3] != src1->ne[3]) {
-        return false;
+        return false;  // 返回
     }
 
     if (dst->ne[0] != src1->ne[0] || dst->ne[1] != src1->ne[1] || dst->ne[2] != src1->ne[2] || dst->ne[3] != src1->ne[3]) {
-        return false;
+        return false;  // 返回
     }
 
     GGML_UNUSED(sess);
-    return true;
+    return true;  // 返回
 }
 
 static const char * ggml_backend_hexagon_name(ggml_backend_t backend) {
@@ -2828,10 +2828,10 @@ static htp_op_code op_remap_to_htp(const ggml_tensor * t) {
         default:
             GGML_ABORT("\nggml-hex: graph-compute %s is not supported\n", ggml_op_desc(t));
     }
-    return HTP_OP_INVALID;
+    return HTP_OP_INVALID;  // 返回
 }
 
-static inline bool op_is_compute(ggml_tensor *node)
+static inline bool op_is_compute(ggml_tensor *node)  // op_is_compute
 {
     return !ggml_op_is_empty(node->op) && !ggml_is_empty(node) && (node->flags & GGML_TENSOR_FLAG_COMPUTE);
 }
@@ -2851,7 +2851,7 @@ static ggml_status ggml_backend_hexagon_graph_compute(ggml_backend_t backend, gg
     // Wait until all pending ops complete
     sess->flush();
 
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 static void ggml_backend_hexagon_synchronize(ggml_backend_t backend) {
@@ -2863,13 +2863,13 @@ static void ggml_backend_hexagon_synchronize(ggml_backend_t backend) {
     sess->flush();
 }
 
-struct node_info {
+struct node_info {  // 结构体定义
     ggml_tensor * node;
 
     std::vector<ggml_tensor *> fused;
 
     ggml_op op() const {
-        return node->op;
+        return node->op;  // 返回
     }
 
     const ggml_tensor * dst() const {
@@ -2877,15 +2877,15 @@ struct node_info {
     }
 
     const ggml_tensor * src0() const {
-        return node->src[0];
+        return node->src[0];  // 返回
     }
 
     const ggml_tensor * src1() const {
-        return node->src[1];
+        return node->src[1];  // 返回
     }
 
     bool is_empty() const {
-        return ggml_op_is_empty(node->op);
+        return ggml_op_is_empty(node->op);  // ggml_op_is_empty
     }
 
     void add_fused(ggml_tensor * t) {
@@ -2896,9 +2896,9 @@ struct node_info {
         switch (this->op()) {
             case GGML_OP_MUL_MAT:
             case GGML_OP_MUL_MAT_ID:
-                return ggml_is_quantized(this->src0()->type);
+                return ggml_is_quantized(this->src0()->type);  // ggml_is_quantized
             default:
-                return false;
+                return false;  // 返回
         }
     }
 
@@ -2951,7 +2951,7 @@ static std::vector<int> ggml_hexagon_graph_optimize_reorder(const std::vector<no
         }
     }
 
-    return res;
+    return res;  // 返回
 }
 
 static void ggml_backend_hexagon_graph_optimize(ggml_backend_t backend, ggml_cgraph * gf) {
@@ -3052,11 +3052,11 @@ static struct ggml_backend_i hexagon_backend_i = {
 static ggml_guid_t ggml_backend_hexagon_guid() {
     static ggml_guid guid = { 0x7b, 0x57, 0xdc, 0xaf, 0xde, 0x12, 0x1d, 0x49,
                               0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11 };
-    return &guid;
+    return &guid;  // 返回
 }
 
 bool ggml_backend_is_hexagon(ggml_backend_t backend) {
-    return backend && backend->iface.get_name == ggml_backend_hexagon_name;
+    return backend && backend->iface.get_name == ggml_backend_hexagon_name;  // 返回
 }
 
 // device interface
@@ -3064,7 +3064,7 @@ bool ggml_backend_is_hexagon(ggml_backend_t backend) {
 static ggml_backend_t ggml_backend_hexagon_device_init(ggml_backend_dev_t dev, const char * params) {
     auto sess = static_cast<ggml_hexagon_session *>(dev->context);
 
-    return new ggml_backend{
+    return new ggml_backend{  // 返回
         /* .guid      = */ ggml_backend_hexagon_guid(),
         /* .interface = */ hexagon_backend_i,
         /* .device    = */ dev,
@@ -3082,7 +3082,7 @@ static const char * ggml_backend_hexagon_device_get_name(ggml_backend_dev_t dev)
 }
 
 static const char * ggml_backend_hexagon_device_get_description(ggml_backend_dev_t dev) {
-    return "Hexagon";
+    return "Hexagon";  // 返回
     GGML_UNUSED(dev);
 }
 
@@ -3094,7 +3094,7 @@ static void ggml_backend_hexagon_device_get_memory(ggml_backend_dev_t dev, size_
 }
 
 static enum ggml_backend_dev_type ggml_backend_hexagon_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+    return GGML_BACKEND_DEVICE_TYPE_GPU;  // 返回
 
     GGML_UNUSED(dev);
 }
@@ -3114,12 +3114,12 @@ static void ggml_backend_hexagon_device_get_props(ggml_backend_dev_t dev, struct
 
 static ggml_backend_buffer_type_t ggml_backend_hexagon_device_get_buffer_type(ggml_backend_dev_t dev) {
     auto sess = static_cast<ggml_hexagon_session *>(dev->context);
-    return &sess->buffer_type;
+    return &sess->buffer_type;  // 返回
 }
 
 static ggml_backend_buffer_type_t ggml_backend_hexagon_device_get_repack_buffer_type(ggml_backend_dev_t dev) {
     auto sess = static_cast<ggml_hexagon_session *>(dev->context);
-    return &sess->repack_buffer_type;
+    return &sess->repack_buffer_type;  // 返回
 }
 
 static bool ggml_hexagon_supported_buffer(ggml_hexagon_session *sess, const struct ggml_tensor * t) {
@@ -3127,22 +3127,22 @@ static bool ggml_hexagon_supported_buffer(ggml_hexagon_session *sess, const stru
         if (ggml_backend_buffer_is_hexagon(t->buffer)      == false) return false; // not our buffer
         if (ggml_backend_hexagon_buffer_get_sess(t->buffer) != sess) return false; // wrong session
     }
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_buffers(ggml_hexagon_session *sess, const struct ggml_tensor * t) {
     // all srcs & dsts must be mapped to the same session
     if (!ggml_hexagon_supported_buffer(sess, t)) {
-        return false;
+        return false;  // 返回
     }
 
     for (int i = 0; i < GGML_MAX_SRC; i++) {
         if (!ggml_hexagon_supported_buffer(sess, t->src[i])) {
-            return false;
+            return false;  // 返回
         }
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_cpy(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -3163,7 +3163,7 @@ static bool ggml_hexagon_supported_cpy(const struct ggml_hexagon_session * sess,
     // cannot handle re-shaping and type conversion at the same time
     if (!sameshape) return false;
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_cont(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -3173,7 +3173,7 @@ static bool ggml_hexagon_supported_cont(const struct ggml_hexagon_session * sess
     // CONT is same-type only, supports f32 and f16
     if (src0->type != GGML_TYPE_F32 && src0->type != GGML_TYPE_F16) return false;
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_repeat(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
@@ -3196,18 +3196,18 @@ static bool ggml_hexagon_supported_repeat(const struct ggml_hexagon_session * se
     // require contiguous tensors (no transposition)
     if (ggml_is_transposed(src0) || ggml_is_transposed(dst)) return false;
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_hexagon_supported_fill(const struct ggml_hexagon_session * sess, const struct ggml_tensor * op) {
     const struct ggml_tensor * dst = op;
 
     if (dst->type != GGML_TYPE_F32 && dst->type != GGML_TYPE_F16) {
-        return false;
+        return false;  // 返回
     }
 
     GGML_UNUSED(sess);
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_backend_hexagon_device_supports_op(ggml_backend_dev_t dev, const struct ggml_tensor * op) {
@@ -3215,13 +3215,13 @@ static bool ggml_backend_hexagon_device_supports_op(ggml_backend_dev_t dev, cons
 
     // reject ops that match the filter
     if (opt_opfilter && std::regex_match(ggml_op_desc(op), *opt_opfilter)) {
-        return false;
+        return false;  // 返回
     }
 
     // all srcs & dsts must be mapped to the same session
     if (!ggml_hexagon_supported_buffers(sess, op)) {
         ggml_hexagon_dump_op_supp(sess->name, op, false);
-        return false;
+        return false;  // 返回
     }
 
     bool supp = false;
@@ -3357,12 +3357,12 @@ static bool ggml_backend_hexagon_device_supports_op(ggml_backend_dev_t dev, cons
     }
 
     ggml_hexagon_dump_op_supp(sess->name, op, supp);
-    return supp;
+    return supp;  // 返回
 }
 
 static bool ggml_backend_hexagon_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
     if (buft->iface.get_alignment != ggml_backend_hexagon_buffer_type_get_alignment) {
-        return false;
+        return false;  // 返回
     }
 
     auto s0 = static_cast<ggml_hexagon_session *>(dev->context);
@@ -3373,7 +3373,7 @@ static bool ggml_backend_hexagon_device_supports_buft(ggml_backend_dev_t dev, gg
 
     HEX_VERBOSE("ggml-hex: %s device-supports-buft %s (%d)\n", s0->name.c_str(), s1->name.c_str(), (int) supp);
 
-    return supp;
+    return supp;  // 返回
 }
 
 static ggml_backend_buffer_type_t * ggml_backend_hexagon_device_get_extra_buffers_type(ggml_backend_dev_t dev) {
@@ -3383,7 +3383,7 @@ static ggml_backend_buffer_type_t * ggml_backend_hexagon_device_get_extra_buffer
     static ggml_backend_buffer_type_t bufts[2];
     bufts[0] = ggml_backend_hexagon_device_get_repack_buffer_type(dev);
     bufts[1] = NULL;
-    return bufts;
+    return bufts;  // 返回
 }
 
 static const struct ggml_backend_device_i ggml_backend_hexagon_device_i = {
@@ -3406,9 +3406,9 @@ static const struct ggml_backend_device_i ggml_backend_hexagon_device_i = {
 
 //** backend registry
 
-#define GGML_HEXAGON_MAX_SESSIONS 16
+#define GGML_HEXAGON_MAX_SESSIONS 16  // 宏定义 GGML_HEXAGON_MAX_SESSIONS
 
-struct ggml_hexagon_registry {
+struct ggml_hexagon_registry {  // 结构体定义
     ggml_hexagon_registry(ggml_backend_reg_t reg);
     ~ggml_hexagon_registry();
 
@@ -3444,12 +3444,12 @@ ggml_hexagon_registry::~ggml_hexagon_registry() {
 }
 
 static const char * ggml_backend_hexagon_reg_get_name(ggml_backend_reg_t reg) {
-    return "HTP";
+    return "HTP";  // 返回
     GGML_UNUSED(reg);
 }
 
 static size_t ggml_backend_hexagon_reg_get_device_count(ggml_backend_reg_t reg) {
-    return opt_ndev;
+    return opt_ndev;  // 返回
     GGML_UNUSED(reg);
 }
 
@@ -3457,10 +3457,10 @@ static ggml_backend_dev_t ggml_backend_hexagon_reg_get_device(ggml_backend_reg_t
     auto hreg = static_cast<ggml_hexagon_registry *>(reg->context);
 
     if (index >= opt_ndev || !hreg->devices[index].context) {
-        return nullptr;
+        return nullptr;  // 返回
     }
 
-    return &hreg->devices[index];
+    return &hreg->devices[index];  // 返回
 }
 
 static void * ggml_backend_hexagon_get_proc_address(ggml_backend_reg_t reg, const char * name) {
@@ -3469,10 +3469,10 @@ static void * ggml_backend_hexagon_get_proc_address(ggml_backend_reg_t reg, cons
         return (void *) fct;
     }
 
-    return NULL;
+    return NULL;  // 返回
 }
 
-template<typename T> std::vector<T> str_to_vec(const char* str) {
+template<typename T> std::vector<T> str_to_vec(const char* str) {  // 模板
     std::stringstream ss(str);
     std::vector<T> v;
     std::string    t;
@@ -3481,15 +3481,15 @@ template<typename T> std::vector<T> str_to_vec(const char* str) {
         v.push_back(std::stoul(t, nullptr, 0));
     }
 
-    return v;
+    return v;  // 返回
 }
 
-template<typename T, int BASE=10> std::string vec_to_str(std::vector<T> v) {
+template<typename T, int BASE=10> std::string vec_to_str(std::vector<T> v) {  // 模板
     std::stringstream ss;
     ss << std::setbase(BASE) << std::showbase;
     for (auto i : v) { ss << i << ','; }
     auto str = ss.str(); str.pop_back(); // drop last comma
-    return str;
+    return str;  // 返回
 }
 
 static void ggml_hexagon_init(ggml_backend_reg * reg) {
@@ -3558,12 +3558,12 @@ static void ggml_hexagon_init(ggml_backend_reg * reg) {
         opt_ndev = GGML_HEXAGON_MAX_SESSIONS;
     }
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__)  // 条件编译
     if (opt_arch < 75) {
         opt_ndev = 1;
         GGML_LOG_WARN("ggml-hex: forcing ndev to 1 for SoCs archs lower than v75.\n");
     }
-#endif
+#endif  // 条件编译结束
 
     if (str_profile) {
         opt_pmu_evt = [&]() -> std::vector<uint32_t> {
@@ -3574,7 +3574,7 @@ static void ggml_hexagon_init(ggml_backend_reg * reg) {
                 default: opt_profile = 0;    return {};          // garbage input
             }}();
         if (opt_profile == 1) opt_pmu_evt = {};
-        GGML_LOG_INFO("ggml-hex: Profiling mode %u : pmu-evt [ %s ]\n", opt_profile,
+        GGML_LOG_INFO("ggml-hex: Profiling mode %u : pmu-evt [ %s ]\n", opt_profile,  // 打印信息日志
                 vec_to_str<uint32_t, 16>(opt_pmu_evt).c_str());
     }
 
@@ -3601,7 +3601,7 @@ ggml_backend_reg_t ggml_backend_hexagon_reg(void) {
         if (!initialized) {
             auto nErr = htpdrv_init();
             if (nErr != AEE_SUCCESS) {
-                return NULL;
+                return NULL;  // 返回
             }
 
             ggml_hexagon_init(&reg);
@@ -3610,7 +3610,7 @@ ggml_backend_reg_t ggml_backend_hexagon_reg(void) {
         initialized = true;
     }
 
-    return &reg;
+    return &reg;  // 返回
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_hexagon_reg)

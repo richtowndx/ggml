@@ -1,13 +1,13 @@
-#ifndef HVX_DUMP_H
-#define HVX_DUMP_H
+#ifndef HVX_DUMP_H  // 如果未定义 HVX_DUMP_H 则编译
+#define HVX_DUMP_H  // 宏定义 HVX_DUMP_H
 
-#include <HAP_farf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <stdbool.h>  // 引入 stdbool.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
 
-#include "hex-utils.h"
-#include "hvx-types.h"
+#include "hex-utils.h"  // 引入 hex-utils.h 头文件
+#include "hvx-types.h"  // 引入 hvx-types.h 头文件
 
 static void hvx_vec_dump_f16_n(char * pref, HVX_Vector v, uint32_t n) {
     HVX_VectorAlias u = { .v = v };
@@ -109,7 +109,7 @@ static void hvx_vec_dump_uint8(char * pref, HVX_Vector v) {
 }
 
 static bool hvx_vec_eq(HVX_Vector v0, HVX_Vector v1, size_t n) {
-    typedef union {
+    typedef union {  // 类型定义
         HVX_Vector v;
         int8_t     d[128];
     } U;
@@ -119,11 +119,11 @@ static bool hvx_vec_eq(HVX_Vector v0, HVX_Vector v1, size_t n) {
 
     for (int i = 0; i < n; i++) {
         if (u0.d[i] != u1.d[i]) {
-            return false;
+            return false;  // 返回
         }
     }
 
-    return true;
+    return true;  // 返回
 }
 
-#endif /* HVX_DUMP_H */
+#endif /* HVX_DUMP_H */  // 条件编译结束

@@ -2,18 +2,18 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
 
-#include <string.h>
+#include <string.h>  // 引入 string.h 头文件
 
-#include "hvx-copy.h"
-#include "hvx-utils.h"
+#include "hvx-copy.h"  // 引入 hvx-copy.h 头文件
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
 
 // ggml op_params layout for FILL:
 //   op_params[0] (as float) - the scalar fill value
@@ -32,7 +32,7 @@
     \
     const uint32_t nr = ne1 * ne2 * ne3;
 
-struct htp_fill_context {
+struct htp_fill_context {  // 结构体定义
     struct htp_ops_context * octx;
     uint32_t nrows_per_thread;
     uint32_t total_rows;  // ne1 * ne2 * ne3
@@ -78,11 +78,11 @@ int op_fill(struct htp_ops_context * octx) {
     fill_preamble;
 
     if (dst->type != HTP_TYPE_F32 && dst->type != HTP_TYPE_F16) {
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     if (octx->flags & HTP_OPFLAGS_SKIP_COMPUTE) {
-        return HTP_STATUS_OK;
+        return HTP_STATUS_OK;  // 返回
     }
 
     // nr = ne1*ne2*ne3 (flat row count across all outer dims); parallelise over it.
@@ -97,7 +97,7 @@ int op_fill(struct htp_ops_context * octx) {
     float val_f32 = 0.f;
     memcpy(&val_f32, &octx->op_params[0], sizeof(float));
 
-    struct htp_fill_context fctx = {
+    struct htp_fill_context fctx = {  // 结构体定义
         .octx             = octx,
         .nrows_per_thread = (nr + n_threads - 1) / n_threads,
         .total_rows       = nr,
@@ -114,10 +114,10 @@ int op_fill(struct htp_ops_context * octx) {
         fctx.elem_size = sizeof(_Float16);
         break;
     default:
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     worker_pool_run_func(octx->ctx->worker_pool, fill_thread, &fctx, n_threads);
 
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }

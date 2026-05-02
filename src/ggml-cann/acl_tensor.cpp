@@ -20,33 +20,33 @@
  * IN THE SOFTWARE.
  */
 
-#include "acl_tensor.h"
+#include "acl_tensor.h"  // 引入 acl_tensor.h 头文件
 
-#include <algorithm>
-#include <cstring>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cstring>  // 引入 cstring 头文件
 
 aclDataType ggml_cann_type_mapping(ggml_type type) {
     switch (type) {
         case GGML_TYPE_F32:
-            return ACL_FLOAT;
+            return ACL_FLOAT;  // 返回
         case GGML_TYPE_F16:
-            return ACL_FLOAT16;
+            return ACL_FLOAT16;  // 返回
         case GGML_TYPE_BF16:
-            return ACL_BF16;
+            return ACL_BF16;  // 返回
         case GGML_TYPE_I8:
-            return ACL_INT8;
+            return ACL_INT8;  // 返回
         case GGML_TYPE_I16:
-            return ACL_INT16;
+            return ACL_INT16;  // 返回
         case GGML_TYPE_I32:
-            return ACL_INT32;
+            return ACL_INT32;  // 返回
         case GGML_TYPE_Q4_0:
-            return ACL_INT4;
+            return ACL_INT4;  // 返回
         case GGML_TYPE_Q8_0:
-            return ACL_INT8;
+            return ACL_INT8;  // 返回
         case GGML_TYPE_I64:
-            return ACL_INT64;
+            return ACL_INT64;  // 返回
         default:
-            return ACL_DT_UNDEFINED;
+            return ACL_DT_UNDEFINED;  // 返回
     }
 }
 
@@ -89,26 +89,26 @@ acl_tensor_ptr ggml_cann_create_tensor(const ggml_tensor * tensor,
     aclTensor * raw = aclCreateTensor(acl_ne, final_dims, ggml_cann_type_mapping(tensor->type), acl_stride, elem_offset,
                                       format, &acl_storage_len, 1, tensor->data);
 
-    return acl_tensor_ptr(raw);
+    return acl_tensor_ptr(raw);  // acl_tensor_ptr
 }
 
 acl_int_array_ptr ggml_cann_create_int_array(const int64_t * value, uint64_t size) {
     aclIntArray * raw = aclCreateIntArray(value, size);
-    return acl_int_array_ptr(raw);
+    return acl_int_array_ptr(raw);  // acl_int_array_ptr
 }
 
 acl_scalar_ptr ggml_cann_create_scalar(void * value, aclDataType dataType) {
     aclScalar * raw = aclCreateScalar(value, dataType);
-    return acl_scalar_ptr(raw);
+    return acl_scalar_ptr(raw);  // acl_scalar_ptr
 }
 
 bool ggml_cann_need_bcast(const ggml_tensor * t0, const ggml_tensor * t1) {
     for (int i = 0; i < GGML_MAX_DIMS; i++) {
         if (t1->ne[i] != t0->ne[i] && t1->ne[i] != 1) {
-            return true;
+            return true;  // 返回
         }
     }
-    return false;
+    return false;  // 返回
 }
 
 int64_t ggml_cann_get_bcast_shape(const ggml_tensor * src0,
@@ -135,7 +135,7 @@ int64_t ggml_cann_get_bcast_shape(const ggml_tensor * src0,
             bcast_dim_cnt++;
         }
     }
-    return bcast_dim_cnt;
+    return bcast_dim_cnt;  // 返回
 }
 
 int64_t ggml_cann_get_mulmat_bcast_shape(const int64_t * input_ne,
@@ -191,5 +191,5 @@ int64_t ggml_cann_get_mulmat_bcast_shape(const int64_t * input_ne,
             bcast_dim_cnt++;
         }
     }
-    return bcast_dim_cnt;
+    return bcast_dim_cnt;  // 返回
 }

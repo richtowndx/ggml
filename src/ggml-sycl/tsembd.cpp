@@ -10,7 +10,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "tsembd.hpp"
+#include "tsembd.hpp"  // 引入 tsembd.hpp 头文件
 
 static void timestep_embedding_f32(
         const float * timesteps, float * dst, const int nb1,
@@ -28,7 +28,7 @@ static void timestep_embedding_f32(
     }
 
     if (j >= half) {
-        return;
+        return;  // 返回
     }
 
     float timestep = timesteps[i];
@@ -57,7 +57,7 @@ static void timestep_embedding_f32_sycl(
 }
 
 void ggml_sycl_op_timestep_embedding(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     const ggml_tensor *  src0   = dst->src[0];
     const float * src0_d = (const float *)src0->data;
     float * dst_d = (float *)dst->data;

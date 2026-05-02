@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#pragma once
+#pragma once  // 防止重复包含
 
-#include <openvino/core/core_visibility.hpp>
-#include <openvino/core/node.hpp>
-#include <openvino/core/runtime_attribute.hpp>
+#include <openvino/core/core_visibility.hpp>  // 引入 openvino/core/core_visibility.hpp 头文件
+#include <openvino/core/node.hpp>  // 引入 openvino/core/node.hpp 头文件
+#include <openvino/core/runtime_attribute.hpp>  // 引入 openvino/core/runtime_attribute.hpp 头文件
 
-namespace ov {
+namespace ov {  // 命名空间
 
 /**
  * @brief Holds weightless caching attributes of a single constant.
@@ -20,7 +20,7 @@ namespace ov {
  * one produced during the tranformation pipeline) - in that case weightless caching
  * can't be used for that constant.
  */
-class OPENVINO_API WeightlessCacheAttribute : public RuntimeAttribute {
+class OPENVINO_API WeightlessCacheAttribute : public RuntimeAttribute {  // 类定义
 public:
     OPENVINO_RTTI("WeightlessCacheAttribute", "0", RuntimeAttribute)
 
@@ -31,7 +31,7 @@ public:
           bin_offset(bin_offset),
           original_dtype(original_dtype) {}
 
-    bool is_copyable() const override;
+    bool is_copyable() const override;  // is_copyable
 
     size_t original_size;
     size_t bin_offset;

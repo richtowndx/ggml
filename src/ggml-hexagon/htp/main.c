@@ -3,32 +3,32 @@
 #pragma clang diagnostic ignored "-Wunused-variable"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
-#include <AEEStdErr.h>
-#include <dspqueue.h>
-#include <HAP_compute_res.h>
-#include <HAP_etm_config.h>
-#include <HAP_mem.h>
-#include <HAP_power.h>
-#include <HAP_ps.h>
-#include <qurt.h>
-#include <qurt_thread.h>
-#include <qurt_memory.h>
-#include <remote.h>
-#include <string.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
+#include <AEEStdErr.h>  // 引入 AEEStdErr.h 头文件
+#include <dspqueue.h>  // 引入 dspqueue.h 头文件
+#include <HAP_compute_res.h>  // 引入 HAP_compute_res.h 头文件
+#include <HAP_etm_config.h>  // 引入 HAP_etm_config.h 头文件
+#include <HAP_mem.h>  // 引入 HAP_mem.h 头文件
+#include <HAP_power.h>  // 引入 HAP_power.h 头文件
+#include <HAP_ps.h>  // 引入 HAP_ps.h 头文件
+#include <qurt.h>  // 引入 qurt.h 头文件
+#include <qurt_thread.h>  // 引入 qurt_thread.h 头文件
+#include <qurt_memory.h>  // 引入 qurt_memory.h 头文件
+#include <remote.h>  // 引入 remote.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#include "hex-utils.h"
-#include "hex-dma.h"
-#include "hmx-queue.h"
+#include "hex-utils.h"  // 引入 hex-utils.h 头文件
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
+#include "hmx-queue.h"  // 引入 hmx-queue.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-ops.h"
-#include "htp_iface.h"
-#include "worker-pool.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp_iface.h"  // 引入 htp_iface.h 头文件
+#include "worker-pool.h"  // 引入 worker-pool.h 头文件
 
 AEEResult htp_iface_open(const char * uri, remote_handle64 * handle) {
     struct htp_context * ctx;
@@ -36,7 +36,7 @@ AEEResult htp_iface_open(const char * uri, remote_handle64 * handle) {
 
     ctx = calloc(1, sizeof(*ctx));
     if (ctx == NULL) {
-        return AEE_ENOMEMORY;
+        return AEE_ENOMEMORY;  // 返回
     }
 
     // Use the context structure as the handle
@@ -53,7 +53,7 @@ AEEResult htp_iface_open(const char * uri, remote_handle64 * handle) {
         request.apptype = HAP_POWER_COMPUTE_CLIENT_CLASS;
 
         if ((err = HAP_power_set((void *) ctx, &request)) != 0) {
-            return err;
+            return err;  // 返回
         }
     }
 
@@ -76,14 +76,14 @@ AEEResult htp_iface_open(const char * uri, remote_handle64 * handle) {
         request.dcvs_v3.set_sleep_disable         = TRUE;
         request.dcvs_v3.sleep_disable             = TRUE;
         if ((err = HAP_power_set((void *) ctx, &request)) != 0) {
-            return err;
+            return err;  // 返回
         }
 
         memset(&request, 0, sizeof(request));
         request.type         = HAP_power_set_HVX;
         request.hvx.power_up = TRUE;
         if ((err = HAP_power_set((void *) ctx, &request)) != 0) {
-            return err;
+            return err;  // 返回
         }
     }
 
@@ -97,11 +97,11 @@ AEEResult htp_iface_open(const char * uri, remote_handle64 * handle) {
         err = HAP_power_set((void *) &ctx, &request);
         if (err != AEE_SUCCESS) {
             FARF(ERROR, "Error powering on HMX.");
-            return err;
+            return err;  // 返回
         }
     }
 
-#if __HVX_ARCH__ >= 75
+#if __HVX_ARCH__ >= 75  // 条件编译
     {
         // Set HMX clock
         HAP_power_request_t request;
@@ -116,12 +116,12 @@ AEEResult htp_iface_open(const char * uri, remote_handle64 * handle) {
         err = HAP_power_set((void *) &ctx, &request);
         if (err != AEE_SUCCESS) {
             FARF(ERROR, "Error setting HMX clock.");
-            return err;
+            return err;  // 返回
         }
     }
-#endif
+#endif  // 条件编译结束
 
-    return AEE_SUCCESS;
+    return AEE_SUCCESS;  // 返回
 }
 
 AEEResult htp_iface_etm(remote_handle64 handle, uint32_t enable) {
@@ -133,13 +133,13 @@ AEEResult htp_iface_etm(remote_handle64 handle, uint32_t enable) {
             FARF(ERROR, "Error executing HAP_user_etm_enable/disable with error code : 0x%x\n", err);
         }
     }
-    return err;
+    return err;  // 返回
 }
 
 AEEResult htp_iface_profiler(remote_handle64 handle, uint32_t mode, const htp_iface_pmu_conf* pmu_conf) {
     struct htp_context * ctx = (struct htp_context *) handle;
     if (!ctx) {
-        return AEE_EBADPARM;
+        return AEE_EBADPARM;  // 返回
     }
 
     if (mode == HTP_PROF_PMU) {
@@ -169,29 +169,29 @@ AEEResult htp_iface_profiler(remote_handle64 handle, uint32_t mode, const htp_if
 
     ctx->profiler = mode;
 
-    return AEE_SUCCESS;
+    return AEE_SUCCESS;  // 返回
 }
 
 AEEResult htp_iface_close(remote_handle64 handle) {
     struct htp_context * ctx = (struct htp_context *) handle;
 
     if (!ctx) {
-        return AEE_EBADPARM;
+        return AEE_EBADPARM;  // 返回
     }
 
     if (ctx->queue) {
         FARF(ERROR, "Closing handle with queue still open");
-        return AEE_EITEMBUSY;
+        return AEE_EITEMBUSY;  // 返回
     }
 
     // release the mmaps (if any)
     for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
         if (ctx->mmap[i].size) {
-#if __HVX_ARCH__ > 73
+#if __HVX_ARCH__ > 73  // 条件编译
             HAP_munmap2((void *) ctx->mmap[i].base, ctx->mmap[i].size);
-#else
+#else  // 否则
             HAP_munmap((void *) ctx->mmap[i].base, ctx->mmap[i].size);
-#endif
+#endif  // 条件编译结束
             ctx->mmap[i].size = 0;
             ctx->mmap[i].base = NULL;
             ctx->mmap[i].fd   = -1;
@@ -207,20 +207,20 @@ AEEResult htp_iface_close(remote_handle64 handle) {
     }
 
     free(ctx);
-    return AEE_SUCCESS;
+    return AEE_SUCCESS;  // 返回
 }
 
 AEEResult htp_iface_mmap(remote_handle64 handle, uint32_t fd, uint32_t size) {
     struct htp_context * ctx = (struct htp_context *) handle;
     if (!ctx) {
-        return AEE_EBADPARM;
+        return AEE_EBADPARM;  // 返回
     }
 
     // See if we already have this mapping
     for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
         struct htp_mmap *m = &ctx->mmap[i];
         if (m->fd == fd) {
-            return AEE_SUCCESS;
+            return AEE_SUCCESS;  // 返回
         }
     }
 
@@ -229,54 +229,54 @@ AEEResult htp_iface_mmap(remote_handle64 handle, uint32_t fd, uint32_t size) {
         struct htp_mmap *m = &ctx->mmap[i];
         if (!m->size) {
             FARF(HIGH, "mmap : fd %u size %u", fd, size);
-#if __HVX_ARCH__ > 73
+#if __HVX_ARCH__ > 73  // 条件编译
             void *va = HAP_mmap2(NULL, size, HAP_PROT_READ | HAP_PROT_WRITE, 0, fd, 0);
-#else
+#else  // 否则
             if (size > HTP_MMAP_MAX_VMEM) { // HAP_mmap has a size limit of 2GB
                 FARF(ERROR, "mmap failed : size %u exceeds 2GB limit for HAP_mmap", (uint32_t) size);
                 abort(); // can't do much else at this point
             }
 
             void *va = HAP_mmap(NULL, size, HAP_PROT_READ | HAP_PROT_WRITE, 0, fd, 0);
-#endif
+#endif  // 条件编译结束
             if (va == (void*)-1) {
                 FARF(ERROR, "mmap failed : va %p fd %u size %u", va, fd, (uint32_t) size);
-                return AEE_EFAILED;
+                return AEE_EFAILED;  // 返回
             }
 
             m->base   = (uint64_t) va;
             m->fd     = fd;
             m->size   = size;
 
-            return AEE_SUCCESS;
+            return AEE_SUCCESS;  // 返回
         }
     }
 
-    return AEE_ENOMEMORY;
+    return AEE_ENOMEMORY;  // 返回
 }
 
 AEEResult htp_iface_munmap(remote_handle64 handle, uint32 fd) {
     struct htp_context * ctx = (struct htp_context *) handle;
     if (!ctx) {
-        return AEE_EBADPARM;
+        return AEE_EBADPARM;  // 返回
     }
 
     for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
         struct htp_mmap *m = &ctx->mmap[i];
         if (fd < 0 || m->fd == fd) {
             FARF(HIGH, "unmmap : base %p fd %u size %u", (void*) m->base, m->fd, (uint32_t) m->size);
-#if __HVX_ARCH__ > 73
+#if __HVX_ARCH__ > 73  // 条件编译
             HAP_munmap2((void *) m->base, m->size);
-#else
+#else  // 否则
             HAP_munmap((void *) m->base, m->size);
-#endif
+#endif  // 条件编译结束
             m->size   = 0;
             m->base   = NULL;
             m->fd     = -1;
         }
     }
 
-    return AEE_SUCCESS;
+    return AEE_SUCCESS;  // 返回
 }
 
 static void vtcm_acquire(struct htp_context * ctx) {
@@ -306,7 +306,7 @@ static void vtcm_release(struct htp_context * ctx) {
 static int vtcm_release_callback(unsigned int rctx, void * state) {
     struct htp_context * ctx = (struct htp_context *) state;
     ctx->vtcm_needs_release = true;
-    return 0;
+    return 0;  // 返回
 }
 
 static int vtcm_alloc(struct htp_context * ctx) {
@@ -325,14 +325,14 @@ static int vtcm_alloc(struct htp_context * ctx) {
     uint32_t rctx = HAP_compute_res_acquire(&attr, 1000000 /* timeout */);
     if (!rctx) {
         FARF(ERROR, "failed to allocate %zu bytes VTCM\n", ctx->vtcm_size);
-        return AEE_ENOMEMORY;
+        return AEE_ENOMEMORY;  // 返回
     }
 
     void * vtcm_ptr;
     if (HAP_compute_res_attr_get_vtcm_ptr_v2(&attr, &vtcm_ptr, &vtcm_size) != 0) {
         HAP_compute_res_release(rctx);
         FARF(ERROR, "failed to allocate %zu bytes VTCM (new)\n", ctx->vtcm_size);
-        return AEE_ENOMEMORY;
+        return AEE_ENOMEMORY;  // 返回
     }
 
     ctx->vtcm_base          = (uint8_t *) vtcm_ptr;
@@ -341,7 +341,7 @@ static int vtcm_alloc(struct htp_context * ctx) {
     ctx->vtcm_valid         = false;
     ctx->vtcm_needs_release = false;
 
-    return 0;
+    return 0;  // 返回
 }
 
 static void vtcm_free(struct htp_context * ctx) {
@@ -352,19 +352,19 @@ static void vtcm_free(struct htp_context * ctx) {
     }
 }
 
-static void htp_packet_callback(dspqueue_t queue, int error, void * context);
-static void htp_error_callback(dspqueue_t queue, int error, void * context);
+static void htp_packet_callback(dspqueue_t queue, int error, void * context);  // htp_packet_callback
+static void htp_error_callback(dspqueue_t queue, int error, void * context);  // htp_error_callback
 
 AEEResult htp_iface_start(remote_handle64 handle, uint32 sess_id, uint64 dsp_queue_id, uint32 n_hvx, uint32 use_hmx, uint64_t max_vmem) {
     struct htp_context * ctx = (struct htp_context *) handle;
 
     if (!ctx) {
-        return AEE_EBADPARM;
+        return AEE_EBADPARM;  // 返回
     }
 
     if (ctx->queue) {
         FARF(ERROR, "Queue already open");
-        return AEE_EITEMBUSY;
+        return AEE_EITEMBUSY;  // 返回
     }
 
     // Import queue created on the CPU
@@ -375,7 +375,7 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32 sess_id, uint64 dsp_que
                               &ctx->queue);
     if (err) {
         FARF(ERROR, "Queue import failed with 0x%08x", (unsigned) err);
-        return err;
+        return err;  // 返回
     }
 
     ctx->max_vmem    = max_vmem;
@@ -386,10 +386,10 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32 sess_id, uint64 dsp_que
     err = vtcm_alloc(ctx);
     if (err != AEE_SUCCESS) {
         FARF(ERROR, "Unable to allocate VTCM");
-        return AEE_ENOMEMORY;
+        return AEE_ENOMEMORY;  // 返回
     }
 
-#ifdef HTP_HAS_HMX
+#ifdef HTP_HAS_HMX  // 如果定义了 HTP_HAS_HMX 则编译
     ctx->hmx_enabled = use_hmx;
     ctx->hmx_queue   = NULL;
     if (use_hmx) {
@@ -400,7 +400,7 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32 sess_id, uint64 dsp_que
         }
     }
     FARF(HIGH, "HMX %s (use_hmx=%d)", ctx->hmx_enabled ? "enabled" : "disabled", use_hmx);
-#endif
+#endif  // 条件编译结束
 
     qurt_sysenv_max_hthreads_t hw_threads;
     qurt_sysenv_get_max_hw_threads(&hw_threads);
@@ -426,24 +426,24 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32 sess_id, uint64 dsp_que
     err = worker_pool_init(&ctx->worker_pool, n_hvx);
     if (err != AEE_SUCCESS) {
         FARF(ERROR, "Unable to create worker pool");
-        return err;
+        return err;  // 返回
     }
 
     FARF(HIGH, "session %u started: n-hvx %u vtcm-size %zu vtcm-rctx %u n-threads %u thread-id %d thread-prio %d \n",
          sess_id, hw_nhvx, ctx->vtcm_size, ctx->vtcm_rctx, ctx->n_threads, ctx->thread_id, ctx->thread_prio);
 
-    return AEE_SUCCESS;
+    return AEE_SUCCESS;  // 返回
 }
 
 AEEResult htp_iface_stop(remote_handle64 handle) {
     struct htp_context * ctx = (struct htp_context *) handle;
     if (!ctx) {
-        return AEE_EBADPARM;
+        return AEE_EBADPARM;  // 返回
     }
 
     if (!ctx->queue) {
         FARF(ERROR, "Queue not open");
-        return AEE_EBADSTATE;
+        return AEE_EBADSTATE;  // 返回
     }
 
     // Close queue. dspqueue_close() will also wait for callbacks to finish.
@@ -451,7 +451,7 @@ AEEResult htp_iface_stop(remote_handle64 handle) {
     ctx->queue = NULL;
     if (err != 0) {
         FARF(ERROR, "Queue close failed with 0x%08x", (unsigned) err);
-        return err;
+        return err;  // 返回
     }
 
     if (ctx->worker_pool) {
@@ -463,17 +463,17 @@ AEEResult htp_iface_stop(remote_handle64 handle) {
         dma_queue_delete(ctx->dma[i]);
     }
 
-#ifdef HTP_HAS_HMX
+#ifdef HTP_HAS_HMX  // 如果定义了 HTP_HAS_HMX 则编译
     if (ctx->hmx_queue) {
         hmx_queue_delete(ctx->hmx_queue);
         ctx->hmx_queue = NULL;
     }
     ctx->hmx_enabled = false;
-#endif
+#endif  // 条件编译结束
 
     vtcm_free(ctx);
 
-    return AEE_SUCCESS;
+    return AEE_SUCCESS;  // 返回
 }
 
 static void htp_error_callback(dspqueue_t queue, int error, void * context) {
@@ -481,7 +481,7 @@ static void htp_error_callback(dspqueue_t queue, int error, void * context) {
     FARF(ERROR, "Error callback: 0x%08x", (unsigned) error);
 }
 
-struct profile_data {
+struct profile_data {  // 结构体定义
     uint64_t usecs;
     uint64_t cycles;
     uint32_t pmu_counters[HEX_NUM_PMU_COUNTERS];
@@ -522,17 +522,17 @@ static inline void profile_stop(uint32_t mode, struct profile_data * d) {
 static int execute_op(struct htp_ops_context * octx) {
     switch (octx->op) {
         case HTP_OP_MUL_MAT:
-            return op_matmul(octx);
+            return op_matmul(octx);  // op_matmul
 
         case HTP_OP_MUL_MAT_ID:
-            return op_matmul_id(octx);
+            return op_matmul_id(octx);  // op_matmul_id
 
         case HTP_OP_MUL:
         case HTP_OP_ADD:
         case HTP_OP_SUB:
         case HTP_OP_DIV:
         case HTP_OP_ADD_ID:
-            return op_binary(octx);
+            return op_binary(octx);  // op_binary
 
         case HTP_OP_RMS_NORM:
         case HTP_OP_SCALE:
@@ -542,56 +542,56 @@ static int execute_op(struct htp_ops_context * octx) {
         case HTP_OP_UNARY_SIGMOID:
         case HTP_OP_UNARY_NEG:
         case HTP_OP_UNARY_EXP:
-            return op_unary(octx);
+            return op_unary(octx);  // op_unary
 
         case HTP_OP_UNARY_SILU:
         case HTP_OP_UNARY_GELU:
         case HTP_OP_GLU_SWIGLU:
         case HTP_OP_GLU_SWIGLU_OAI:
         case HTP_OP_GLU_GEGLU:
-            return op_activations(octx);
+            return op_activations(octx);  // op_activations
 
         case HTP_OP_SOFTMAX:
-            return op_softmax(octx);
+            return op_softmax(octx);  // op_softmax
 
         case HTP_OP_ROPE:
-            return op_rope(octx);
+            return op_rope(octx);  // op_rope
 
         case HTP_OP_FLASH_ATTN_EXT:
-            return op_flash_attn_ext(octx);
+            return op_flash_attn_ext(octx);  // op_flash_attn_ext
 
         case HTP_OP_SET_ROWS:
-            return op_set_rows(octx);
+            return op_set_rows(octx);  // op_set_rows
 
         case HTP_OP_GET_ROWS:
-            return op_get_rows(octx);
+            return op_get_rows(octx);  // op_get_rows
 
         case HTP_OP_SUM_ROWS:
-            return op_sum_rows(octx);
+            return op_sum_rows(octx);  // op_sum_rows
 
         case HTP_OP_CPY:
-            return op_cpy(octx);
+            return op_cpy(octx);  // op_cpy
 
         case HTP_OP_REPEAT:
-            return op_repeat(octx);
+            return op_repeat(octx);  // op_repeat
 
         case HTP_OP_ARGSORT:
-            return op_argsort(octx);
+            return op_argsort(octx);  // op_argsort
 
         case HTP_OP_SSM_CONV:
-            return op_ssm_conv(octx);
+            return op_ssm_conv(octx);  // op_ssm_conv
 
         case HTP_OP_CUMSUM:
-            return op_cumsum(octx);
+            return op_cumsum(octx);  // op_cumsum
 
         case HTP_OP_FILL:
-            return op_fill(octx);
+            return op_fill(octx);  // op_fill
 
         case HTP_OP_DIAG:
-            return op_diag(octx);
+            return op_diag(octx);  // op_diag
 
         case HTP_OP_SOLVE_TRI:
-            return op_solve_tri(octx);
+            return op_solve_tri(octx);  // op_solve_tri
 
         case HTP_OP_INVALID:
             break;
@@ -600,7 +600,7 @@ static int execute_op(struct htp_ops_context * octx) {
     }
 
     FARF(ERROR, "Unknown Op %u", octx->op);
-    return -1;
+    return -1;  // 返回
 }
 
 static inline bool reuse_buf(struct htp_context *ctx, uint32_t *m_reuse, struct htp_buf_desc *b) {
@@ -611,21 +611,21 @@ static inline bool reuse_buf(struct htp_context *ctx, uint32_t *m_reuse, struct 
         if (m->size && m->fd == b->fd) {
             b->base   = m->base;
             *m_reuse |= (1 << i);
-            return true;
+            return true;  // 返回
         }
     }
 
-    return false;
+    return false;  // 返回
 }
 
 static inline void drop_mmap(struct htp_context *ctx, struct htp_mmap *m) {
     if (m->size) {
         FARF(HIGH, "unmap : fd %u base %p size %u", m->fd, (void*) m->base, (uint32_t) m->size);
-#if __HVX_ARCH__ > 73
+#if __HVX_ARCH__ > 73  // 条件编译
         HAP_munmap2((void *) m->base, m->size);
-#else
+#else  // 否则
         HAP_munmap((void *) m->base, m->size);
-#endif
+#endif  // 条件编译结束
         m->size = 0;
         m->base = 0;
         m->fd   = -1;
@@ -639,16 +639,16 @@ static inline void mmap_buf(struct htp_context *ctx, struct htp_buf_desc *b) {
     for (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
         struct htp_mmap *m = &ctx->mmap[i];
         if (!m->size) {
-#if __HVX_ARCH__ > 73
+#if __HVX_ARCH__ > 73  // 条件编译
             void *va = HAP_mmap2(NULL, b->size, HAP_PROT_READ | HAP_PROT_WRITE, 0, b->fd, 0);
-#else
+#else  // 否则
             if (b->size > HTP_MMAP_MAX_VMEM) { // HAP_mmap has a size limit of 2GB
                 FARF(ERROR, "mmap failed : size %u exceeds 2GB limit for HAP_mmap", (uint32_t) b->size);
                 abort(); // can't do much else at this point
             }
 
             void *va = HAP_mmap(NULL, b->size, HAP_PROT_READ | HAP_PROT_WRITE, 0, b->fd, 0);
-#endif
+#endif  // 条件编译结束
             if (va == (void*)-1) {
                 FARF(ERROR, "mmap failed : va %p fd %u size %u", va, b->fd, (uint32_t) b->size);
                 abort(); // can't do much else at this point
@@ -659,7 +659,7 @@ static inline void mmap_buf(struct htp_context *ctx, struct htp_buf_desc *b) {
             m->size   = b->size;
 
             FARF(HIGH, "mmap : fd %u base %p size %u", m->fd, (void*) m->base, (uint32_t) m->size);
-            return;
+            return;  // 返回
         }
     }
 }
@@ -760,8 +760,8 @@ static void proc_op_req(struct htp_ops_context * octx, struct htp_tensor *tens, 
         dst->ne[0], dst->ne[1], dst->ne[3], dst->ne[3]);
 }
 
-#define DSPQUEUE_POLL_TIMEOUT_USEC 100
-#define DSPQUEUE_POLL_COUNT        100
+#define DSPQUEUE_POLL_TIMEOUT_USEC 100  // 宏定义 DSPQUEUE_POLL_TIMEOUT_USEC
+#define DSPQUEUE_POLL_COUNT        100  // 宏定义 DSPQUEUE_POLL_COUNT
 
 static void htp_packet_callback(dspqueue_t queue, int error, void * context) {
     struct htp_context * ctx = (struct htp_context *) context;

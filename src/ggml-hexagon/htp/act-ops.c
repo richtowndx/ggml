@@ -2,20 +2,20 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
 
-#include <math.h>
-#include <string.h>
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#include "hex-dma.h"
-#include "hvx-utils.h"
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-ops.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
 
 #define htp_act_preamble                                 \
     const struct htp_tensor * src0 = actx->octx->src[0]; \
@@ -52,7 +52,7 @@
     const uint32_t nb2 = dst->nb[2];                     \
     const uint32_t nb3 = dst->nb[3];
 
-struct htp_act_context {
+struct htp_act_context {  // 结构体定义
     struct htp_ops_context *  octx;
 
     // Precomputed values
@@ -93,7 +93,7 @@ static void glu_swiglu_f32_per_thread(unsigned int nth, unsigned int ith, void *
 
     // no work for this thread
     if (src0_start_row >= src0_end_row) {
-        return;
+        return;  // 返回
     }
 
     uint64_t t1, t2;
@@ -122,7 +122,7 @@ static void glu_swiglu_f32_per_thread(unsigned int nth, unsigned int ith, void *
         FARF(ERROR,
              "swiglu-f32 : current VTCM reservation %zu is too small for even 1 row per thread, needed at least %zu\n",
              actx->octx->src0_spad.size_per_thread, src0_row_size_aligned);
-        return;
+        return;  // 返回
     }
 
     dma_queue * dma_queue = actx->octx->ctx->dma[ith];
@@ -204,7 +204,7 @@ static void glu_swiglu_oai_f32_per_thread(unsigned int nth, unsigned int ith, vo
 
     // no work for this thread
     if (src0_start_row >= src0_end_row) {
-        return;
+        return;  // 返回
     }
 
     const uint8_t * restrict data_src0 = actx->data_src0;
@@ -231,7 +231,7 @@ static void glu_swiglu_oai_f32_per_thread(unsigned int nth, unsigned int ith, vo
              "swiglu-oai-f32 : current VTCM reservation %zu is too small for even 1 row per thread, needed at least "
              "%zu\n",
              actx->octx->src0_spad.size_per_thread, src0_row_size_aligned);
-        return;
+        return;  // 返回
     }
     const float alpha = ((const float *) (actx->octx->op_params))[2];
     const float limit = ((const float *) (actx->octx->op_params))[3];
@@ -327,7 +327,7 @@ static void unary_gelu_f32_per_thread(unsigned int nth, unsigned int ith, void *
 
     // no work for this thread
     if (src0_start_row >= src0_end_row) {
-        return;
+        return;  // 返回
     }
 
     const uint8_t * data_src0 = actx->data_src0;
@@ -348,7 +348,7 @@ static void unary_gelu_f32_per_thread(unsigned int nth, unsigned int ith, void *
     if (BLOCK == 0) {
         FARF(ERROR, "gelu-f32 : current VTCM reservation %zu is too small for even 1 row per thread, needed at least %zu\n",
                 actx->octx->src0_spad.size_per_thread, src0_row_size_aligned);
-        return;
+        return;  // 返回
     }
 
     dma_queue * dma_queue = actx->octx->ctx->dma[ith];
@@ -426,7 +426,7 @@ static void unary_silu_f32_per_thread(unsigned int nth, unsigned int ith, void *
 
     // no work for this thread
     if (src0_start_row >= src0_end_row) {
-        return;
+        return;  // 返回
     }
 
     const uint8_t * data_src0 = actx->data_src0;
@@ -445,7 +445,7 @@ static void unary_silu_f32_per_thread(unsigned int nth, unsigned int ith, void *
     if (BLOCK == 0) {
         FARF(ERROR, "silu-f32 : current VTCM reservation %zu is too small for even 1 row per thread, needed at least %zu\n",
                 actx->octx->src0_spad.size_per_thread, src0_row_size_aligned);
-        return;
+        return;  // 返回
     }
 
     dma_queue * dma_queue = actx->octx->ctx->dma[ith];
@@ -523,7 +523,7 @@ static void glu_geglu_f32_per_thread(unsigned int nth, unsigned int ith, void * 
 
     // no work for this thread
     if (src0_start_row >= src0_end_row) {
-        return;
+        return;  // 返回
     }
 
     const uint8_t * restrict data_src0 = actx->data_src0;
@@ -549,7 +549,7 @@ static void glu_geglu_f32_per_thread(unsigned int nth, unsigned int ith, void * 
         FARF(ERROR,
              "geglu-f32 : current VTCM reservation %zu is too small for even 1 row per thread, needed at least %zu\n",
              actx->octx->src0_spad.size_per_thread, src0_row_size_aligned);
-        return;
+        return;  // 返回
     }
 
     dma_queue * dma_queue = actx->octx->ctx->dma[ith];
@@ -628,7 +628,7 @@ static int execute_op_activations_f32(struct htp_ops_context * octx) {
 
     if (((src0->ne[0] * SIZEOF_FP32) != src0->nb[1]) || ((dst->ne[0] * SIZEOF_FP32) != dst->nb[1])) {
         FARF(ERROR, "Non-contiguous tensors are not supported at this time \n");
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     worker_callback_t act_op_func;
@@ -660,7 +660,7 @@ static int execute_op_activations_f32(struct htp_ops_context * octx) {
             break;
         default:
             FARF(ERROR, "Unsupported activations Op %u\n", octx->op);
-            return HTP_STATUS_NO_SUPPORT;
+            return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     const uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
@@ -683,7 +683,7 @@ static int execute_op_activations_f32(struct htp_ops_context * octx) {
     if (vtcm_row_per_thread == 0) {
         FARF(ERROR, "act-%s : current VTCM reservation %zu is too small for even 1 row per thread, needed at least %zu\n", op_type, octx->ctx->vtcm_size,
              spad_size_per_row * n_threads);
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        return HTP_STATUS_VTCM_TOO_SMALL;  // 返回
     }
 
     octx->src0_spad.size_per_thread = src0_row_size_aligned * vtcm_row_per_thread;
@@ -714,7 +714,7 @@ static int execute_op_activations_f32(struct htp_ops_context * octx) {
     }
 
     if ((octx->flags & HTP_OPFLAGS_SKIP_COMPUTE)) {
-        return HTP_STATUS_OK;
+        return HTP_STATUS_OK;  // 返回
     }
 
     // Prepare context
@@ -762,7 +762,7 @@ static int execute_op_activations_f32(struct htp_ops_context * octx) {
     actx.data_dst  = (uint8_t *) dst->data;
 
     worker_pool_run_func(octx->ctx->worker_pool, act_op_func, &actx, n_threads);
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }
 
 int op_activations(struct htp_ops_context * octx) {
@@ -778,5 +778,5 @@ int op_activations(struct htp_ops_context * octx) {
             break;
     }
 
-    return err;
+    return err;  // 返回
 }

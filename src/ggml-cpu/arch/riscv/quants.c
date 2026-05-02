@@ -1,33 +1,33 @@
-#define GGML_COMMON_IMPL_C
-#include "ggml-common.h"
-#include "ggml-quants.h"
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "simd-mappings.h"
+#define GGML_COMMON_IMPL_C  // 宏定义 GGML_COMMON_IMPL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "simd-mappings.h"  // 引入 simd-mappings.h 头文件
 
-#include "../../quants.h"
-#include "../../ggml-cpu-impl.h"
+#include "../../quants.h"  // 引入 ../../quants.h 头文件
+#include "../../ggml-cpu-impl.h"  // 引入 ../../ggml-cpu-impl.h 头文件
 
-#include <math.h>
-#include <string.h>
-#include <assert.h>
-#include <float.h>
-#include <stdlib.h> // for qsort
-#include <stdio.h>  // for GGML_ASSERT
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
+#include <assert.h>  // 引入 assert.h 头文件
+#include <float.h>  // 引入 float.h 头文件
+#include <stdlib.h> // for qsort  // 引入 stdlib.h 头文件
+#include <stdio.h>  // for GGML_ASSERT  // 引入 stdio.h 头文件
 
-#ifdef _MSC_VER
-#define NOINLINE __declspec(noinline)
-#else
-#define NOINLINE __attribute__((__noinline__))
-#endif
+#ifdef _MSC_VER  // 如果定义了 _MSC_VER 则编译
+#define NOINLINE __declspec(noinline)  // 宏定义 NOINLINE
+#else  // 否则
+#define NOINLINE __attribute__((__noinline__))  // 宏定义 NOINLINE
+#endif  // 条件编译结束
 
-#define GROUP_MAX_EPS 1e-15f
-#define GROUP_MAX_EPS_IQ3_XXS 1e-8f
-#define GROUP_MAX_EPS_IQ2_S 1e-8f
-#define GROUP_MAX_EPS_IQ1_M 1e-7f
-#define GROUP_MAX_EPS_IQ1_S 1e-12f
+#define GROUP_MAX_EPS 1e-15f  // 宏定义 GROUP_MAX_EPS
+#define GROUP_MAX_EPS_IQ3_XXS 1e-8f  // 宏定义 GROUP_MAX_EPS_IQ3_XXS
+#define GROUP_MAX_EPS_IQ2_S 1e-8f  // 宏定义 GROUP_MAX_EPS_IQ2_S
+#define GROUP_MAX_EPS_IQ1_M 1e-7f  // 宏定义 GROUP_MAX_EPS_IQ1_M
+#define GROUP_MAX_EPS_IQ1_S 1e-12f  // 宏定义 GROUP_MAX_EPS_IQ1_S
 
-#define UNUSED GGML_UNUSED
+#define UNUSED GGML_UNUSED  // 宏定义 UNUSED
 
 void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
@@ -36,7 +36,7 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
     block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__riscv_v)
+#if defined(__riscv_v)  // 条件编译
 
     size_t vl = QK8_0;
 
@@ -63,11 +63,11 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         // store result
         __riscv_vse8_v_i8m2(y[i].qs , vs, vl);
     }
-#else
+#else  // 否则
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_0_ref(x, y, k);
-#endif
+#endif  // 条件编译结束
 }
 
 void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
@@ -76,7 +76,7 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
     block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__riscv_v)
+#if defined(__riscv_v)  // 条件编译
 
     size_t vl = QK8_1;
 
@@ -112,18 +112,18 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         y[i].s = GGML_CPU_FP32_TO_FP16(sum*d);
     }
 
-#else
+#else  // 否则
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_1_ref(x, y, k);
-#endif
+#endif  // 条件编译结束
 }
 
 void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k) {
     assert(k % QK_K == 0);
     size_t nb = k / QK_K;
 
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
     block_q8_K * y_blocks = (block_q8_K *)y;
     const size_t vlmax_f32m8 = __riscv_vsetvlmax_e32m8();
 
@@ -210,17 +210,17 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
             offset += vl;
         }
     }
-#else
+#else  // 否则
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_K_ref(x, y, k);
-#endif
+#endif  // 条件编译结束
 }
 
 //===================================== Dot products =================================
 
 void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined(__riscv_v)
+#if defined(__riscv_v)  // 条件编译
     const int qk = QK8_0;
     const int nb = n / qk;
 
@@ -269,13 +269,13 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     }
 
     *s = sumf;
-#else
+#else  // 否则
     ggml_vec_dot_q4_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined(__riscv_v)
+#if defined(__riscv_v)  // 条件编译
     const int qk = QK8_1;
     const int nb = n / qk;
 
@@ -320,13 +320,13 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     }
 
     *s = sumf;
-#else
+#else  // 否则
     ggml_vec_dot_q4_1_q8_1_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined(__riscv_v)
+#if defined(__riscv_v)  // 条件编译
     const int qk = QK8_0;
     const int nb = n / qk;
 
@@ -374,13 +374,13 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     }
 
     *s = sumf;
-#else
+#else  // 否则
     ggml_vec_dot_q5_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined(__riscv_v)
+#if defined(__riscv_v)  // 条件编译
     const int qk = QK8_1;
     const int nb = n / qk;
 
@@ -427,9 +427,9 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     }
 
     *s = sumf;
-#else
+#else  // 否则
     ggml_vec_dot_q5_1_q8_1_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -449,7 +449,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     int ib = 0;
     float sumf = 0;
 
-#if defined(__riscv_v)
+#if defined(__riscv_v)  // 条件编译
     size_t vl = qk;
 
     for (; ib < nb; ++ib) {
@@ -468,7 +468,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     }
 
     *s = sumf;
-#else
+#else  // 否则
 
     UNUSED(nb);
     UNUSED(x);
@@ -477,7 +477,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     UNUSED(sumf);
 
     ggml_vec_dot_q8_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -492,7 +492,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     const int nb = n / QK_K;
 
-#if defined __riscv_xtheadvector
+#if defined __riscv_xtheadvector  // 条件编译
 
     float sumf = 0;
     uint8_t atmp[16];
@@ -589,7 +589,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#elif defined __riscv_v
+#elif defined __riscv_v  // 否则如果
 
     float sumf = 0;
     uint8_t atmp[16];
@@ -817,14 +817,14 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#else  // 否则
 
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
 
     ggml_vec_dot_q2_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -843,7 +843,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     const int nb = n / QK_K;
 
-#if defined __riscv_xtheadvector
+#if defined __riscv_xtheadvector  // 条件编译
 
     uint32_t utmp[4];
     float sumf = 0;
@@ -971,7 +971,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#elif defined __riscv_v
+#elif defined __riscv_v  // 否则如果
 
     uint32_t utmp[4];
     float sumf = 0;
@@ -1207,7 +1207,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#else  // 否则
 
     UNUSED(kmask1);
     UNUSED(kmask2);
@@ -1216,7 +1216,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     UNUSED(nb);
 
     ggml_vec_dot_q3_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 
 }
 
@@ -1239,7 +1239,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined __riscv_xtheadvector
+#if defined __riscv_xtheadvector  // 条件编译
 
     const uint8_t * scales = (const uint8_t*)&utmp[0];
     const uint8_t * mins   = (const uint8_t*)&utmp[2];
@@ -1355,7 +1355,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#elif defined __riscv_v
+#elif defined __riscv_v  // 否则如果
 
     const uint8_t * scales = (const uint8_t*)&utmp[0];
     const uint8_t * mins   = (const uint8_t*)&utmp[2];
@@ -1615,7 +1615,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#else  // 否则
 
     UNUSED(x);
     UNUSED(y);
@@ -1626,7 +1626,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     UNUSED(utmp);
 
     ggml_vec_dot_q4_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, int nrc) {
@@ -1648,7 +1648,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined __riscv_v
+#if defined __riscv_v  // 条件编译
 
     const uint8_t * scales = (const uint8_t*)&utmp[0];
     const uint8_t * mins   = (const uint8_t*)&utmp[2];
@@ -1734,7 +1734,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf+sums;
 
-#else
+#else  // 否则
 
     UNUSED(x);
     UNUSED(y);
@@ -1745,7 +1745,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     UNUSED(utmp);
 
     ggml_vec_dot_q5_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1761,7 +1761,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     const int nb = n / QK_K;
 
-#if defined __riscv_xtheadvector
+#if defined __riscv_xtheadvector  // 条件编译
 
     float sumf = 0;
 
@@ -1842,7 +1842,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#elif defined __riscv_v
+#elif defined __riscv_v  // 否则如果
 
     float sumf = 0;
     const int vector_length = __riscv_vlenb() * 8;
@@ -2048,17 +2048,17 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#else  // 否则
 
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
 
     ggml_vec_dot_q6_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
 static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
@@ -2118,7 +2118,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl128(int n, float * GGML_RESTRICT 
             lsums_s[0] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(lsum0, 0), one_scalar, 32));
             lsums_s[1] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(lsum0, 1), one_scalar, 32));
         }
-        __asm__ __volatile__("" ::: "memory");
+        __asm__ __volatile__("" ::: "memory");  // __volatile__
         // Sub-blocks 3-4
         {
             vuint16m1_t grid_index0 = __riscv_vget_v_u16m4_u16m1(index, 1);
@@ -2128,7 +2128,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl128(int n, float * GGML_RESTRICT 
             lsums_s[2] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(lsum0, 0), one_scalar, 32));
             lsums_s[3] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(lsum0, 1), one_scalar, 32));
         }
-        __asm__ __volatile__("" ::: "memory");
+        __asm__ __volatile__("" ::: "memory");  // __volatile__
         // Sub-blocks 5-6
         {
             vuint16m1_t grid_index0 = __riscv_vget_v_u16m4_u16m1(index, 2);
@@ -2138,7 +2138,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl128(int n, float * GGML_RESTRICT 
             lsums_s[4] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(lsum0, 0), one_scalar, 32));
             lsums_s[5] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(lsum0, 1), one_scalar, 32));
         }
-        __asm__ __volatile__("" ::: "memory");
+        __asm__ __volatile__("" ::: "memory");  // __volatile__
         // Sub-blocks 7-8
         {
             vuint16m1_t grid_index0 = __riscv_vget_v_u16m4_u16m1(index, 3);
@@ -2148,7 +2148,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl128(int n, float * GGML_RESTRICT 
             lsums_s[6] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(lsum0, 0), one_scalar, 32));
             lsums_s[7] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(lsum0, 1), one_scalar, 32));
         }
-        __asm__ __volatile__("" ::: "memory");
+        __asm__ __volatile__("" ::: "memory");  // __volatile__
         vint32m2_t lsums = __riscv_vle32_v_i32m2(&lsums_s[0], 8);
 
         // Calculate the bsums.
@@ -2232,7 +2232,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl256(int n, float * GGML_RESTRICT 
             lsums_s[2] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(lsum0, 2), one_scalar, 32));
             lsums_s[3] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(lsum0, 3), one_scalar, 32));
         }
-        __asm__ __volatile__("" ::: "memory");
+        __asm__ __volatile__("" ::: "memory");  // __volatile__
         // Sub-blocks 5-8
         {
             vuint16m1_t grid_index1 = __riscv_vget_v_u16m2_u16m1(index, 1);
@@ -2244,7 +2244,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl256(int n, float * GGML_RESTRICT 
             lsums_s[6] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(lsum1, 2), one_scalar, 32));
             lsums_s[7] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(lsum1, 3), one_scalar, 32));
         }
-        __asm__ __volatile__("" ::: "memory");
+        __asm__ __volatile__("" ::: "memory");  // __volatile__
         vint32m1_t lsums = __riscv_vle32_v_i32m1(&lsums_s[0], 8);
 
         // Calculate the bsums.
@@ -2266,10 +2266,10 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl256(int n, float * GGML_RESTRICT 
 
     *s = sumf;
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
     switch (__riscv_vlenb() * 8) {
         case 128:
             ggml_vec_dot_iq1_s_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
@@ -2281,12 +2281,12 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             ggml_vec_dot_iq1_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
             break;
     }
-#else
+#else  // 否则
     ggml_vec_dot_iq1_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
 static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
@@ -2367,7 +2367,7 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl128(int n, float * GGML_RESTRICT 
                     acc2 = __riscv_vwmacc_vx_i32m4(acc2, ls_0, __riscv_vget_v_i16m4_i16m2(lsum2, 0), 16);
                     acc2 = __riscv_vwmacc_vx_i32m4(acc2, ls_1, __riscv_vget_v_i16m4_i16m2(lsum2, 1), 16);
                 }
-                __asm__ __volatile__("" ::: "memory");
+                __asm__ __volatile__("" ::: "memory");  // __volatile__
                 // Sub-block 2, 3
                 {
                     // Load q8 for each sub-block.
@@ -2390,7 +2390,7 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl128(int n, float * GGML_RESTRICT 
                 }
                 sc += 1;
             }
-            __asm__ __volatile__("" ::: "memory");
+            __asm__ __volatile__("" ::: "memory");  // __volatile__
             // Sub-blocks 4-7
             {
                 // Load the grid.
@@ -2419,7 +2419,7 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl128(int n, float * GGML_RESTRICT 
                     acc2 = __riscv_vwmacc_vx_i32m4(acc2, ls_0, __riscv_vget_v_i16m4_i16m2(lsum2, 0), 16);
                     acc2 = __riscv_vwmacc_vx_i32m4(acc2, ls_1, __riscv_vget_v_i16m4_i16m2(lsum2, 1), 16);
                 }
-                __asm__ __volatile__("" ::: "memory");
+                __asm__ __volatile__("" ::: "memory");  // __volatile__
                 // Sub-block 6, 7
                 {
                     // Load q8 for each sub-block.
@@ -2492,7 +2492,7 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl256(int n, float * GGML_RESTRICT 
                 __riscv_vreinterpret_v_u16mf2_u8mf2(__riscv_vor_vv_u16mf2(qh_16_lo, qh_16_hi, 8)), 16);
             qh += 8;
 
-            __asm__ __volatile__("" ::: "memory");
+            __asm__ __volatile__("" ::: "memory");  // __volatile__
 
             // Prepare grid indices.
             const vuint16m1_t qsb = __riscv_vzext_vf2_u16m1(__riscv_vle8_v_u8mf2(&qs[0], 16), 16);
@@ -2501,7 +2501,7 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl256(int n, float * GGML_RESTRICT 
             index = __riscv_vsll_vx_u16m1(index, 3, 16);
             qs += 16;
 
-            __asm__ __volatile__("" ::: "memory");
+            __asm__ __volatile__("" ::: "memory");  // __volatile__
 
             // Load the grid.
             const vint8m4_t iq1b = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vreinterpret_v_u64m4_i64m4(
@@ -2554,7 +2554,7 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl256(int n, float * GGML_RESTRICT 
             acc2 = __riscv_vwmacc_vx_i32m2(acc2, ls_3_0, __riscv_vget_v_i16m8_i16m1(lsum2, 6), 16);
             acc2 = __riscv_vwmacc_vx_i32m2(acc2, ls_3_1, __riscv_vget_v_i16m8_i16m1(lsum2, 7), 16);
 
-            __asm__ __volatile__("" ::: "memory");
+            __asm__ __volatile__("" ::: "memory");  // __volatile__
         }
 
         // Reduce and accumulate in `sumf`.
@@ -2566,10 +2566,10 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl256(int n, float * GGML_RESTRICT 
 
     *s = sumf;
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_iq1_m_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
     switch (__riscv_vlenb() * 8) {
         case 128:
             ggml_vec_dot_iq1_m_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
@@ -2581,12 +2581,12 @@ void ggml_vec_dot_iq1_m_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             ggml_vec_dot_iq1_m_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
             break;
     }
-#else
+#else  // 否则
     ggml_vec_dot_iq1_m_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
 static const uint8_t sign_gather_indices_arr[64] = {
     0,0,0,0,0,0,0,0, 1,1,1,1,1,1,1,1, 2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3,
     4,4,4,4,4,4,4,4, 5,5,5,5,5,5,5,5, 6,6,6,6,6,6,6,6, 7,7,7,7,7,7,7,7
@@ -2789,10 +2789,10 @@ static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl256(int n, float * GGML_RESTRICT 
     }
     *s = 0.125f * sumf;
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
     switch (__riscv_vlenb() * 8) {
         case 128:
             ggml_vec_dot_iq2_s_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
@@ -2804,12 +2804,12 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             ggml_vec_dot_iq2_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
             break;
     }
-#else
+#else  // 否则
     ggml_vec_dot_iq2_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
 static const int8_t keven_signs_q2xs[1024] = {
      1,  1,  1,  1,  1,  1,  1,  1, -1,  1,  1,  1,  1,  1,  1, -1,  1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1,  1,  1,
      1,  1, -1,  1,  1,  1,  1, -1, -1,  1, -1,  1,  1,  1,  1,  1,  1, -1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1, -1,
@@ -2887,12 +2887,12 @@ static NOINLINE void ggml_vec_dot_iq2_xs_q8_K_vl128(int n, float * GGML_RESTRICT
             vint8m4_t q2u = __riscv_vreinterpret_v_u8m4_i8m4(__riscv_vreinterpret_v_u64m4_u8m4(vq2_64));
             vint8m4_t q2s = __riscv_vreinterpret_v_u8m4_i8m4(__riscv_vreinterpret_v_u64m4_u8m4(vs2_64));
             vint8m4_t q2_final = __riscv_vmul_vv_i8m4(q2u, q2s, 64);
-            asm volatile("" ::: "memory");
+            asm volatile("" ::: "memory");  // volatile
             vint8m4_t q8v = __riscv_vle8_v_i8m4(q8, 64);
             q8 += 64;
 
             vint16m8_t prod = __riscv_vwmul_vv_i16m8(q2_final, q8v, 64);
-            asm volatile("" ::: "memory");
+            asm volatile("" ::: "memory");  // volatile
             vint32m1_t zero_vec = __riscv_vmv_v_x_i32m1(0, 1);
 
             int32_t sum0 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(
@@ -2996,10 +2996,10 @@ static NOINLINE void ggml_vec_dot_iq2_xs_q8_K_vl256(int n, float * GGML_RESTRICT
     }
     *s = 0.125f * sumf;
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
       switch (__riscv_vlenb() * 8) {
           case 128:
               ggml_vec_dot_iq2_xs_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
@@ -3011,12 +3011,12 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
               ggml_vec_dot_iq2_xs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
               break;
       }
-#else
+#else  // 否则
     ggml_vec_dot_iq2_xs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
 static NOINLINE void ggml_vec_dot_iq2_xxs_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
@@ -3201,10 +3201,10 @@ static NOINLINE void ggml_vec_dot_iq2_xxs_q8_K_vl256(int n, float * GGML_RESTRIC
     }
     *s = 0.125f * sumf;
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
     switch (__riscv_vlenb() * 8) {
         case 128:
             ggml_vec_dot_iq2_xxs_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
@@ -3213,12 +3213,12 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
             ggml_vec_dot_iq2_xxs_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
             break;
     }
-#else
+#else  // 否则
     ggml_vec_dot_iq2_xxs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
 static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(n % QK_K == 0);
     UNUSED(nrc); UNUSED(bx); UNUSED(by); UNUSED(bs);
@@ -3278,7 +3278,7 @@ static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl128(int n, float * GGML_RESTRICT 
                 vuint32m2_t v_grid_packed = __riscv_vluxei16_v_u32m2(grid32, v_grid_offsets, 8);
                 v_grid_u8 = __riscv_vreinterpret_v_u32m2_u8m2(v_grid_packed);
             }
-            __asm__ volatile ("" ::: "memory");
+            __asm__ volatile ("" ::: "memory");  // volatile
 
             //Sign application and dot product
             int32_t s_val;
@@ -3301,7 +3301,7 @@ static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl128(int n, float * GGML_RESTRICT 
                 s_val = __riscv_vmv_x_s_i32m1_i32(
                     __riscv_vwredsum_vs_i16m4_i32m1(v_dot, v_zero, 32));
             }
-            __asm__ volatile ("" ::: "memory");
+            __asm__ volatile ("" ::: "memory");  // volatile
             {
                 uint8_t sc_byte = scales[ib >> 1];
                 int sc_val = (ib & 1) ? (sc_byte >> 4) : (sc_byte & 0xF);
@@ -3408,10 +3408,10 @@ static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl256(int n, float * GGML_RESTRICT 
     }
     *s = sumf;
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
     switch (__riscv_vlenb() * 8) {
         case 128:
              ggml_vec_dot_iq3_s_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
@@ -3423,12 +3423,12 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             ggml_vec_dot_iq3_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
             break;
     }
-#else
+#else  // 否则
     ggml_vec_dot_iq3_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
 static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(n % QK_K == 0);
     UNUSED(nrc); UNUSED(bx); UNUSED(by); UNUSED(bs);
@@ -3492,13 +3492,13 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl128(int n, float * GGML_RESTRIC
                                  __riscv_vreinterpret_v_u64m4_u8m4(v_s_vals_u64));
 
             vint8m4_t v_q3_signed = __riscv_vmul_vv_i8m4(v_q3_magnitudes, v_s_vals, 64);
-            asm volatile("" ::: "memory");
+            asm volatile("" ::: "memory");  // volatile
             vint8m4_t v_q8 = __riscv_vle8_v_i8m4(q8, 64);
             q8 += 64;
 
             vint16m8_t v_dot = __riscv_vwmul_vv_i16m8(v_q8, v_q3_signed, 64);
 
-            asm volatile("" ::: "memory");
+            asm volatile("" ::: "memory");  // volatile
 
             vint16m4_t v_dot_1 = __riscv_vget_v_i16m8_i16m4(v_dot, 0);
             vint16m4_t v_dot_2 = __riscv_vget_v_i16m8_i16m4(v_dot, 1);
@@ -3614,10 +3614,10 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl256(int n, float * GGML_RESTRIC
     }
     *s = 0.25f * sumf;
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
     switch (__riscv_vlenb() * 8) {
         case 128:
             ggml_vec_dot_iq3_xxs_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
@@ -3629,12 +3629,12 @@ void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
             ggml_vec_dot_iq3_xxs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
             break;
     }
-#else
+#else  // 否则
     ggml_vec_dot_iq3_xxs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
 static NOINLINE void ggml_vec_dot_iq4_nl_q8_0_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
@@ -3746,10 +3746,10 @@ static NOINLINE void ggml_vec_dot_iq4_nl_q8_0_vl256(int n, float * GGML_RESTRICT
 
     *s = sumf;
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
     switch (__riscv_vlenb() * 8) {
         case 128:
             ggml_vec_dot_iq4_nl_q8_0_vl128(n, s, bs, vx, bx, vy, by, nrc);
@@ -3758,12 +3758,12 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
             ggml_vec_dot_iq4_nl_q8_0_vl256(n, s, bs, vx, bx, vy, by, nrc);
             break;
     }
-#else
+#else  // 否则
     ggml_vec_dot_iq4_nl_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
 static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
@@ -3821,7 +3821,7 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl128(int n, float * GGML_RESTRICT
             sumi1 += acc0 * ls1;
             sumi2 += acc1 * ls2;
 
-            __asm__ __volatile__("" ::: "memory");
+            __asm__ __volatile__("" ::: "memory");  // __volatile__
         }
 
         sumf += GGML_CPU_FP16_TO_FP32(x[ibl].d) * y[ibl].d * (sumi1 + sumi2);
@@ -3875,14 +3875,14 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl256(int n, float * GGML_RESTRICT
             vuint8m4_t iq4bits_reorder = __riscv_vreinterpret_v_u64m4_u8m4(__riscv_vrgatherei16_vv_u64m4(__riscv_vreinterpret_v_u8m4_u64m4(iq4bits), i_vec, 16));
             vint8m4_t iq4b = __riscv_vrgather_vv_i8m4(values, iq4bits_reorder, 128);
 
-            __asm__ __volatile__("" ::: "memory");
+            __asm__ __volatile__("" ::: "memory");  // __volatile__
 
             // Multiply with activations.
             vint8m4_t q8b = __riscv_vle8_v_i8m4(q8, 128);
             vint16m8_t prod = __riscv_vwmul_vv_i16m8(iq4b, q8b, 128);
             q8 += 128;
 
-            __asm__ __volatile__("" ::: "memory");
+            __asm__ __volatile__("" ::: "memory");  // __volatile__
 
             // Reduce separately.
             int acc0 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(prod, 0), __riscv_vmv_v_x_i32m1(0, 1), 32));
@@ -3901,7 +3901,7 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl256(int n, float * GGML_RESTRICT
             sumi3 += acc2 * ls3;
             sumi4 += acc3 * ls4;
 
-            __asm__ __volatile__("" ::: "memory");
+            __asm__ __volatile__("" ::: "memory");  // __volatile__
         }
 
         sumf += GGML_CPU_FP16_TO_FP32(x[ibl].d) * y[ibl].d * (sumi1 + sumi2 + sumi3 + sumi4);
@@ -3909,10 +3909,10 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl256(int n, float * GGML_RESTRICT
 
     *s = sumf;
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
     switch (__riscv_vlenb() * 8) {
         case 128:
             ggml_vec_dot_iq4_xs_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
@@ -3924,12 +3924,12 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
             ggml_vec_dot_iq4_xs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
             break;
     }
-#else
+#else  // 否则
     ggml_vec_dot_iq4_xs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
 static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
@@ -4006,7 +4006,7 @@ static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl128(int n, float * GGML_RESTRICT 
             uint32_t qh;
             memcpy(&qh, &x[i].qh[0], 4);
             // Prevent fusion with vmv.
-            __asm__ __volatile__("" : "+r"(qh));
+            __asm__ __volatile__("" : "+r"(qh));  // __volatile__
             const vuint8m1_t tqb = __riscv_vreinterpret_v_u32m1_u8m1(__riscv_vmv_v_x_u32m1(qh, vl / 4));
 
             const vuint8m1_t p = __riscv_vle8_v_u8m1(pow, vl);
@@ -4111,7 +4111,7 @@ static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl256(int n, float * GGML_RESTRICT 
             uint32_t qh;
             memcpy(&qh, &x[i].qh[0], 4);
             // Prevent fusion with vmv.
-            __asm__ __volatile__("" : "+r"(qh));
+            __asm__ __volatile__("" : "+r"(qh));  // __volatile__
             vuint8mf2_t tq = __riscv_vreinterpret_v_u32mf2_u8mf2(__riscv_vmv_v_x_u32mf2(qh, vl / 4));
 
             vuint8mf2_t p = __riscv_vle8_v_u8mf2(pow, vl);
@@ -4132,10 +4132,10 @@ static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl256(int n, float * GGML_RESTRICT 
 
     *s = sumf;
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_tq1_0_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
     switch (__riscv_vlenb() * 8) {
         case 128:
             ggml_vec_dot_tq1_0_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
@@ -4147,12 +4147,12 @@ void ggml_vec_dot_tq1_0_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             ggml_vec_dot_tq1_0_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
             break;
     }
-#else
+#else  // 否则
     ggml_vec_dot_tq1_0_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
 static NOINLINE void ggml_vec_dot_tq2_0_q8_K_vl128(const int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
@@ -4192,7 +4192,7 @@ static NOINLINE void ggml_vec_dot_tq2_0_q8_K_vl128(const int n, float * GGML_RES
                 // Accumulate
                 vacc16 = __riscv_vwmacc_vv_i16m4(vacc16, vq, vy, vl);
             }
-            __asm__ volatile("" ::: "memory");
+            __asm__ volatile("" ::: "memory");  // volatile
             // Process bits 3:2
             {
                 vuint8m2_t t1 = __riscv_vsrl_vx_u8m2(vx_u8, 2, vl);
@@ -4202,7 +4202,7 @@ static NOINLINE void ggml_vec_dot_tq2_0_q8_K_vl128(const int n, float * GGML_RES
                 vint8m2_t vy = __riscv_vle8_v_i8m2(py1, vl);
                 vacc16 = __riscv_vwmacc_vv_i16m4(vacc16, vq, vy, vl);
             }
-            __asm__ volatile("" ::: "memory");
+            __asm__ volatile("" ::: "memory");  // volatile
             // Process bits 5:4
             {
                 vuint8m2_t t2 = __riscv_vsrl_vx_u8m2(vx_u8, 4, vl);
@@ -4212,7 +4212,7 @@ static NOINLINE void ggml_vec_dot_tq2_0_q8_K_vl128(const int n, float * GGML_RES
                 vint8m2_t vy = __riscv_vle8_v_i8m2(py2, vl);
                 vacc16 = __riscv_vwmacc_vv_i16m4(vacc16, vq, vy, vl);
             }
-            __asm__ volatile("" ::: "memory");
+            __asm__ volatile("" ::: "memory");  // volatile
             // Process bits 7:6
             {
                 vuint8m2_t t3 = __riscv_vsrl_vx_u8m2(vx_u8, 6, vl);
@@ -4221,7 +4221,7 @@ static NOINLINE void ggml_vec_dot_tq2_0_q8_K_vl128(const int n, float * GGML_RES
                 vint8m2_t vy = __riscv_vle8_v_i8m2(py3, vl);
                 vacc16 = __riscv_vwmacc_vv_i16m4(vacc16, vq, vy, vl);
             }
-            __asm__ volatile("" ::: "memory");
+            __asm__ volatile("" ::: "memory");  // volatile
             vl = __riscv_vsetvl_e16m4(32);
             vint32m1_t vzero32 = __riscv_vmv_v_x_i32m1(0, 1);
             vint32m1_t vred32 = __riscv_vwredsum_vs_i16m4_i32m1(vacc16, vzero32, vl);
@@ -4305,10 +4305,10 @@ static NOINLINE void ggml_vec_dot_tq2_0_q8_K_vl256(int n, float * GGML_RESTRICT 
 
     *s = sumf;
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_tq2_0_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
     switch (__riscv_vlenb() * 8) {
         case 128:
             ggml_vec_dot_tq2_0_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
@@ -4320,12 +4320,12 @@ void ggml_vec_dot_tq2_0_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             ggml_vec_dot_tq2_0_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
             break;
     }
-#else
+#else  // 否则
     ggml_vec_dot_tq2_0_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
 static NOINLINE void ggml_vec_dot_mxfp4_q8_0_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
@@ -4437,10 +4437,10 @@ static NOINLINE void ggml_vec_dot_mxfp4_q8_0_vl256(int n, float * GGML_RESTRICT 
 
     *s = sumf;
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v_intrinsic
+#if defined __riscv_v_intrinsic  // 条件编译
     switch (__riscv_vlenb() * 8) {
         case 128:
             ggml_vec_dot_mxfp4_q8_0_vl128(n, s, bs, vx, bx, vy, by, nrc);
@@ -4449,7 +4449,7 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
             ggml_vec_dot_mxfp4_q8_0_vl256(n, s, bs, vx, bx, vy, by, nrc);
             break;
     }
-#else
+#else  // 否则
     ggml_vec_dot_mxfp4_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }

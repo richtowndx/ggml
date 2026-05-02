@@ -10,50 +10,50 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include <algorithm>
-#include <assert.h>
-#include <atomic>
-#include <cinttypes>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <float.h>
-#include <limits>
-#include <stdint.h>
-#include <stdio.h>
-#include <vector>
-#include <cmath>
-#include <iostream>
-#include <fstream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <regex>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <assert.h>  // 引入 assert.h 头文件
+#include <atomic>  // 引入 atomic 头文件
+#include <cinttypes>  // 引入 cinttypes 头文件
+#include <cstddef>  // 引入 cstddef 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <cstdlib>  // 引入 cstdlib 头文件
+#include <float.h>  // 引入 float.h 头文件
+#include <limits>  // 引入 limits 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <vector>  // 引入 vector 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <iostream>  // 引入 iostream 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
+#include <regex>  // 引入 regex 头文件
 
-#include <sycl/sycl.hpp>
-#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
-#    include <sycl/ext/oneapi/experimental/async_alloc/async_alloc.hpp>
-#endif
-#include <sycl/half_type.hpp>
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
+#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC  // 条件编译
+#    include <sycl/ext/oneapi/experimental/async_alloc/async_alloc.hpp>  // 引入 sycl/ext/oneapi/experimental/async_alloc/async_alloc.hpp 头文件
+#endif  // 条件编译结束
+#include <sycl/half_type.hpp>  // 引入 sycl/half_type.hpp 头文件
 
-#include "ggml.h"
-#include "ggml-sycl.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-sycl.h"  // 引入 ggml-sycl.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
 
-#include "ggml-sycl/add-id.hpp"
-#include "ggml-sycl/backend.hpp"
-#include "ggml-sycl/common.hpp"
-#include "ggml-sycl/element_wise.hpp"
-#include "ggml-sycl/gemm.hpp"
-#include "ggml-sycl/getrows.hpp"
-#include "ggml-sycl/norm.hpp"
-#include "ggml-sycl/presets.hpp"
-#include "ggml-sycl/quantize.hpp"
-#include "ggml-sycl/repeat_back.hpp"
-#include "ggml-sycl/set_rows.hpp"
-#include "ggml-sycl/set.hpp"
-#include "ggml-sycl/ssm_conv.hpp"
-#include "ggml-sycl/sycl_hw.hpp"
+#include "ggml-sycl/add-id.hpp"  // 引入 ggml-sycl/add-id.hpp 头文件
+#include "ggml-sycl/backend.hpp"  // 引入 ggml-sycl/backend.hpp 头文件
+#include "ggml-sycl/common.hpp"  // 引入 ggml-sycl/common.hpp 头文件
+#include "ggml-sycl/element_wise.hpp"  // 引入 ggml-sycl/element_wise.hpp 头文件
+#include "ggml-sycl/gemm.hpp"  // 引入 ggml-sycl/gemm.hpp 头文件
+#include "ggml-sycl/getrows.hpp"  // 引入 ggml-sycl/getrows.hpp 头文件
+#include "ggml-sycl/norm.hpp"  // 引入 ggml-sycl/norm.hpp 头文件
+#include "ggml-sycl/presets.hpp"  // 引入 ggml-sycl/presets.hpp 头文件
+#include "ggml-sycl/quantize.hpp"  // 引入 ggml-sycl/quantize.hpp 头文件
+#include "ggml-sycl/repeat_back.hpp"  // 引入 ggml-sycl/repeat_back.hpp 头文件
+#include "ggml-sycl/set_rows.hpp"  // 引入 ggml-sycl/set_rows.hpp 头文件
+#include "ggml-sycl/set.hpp"  // 引入 ggml-sycl/set.hpp 头文件
+#include "ggml-sycl/ssm_conv.hpp"  // 引入 ggml-sycl/ssm_conv.hpp 头文件
+#include "ggml-sycl/sycl_hw.hpp"  // 引入 ggml-sycl/sycl_hw.hpp 头文件
 
 
 static bool g_sycl_loaded = false;
@@ -72,7 +72,7 @@ static ggml_sycl_device_info ggml_sycl_init() {
     info.device_count = dpct::dev_mgr::instance().device_count();
     if (info.device_count == 0) {
         GGML_LOG_ERROR("%s: failed to initialize: %s\n", GGML_SYCL_NAME, __func__);
-        return info;
+        return info;  // 返回
     }
 
     GGML_ASSERT(info.device_count <= GGML_SYCL_MAX_DEVICES);
@@ -111,12 +111,12 @@ static ggml_sycl_device_info ggml_sycl_init() {
     for (int id = 0; id < info.device_count; ++id) {
         info.default_tensor_split[id] /= total_vram;
     }
-    return info;
+    return info;  // 返回
 }
 
 const ggml_sycl_device_info & ggml_sycl_info() {
     static ggml_sycl_device_info info = ggml_sycl_init();
-    return info;
+    return info;  // 返回
 }
 
 static void print_device_detail(int id, sycl::device &device, std::string device_type) {
@@ -144,9 +144,9 @@ static void print_device_detail(int id, sycl::device &device, std::string device
 
 static void print_device_opt_feature(int device_count) {
     GGML_LOG_INFO("SYCL Optimization Feature:\n");
-    GGML_LOG_INFO(
+    GGML_LOG_INFO(  // 打印信息日志
         "|ID|        Device Type|Reorder|\n");
-    GGML_LOG_INFO(
+    GGML_LOG_INFO(  // 打印信息日志
         "|--|-------------------|-------|\n");
     std::map<std::string, size_t> DeviceNums;
     for (int id = 0; id < device_count; ++id) {
@@ -169,16 +169,16 @@ void ggml_backend_sycl_print_sycl_devices() {
     std::map<std::string, size_t> DeviceNums;
     GGML_LOG_INFO("Found %d SYCL devices:\n", device_count);
 
-    GGML_LOG_INFO(
+    GGML_LOG_INFO(  // 打印信息日志
         "|  |                   |                                       |      "
         " |Max    |        |Max  |Global |                     |\n");
-    GGML_LOG_INFO(
+    GGML_LOG_INFO(  // 打印信息日志
         "|  |                   |                                       |      "
         " |compute|Max work|sub  |mem    |                     |\n");
-    GGML_LOG_INFO(
+    GGML_LOG_INFO(  // 打印信息日志
         "|ID|        Device Type|                                   "
         "Name|Version|units  |group   |group|size   |       Driver version|\n");
-    GGML_LOG_INFO(
+    GGML_LOG_INFO(  // 打印信息日志
         "|--|-------------------|---------------------------------------|------"
         "-|-------|--------|-----|-------|---------------------|\n");
 
@@ -206,7 +206,7 @@ static inline int get_sycl_env(const char *env_name, int default_val) {
     } else {
         user_number = default_val;
     }
-    return user_number;
+    return user_number;  // 返回
 }
 
 static void ggml_check_sycl() try {
@@ -219,69 +219,69 @@ static void ggml_check_sycl() try {
         g_ggml_sycl_disable_dnn = get_sycl_env("GGML_SYCL_DISABLE_DNN", 0);
         g_ggml_sycl_prioritize_dmmv = get_sycl_env("GGML_SYCL_PRIORITIZE_DMMV", 0);
 
-#ifdef SYCL_FLASH_ATTN
+#ifdef SYCL_FLASH_ATTN  // 如果定义了 SYCL_FLASH_ATTN 则编译
         g_ggml_sycl_enable_flash_attention = get_sycl_env("GGML_SYCL_ENABLE_FLASH_ATTN", 1);
-#else
+#else  // 否则
         g_ggml_sycl_enable_flash_attention = 0;
-#endif
+#endif  // 条件编译结束
 
         GGML_SYCL_DEBUG("[SYCL] call ggml_check_sycl\n");
 
         GGML_LOG_INFO("Build with Macros:\n");
-#if defined(GGML_SYCL_FORCE_MMQ)
+#if defined(GGML_SYCL_FORCE_MMQ)  // 条件编译
         GGML_LOG_INFO("  GGML_SYCL_FORCE_MMQ: yes\n");
-#else
+#else  // 否则
         GGML_LOG_INFO("  GGML_SYCL_FORCE_MMQ: no\n");
-#endif
-#if defined(GGML_SYCL_F16)
+#endif  // 条件编译结束
+#if defined(GGML_SYCL_F16)  // 条件编译
         GGML_LOG_INFO("  GGML_SYCL_F16: yes\n");
-#else
+#else  // 否则
         GGML_LOG_INFO("  GGML_SYCL_F16: no\n");
-#endif
-#if defined(GGML_SYCL_GRAPH)
+#endif  // 条件编译结束
+#if defined(GGML_SYCL_GRAPH)  // 条件编译
         GGML_LOG_INFO("  GGML_SYCL_GRAPH: yes\n");
-#else
+#else  // 否则
         GGML_LOG_INFO("  GGML_SYCL_GRAPH: no\n");
-#endif
-#if defined(GGML_SYCL_DNNL)
+#endif  // 条件编译结束
+#if defined(GGML_SYCL_DNNL)  // 条件编译
         GGML_LOG_INFO("  GGML_SYCL_DNNL: yes\n");
-#else
+#else  // 否则
         GGML_LOG_INFO("  GGML_SYCL_DNNL: no\n");
-#endif
+#endif  // 条件编译结束
 
         GGML_LOG_INFO("Running with Environment Variables:\n");
         GGML_LOG_INFO("  GGML_SYCL_DEBUG: %d\n", g_ggml_sycl_debug);
         GGML_LOG_INFO("  GGML_SYCL_DISABLE_OPT: %d\n", g_ggml_sycl_disable_optimize);
-#ifdef GGML_SYCL_GRAPH
+#ifdef GGML_SYCL_GRAPH  // 如果定义了 GGML_SYCL_GRAPH 则编译
         GGML_LOG_INFO("  GGML_SYCL_DISABLE_GRAPH: %d\n", g_ggml_sycl_disable_graph);
-#else
+#else  // 否则
         GGML_LOG_INFO("  GGML_SYCL_DISABLE_GRAPH: graph disabled by compile flag\n");
-#endif
-#if GGML_SYCL_DNNL
+#endif  // 条件编译结束
+#if GGML_SYCL_DNNL  // 条件编译
         GGML_LOG_INFO("  GGML_SYCL_DISABLE_DNN: %d\n", g_ggml_sycl_disable_dnn);
-#else
+#else  // 否则
         GGML_LOG_INFO("  GGML_SYCL_DISABLE_DNN: DNN disabled by compile flag\n");
-#endif
+#endif  // 条件编译结束
         GGML_LOG_INFO("  GGML_SYCL_PRIORITIZE_DMMV: %d\n", g_ggml_sycl_prioritize_dmmv);
 
-#ifdef SYCL_FLASH_ATTN
+#ifdef SYCL_FLASH_ATTN  // 如果定义了 SYCL_FLASH_ATTN 则编译
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_FLASH_ATTN: %d\n", g_ggml_sycl_enable_flash_attention);
-#else
-        GGML_LOG_INFO("  GGML_SYCL_ENABLE_FLASH_ATTN: %d disabled by compile flag\n",
+#else  // 否则
+        GGML_LOG_INFO("  GGML_SYCL_ENABLE_FLASH_ATTN: %d disabled by compile flag\n",  // 打印信息日志
             g_ggml_sycl_enable_flash_attention);
-#endif
+#endif  // 条件编译结束
 
 /* NOT REMOVE, keep it for next optimize for XMX.
-#if defined(SYCL_USE_XMX)
+#if defined(SYCL_USE_XMX)  // 条件编译
         fprintf(stderr, "%s: SYCL_USE_XMX: yes\n", __func__);
-#else
+#else  // 否则
         fprintf(stderr, "%s: SYCL_USE_XMX: no\n", __func__);
-#endif
+#endif  // 条件编译结束
 */
         // Currently, we only use async malloc / free when graphs are enabled as it is required for the calls to be
         // properly recorded. As this SYCL extension matures it may be beneficial to enable as the default path and in
         // other places.
-#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
+#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC  // 条件编译
         g_ggml_sycl_use_async_mem_op = !g_ggml_sycl_disable_graph;
         if (g_ggml_sycl_use_async_mem_op) {
             for (unsigned int i = 0; i < dpct::dev_mgr::instance().device_count(); ++i) {
@@ -291,12 +291,12 @@ static void ggml_check_sycl() try {
                 }
             }
         }
-#endif
+#endif  // 条件编译结束
         if (CHECK_TRY_ERROR(g_all_sycl_device_count =
                             dpct::dev_mgr::instance().device_count()) != 0) {
             initialized = true;
             g_sycl_loaded = false;
-            return;
+            return;  // 返回
         }
         GGML_ASSERT(g_all_sycl_device_count <= GGML_SYCL_MAX_DEVICES);
 
@@ -338,7 +338,7 @@ GGML_API void ggml_backend_sycl_get_gpu_list(int *id_list, int max_len) try {
         if (i>=max_len) break;
         id_list[i] = i;
     }
-    return;
+    return;  // 返回
 }
 catch (sycl::exception const &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
@@ -348,7 +348,7 @@ catch (sycl::exception const &exc) {
 
 // sycl buffer
 
-struct ggml_backend_sycl_buffer_context {
+struct ggml_backend_sycl_buffer_context {  // 结构体定义
     int device;
     void * dev_ptr = nullptr;
     queue_ptr stream;
@@ -377,10 +377,10 @@ struct ggml_backend_sycl_buffer_context {
     }
 };
 
-static const char * ggml_backend_sycl_buffer_type_get_name(ggml_backend_buffer_type_t buft);
+static const char * ggml_backend_sycl_buffer_type_get_name(ggml_backend_buffer_type_t buft);  // ggml_backend_sycl_buffer_type_get_name
 
 static bool ggml_backend_buffer_is_sycl(ggml_backend_buffer_t buffer) {
-    return buffer->buft->iface.get_name == ggml_backend_sycl_buffer_type_get_name;
+    return buffer->buft->iface.get_name == ggml_backend_sycl_buffer_type_get_name;  // 返回
 }
 
 static void
@@ -398,7 +398,7 @@ catch (sycl::exception const &exc) {
 
 static void * ggml_backend_sycl_buffer_get_base(ggml_backend_buffer_t buffer) {
     ggml_backend_sycl_buffer_context * ctx = ( ggml_backend_sycl_buffer_context *)buffer->context;
-    return ctx->dev_ptr;
+    return ctx->dev_ptr;  // 返回
 }
 
 static enum ggml_status
@@ -410,7 +410,7 @@ ggml_backend_sycl_buffer_init_tensor(ggml_backend_buffer_t buffer,
 
     if (tensor->view_src != NULL) {
         assert(tensor->view_src->buffer->buft == buffer->buft);
-        return GGML_STATUS_SUCCESS;
+        return GGML_STATUS_SUCCESS;  // 返回
     }
 
     if (!g_ggml_sycl_disable_optimize) {
@@ -441,7 +441,7 @@ ggml_backend_sycl_buffer_init_tensor(ggml_backend_buffer_t buffer,
                 padded_size - original_size).wait()));
         }
     }
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 catch (sycl::exception const &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
@@ -460,16 +460,16 @@ static void ggml_backend_sycl_buffer_set_tensor(ggml_backend_buffer_t buffer,
     ggml_sycl_set_device(ctx->device);
     auto stream = &(dpct::dev_mgr::instance().get_device(ctx->device).default_queue());
     SYCL_CHECK(CHECK_TRY_ERROR(dpct::dev_mgr::instance().get_device(ctx->device).queues_wait_and_throw()));
-#ifndef _WIN32
+#ifndef _WIN32  // 如果未定义 _WIN32 则编译
     // Note: Use host buffer to save the data from mmap(), then copy to device. It's workaround for mmap() issue on PVC GPU.
     // This function will be called during load model from disk. Use memory buffer replace dynamic won't save more time and brings potential memory leak risk here.
     char * host_buf = (char *) malloc(size);
     memcpy(host_buf, data, size);
     SYCL_CHECK(CHECK_TRY_ERROR((*stream).memcpy((char *) tensor->data + offset, host_buf, size).wait()));
     free(host_buf);
-#else
+#else  // 否则
     SYCL_CHECK(CHECK_TRY_ERROR((*stream).memcpy((char *) tensor->data + offset, data, size).wait()));
-#endif
+#endif  // 条件编译结束
 }
 catch (sycl::exception const &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
@@ -550,7 +550,7 @@ ggml_backend_sycl_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
         dev2dev_memcpy(*stream_dst, *stream_src, dst->data, src->data, size);
 
 //todo, it's known issue：error in device2device cross GPUs. reused when the issue is fixed. DON"T remove
-#if 0
+#if 0  // 条件编译
         SYCL_CHECK(CHECK_TRY_ERROR((*stream).memcpy(
             (char *)dst->data, (const char *)src->data, size).wait()));
 
@@ -561,10 +561,10 @@ ggml_backend_sycl_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
         */
         SYCL_CHECK(CHECK_TRY_ERROR(
             dpct::dev_mgr::instance().get_device(dst_ctx->device).queues_wait_and_throw()));
-#endif
-        return true;
+#endif  // 条件编译结束
+        return true;  // 返回
     }
-    return false;
+    return false;  // 返回
     GGML_UNUSED(buffer);
 } catch (const sycl::exception & exc) {
     std::cerr << exc.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::endl;
@@ -619,7 +619,7 @@ static void ggml_backend_sycl_buffer_memset_tensor(ggml_backend_buffer_t buffer,
 static void ggml_backend_sycl_buffer_reset(ggml_backend_buffer_t buffer) {
     GGML_SYCL_DEBUG("[SYCL] call %s\n", __func__);
     if (buffer == nullptr) {
-        return;
+        return;  // 返回
     }
 
     ggml_backend_sycl_buffer_context * ctx = (ggml_backend_sycl_buffer_context *) buffer->context;
@@ -647,7 +647,7 @@ static const ggml_backend_buffer_i ggml_backend_sycl_buffer_interface = {
 };
 
 // sycl buffer type
-struct ggml_backend_sycl_buffer_type_context {
+struct ggml_backend_sycl_buffer_type_context {  // 结构体定义
     int device;
     std::string name;
 
@@ -674,10 +674,10 @@ ggml_backend_sycl_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
                                     size, *stream)));
     if (!dev_ptr) {
       GGML_LOG_ERROR("%s: can't allocate %lu Bytes of memory on device\n", __func__, size);
-      return nullptr;
+      return nullptr;  // 返回
     }
     ggml_backend_sycl_buffer_context * ctx = new  ggml_backend_sycl_buffer_context(buft_ctx->device, dev_ptr, buft_ctx->stream);
-    return ggml_backend_buffer_init(buft, ggml_backend_sycl_buffer_interface, ctx, size);
+    return ggml_backend_buffer_init(buft, ggml_backend_sycl_buffer_interface, ctx, size);  // ggml_backend_buffer_init
 }
 catch (sycl::exception const &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
@@ -686,7 +686,7 @@ catch (sycl::exception const &exc) {
 }
 
 static size_t ggml_backend_sycl_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 128;
+    return 128;  // 返回
     GGML_UNUSED(buft);
 }
 
@@ -706,7 +706,7 @@ static size_t ggml_backend_sycl_buffer_type_get_alloc_size(ggml_backend_buffer_t
         }
     }
 
-    return size;
+    return size;  // 返回
 
     GGML_UNUSED(buft);
 }
@@ -748,7 +748,7 @@ ggml_backend_buffer_type_t ggml_backend_sycl_buffer_type(int device) {
         }
         ggml_backend_sycl_buffer_type_initialized = true;
     }
-    return &ggml_backend_sycl_buffer_types[device];
+    return &ggml_backend_sycl_buffer_types[device];  // 返回
 }
 
 static ggml_backend_buffer_type_t ggml_backend_sycl_buffer_type(ggml_backend_sycl_context * ctx) {
@@ -774,7 +774,7 @@ static ggml_backend_buffer_type_t ggml_backend_sycl_buffer_type(ggml_backend_syc
         }
         ggml_backend_sycl_buffer_type_initialized = true;
     }
-    return &ggml_backend_sycl_buffer_types[device];
+    return &ggml_backend_sycl_buffer_types[device];  // 返回
 }
 
 // sycl split buffer
@@ -796,14 +796,14 @@ static int64_t get_row_rounding(ggml_type type, const std::array<float, GGML_SYC
     switch(type) {
         case GGML_TYPE_Q4_0:
         case GGML_TYPE_Q4_1:
-            return max_compute_capability >= VER_GEN9 ? 128 : 64;
+            return max_compute_capability >= VER_GEN9 ? 128 : 64;  // 返回
         case GGML_TYPE_Q5_0:
         case GGML_TYPE_Q5_1:
         case GGML_TYPE_Q8_0:
-            return 64;
+            return 64;  // 返回
         case GGML_TYPE_F16:
         case GGML_TYPE_F32:
-            return 1;
+            return 1;  // 返回
         case GGML_TYPE_Q2_K:
         case GGML_TYPE_Q3_K:
         case GGML_TYPE_Q4_K:
@@ -816,11 +816,11 @@ static int64_t get_row_rounding(ggml_type type, const std::array<float, GGML_SYC
         case GGML_TYPE_IQ3_XXS:
         case GGML_TYPE_IQ4_XS:
         case GGML_TYPE_IQ4_NL:
-            return max_compute_capability >= VER_GEN9 ? 128 : 64;
+            return max_compute_capability >= VER_GEN9 ? 128 : 64;  // 返回
         case GGML_TYPE_IQ3_S:
-            return max_compute_capability >= VER_GEN9 ? 128 : 64;
+            return max_compute_capability >= VER_GEN9 ? 128 : 64;  // 返回
         case GGML_TYPE_Q6_K:
-            return 64;
+            return 64;  // 返回
         default:
             GGML_ABORT("fatal error");
     }
@@ -846,11 +846,11 @@ static size_t ggml_nbytes_split(const struct ggml_tensor * tensor, int nrows_spl
     return nrows_split*ggml_row_size(tensor->type, tensor->ne[0]);
 }
 
-struct ggml_backend_sycl_split_buffer_type_context {
+struct ggml_backend_sycl_split_buffer_type_context {  // 结构体定义
     std::array<float, GGML_SYCL_MAX_DEVICES> tensor_split;
 };
 
-struct ggml_backend_sycl_split_buffer_context {
+struct ggml_backend_sycl_split_buffer_context {  // 结构体定义
     ~ggml_backend_sycl_split_buffer_context() try {
         for (ggml_tensor_extra_gpu * extra : tensor_extras) {
             release_extra_gpu(extra, streams);
@@ -955,7 +955,7 @@ ggml_backend_sycl_split_buffer_init_tensor(ggml_backend_buffer_t buffer,
         }
     }
     tensor->extra = extra;
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 catch (sycl::exception const &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
@@ -1097,13 +1097,13 @@ static struct ggml_backend_buffer_i ggml_backend_sycl_split_buffer_interface = {
 // sycl split buffer type
 
 static const char * ggml_backend_sycl_split_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return GGML_SYCL_NAME "_Split";
+    return GGML_SYCL_NAME "_Split";  // 返回
 
     GGML_UNUSED(buft);
 }
 
 static bool ggml_backend_buffer_is_sycl_split(ggml_backend_buffer_t buffer) {
-   return buffer->buft->iface.get_name == ggml_backend_sycl_split_buffer_type_get_name;
+   return buffer->buft->iface.get_name == ggml_backend_sycl_split_buffer_type_get_name;  // 返回
 }
 
 static ggml_backend_buffer_t ggml_backend_sycl_split_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
@@ -1113,11 +1113,11 @@ static ggml_backend_buffer_t ggml_backend_sycl_split_buffer_type_alloc_buffer(gg
     // as returned by get_alloc_size. this limit is enforced during tensor allocation by ggml-alloc, so it must be correct.
     ggml_backend_sycl_split_buffer_context * ctx = new ggml_backend_sycl_split_buffer_context();
 
-    return ggml_backend_buffer_init(buft, ggml_backend_sycl_split_buffer_interface, ctx, size);
+    return ggml_backend_buffer_init(buft, ggml_backend_sycl_split_buffer_interface, ctx, size);  // ggml_backend_buffer_init
 }
 
 static size_t ggml_backend_sycl_split_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 128;
+    return 128;  // 返回
     GGML_UNUSED(buft);
 }
 
@@ -1145,11 +1145,11 @@ static size_t ggml_backend_sycl_split_buffer_type_get_alloc_size(ggml_backend_bu
         }
     }
 
-    return total_size;
+    return total_size;  // 返回
 }
 
 static bool ggml_backend_sycl_split_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
-    return false;
+    return false;  // 返回
 
     GGML_UNUSED(buft);
 }
@@ -1190,41 +1190,41 @@ ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(const float * ten
 
     auto it = buft_map.find(tensor_split_arr);
     if (it != buft_map.end()) {
-        return &it->second;
+        return &it->second;  // 返回
     }
 
-    struct ggml_backend_buffer_type buft {
+    struct ggml_backend_buffer_type buft {  // 结构体定义
         /* .iface   = */ ggml_backend_sycl_split_buffer_type_interface,
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_sycl_reg(), 0),
         /* .context = */ new ggml_backend_sycl_split_buffer_type_context{tensor_split_arr},
     };
 
     auto result = buft_map.emplace(tensor_split_arr, buft);
-    return &result.first->second;
+    return &result.first->second;  // 返回
 }
 
 // host buffer type
 
 static const char * ggml_backend_sycl_host_buffer_type_name(ggml_backend_buffer_type_t buft) {
-    return GGML_SYCL_NAME "_Host";
+    return GGML_SYCL_NAME "_Host";  // 返回
 
     GGML_UNUSED(buft);
 }
 
 inline void * aligned_malloc_host(size_t alignment, size_t size) {
-#ifdef _WIN32
-    return _aligned_malloc(size, alignment);
-#else
-    return aligned_alloc(alignment, size);
-#endif
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
+    return _aligned_malloc(size, alignment);  // _aligned_malloc
+#else  // 否则
+    return aligned_alloc(alignment, size);  // aligned_alloc
+#endif  // 条件编译结束
 }
 
 inline void free_aligned_mem_host(void * memblock) {
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
     _aligned_free(memblock);
-#else
+#else  // 否则
     free(memblock);
-#endif
+#endif  // 条件编译结束
 }
 
 static void ggml_backend_sycl_host_buffer_free_buffer(ggml_backend_buffer_t buffer) {
@@ -1235,7 +1235,7 @@ static ggml_backend_buffer_t ggml_backend_sycl_host_buffer_type_alloc_buffer(ggm
     void * ptr = aligned_malloc_host(TENSOR_ALIGNMENT, size);
     if (ptr == nullptr) {
         // fallback to cpu buffer
-        return ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
+        return ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);  // ggml_backend_buft_alloc_buffer
     }
 
     // FIXME: this is a hack to avoid having to implement a new buffer type
@@ -1243,7 +1243,7 @@ static ggml_backend_buffer_t ggml_backend_sycl_host_buffer_type_alloc_buffer(ggm
     buffer->buft = buft;
     buffer->iface.free_buffer = ggml_backend_sycl_host_buffer_free_buffer;
 
-    return buffer;
+    return buffer;  // 返回
 }
 
 ggml_backend_buffer_type_t ggml_backend_sycl_host_buffer_type() {
@@ -1261,16 +1261,16 @@ ggml_backend_buffer_type_t ggml_backend_sycl_host_buffer_type() {
         /* .context  = */ nullptr,
     };
 
-    return &ggml_backend_sycl_buffer_type_host;
+    return &ggml_backend_sycl_buffer_type_host;  // 返回
 }
 
 // buffer pool for sycl (legacy)
-struct ggml_sycl_pool_leg : public ggml_sycl_pool {
+struct ggml_sycl_pool_leg : public ggml_sycl_pool {  // 结构体定义
     static const int MAX_SYCL_BUFFERS = 256;
 
     int device;
     queue_ptr qptr;
-    struct ggml_sycl_buffer {
+    struct ggml_sycl_buffer {  // 结构体定义
         void * ptr = nullptr;
         size_t size = 0;
     };
@@ -1292,19 +1292,19 @@ struct ggml_sycl_pool_leg : public ggml_sycl_pool {
     }
 
     void * alloc(size_t size, size_t * actual_size) override {
-#ifdef DEBUG_sycl_MALLOC
+#ifdef DEBUG_sycl_MALLOC  // 如果定义了 DEBUG_sycl_MALLOC 则编译
         int nnz = 0;
         size_t max_size = 0;
-#endif
+#endif  // 条件编译结束
         size_t best_diff = 1ull << 36;
         int ibest = -1;
         for (int i = 0; i < MAX_SYCL_BUFFERS; ++i) {
             ggml_sycl_buffer& b = buffer_pool[i];
             if (b.ptr != nullptr) {
-#ifdef DEBUG_sycl_MALLOC
+#ifdef DEBUG_sycl_MALLOC  // 如果定义了 DEBUG_sycl_MALLOC 则编译
                 ++nnz;
                 if (b.size > max_size) max_size = b.size;
-#endif
+#endif  // 条件编译结束
                 if (b.size >= size) {
                     size_t diff = b.size - size;
                     if (diff < best_diff) {
@@ -1315,7 +1315,7 @@ struct ggml_sycl_pool_leg : public ggml_sycl_pool {
                             *actual_size = b.size;
                             b.ptr = nullptr;
                             b.size = 0;
-                            return ptr;
+                            return ptr;  // 返回
                         }
                     }
                 }
@@ -1327,7 +1327,7 @@ struct ggml_sycl_pool_leg : public ggml_sycl_pool {
             *actual_size = b.size;
             b.ptr = nullptr;
             b.size = 0;
-            return ptr;
+            return ptr;  // 返回
         }
         void * ptr;
         size_t look_ahead_size = (size_t) (1.05 * size);
@@ -1337,19 +1337,19 @@ struct ggml_sycl_pool_leg : public ggml_sycl_pool {
                                 look_ahead_size, *qptr)));
         if (!ptr) {
             GGML_LOG_ERROR("%s: can't allocate %lu Bytes of memory on device/GPU\n", __func__, look_ahead_size);
-            return nullptr;
+            return nullptr;  // 返回
         }
 
         *actual_size = look_ahead_size;
         pool_size += look_ahead_size;
 
-#ifdef DEBUG_SYCL_MALLOC
+#ifdef DEBUG_SYCL_MALLOC  // 如果定义了 DEBUG_SYCL_MALLOC 则编译
         GGML_LOG_DEBUG("%s[%d]: %d buffers, max_size = %u MB, pool_size = %u MB, requested %u MB\n", __func__, id, nnz,
                 (uint32_t)(max_size/1024/1024), (uint32_t)(g_sycl_pool_size[id]/1024/1024), (uint32_t)(size/1024/1024));
-#endif
+#endif  // 条件编译结束
 
         // GGML_SYCL_DEBUG("ggml_sycl_pool_malloc_leg look_ahead_size=%lu, return %p\n", look_ahead_size, ptr);
-        return ptr;
+        return ptr;  // 返回
     }
 
     void free(void * ptr, size_t size) override {
@@ -1358,7 +1358,7 @@ struct ggml_sycl_pool_leg : public ggml_sycl_pool {
             if (b.ptr == nullptr) {
                 b.ptr = ptr;
                 b.size = size;
-                return;
+                return;  // 返回
             }
         }
         GGML_LOG_WARN("WARNING: sycl buffer pool full, increase MAX_sycl_BUFFERS\n");
@@ -1367,13 +1367,13 @@ struct ggml_sycl_pool_leg : public ggml_sycl_pool {
     }
 };
 
-struct ggml_sycl_pool_host : public ggml_sycl_pool {
+struct ggml_sycl_pool_host : public ggml_sycl_pool {  // 结构体定义
     queue_ptr qptr;
     int       device;
 
     inline static int counter{ 0 };
 
-    struct ggml_sycl_buffer {
+    struct ggml_sycl_buffer {  // 结构体定义
         void * ptr  = nullptr;
         size_t size = 0;
     };
@@ -1404,7 +1404,7 @@ struct ggml_sycl_pool_host : public ggml_sycl_pool {
             void *           ptr             = b.ptr;
             *actual_size                     = b.size;
             counter                          = 1;
-            return ptr;
+            return ptr;  // 返回
         }
         ggml_sycl_buffer & b = buffer_pool[counter];
 
@@ -1414,16 +1414,16 @@ struct ggml_sycl_pool_host : public ggml_sycl_pool {
             SYCL_CHECK(CHECK_TRY_ERROR(ptr = (void *) sycl::malloc_host(size, *qptr)));
             if (!ptr) {
                 GGML_LOG_ERROR("%s: can't allocate %lu Bytes of memory on host\n", __func__, size);
-                return nullptr;
+                return nullptr;  // 返回
             }
             pool_size += size;
             *actual_size = size;
             counter      = counter + 1;
-            return ptr;
+            return ptr;  // 返回
         } else {
             ++counter;
             b.size = size;
-            return b.ptr;
+            return b.ptr;  // 返回
         }
     }
 
@@ -1435,7 +1435,7 @@ struct ggml_sycl_pool_host : public ggml_sycl_pool {
             if (b.ptr == nullptr) {
                 b.ptr  = ptr;
                 b.size = size;
-                return;
+                return;  // 返回
             }
         }
     }
@@ -1458,7 +1458,7 @@ std::unique_ptr<ggml_sycl_pool> ggml_backend_sycl_context::new_pool_for_device(q
 // struct ggml_sycl_pool_vmm : public ggml_sycl_pool
 
 /// kernels
-typedef void (*ggml_sycl_op_mul_mat_t)(
+typedef void (*ggml_sycl_op_mul_mat_t)(  // 类型定义
     ggml_backend_sycl_context & ctx,
     const ggml_tensor *src0, const ggml_tensor *src1, ggml_tensor *dst,
     const char *src0_dd_i, const float *src1_ddf_i, const char *src1_ddq_i,
@@ -1595,14 +1595,14 @@ static void k_sum_rows_f32(const float * x, float * dst, const int ncols,
 }
 
 
-template<typename T>
+template<typename T>  // 模板
 static inline void ggml_sycl_swap(T & a, T & b) {
     T tmp = a;
     a = b;
     b = tmp;
 }
 
-template <ggml_sort_order order>
+template <ggml_sort_order order>  // 模板
 __dpct_inline__ static void
 k_argsort_f32_i32(const float *x, int *dst, const int ncols, int ncols_pad,
                   const int tasks_per_thread, const sycl::nd_item<3> &item_ct1,
@@ -1614,7 +1614,7 @@ k_argsort_f32_i32(const float *x, int *dst, const int ncols, int ncols_pad,
     for (int i = 0; i < tasks_per_thread; i++) {
         int col = col_index * tasks_per_thread + i;
         if (col >= ncols_pad) {
-            return;
+            return;  // 返回
         }
     }
 
@@ -1677,7 +1677,7 @@ static void diag_mask_inf_f32(const float * x, float * dst, const int ncols, con
                     item_ct1.get_local_id(2);
 
     if (col >= ncols) {
-        return;
+        return;  // 返回
     }
 
     const int i = row*ncols + col;
@@ -1692,14 +1692,14 @@ static void scale_f32(const float * x, float * dst, const float scale, const flo
                   item_ct1.get_local_id(2);
 
     if (i >= k) {
-        return;
+        return;  // 返回
     }
 
     dst[i] = scale * x[i] + bias;
 }
 
 
-template <typename Ti, typename To>
+template <typename Ti, typename To>  // 模板
 static  void pool2d_nchw_kernel(
         const int ih, const int iw, const int oh, const int ow,
         const int kh, const int kw, const int sh, const int sw,
@@ -1709,7 +1709,7 @@ static  void pool2d_nchw_kernel(
         int idx = item_ct1.get_local_id(2) +
                   item_ct1.get_group(2) * item_ct1.get_local_range(2);
         if (idx >= parallel_elements) {
-            return;
+            return;  // 返回
         }
 
         const int I_HW = ih * iw;
@@ -1738,7 +1738,7 @@ static  void pool2d_nchw_kernel(
 
         for (int i = bh; i < eh; i += 1) {
             for (int j = bw; j < ew; j += 1) {
-#if DPCT_COMPATIBILITY_TEMP >= 350
+#if DPCT_COMPATIBILITY_TEMP >= 350  // 条件编译
                 /*
                 DPCT1098:106: The '*' expression is used instead of the __ldg
                 call. These two expressions do not provide the exact same
@@ -1746,9 +1746,9 @@ static  void pool2d_nchw_kernel(
                 and/or performance issues.
                 */
                 Ti cur = *(i_ptr + i * iw + j);
-#else
+#else  // 否则
                 Ti cur = i_ptr[i * iw + j];
-#endif
+#endif  // 条件编译结束
                 switch (op) {
                     case GGML_OP_POOL_AVG: res += (cur / (kh * kw)); break;
                     case GGML_OP_POOL_MAX: res = sycl::max(res, (To)cur); break;
@@ -1836,7 +1836,7 @@ static int next_power_of_2(int x) {
     while (n < x) {
         n *= 2;
     }
-    return n;
+    return n;  // 返回
 }
 
 static void argsort_f32_i32_sycl(const float *x, int *dst, const int ncols,
@@ -2113,11 +2113,11 @@ static dpct::err0 ggml_sycl_cpy_tensor_2d(void *dst,
     if (nb0 == ts && nb1 == ts*ne0/bs) {
         // GGML_SYCL_DEBUG("stream->memcpy: dst_ptr=%p, x=%p, size=%lu\n", dst_ptr, x, i1_diff * nb1);
         // return CHECK_TRY_ERROR(stream->memcpy(dst_ptr, x, i1_diff * nb1));
-        return CHECK_TRY_ERROR(dpct::async_dpct_memcpy(dst_ptr, x, i1_diff * nb1,
+        return CHECK_TRY_ERROR(dpct::async_dpct_memcpy(dst_ptr, x, i1_diff * nb1,  // 返回
                                     kind, *stream));
 
     } else if (nb0 == ts) {
-        return CHECK_TRY_ERROR(
+        return CHECK_TRY_ERROR(  // 返回
             dpct::async_dpct_memcpy(dst_ptr, ts * ne0 / bs, x, nb1,
                                     ts * ne0 / bs, i1_diff, kind, *stream));
     } else {
@@ -2136,7 +2136,7 @@ static dpct::err0 ggml_sycl_cpy_tensor_2d(void *dst,
             */
             if (r != 0) return r;
         }
-        return 0;
+        return 0;  // 返回
     }
 }
 catch (sycl::exception const &exc) {
@@ -2172,17 +2172,17 @@ inline void ggml_sycl_op_mul_mat_sycl(
     // ldc == nrows of the matrix that cuBLAS writes into
     int ldc = id == ctx.device ? ne0 : row_diff; // used by MKL only
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     bool use_fp16 = true;  // TODO(Yu) SYCL capability check
-#else
+#else  // 否则
     bool use_fp16 = false;
-#endif
+#endif  // 条件编译结束
 
-#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
+#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)  // 条件编译
     // Fast path for bf16 src0
     if (src0->type == GGML_TYPE_BF16 && !g_ggml_sycl_disable_dnn && ggml_is_contiguous(src0) &&
         row_diff == src0->ne[1]) {
-        using bf16_t = sycl::ext::oneapi::bfloat16;
+        using bf16_t = sycl::ext::oneapi::bfloat16;  // using 声明
         ggml_sycl_pool_alloc<bf16_t> src1_as_bf16(ctx.pool(), src1_ncols*ne10);
         if (src1->type != GGML_TYPE_BF16) {
             const to_bf16_sycl_t to_bf16_sycl = ggml_get_to_bf16_sycl(src1->type, dst);
@@ -2198,9 +2198,9 @@ inline void ggml_sycl_op_mul_mat_sycl(
         GGML_UNUSED(dst);
         GGML_UNUSED(src1_ddq_i);
         GGML_UNUSED(src1_padded_row_size);
-        return;
+        return;  // 返回
     }
-#endif
+#endif  // 条件编译结束
 
     if ((src0->type == GGML_TYPE_F16 || ggml_is_quantized(src0->type)) && use_fp16 && ggml_is_contiguous(src0) &&
         row_diff == src0->ne[1] && dst->op_params[0] == GGML_PREC_DEFAULT) {
@@ -2232,14 +2232,14 @@ inline void ggml_sycl_op_mul_mat_sycl(
                 ? (const sycl::half *)src1->data + src1_padded_row_size
                                          : src1_as_f16.get();
 
-#if GGML_SYCL_DNNL
+#if GGML_SYCL_DNNL  // 条件编译
         if (!g_ggml_sycl_disable_dnn) {
                 DnnlGemmWrapper::row_gemm(ctx,row_diff, src1_ncols , ne10, src0_ptr,
                                      DnnlGemmWrapper::to_dt<sycl::half>(), src1_ptr, DnnlGemmWrapper::to_dt<sycl::half>(),
                                       dst_dd_i, DnnlGemmWrapper::to_dt<float>(), stream);
         }
         else
-#endif
+#endif  // 条件编译结束
         {
             ggml_sycl_pool_alloc<sycl::half> dst_f16(ctx.pool(), row_diff * src1_ncols);
 
@@ -2279,14 +2279,14 @@ inline void ggml_sycl_op_mul_mat_sycl(
         const float * src0_ddf_i = src0->type == GGML_TYPE_F32 ? (const float *) src0_dd_i : src0_ddq_as_f32.get();
         const float * src1_ddf1_i = src1->type == GGML_TYPE_F32 ? (const float *) src1_ddf_i : src1_ddq_as_f32.get();
 
-#if GGML_SYCL_DNNL
+#if GGML_SYCL_DNNL  // 条件编译
         if (!g_ggml_sycl_disable_dnn) {
             DnnlGemmWrapper::row_gemm(ctx, row_diff, src1_ncols, ne10, src0_ddf_i,
                                       DnnlGemmWrapper::to_dt<float>(), src1_ddf1_i, DnnlGemmWrapper::to_dt<float>(),
                                       dst_dd_i, DnnlGemmWrapper::to_dt<float>(), stream);
         }
         else
-#endif
+#endif  // 条件编译结束
         {
             const float alpha = 1.0f;
             const float beta  = 0.0f;
@@ -2556,10 +2556,10 @@ static void ggml_sycl_set_peer_access(const int n_tokens, int main_device) {
     const bool enable_peer_access = n_tokens <= GGML_SYCL_PEER_MAX_BATCH_SIZE;
 
     if (peer_access_enabled == enable_peer_access) {
-        return;
+        return;  // 返回
     }
 
-#ifdef NDEBUG
+#ifdef NDEBUG  // 如果定义了 NDEBUG 则编译
     for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
         SYCL_CHECK(ggml_sycl_set_device(i));
     }
@@ -2586,12 +2586,12 @@ static void ggml_sycl_set_peer_access(const int n_tokens, int main_device) {
             // }
         }
     }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
 
     peer_access_enabled = enable_peer_access;
 }
 
-template <template <int> typename quantize_f>
+template <template <int> typename quantize_f>  // 模板
 static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor *src0,
                                  const ggml_tensor *src1, ggml_tensor *dst,
                                  ggml_sycl_op_mul_mat_t op) try {
@@ -2643,7 +2643,7 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
         tensor_split = buft_ctx->tensor_split;
     }
 
-    struct dev_data {
+    struct dev_data {  // 结构体定义
         ggml_sycl_pool_alloc<char> src0_dd_alloc;
         ggml_sycl_pool_alloc<float> src1_ddf_alloc;
         ggml_sycl_pool_alloc<char> src1_ddq_alloc;
@@ -2855,7 +2855,7 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
 
                         SYCL_CHECK(CHECK_TRY_ERROR(dpct::async_dpct_memcpy(
                             dhf_dst_i, ne0 * sizeof(float), dst_dd_i,
-                            row_diff * sizeof(float), row_diff * sizeof(float),
+                            row_diff * sizeof(float), row_diff * sizeof(float),  // sizeof
                             src1_ncols, dpct::device_to_device, *stream)));
                     } else {
                         float * dhf_dst_i = (float *) ((char *) dst_off_device + i02*nb2 + i03*nb3);
@@ -2902,37 +2902,37 @@ catch (sycl::exception const &exc) {
 }
 
 static void ggml_sycl_repeat_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_repeat_back(ctx, dst);
 }
 
 static void ggml_sycl_get_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     ggml_sycl_op_get_rows(ctx, dst);
 }
 
 static void ggml_sycl_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_norm(ctx, dst);
 }
 
 static void ggml_sycl_rms_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_rms_norm(ctx, dst);
 }
 
 static void ggml_sycl_rms_norm_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     ggml_sycl_op_rms_norm_back(ctx, dst);
 }
 
 static void ggml_sycl_l2_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_l2_norm(ctx, dst);
 }
 
 static void ggml_sycl_group_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_group_norm(ctx, dst);
 }
 
@@ -3016,7 +3016,7 @@ static void k_compute_batched_ptrs(const sycl::half * src0_as_f16, const sycl::h
     const int64_t i12 = item_ct1.get_group(1) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
 
     if (i13 >= ne13 || i12 >= ne12) {
-        return;
+        return;  // 返回
     }
 
     const int64_t i03 = i13 / r3;
@@ -3090,7 +3090,7 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
             }
 
         }
-#if GGML_SYCL_DNNL
+#if GGML_SYCL_DNNL  // 条件编译
         // oneDNN handles strided data and does not need overhead of ggml_get_to_fp16_nc_sycl
         const int64_t ne_src1 = src1->nb[last_str] * src1->ne[last_dim] / type_size_src1;
         src1_f16_alloc.alloc(ne_src1);
@@ -3103,7 +3103,7 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
         const to_fp16_nc_sycl_t to_fp16_nc_sycl = ggml_get_to_fp16_nc_sycl(src1->type);
         GGML_ASSERT(to_fp16_nc_sycl != nullptr);
         to_fp16_nc_sycl(src1_f16, src1_f16_alloc.get(), ne10, ne11, ne12, ne13, s11, s12, s13, queue);
-#endif
+#endif  // 条件编译结束
 
         src1_f16 = src1_f16_alloc.get();
         s11      = ne10;
@@ -3137,7 +3137,7 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
     const int64_t r2 = ne12 / ne02;
     const int64_t r3 = ne13 / ne03;
 
-#if GGML_SYCL_DNNL
+#if GGML_SYCL_DNNL  // 条件编译
     if (!g_ggml_sycl_disable_dnn) {
             int64_t str_a0 = nb00 / type_size_src0;
             int64_t str_a1 = nb01 / type_size_src0;
@@ -3236,7 +3236,7 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
 
     }
     else
-#endif
+#endif  // 条件编译结束
     {
         if (r2 == 1 && r3 == 1 && is_src0_cont_2 && is_src1_cont_2) {
             // with a [0, 2, 1, 3] perm. and ne02==1 the matrix strides need to be determined from dim 3:
@@ -3280,7 +3280,7 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
     std::exit(1);
 }
 
-enum class mul_mat_algo {
+enum class mul_mat_algo {  // 枚举定义
     DMMV         = 0,
     MMVQ         = 1,
     MUL_MAT_SYCL = 2,
@@ -3289,19 +3289,19 @@ enum class mul_mat_algo {
 inline bool ggml_sycl_supports_mmq(enum ggml_type type) {
     // TODO: accuracy issues in MMQ
     GGML_UNUSED(type);
-    return false;
+    return false;  // 返回
 }
 
 inline bool ggml_sycl_supports_reorder_mul_mat_sycl(enum ggml_type type) {
     switch (type) {
         case GGML_TYPE_Q4_0:
         case GGML_TYPE_Q8_0:
-            return true;
+            return true;  // 返回
         case GGML_TYPE_Q4_K:
         case GGML_TYPE_Q6_K:
-            return !g_ggml_sycl_prioritize_dmmv;
+            return !g_ggml_sycl_prioritize_dmmv;  // 返回
         default:
-            return false;
+            return false;  // 返回
     }
 }
 
@@ -3309,9 +3309,9 @@ inline bool ggml_sycl_supports_reorder_dmmv(enum ggml_type type) {
     switch (type) {
         case GGML_TYPE_Q4_0:
         case GGML_TYPE_Q8_0:
-            return true;
+            return true;  // 返回
         default:
-            return false;
+            return false;  // 返回
     }
 }
 
@@ -3321,9 +3321,9 @@ inline bool ggml_sycl_supports_reorder_mmvq(enum ggml_type type) {
         case GGML_TYPE_Q8_0:
         case GGML_TYPE_Q4_K:
         case GGML_TYPE_Q6_K:
-            return true;
+            return true;  // 返回
         default:
-            return false;
+            return false;  // 返回
     }
 }
 
@@ -3340,37 +3340,37 @@ static bool ggml_sycl_supports_dmmv(enum ggml_type type) {
         case GGML_TYPE_Q5_K:
         case GGML_TYPE_Q6_K:
         case GGML_TYPE_F16:
-            return true;
+            return true;  // 返回
         default:
-            return false;
+            return false;  // 返回
     }
 }
 
 // Helper functions to unify device memory allocation for both async and sync paths
 static inline void * sycl_ext_malloc_device(dpct::queue_ptr stream, size_t size) {
     bool use_async = g_ggml_sycl_use_async_mem_op;
-#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
+#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC  // 条件编译
     if (use_async) {
         return syclex::async_malloc(*stream, sycl::usm::alloc::device, size);
     }
-#else
+#else  // 否则
     // If async allocation extension is not available, use_async should always be false.
     GGML_ASSERT(!use_async);
-#endif
+#endif  // 条件编译结束
     return sycl::malloc(size, *stream, sycl::usm::alloc::device);
 }
 
 static inline void sycl_ext_free(dpct::queue_ptr stream, void * ptr) {
     bool use_async = g_ggml_sycl_use_async_mem_op;
-#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
+#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC  // 条件编译
     if (use_async) {
         syclex::async_free(*stream, ptr);
-        return;
+        return;  // 返回
     }
-#else
+#else  // 否则
     // If async allocation extension is not available, use_async should always be false.
     GGML_ASSERT(!use_async);
-#endif
+#endif  // 条件编译结束
     sycl::free(ptr, *stream);
 }
 
@@ -3378,13 +3378,13 @@ static inline void sycl_ext_free(dpct::queue_ptr stream, void * ptr) {
 // When device allocation fails and GGML_SYCL_HOST_MEM_FALLBACK is enabled,
 // falls back to host memory so the reorder kernel can still run (over PCIe).
 // Device access to host memory requires Linux kernel 6.8+ (Ubuntu 26.04+).
-struct sycl_reorder_temp_buffer {
+struct sycl_reorder_temp_buffer {  // 结构体定义
     void *          ptr  = nullptr;
     dpct::queue_ptr stream;
 
     sycl_reorder_temp_buffer(dpct::queue_ptr stream, size_t size) : stream(stream) {
         ptr = sycl_ext_malloc_device(stream, size);
-#ifdef GGML_SYCL_HOST_MEM_FALLBACK
+#ifdef GGML_SYCL_HOST_MEM_FALLBACK  // 如果定义了 GGML_SYCL_HOST_MEM_FALLBACK 则编译
         if (!ptr) {
             ptr = sycl::malloc_host(size, *stream);
             if (ptr) {
@@ -3392,12 +3392,12 @@ struct sycl_reorder_temp_buffer {
                 GGML_LOG_WARN("%s: device alloc of %zu bytes failed, using host memory fallback\n", __func__, size);
             }
         }
-#endif
+#endif  // 条件编译结束
     }
 
     ~sycl_reorder_temp_buffer() {
         if (!ptr) {
-            return;
+            return;  // 返回
         }
         if (host_fallback) {
             sycl::free(ptr, *stream);
@@ -3417,10 +3417,10 @@ private:
 
 static bool reorder_qw_q4_0(uint8_t * data_device, const int ncols, const int nrows, size_t size, size_t offset,
                             dpct::queue_ptr stream) {
-    sycl_reorder_temp_buffer tmp(stream, size);
+    sycl_reorder_temp_buffer tmp(stream, size);  // tmp
     if (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        return false;  // 返回
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
@@ -3451,15 +3451,15 @@ static bool reorder_qw_q4_0(uint8_t * data_device, const int ncols, const int nr
     if (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    return true;  // 返回
 }
 
 static bool reorder_qw_q8_0(uint8_t * data_device, const int ncols, const int nrows, size_t size, size_t offset,
                             dpct::queue_ptr stream) {
-    sycl_reorder_temp_buffer tmp(stream, size);
+    sycl_reorder_temp_buffer tmp(stream, size);  // tmp
     if (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        return false;  // 返回
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
@@ -3490,7 +3490,7 @@ static bool reorder_qw_q8_0(uint8_t * data_device, const int ncols, const int nr
     if (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    return true;  // 返回
 }
 
 static bool reorder_qw_q4_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
@@ -3499,10 +3499,10 @@ static bool reorder_qw_q4_k(uint8_t * data_device, size_t size, size_t offset, d
 
     const int nblocks = size / sizeof(block_q4_K);
 
-    sycl_reorder_temp_buffer tmp(stream, size);
+    sycl_reorder_temp_buffer tmp(stream, size);  // tmp
     if (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        return false;  // 返回
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
@@ -3533,7 +3533,7 @@ static bool reorder_qw_q4_k(uint8_t * data_device, size_t size, size_t offset, d
     if (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    return true;  // 返回
 }
 
 static bool reorder_qw_q6_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
@@ -3542,10 +3542,10 @@ static bool reorder_qw_q6_k(uint8_t * data_device, size_t size, size_t offset, d
 
     const int nblocks = size / sizeof(block_q6_K);
 
-    sycl_reorder_temp_buffer tmp(stream, size);
+    sycl_reorder_temp_buffer tmp(stream, size);  // tmp
     if (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        return false;  // 返回
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
@@ -3586,7 +3586,7 @@ static bool reorder_qw_q6_k(uint8_t * data_device, size_t size, size_t offset, d
     if (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    return true;  // 返回
 }
 
 static bool reorder_qw(const ggml_tensor * src0, dpct::queue_ptr stream) {
@@ -3597,21 +3597,21 @@ static bool reorder_qw(const ggml_tensor * src0, dpct::queue_ptr stream) {
 
     switch (src0->type) {
         case GGML_TYPE_Q4_0:
-            return reorder_qw_q4_0(data_device, ncols, nrows, size, 0, stream);
+            return reorder_qw_q4_0(data_device, ncols, nrows, size, 0, stream);  // reorder_qw_q4_0
         case GGML_TYPE_Q8_0:
-            return reorder_qw_q8_0(data_device, ncols, nrows, size, 0, stream);
+            return reorder_qw_q8_0(data_device, ncols, nrows, size, 0, stream);  // reorder_qw_q8_0
         case GGML_TYPE_Q4_K:
-            return reorder_qw_q4_k(data_device, size, 0, stream);
+            return reorder_qw_q4_k(data_device, size, 0, stream);  // reorder_qw_q4_k
         case GGML_TYPE_Q6_K:
-            return reorder_qw_q6_k(data_device, size, 0, stream);
+            return reorder_qw_q6_k(data_device, size, 0, stream);  // reorder_qw_q6_k
         default:
             GGML_ABORT("reorder_qw() called with unsupported type");
-            return false;
+            return false;  // 返回
     }
 }
 
 static bool should_reorder_tensor(ggml_backend_sycl_context& ctx, const ggml_tensor * dst) {
-    return !g_ggml_sycl_disable_optimize && //allow optimize, controlled by $GGML_SYCL_DISABLE_OPT
+    return !g_ggml_sycl_disable_optimize && //allow optimize, controlled by $GGML_SYCL_DISABLE_OPT  // 返回
             ctx.opt_feature.reorder &&      //allow this device due to good perf, skip the devices with bad perf.
             dst->op == GGML_OP_MUL_MAT &&   //limit to some supported cases of Q4_0, to do for more cases.
             dst->src[1]->ne[1]==1 && dst->src[1]->ne[2]==1 && dst->src[1]->ne[3]==1;
@@ -3620,7 +3620,7 @@ static bool should_reorder_tensor(ggml_backend_sycl_context& ctx, const ggml_ten
 static void opt_for_reorder(ggml_backend_sycl_context * ctx, const ggml_tensor * src0, const ggml_tensor * /* src1 */,
                             ggml_tensor * dst, mul_mat_algo mm_algorithm) {
     if (!should_reorder_tensor(*ctx, dst)) {
-        return;
+        return;  // 返回
     }
 
     ggml_tensor_extra_gpu * extra = static_cast<ggml_tensor_extra_gpu *>(src0->extra);
@@ -3631,17 +3631,17 @@ static void opt_for_reorder(ggml_backend_sycl_context * ctx, const ggml_tensor *
     switch (mm_algorithm) {
         case mul_mat_algo::DMMV:
             if (!ggml_sycl_supports_reorder_dmmv(src0->type)) {
-                return;
+                return;  // 返回
             }
             break;
         case mul_mat_algo::MMVQ:
             if (!ggml_sycl_supports_reorder_mmvq(src0->type)) {
-                return;
+                return;  // 返回
             }
             break;
         case mul_mat_algo::MUL_MAT_SYCL:
             if (!ggml_sycl_supports_reorder_mul_mat_sycl(src0->type)) {
-                return;
+                return;  // 返回
             }
             break;
     }
@@ -3653,17 +3653,17 @@ static void opt_for_reorder(ggml_backend_sycl_context * ctx, const ggml_tensor *
 
 
 static bool can_use_dequantize_mul_mat_vec(const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
-    return ggml_sycl_supports_dmmv(src0->type) && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&
+    return ggml_sycl_supports_dmmv(src0->type) && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&  // ggml_sycl_supports_dmmv
            src0->ne[0] % GGML_SYCL_DMMV_X == 0 && src1->ne[1] == 1;
 }
 
 static bool can_use_mul_mat_vec_q(const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
-    return ggml_is_quantized(src0->type) && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&
+    return ggml_is_quantized(src0->type) && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&  // ggml_is_quantized
            src1->ne[1] <= MMVQ_MAX_BATCH_SIZE;
 }
 
 static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     const bool split = ggml_backend_buffer_is_sycl_split(src0->buffer);
     int64_t min_compute_capability = INT_MAX;
 
@@ -3697,9 +3697,9 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
     // mmvq and mmq need the __dp4a instruction which is available for gen12+
     // Workaround in https://github.com/ggml-org/llama.cpp/commit/95f84d5ce8b449a9b16009434aca800df504a02e
     use_mul_mat_q = use_mul_mat_q && (src0->type != GGML_TYPE_IQ2_XXS);
-#ifdef SYCL_USE_XMX
+#ifdef SYCL_USE_XMX  // 如果定义了 SYCL_USE_XMX 则编译
     use_mul_mat_q = use_mul_mat_q && (src1->ne[1] <= MMQ_MAX_BATCH_SIZE);
-#endif // SYCL_USE_XMX
+#endif // SYCL_USE_XMX  // 条件编译结束
 
     // Dispatch becomes obscure with the reorder, MMVQ when the reorder optimization
     // is enabled takes precedence over DMMV, the current if-else implementation
@@ -3751,7 +3751,7 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
 }
 
 
-struct mmid_row_mapping {
+struct mmid_row_mapping {  // 结构体定义
     int32_t i1;
     int32_t i2;
 };
@@ -3768,7 +3768,7 @@ __dpct_inline__ static void k_copy_src1_to_contiguous(
     const int32_t row_id_i = *(const int32_t *) (ids + iid1*ids_nb1 + id*ids_nb0);
 
     if (row_id_i != i02) {
-        return;
+        return;  // 返回
     }
 
     const int64_t i11 = id % ne11;
@@ -3853,7 +3853,7 @@ static bool ggml_sycl_mul_mat_id_mmvq_fused(
     const size_t bytes_per_qrow = (size_t) src1_padded_cols * sizeof(block_q8_1) / QK8_1;
     const size_t src1_row_stride = (ne11 == 1) ? 0 : bytes_per_qrow;
 
-    return ggml_sycl_mul_mat_vec_q_id(
+    return ggml_sycl_mul_mat_vec_q_id(  // 返回
         src0->type, src0->data, src1_ddq, (const int32_t *) ids->data,
         (float *) dst->data, (int) ne10, nrows, n_experts_used,
         /*expert_weight_stride=*/ src0->nb[2],
@@ -3863,7 +3863,7 @@ static bool ggml_sycl_mul_mat_id_mmvq_fused(
 
 static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
                                  ggml_tensor *dst) try {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);  // scope_dbg_print
     const ggml_tensor *src0 = dst->src[0];
     const ggml_tensor *src1 = dst->src[1];
     GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(src0->buffer) && "mul_mat_id does not support split buffers");
@@ -3878,7 +3878,7 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
 
     if (ne12 == 1) {
         if (ggml_sycl_mul_mat_id_mmvq_fused(ctx, src0, src1, ids, dst)) {
-            return;
+            return;  // 返回
         }
     }
 
@@ -4042,51 +4042,51 @@ catch (sycl::exception const &exc) {
 }
 
 static void ggml_sycl_scale(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_scale(ctx, dst);
 }
 
 static void ggml_sycl_diag_mask_inf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_diag_mask_inf(ctx, dst);
 }
 
 static void ggml_sycl_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_pool2d(ctx, dst);
 }
 
 static void ggml_sycl_im2col(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     ggml_sycl_op_im2col(ctx, dst);
 }
 
 static void ggml_sycl_sum(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
     ggml_sycl_op_sum(ctx, dst);
 }
 
 static void ggml_sycl_sum_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
     ggml_sycl_op_sum_rows(ctx, dst);
 }
 
 static void ggml_sycl_mean(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
     ggml_sycl_op_mean(ctx, dst);
 }
 
 static void ggml_sycl_argsort(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
     ggml_sycl_op_argsort(ctx, dst);
 }
 
 static void ggml_sycl_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
     ggml_sycl_op_argmax(ctx, dst);
 }
@@ -4094,7 +4094,7 @@ static void ggml_sycl_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * dst)
 
 static void ggml_sycl_set_main_device(const int main_device) try {
     if (dpct::get_current_device_id() == static_cast<unsigned int> (main_device)) {
-        return;
+        return;  // 返回
     }
     check_allow_gpu_index(main_device);
     dpct::select_device(main_device);
@@ -4233,7 +4233,7 @@ static bool ggml_sycl_compute_forward(ggml_backend_sycl_context & ctx, struct gg
                     ggml_sycl_trunc(ctx, dst);
                     break;
                 default:
-                    return false;
+                    return false;  // 返回
             }
             break;
         case GGML_OP_GLU:
@@ -4257,7 +4257,7 @@ static bool ggml_sycl_compute_forward(ggml_backend_sycl_context & ctx, struct gg
                     ggml_sycl_geglu_quick(ctx, dst);
                     break;
                 default:
-                    return false;
+                    return false;  // 返回
             }
             break;
         case GGML_OP_NORM:
@@ -4292,14 +4292,14 @@ static bool ggml_sycl_compute_forward(ggml_backend_sycl_context & ctx, struct gg
             break;
         case GGML_OP_MUL_MAT:
             if (dst->src[0]->ne[3] != dst->src[1]->ne[3]) {
-                return false;
+                return false;  // 返回
             }
             /* ggml_sycl_mul_mat_id is dependent on ggml_sycl_mul_mat */
             ggml_sycl_mul_mat(ctx, dst->src[0], dst->src[1], dst);
             break;
         case GGML_OP_MUL_MAT_ID:
             if (dst->src[0]->ne[3] != dst->src[1]->ne[3]) {
-                return false;
+                return false;  // 返回
             }
             ggml_sycl_mul_mat_id(ctx, dst);
             break;
@@ -4404,10 +4404,10 @@ static bool ggml_sycl_compute_forward(ggml_backend_sycl_context & ctx, struct gg
             ggml_sycl_flash_attn_ext(ctx, dst);
             break;
         default:
-            return false;
+            return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 } catch (sycl::exception & e) {
     std::cerr << e.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::endl;
     std::cerr << "Error OP "<<ggml_op_name(dst->op)<< std::endl;
@@ -4521,10 +4521,10 @@ static bool ggml_backend_sycl_cpy_tensor_async(ggml_backend_t backend,
         const queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
         SYCL_CHECK(CHECK_TRY_ERROR((stream)->memcpy(
             dst->data, src->data, ggml_nbytes(dst))));
-        return true;
+        return true;  // 返回
     }
 
-    return false;
+    return false;  // 返回
 }
 catch (sycl::exception const &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
@@ -4557,14 +4557,14 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
         if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
             continue;
         }
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         assert(node->buffer->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device));
         for (int j = 0; j < GGML_MAX_SRC; j++) {
             if (node->src[j] != nullptr) {
                 assert(node->src[j]->buffer->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device));
             }
         }
-#endif
+#endif  // 条件编译结束
         bool ok = ggml_sycl_compute_forward(*sycl_ctx, node);
         if (!ok) {
             GGML_LOG_ERROR("%s: error: op not supported %s (%s)\n", __func__, node->name, ggml_op_name(node->op));
@@ -4573,12 +4573,12 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
     }
 }
 
-#ifdef GGML_SYCL_GRAPH
+#ifdef GGML_SYCL_GRAPH  // 如果定义了 GGML_SYCL_GRAPH 则编译
 static bool check_graph_compatibility(ggml_cgraph * cgraph) {
     if (ggml_sycl_info().device_count > 1) {
         // A sycl_ex::command_graph object can only be created for a single device
         GGML_LOG_INFO("%s: disabling SYCL graphs due to multiple devices\n", __func__);
-        return false;
+        return false;  // 返回
     }
 
     for (int i = 0; i < cgraph->n_nodes; i++) {
@@ -4595,38 +4595,38 @@ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
                 // ggml_sycl_mul_mat_id() does a blocking host wait on the sycl queue after
                 // submitting a memcpy operation, but wait() can't be called on a queue that
                 // is recording to a graph.
-                GGML_LOG_INFO("%s: disabling SYCL graphs due to unsupported node type %s\n", __func__,
+                GGML_LOG_INFO("%s: disabling SYCL graphs due to unsupported node type %s\n", __func__,  // 打印信息日志
                               ggml_op_name(node_op));
-                return false;
+                return false;  // 返回
             case GGML_OP_MUL_MAT:
                 // We cannot use graphs with ggml_sycl_mul_mat() when SYCL async memory allocation extensions are not available,
                 // as SYCL malloc / free and host wait calls are not supported when recording to a graph which are all present
                 // in reordering.
                 if (!g_ggml_sycl_use_async_mem_op) {
-                    GGML_LOG_INFO(
+                    GGML_LOG_INFO(  // 打印信息日志
                         "%s: disabling SYCL graphs due to unsupported node type when using a compiler without the "
                         "oneAPI async memory allocation extension "
                         "%s\n",
                         __func__, ggml_op_name(node_op));
-                    return false;
+                    return false;  // 返回
                 }
         }
     }
-    return true;
+    return true;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
     auto * sycl_ctx = static_cast<ggml_backend_sycl_context *>(backend->context);
 
-#ifdef GGML_SYCL_GRAPH
+#ifdef GGML_SYCL_GRAPH  // 如果定义了 GGML_SYCL_GRAPH 则编译
     bool use_sycl_graph = !g_ggml_sycl_disable_graph && check_graph_compatibility(cgraph);
     if (use_sycl_graph) {
         const bool graph_support = dpct::get_device(sycl_ctx->device).has(sycl::aspect::ext_oneapi_limited_graph);
         if (!graph_support) {
             GGML_SYCL_DEBUG("[SYCL-GRAPH] can not use graphs on device:%d\n", sycl_ctx->device);
             ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
-            return GGML_STATUS_SUCCESS;
+            return GGML_STATUS_SUCCESS;  // 返回
         }
 
         sycl_ex::command_graph model_sycl_graph(*(sycl_ctx->stream()), {sycl_ex::property::graph::assume_buffer_outlives_graph{}});
@@ -4655,14 +4655,14 @@ static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_
 
         sycl_ctx->stream()->ext_oneapi_graph(*(sycl_ctx->exec_graph));
     } else
-#endif
+#endif  // 条件编译结束
     {
         ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
     }
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
-static void ggml_backend_sycl_event_record(ggml_backend_t backend, ggml_backend_event_t event)
+static void ggml_backend_sycl_event_record(ggml_backend_t backend, ggml_backend_event_t event)  // ggml_backend_sycl_event_record
 try
 {
     ggml_backend_sycl_context *sycl_ctx =
@@ -4718,7 +4718,7 @@ static ggml_backend_i ggml_backend_sycl_interface = {
 
 static ggml_guid_t ggml_backend_sycl_guid() {
     static ggml_guid guid = { 0x58, 0x05, 0x13, 0x8f, 0xcd, 0x3a, 0x61, 0x9d, 0xe7, 0xcd, 0x98, 0xa9, 0x03, 0xfd, 0x7c, 0x53 };
-    return &guid;
+    return &guid;  // 返回
 }
 
 bool ggml_backend_is_sycl(ggml_backend_t backend) {
@@ -4726,13 +4726,13 @@ bool ggml_backend_is_sycl(ggml_backend_t backend) {
 }
 
 int ggml_backend_sycl_get_device_count() {
-    return ggml_sycl_info().device_count;
+    return ggml_sycl_info().device_count;  // ggml_sycl_info
 }
 
 
 // backend device
 
-struct ggml_backend_sycl_device_context {
+struct ggml_backend_sycl_device_context {  // 结构体定义
     int device;
     std::string name;
     std::string description;
@@ -4758,7 +4758,7 @@ static void ggml_backend_sycl_device_get_memory(ggml_backend_dev_t dev, size_t *
 
 static enum ggml_backend_dev_type ggml_backend_sycl_device_get_type(ggml_backend_dev_t dev) {
     GGML_UNUSED(dev);
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+    return GGML_BACKEND_DEVICE_TYPE_GPU;  // 返回
 }
 
 static void ggml_backend_sycl_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
@@ -4768,11 +4768,11 @@ static void ggml_backend_sycl_device_get_props(ggml_backend_dev_t dev, ggml_back
     ggml_backend_sycl_device_get_memory(dev, &props->memory_free, &props->memory_total);
 
     bool host_buffer = getenv("GGML_SYCL_NO_PINNED") == nullptr;
-#ifdef GGML_SYCL_NO_PEER_COPY
+#ifdef GGML_SYCL_NO_PEER_COPY  // 如果定义了 GGML_SYCL_NO_PEER_COPY 则编译
     bool events = false;
-#else
+#else  // 否则
     bool events = true;
-#endif
+#endif  // 条件编译结束
 
     props->caps = {
         /* .async                 = */ true,
@@ -4785,17 +4785,17 @@ static void ggml_backend_sycl_device_get_props(ggml_backend_dev_t dev, ggml_back
 static ggml_backend_t ggml_backend_sycl_device_init(ggml_backend_dev_t dev, const char * params) {
     GGML_UNUSED(params);
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return ggml_backend_sycl_init(ctx->device);
+    return ggml_backend_sycl_init(ctx->device);  // ggml_backend_sycl_init
 }
 
 static ggml_backend_buffer_type_t ggml_backend_sycl_device_get_buffer_type(ggml_backend_dev_t dev) {
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return ggml_backend_sycl_buffer_type(ctx->device);
+    return ggml_backend_sycl_buffer_type(ctx->device);  // ggml_backend_sycl_buffer_type
 }
 
 static ggml_backend_buffer_type_t ggml_backend_sycl_device_get_host_buffer_type(ggml_backend_dev_t dev) {
     GGML_UNUSED(dev);
-    return ggml_backend_sycl_host_buffer_type();
+    return ggml_backend_sycl_host_buffer_type();  // ggml_backend_sycl_host_buffer_type
 }
 
 static ggml_backend_buffer_t ggml_backend_sycl_device_buffer_from_host_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
@@ -4803,7 +4803,7 @@ static ggml_backend_buffer_t ggml_backend_sycl_device_buffer_from_host_ptr(ggml_
     GGML_UNUSED(ptr);
     GGML_UNUSED(size);
     GGML_UNUSED(max_tensor_size);
-    return nullptr;
+    return nullptr;  // 返回
 }
 
 static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
@@ -4816,9 +4816,9 @@ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const g
                 ggml_type src0_type = op->src[0]->type;
                 ggml_type src1_type = op->src[1]->type;
                 if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_F32) {
-                    return true;
+                    return true;  // 返回
                 }
-                return false;
+                return false;  // 返回
             }
         case GGML_OP_UNARY:
             switch (ggml_get_unary_op(op)) {
@@ -4839,17 +4839,17 @@ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const g
                 case GGML_UNARY_OP_SOFTPLUS:
                 case GGML_UNARY_OP_ELU:
                 case GGML_UNARY_OP_CEIL:
-                    return true;
+                    return true;  // 返回
                 case GGML_UNARY_OP_FLOOR:
                 case GGML_UNARY_OP_ROUND:
                 case GGML_UNARY_OP_TRUNC:
-#if defined (GGML_SYCL_F16)
-                    return ggml_is_contiguous(op->src[0]) && (op->type == op->src[0]->type);
-#else
-                    return ggml_is_contiguous(op->src[0]) && (op->src[0]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32) && (op->type == op->src[0]->type);
-#endif
+#if defined (GGML_SYCL_F16)  // 条件编译
+                    return ggml_is_contiguous(op->src[0]) && (op->type == op->src[0]->type);  // ggml_is_contiguous
+#else  // 否则
+                    return ggml_is_contiguous(op->src[0]) && (op->src[0]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32) && (op->type == op->src[0]->type);  // ggml_is_contiguous
+#endif  // 条件编译结束
                 default:
-                    return false;
+                    return false;  // 返回
             }
         case GGML_OP_GLU:
             switch (ggml_get_glu_op(op)) {
@@ -4859,9 +4859,9 @@ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const g
                 case GGML_GLU_OP_SWIGLU_OAI:
                 case GGML_GLU_OP_GEGLU_ERF:
                 case GGML_GLU_OP_GEGLU_QUICK:
-                    return ggml_is_contiguous_1(op->src[0]);
+                    return ggml_is_contiguous_1(op->src[0]);  // ggml_is_contiguous_1
                 default:
-                    return false;
+                    return false;  // 返回
             }
             break;
         case GGML_OP_MUL_MAT:
@@ -4872,11 +4872,11 @@ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const g
 
                 // disable Q1_0 until implementation
                 if (a->type == GGML_TYPE_Q1_0 || b->type == GGML_TYPE_Q1_0) {
-                    return false;
+                    return false;  // 返回
                 }
 
                 if (a->ne[3] != b->ne[3]) {
-                    return false;
+                    return false;  // 返回
                 }
 
                 ggml_type src0_type = op->src[0]->type;
@@ -4886,18 +4886,18 @@ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const g
                 // TODO: The configuration below needs more work to be supported with oneDNN
                 if (ggml_is_permuted(a) && !ggml_is_contiguous(a) &&
                     a->ne[2] > 1 && a->ne[3] > 1 && src0_type == GGML_TYPE_F16) {
-                  return false;
+                  return false;  // 返回
                 }
 
                 // TODO: This specific configuration can fail with oneDNN and needs more debugging
                 if (!ggml_is_permuted(a) && ggml_is_permuted(b) && b->ne[2] > 1 && b->ne[3] > 1 &&
                     a->ne[0] > 128 && a->ne[2] == 1 && src0_type == GGML_TYPE_F16) {
-                    return false;
+                    return false;  // 返回
                 }
-                return true;
+                return true;  // 返回
             }
         case GGML_OP_OUT_PROD:
-            return op->type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 && op->ne[2] == 1 && op->ne[3] == 1;
+            return op->type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 && op->ne[2] == 1 && op->ne[3] == 1;  // 返回
         case GGML_OP_GET_ROWS:
             {
                 switch (op->src[0]->type) {
@@ -4908,9 +4908,9 @@ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const g
                     case GGML_TYPE_Q5_0:
                     case GGML_TYPE_Q5_1:
                     case GGML_TYPE_Q8_0:
-                        return true;
+                        return true;  // 返回
                     default:
-                        return false;
+                        return false;  // 返回
                 }
             }
          case GGML_OP_SET:
@@ -4921,7 +4921,7 @@ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const g
 
         case GGML_OP_SET_ROWS:
             {
-                return ((op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16 || op->type == GGML_TYPE_BF16 ||
+                return ((op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16 || op->type == GGML_TYPE_BF16 ||  // 返回
                          op->type == GGML_TYPE_Q8_0 || op->type == GGML_TYPE_Q5_1 || op->type == GGML_TYPE_Q5_0 ||
                          op->type == GGML_TYPE_Q4_1 || op->type == GGML_TYPE_Q4_0 || op->type == GGML_TYPE_IQ4_NL) &&
                         (op->src[1]->type == GGML_TYPE_I64 || op->src[1]->type == GGML_TYPE_I32));
@@ -4932,74 +4932,74 @@ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const g
                 ggml_type src0_type = op->src[0]->type;
                 ggml_type src1_type = op->src[1]->type;
                 if (src0_type == src1_type && (ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1])) && src0_type != GGML_TYPE_BF16) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_F32) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_F16) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_Q8_0) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_Q4_0) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_Q4_1) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_F16 && src1_type == GGML_TYPE_F16) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_F16 && src1_type == GGML_TYPE_F32) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_Q8_0 && src1_type == GGML_TYPE_F32) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_Q4_0 && src1_type == GGML_TYPE_F32) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_Q4_1 && src1_type == GGML_TYPE_F32) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_Q5_0) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_Q5_0 && src1_type == GGML_TYPE_F32) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_Q5_1) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_Q5_1 && src1_type == GGML_TYPE_F32) {
-                    return true;
+                    return true;  // 返回
                 }
                 if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_IQ4_NL) {
-                    return true;
+                    return true;  // 返回
                 }
                 if(src0_type == GGML_TYPE_Q8_0 && src1_type == GGML_TYPE_Q8_0) {
-                    return true;
+                    return true;  // 返回
                 }
                 if(src0_type == GGML_TYPE_Q5_0 && src1_type == GGML_TYPE_Q5_0) {
-                    return true;
+                    return true;  // 返回
                 }
                 if(src0_type == GGML_TYPE_Q5_1 && src1_type == GGML_TYPE_Q5_1) {
-                    return true;
+                    return true;  // 返回
                 }
                 if(src0_type == GGML_TYPE_Q4_0 && src1_type == GGML_TYPE_Q4_0) {
-                    return true;
+                    return true;  // 返回
                 }
                 if(src0_type == GGML_TYPE_Q4_1 && src1_type == GGML_TYPE_Q4_1) {
-                    return true;
+                    return true;  // 返回
                 }
-                return false;
+                return false;  // 返回
             }
         case GGML_OP_REPEAT_BACK:
             {
                 ggml_type src0_type = op->src[0]->type;
-                return src0_type == GGML_TYPE_F32;
+                return src0_type == GGML_TYPE_F32;  // 返回
             }
         case GGML_OP_CONCAT:
         case GGML_OP_DUP:
@@ -5017,97 +5017,97 @@ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const g
         case GGML_OP_MUL:
         case GGML_OP_DIV:
         case GGML_OP_REPEAT:
-            return true;
+            return true;  // 返回
         case GGML_OP_PAD_REFLECT_1D:
-            return ggml_is_contiguous(op->src[0]) && op-> type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32;
+            return ggml_is_contiguous(op->src[0]) && op-> type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32;  // ggml_is_contiguous
         case GGML_OP_SQR:
         case GGML_OP_SQRT:
         case GGML_OP_SIN:
         case GGML_OP_COS:
         case GGML_OP_CLAMP:
         case GGML_OP_LOG:
-#if defined (GGML_SYCL_F16)
+#if defined (GGML_SYCL_F16)  // 条件编译
             return ((op->type == GGML_TYPE_F32 || op->type == GGML_SYCL_F16) && (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_SYCL_F16) && (op->type == op->src[0]->type));
-#else
+#else  // 否则
             return (op->type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32) && (op->type == op->src[0]->type);
-#endif
+#endif  // 条件编译结束
         case GGML_OP_NORM:
         case GGML_OP_L2_NORM:
         case GGML_OP_GROUP_NORM:
         case GGML_OP_RMS_NORM:
-            return true;
+            return true;  // 返回
         case GGML_OP_RMS_NORM_BACK:
-            return ggml_is_contiguous(op->src[0]);
+            return ggml_is_contiguous(op->src[0]);  // ggml_is_contiguous
         case GGML_OP_SCALE:
-            return true;
+            return true;  // 返回
         case GGML_OP_CONT:
-            return op->src[0]->type != GGML_TYPE_BF16;
+            return op->src[0]->type != GGML_TYPE_BF16;  // 返回
         case GGML_OP_TRI:
             {
                 const ggml_tensor * src0 = op->src[0];
-                return src0 &&
+                return src0 &&  // 返回
                        op->type == GGML_TYPE_F32 &&
                        ggml_is_contiguous(src0);
             }
         case GGML_OP_DIAG_MASK_INF:
-            return true;
+            return true;  // 返回
         case GGML_OP_SOFT_MAX:
-            return true;
+            return true;  // 返回
         case GGML_OP_SOFT_MAX_BACK: {
             float max_bias = 0.0f;
             memcpy(&max_bias, (const float *) op->op_params + 1, sizeof(float));
-            return max_bias == 0.0f;
+            return max_bias == 0.0f;  // 返回
         }
         case GGML_OP_ROPE:
         case GGML_OP_ROPE_BACK:
         case GGML_OP_IM2COL:
         case GGML_OP_UPSCALE:
-            return true;
+            return true;  // 返回
         case GGML_OP_SUM:
         case GGML_OP_SUM_ROWS:
         case GGML_OP_MEAN:
-            return ggml_is_contiguous(op->src[0]);
+            return ggml_is_contiguous(op->src[0]);  // ggml_is_contiguous
         case GGML_OP_ARGSORT:
             return op->src[0]->ne[0] * sizeof(int) <=
                    ggml_sycl_info().devices[device].smpbo;
         case GGML_OP_TOP_K: {
             const ggml_tensor * src0 = op->src[0];
             const int k = op->ne[0];
-            return src0 &&
+            return src0 &&  // 返回
                 op->type == GGML_TYPE_I32 &&
                 src0->type == GGML_TYPE_F32 &&
                 ggml_is_contiguous(src0) &&
                 k > 0 && k <= 32;
         }
         case GGML_OP_POOL_2D:
-            return true;
+            return true;  // 返回
         case GGML_OP_ACC:
-            return ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
+            return ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);  // ggml_is_contiguous
         case GGML_OP_PAD:
             // TODO: add circular padding support for syscl, see https://github.com/ggml-org/llama.cpp/pull/16985
             if (ggml_get_op_params_i32(op, 8) != 0) {
-                return false;
+                return false;  // 返回
             }
-            return ggml_is_contiguous(op->src[0]);
+            return ggml_is_contiguous(op->src[0]);  // ggml_is_contiguous
         case GGML_OP_LEAKY_RELU:
         case GGML_OP_TIMESTEP_EMBEDDING:
         case GGML_OP_RWKV_WKV6:
         case GGML_OP_RWKV_WKV7:
         case GGML_OP_GATED_LINEAR_ATTN:
         case GGML_OP_GATED_DELTA_NET:
-            return true;
+            return true;  // 返回
         case GGML_OP_SSM_CONV:
-            return op->type == GGML_TYPE_F32 &&
+            return op->type == GGML_TYPE_F32 &&  // 返回
                    op->src[0]->type == GGML_TYPE_F32 &&
                    op->src[1]->type == GGML_TYPE_F32;
         case GGML_OP_ROLL:
-            return op->type == GGML_TYPE_F32;
+            return op->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_ARANGE:
-            return op->type == GGML_TYPE_F32;
+            return op->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_FLASH_ATTN_EXT:
-            return ggml_sycl_flash_attn_ext_supported(device, op);
+            return ggml_sycl_flash_attn_ext_supported(device, op);  // ggml_sycl_flash_attn_ext_supported
         default:
-            return false;
+            return false;  // 返回
     }
 
     GGML_UNUSED(dev);
@@ -5115,51 +5115,51 @@ static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const g
 
 static bool ggml_backend_sycl_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
     if (buft->iface.get_name != ggml_backend_sycl_buffer_type_get_name) {
-        return false;
+        return false;  // 返回
     }
     ggml_backend_sycl_buffer_type_context * buft_ctx = (ggml_backend_sycl_buffer_type_context *)buft->context;
     ggml_backend_sycl_device_context * sycl_ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return buft_ctx->device == sycl_ctx->device;
+    return buft_ctx->device == sycl_ctx->device;  // 返回
 }
 
 static int64_t get_op_batch_size(const ggml_tensor * op) {
     switch (op->op) {
         case GGML_OP_GET_ROWS:
-            return 0;
+            return 0;  // 返回
         case GGML_OP_MUL_MAT:
-            return op->ne[1];
+            return op->ne[1];  // 返回
         case GGML_OP_MUL_MAT_ID:
         case GGML_OP_ROPE:
-            return op->ne[2];
+            return op->ne[2];  // 返回
         default:
-            return ggml_nrows(op);
+            return ggml_nrows(op);  // ggml_nrows
     }
 }
 
 static bool ggml_backend_sycl_device_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
     ggml_backend_sycl_device_context * sycl_ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return get_op_batch_size(op) >= sycl_ctx->op_offload_min_batch_size;
+    return get_op_batch_size(op) >= sycl_ctx->op_offload_min_batch_size;  // get_op_batch_size
 }
 
 static ggml_backend_event_t
 ggml_backend_sycl_device_event_new(ggml_backend_dev_t dev) {
 
-#ifdef GGML_SYCL_NO_PEER_COPY
-    return nullptr;
-#else
+#ifdef GGML_SYCL_NO_PEER_COPY  // 如果定义了 GGML_SYCL_NO_PEER_COPY 则编译
+    return nullptr;  // 返回
+#else  // 否则
   sycl::event *event_ptr = new sycl::event();
 
-  return new ggml_backend_event{
+  return new ggml_backend_event{  // 返回
       /* .device = */ dev,
       /* .context = */ event_ptr,
   };
-#endif
+#endif  // 条件编译结束
 }
 
 static void ggml_backend_sycl_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) try {
   GGML_UNUSED(dev);
   if (event == nullptr) {
-    return;
+    return;  // 返回
   }
 
   if (event->context != nullptr) {
@@ -5208,13 +5208,13 @@ static const ggml_backend_device_i ggml_backend_sycl_device_interface = {
 
 // backend reg
 
-struct ggml_backend_sycl_reg_context {
+struct ggml_backend_sycl_reg_context {  // 结构体定义
     std::vector<ggml_backend_dev_t> devices;
 };
 
 static const char * ggml_backend_sycl_reg_get_name(ggml_backend_reg_t reg) {
     GGML_UNUSED(reg);
-    return GGML_SYCL_NAME;
+    return GGML_SYCL_NAME;  // 返回
 }
 
 static size_t ggml_backend_sycl_reg_get_device_count(ggml_backend_reg_t reg) {
@@ -5225,7 +5225,7 @@ static size_t ggml_backend_sycl_reg_get_device_count(ggml_backend_reg_t reg) {
 static ggml_backend_dev_t ggml_backend_sycl_reg_get_device(ggml_backend_reg_t reg, size_t index) {
     ggml_backend_sycl_reg_context * ctx = (ggml_backend_sycl_reg_context *)reg->context;
     GGML_ASSERT(index < ctx->devices.size());
-    return ctx->devices[index];
+    return ctx->devices[index];  // 返回
 }
 
 static void *ggml_backend_sycl_reg_get_proc_address(ggml_backend_reg_t reg, const char *name) {
@@ -5239,7 +5239,7 @@ static void *ggml_backend_sycl_reg_get_proc_address(ggml_backend_reg_t reg, cons
     // "ggml_backend_register_host_buffer"
     // "ggml_backend_unregister_host_buffer"
     GGML_UNUSED(name);
-    return nullptr;
+    return nullptr;  // 返回
 }
 
 static const ggml_backend_reg_i ggml_backend_sycl_reg_interface = {
@@ -5295,7 +5295,7 @@ ggml_backend_reg_t ggml_backend_sycl_reg() {
         initialized = true;
     }
 
-    return &reg;
+    return &reg;  // 返回
 }
 
 ggml_backend_t ggml_backend_sycl_init(int device) {
@@ -5307,7 +5307,7 @@ ggml_backend_t ggml_backend_sycl_init(int device) {
     ggml_backend_sycl_context * ctx = new ggml_backend_sycl_context(device);
     if (ctx == nullptr) {
         GGML_LOG_ERROR("%s: error: failed to allocate context\n", __func__);
-        return nullptr;
+        return nullptr;  // 返回
     };
 
     ggml_backend_t sycl_backend = new ggml_backend {
@@ -5317,7 +5317,7 @@ ggml_backend_t ggml_backend_sycl_init(int device) {
         /* .context = */ ctx
     };
 
-    return sycl_backend;
+    return sycl_backend;  // 返回
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_sycl_reg)

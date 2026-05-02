@@ -1,30 +1,30 @@
-#include "ggml-impl.h"
-#include "ggml-blas.h"
-#include "ggml-backend-impl.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-blas.h"  // 引入 ggml-blas.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
 
-#include <future>
-#include <vector>
-#include <cstring>
+#include <future>  // 引入 future 头文件
+#include <vector>  // 引入 vector 头文件
+#include <cstring>  // 引入 cstring 头文件
 
-#if defined(GGML_BLAS_USE_ACCELERATE)
-#   include <Accelerate/Accelerate.h>
-#elif defined(GGML_BLAS_USE_MKL)
-#   include <mkl.h>
-#elif defined(GGML_BLAS_USE_BLIS)
-#   include <blis.h>
-#elif defined(GGML_BLAS_USE_NVPL)
-#   include <nvpl_blas.h>
-#else
-#   include <cblas.h>
-#endif
+#if defined(GGML_BLAS_USE_ACCELERATE)  // 条件编译
+#   include <Accelerate/Accelerate.h>  // 引入 Accelerate/Accelerate.h 头文件
+#elif defined(GGML_BLAS_USE_MKL)  // 否则如果
+#   include <mkl.h>  // 引入 mkl.h 头文件
+#elif defined(GGML_BLAS_USE_BLIS)  // 否则如果
+#   include <blis.h>  // 引入 blis.h 头文件
+#elif defined(GGML_BLAS_USE_NVPL)  // 否则如果
+#   include <nvpl_blas.h>  // 引入 nvpl_blas.h 头文件
+#else  // 否则
+#   include <cblas.h>  // 引入 cblas.h 头文件
+#endif  // 条件编译结束
 
-struct ggml_backend_blas_context {
+struct ggml_backend_blas_context {  // 结构体定义
     int n_threads = GGML_DEFAULT_N_THREADS;
     std::unique_ptr<char[]> work_data;
     size_t work_size = 0;
-#ifndef GGML_USE_OPENMP
+#ifndef GGML_USE_OPENMP  // 如果未定义 GGML_USE_OPENMP 则编译
     std::vector<std::future<void>> tasks;
-#endif
+#endif  // 条件编译结束
 };
 
 static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct ggml_tensor * dst) {
@@ -77,12 +77,12 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
                 const int min_rows_per_thread = std::max((int)(min_cols_per_thread/ne00), 1);
                 const int n_threads = std::max(std::min(ctx->n_threads, (int)(ne01/min_rows_per_thread)), 1);
 
-#ifdef GGML_USE_OPENMP
+#ifdef GGML_USE_OPENMP  // 如果定义了 GGML_USE_OPENMP 则编译
                 #pragma omp parallel for num_threads(n_threads)
                 for (int64_t i01 = 0; i01 < ne01; i01++) {
                     to_float((const char *) x + i01*nb01, wplane + i01*ne00, ne00);
                 }
-#else
+#else  // 否则
                 for (int i = 1; i < n_threads; i++) {
                     const int64_t start =       i*ne01/n_threads;
                     const int64_t end   = (i + 1)*ne01/n_threads;
@@ -102,28 +102,28 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
                         to_float((const char *) x + i01*nb01, wplane + i01*ne00, ne00);
                     }
                 }
-#endif
+#endif  // 条件编译结束
             }
         }
 
-#ifndef GGML_USE_OPENMP
+#ifndef GGML_USE_OPENMP  // 如果未定义 GGML_USE_OPENMP 则编译
         // wait for all tasks to finish
         for (auto & task : ctx->tasks) {
             task.get();
         }
         ctx->tasks.clear();
-#endif
+#endif  // 条件编译结束
     }
 
-#if defined(GGML_BLAS_USE_OPENBLAS)
+#if defined(GGML_BLAS_USE_OPENBLAS)  // 条件编译
     openblas_set_num_threads(ctx->n_threads);
-#elif defined(GGML_BLAS_USE_BLIS)
+#elif defined(GGML_BLAS_USE_BLIS)  // 否则如果
     bli_thread_set_num_threads(ctx->n_threads);
-#elif defined(GGML_BLAS_USE_NVPL)
+#elif defined(GGML_BLAS_USE_NVPL)  // 否则如果
     nvpl_blas_set_num_threads(ctx->n_threads);
-#elif defined(GGML_BLAS_USE_MKL)
+#elif defined(GGML_BLAS_USE_MKL)  // 否则如果
     mkl_set_num_threads(ctx->n_threads);
-#endif
+#endif  // 条件编译结束
 
     for (int64_t i13 = 0; i13 < ne13; i13++) {
         for (int64_t i12 = 0; i12 < ne12; i12++) {
@@ -211,7 +211,7 @@ static void ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, struct g
 // backend interface
 
 static const char * ggml_backend_blas_get_name(ggml_backend_t backend) {
-    return "BLAS";
+    return "BLAS";  // 返回
 
     GGML_UNUSED(backend);
 }
@@ -253,7 +253,7 @@ static enum ggml_status ggml_backend_blas_graph_compute(ggml_backend_t backend, 
         }
     }
 
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 
     GGML_UNUSED(backend);
 }
@@ -279,7 +279,7 @@ static struct ggml_backend_i blas_backend_i = {
 
 static ggml_guid_t ggml_backend_blas_guid(void) {
     static ggml_guid guid = { 0x12, 0xa8, 0xae, 0xf4, 0xc0, 0x1e, 0x61, 0x97, 0x8f, 0xeb, 0x33, 0x04, 0xa1, 0x33, 0x51, 0x2d };
-    return &guid;
+    return &guid;  // 返回
 }
 
 ggml_backend_t ggml_backend_blas_init(void) {
@@ -292,17 +292,17 @@ ggml_backend_t ggml_backend_blas_init(void) {
         /* .context = */ ctx,
     };
 
-#if defined(GGML_BLAS_USE_OPENBLAS) && defined(GGML_USE_OPENMP)
+#if defined(GGML_BLAS_USE_OPENBLAS) && defined(GGML_USE_OPENMP)  // 条件编译
     if (openblas_get_parallel() != OPENBLAS_OPENMP) {
         GGML_LOG_DEBUG("%s: warning: ggml is using OpenMP, but OpenBLAS was compiled without OpenMP support\n", __func__);
     }
-#endif
+#endif  // 条件编译结束
 
-#if defined(BLIS_ENABLE_CBLAS) && defined(GGML_USE_OPENMP) && !defined(BLIS_ENABLE_OPENMP)
+#if defined(BLIS_ENABLE_CBLAS) && defined(GGML_USE_OPENMP) && !defined(BLIS_ENABLE_OPENMP)  // 条件编译
     GGML_LOG_DEBUG("%s: warning: ggml is using OpenMP, but BLIS was compiled without OpenMP support\n", __func__);
-#endif
+#endif  // 条件编译结束
 
-    return backend;
+    return backend;  // 返回
 }
 
 bool ggml_backend_is_blas(ggml_backend_t backend) {
@@ -319,25 +319,25 @@ void ggml_backend_blas_set_n_threads(ggml_backend_t backend_blas, int n_threads)
 // device interface
 
 static const char * ggml_backend_blas_device_get_name(ggml_backend_dev_t dev) {
-    return "BLAS";
+    return "BLAS";  // 返回
 
     GGML_UNUSED(dev);
 }
 
 static const char * ggml_backend_blas_device_get_description(ggml_backend_dev_t dev) {
-    #if defined(GGML_BLAS_USE_ACCELERATE)
-        return "Accelerate";
-    #elif defined(GGML_BLAS_USE_MKL)
-        return "MKL";
-    #elif defined(GGML_BLAS_USE_BLIS)
-        return "BLIS";
-    #elif defined(GGML_BLAS_USE_NVPL)
-        return "NVPL";
-    #elif defined(GGML_BLAS_USE_OPENBLAS)
-        return "OpenBLAS";
-    #else
-        return "BLAS";
-    #endif
+    #if defined(GGML_BLAS_USE_ACCELERATE)  // 条件编译
+        return "Accelerate";  // 返回
+    #elif defined(GGML_BLAS_USE_MKL)  // 否则如果
+        return "MKL";  // 返回
+    #elif defined(GGML_BLAS_USE_BLIS)  // 否则如果
+        return "BLIS";  // 返回
+    #elif defined(GGML_BLAS_USE_NVPL)  // 否则如果
+        return "NVPL";  // 返回
+    #elif defined(GGML_BLAS_USE_OPENBLAS)  // 否则如果
+        return "OpenBLAS";  // 返回
+    #else  // 否则
+        return "BLAS";  // 返回
+    #endif  // 条件编译结束
 
     GGML_UNUSED(dev);
 }
@@ -351,7 +351,7 @@ static void ggml_backend_blas_device_get_memory(ggml_backend_dev_t dev, size_t *
 }
 
 static enum ggml_backend_dev_type ggml_backend_blas_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_ACCEL;
+    return GGML_BACKEND_DEVICE_TYPE_ACCEL;  // 返回
 
     GGML_UNUSED(dev);
 }
@@ -370,20 +370,20 @@ static void ggml_backend_blas_device_get_props(ggml_backend_dev_t dev, struct gg
 }
 
 static ggml_backend_t ggml_backend_blas_device_init_backend(ggml_backend_dev_t dev, const char * params) {
-    return ggml_backend_blas_init();
+    return ggml_backend_blas_init();  // ggml_backend_blas_init
 
     GGML_UNUSED(dev);
     GGML_UNUSED(params);
 }
 
 static ggml_backend_buffer_type_t ggml_backend_blas_device_get_buffer_type(ggml_backend_dev_t dev) {
-    return ggml_backend_cpu_buffer_type();
+    return ggml_backend_cpu_buffer_type();  // ggml_backend_cpu_buffer_type
 
     GGML_UNUSED(dev);
 }
 
 static ggml_backend_buffer_t ggml_backend_blas_device_buffer_from_host_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
-    return ggml_backend_cpu_buffer_from_ptr(ptr, size);
+    return ggml_backend_cpu_buffer_from_ptr(ptr, size);  // ggml_backend_cpu_buffer_from_ptr
 
     GGML_UNUSED(dev);
     GGML_UNUSED(max_tensor_size);
@@ -399,7 +399,7 @@ static bool ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, const s
         case GGML_OP_VIEW:
         case GGML_OP_PERMUTE:
         case GGML_OP_TRANSPOSE:
-            return true;
+            return true;  // 返回
 
         case GGML_OP_MUL_MAT:
         {
@@ -415,7 +415,7 @@ static bool ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, const s
             // TODO: find the optimal value
             const int64_t min_batch = 32;
 
-            return ggml_is_contiguous(src0) &&
+            return ggml_is_contiguous(src0) &&  // ggml_is_contiguous
                    ggml_is_contiguous(src1) &&
                    src1->type == GGML_TYPE_F32 &&
                    (ne0 >= min_batch && ne1 >= min_batch && ne10 >= min_batch) &&
@@ -423,7 +423,7 @@ static bool ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, const s
         }
 
         case GGML_OP_OUT_PROD:
-            return op->src[0]->type == GGML_TYPE_F32 &&
+            return op->src[0]->type == GGML_TYPE_F32 &&  // 返回
                    op->src[1]->type == GGML_TYPE_F32 &&
                    ggml_is_matrix(src0) &&
                    ggml_is_matrix(src1) &&
@@ -432,7 +432,7 @@ static bool ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, const s
                    (src0->type == GGML_TYPE_F32 || ggml_get_type_traits(src0->type)->to_float != NULL);
 
         default:
-            return false;
+            return false;  // 返回
 
     }
 
@@ -440,7 +440,7 @@ static bool ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, const s
 }
 
 static bool ggml_backend_blas_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return ggml_backend_buft_is_host(buft);
+    return ggml_backend_buft_is_host(buft);  // ggml_backend_buft_is_host
 
     GGML_UNUSED(dev);
 }
@@ -466,13 +466,13 @@ static const struct ggml_backend_device_i ggml_backend_blas_device_i = {
 // backend reg interface
 
 static const char * ggml_backend_blas_reg_get_name(ggml_backend_reg_t reg) {
-    return "BLAS";
+    return "BLAS";  // 返回
 
     GGML_UNUSED(reg);
 }
 
 static size_t ggml_backend_blas_reg_get_device_count(ggml_backend_reg_t reg) {
-    return 1;
+    return 1;  // 返回
 
     GGML_UNUSED(reg);
 }
@@ -486,7 +486,7 @@ static ggml_backend_dev_t ggml_backend_blas_reg_get_device(ggml_backend_reg_t re
         /* .context = */ nullptr,
     };
 
-    return &ggml_backend_blas_device;
+    return &ggml_backend_blas_device;  // 返回
 
     GGML_UNUSED(reg);
     GGML_UNUSED(index);
@@ -496,7 +496,7 @@ static void * ggml_backend_blas_get_proc_address(ggml_backend_reg_t reg, const c
     if (std::strcmp(name, "ggml_backend_set_n_threads") == 0) {
         return (void *)ggml_backend_blas_set_n_threads;
     }
-    return NULL;
+    return NULL;  // 返回
 
     GGML_UNUSED(reg);
     GGML_UNUSED(name);
@@ -516,7 +516,7 @@ ggml_backend_reg_t ggml_backend_blas_reg(void) {
         /* .context     = */ NULL,
     };
 
-    return &ggml_backend_blas_reg;
+    return &ggml_backend_blas_reg;  // 返回
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_blas_reg)

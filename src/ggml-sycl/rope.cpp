@@ -1,13 +1,13 @@
-#include "rope.hpp"
-#include "convert.hpp"
-#include "ggml-sycl/common.hpp"
-#include "ggml.h"
+#include "rope.hpp"  // 引入 rope.hpp 头文件
+#include "convert.hpp"  // 引入 convert.hpp 头文件
+#include "ggml-sycl/common.hpp"  // 引入 ggml-sycl/common.hpp 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-struct rope_corr_dims {
+struct rope_corr_dims {  // 结构体定义
     float v[2];
 };
 
-struct mrope_sections {
+struct mrope_sections {  // 结构体定义
     int v[4];
 };
 
@@ -16,7 +16,7 @@ static float rope_yarn_ramp(const float low, const float high, const int i0) {
     return 1.0f - sycl::min(1.0f, sycl::max(0.0f, y));
 }
 
-template <bool forward>
+template <bool forward>  // 模板
 static void rope_yarn(const float theta_extrap, const float freq_scale,
                       const rope_corr_dims corr_dims, const int64_t i0,
                       const float ext_factor, float mscale, float &cos_theta,
@@ -37,7 +37,7 @@ static void rope_yarn(const float theta_extrap, const float freq_scale,
     }
 }
 
-template <bool forward, bool has_ff, typename T, typename D>
+template <bool forward, bool has_ff, typename T, typename D>  // 模板
 static void rope_norm(const T *x, D *dst, const int ne00, const int ne01,
                       const int ne02, const int s01, const int s02,
                       const int s03, const int s1, const int s2, const int s3,
@@ -51,7 +51,7 @@ static void rope_norm(const T *x, D *dst, const int ne00, const int ne01,
                         item_ct1.get_local_id(1));
 
     if (i0 >= ne00) {
-        return;
+        return;  // 返回
     }
 
     const int row_dst = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
@@ -80,7 +80,7 @@ static void rope_norm(const T *x, D *dst, const int ne00, const int ne01,
     };
     if (i0 >= n_dims) {
         store_coaelsced(x[ix + 0], x[ix + 1]);
-        return;
+        return;  // 返回
     }
 
     const float theta_base = pos[i2] * dpct::pow(theta_scale, i0 / 2.0f);
@@ -100,7 +100,7 @@ static void rope_norm(const T *x, D *dst, const int ne00, const int ne01,
                     x0 * sin_theta + x1 * cos_theta);
 }
 
-template <bool forward, bool has_ff, typename T, typename D>
+template <bool forward, bool has_ff, typename T, typename D>  // 模板
 static void rope_neox(const T *x, D *dst, const int ne00, const int ne01,
                       const int ne02, const int s01, const int s02,
                       const int s03, const int s1, const int s2, const int s3,
@@ -114,7 +114,7 @@ static void rope_neox(const T *x, D *dst, const int ne00, const int ne01,
                         item_ct1.get_local_id(1));
 
     if (i0 >= ne00) {
-        return;
+        return;  // 返回
     }
 
     const int row_dst = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
@@ -136,7 +136,7 @@ static void rope_neox(const T *x, D *dst, const int ne00, const int ne01,
         dst[idst + i0 / 2 + 0] = ggml_sycl_cast<D>(x[ix + i0 / 2 + 0]);
         dst[idst + i0 / 2 + 1] = ggml_sycl_cast<D>(x[ix + i0 / 2 + 1]);
 
-        return;
+        return;  // 返回
     }
 
     const float theta_base = pos[i2] * dpct::pow(theta_scale, i0 / 2.0f);
@@ -156,7 +156,7 @@ static void rope_neox(const T *x, D *dst, const int ne00, const int ne01,
     dst[idst + n_dims / 2] = ggml_sycl_cast<D>(x0 * sin_theta + x1 * cos_theta);
 }
 
-template <bool forward, bool has_ff, typename T>
+template <bool forward, bool has_ff, typename T>  // 模板
 static void rope_multi(const T *x, T *dst, const int ne00, const int ne01,
                        const int ne02, const int s01, const int s02,
                        const int s03, const int s1, const int s2, const int s3,
@@ -170,7 +170,7 @@ static void rope_multi(const T *x, T *dst, const int ne00, const int ne01,
                         item_ct1.get_local_id(1));
 
     if (i0 >= ne00) {
-        return;
+        return;  // 返回
     }
 
     const int row_dst = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
@@ -187,7 +187,7 @@ static void rope_multi(const T *x, T *dst, const int ne00, const int ne01,
         dst[idst + i0 / 2 + 0] = x[ix + i0 / 2 + 0];
         dst[idst + i0 / 2 + 1] = x[ix + i0 / 2 + 1];
 
-        return;
+        return;  // 返回
     }
 
     const int sect_dims =
@@ -233,7 +233,7 @@ static void rope_multi(const T *x, T *dst, const int ne00, const int ne01,
     dst[idst + n_dims / 2] = x0 * sin_theta + x1 * cos_theta;
 }
 
-template <bool forward, bool has_ff, typename T>
+template <bool forward, bool has_ff, typename T>  // 模板
 static void rope_vision(const T *x, T *dst, const int ne00, const int ne01,
                         const int ne02, const int s01, const int s02,
                         const int s03, const int s1, const int s2, const int s3,
@@ -247,7 +247,7 @@ static void rope_vision(const T *x, T *dst, const int ne00, const int ne01,
                         item_ct1.get_local_id(1));
 
     if (i0 >= ne00) {
-        return;
+        return;  // 返回
     }
 
     const int row_dst = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
@@ -288,7 +288,7 @@ static void rope_vision(const T *x, T *dst, const int ne00, const int ne01,
     dst[idst + n_dims] = x0 * sin_theta + x1 * cos_theta;
 }
 
-template <bool forward, typename T, typename D>
+template <bool forward, typename T, typename D>  // 模板
 static void
 rope_norm_sycl(const T *x, D *dst, const int ne00, const int ne01,
                const int ne02, const int s01, const int s02, const int s03,
@@ -329,7 +329,7 @@ rope_norm_sycl(const T *x, D *dst, const int ne00, const int ne01,
     }
 }
 
-template <bool forward, typename T, typename D>
+template <bool forward, typename T, typename D>  // 模板
 static void
 rope_neox_sycl(const T *x, D *dst, const int ne00, const int ne01,
                const int ne02, const int s01, const int s02, const int s03,
@@ -370,7 +370,7 @@ rope_neox_sycl(const T *x, D *dst, const int ne00, const int ne01,
     }
 }
 
-template <bool forward, typename T>
+template <bool forward, typename T>  // 模板
 static void
 rope_multi_sycl(const T *x, T *dst, const int ne00, const int ne01,
                 const int ne02, const int s01, const int s02, const int s03,
@@ -411,7 +411,7 @@ rope_multi_sycl(const T *x, T *dst, const int ne00, const int ne01,
     }
 }
 
-template <bool forward, typename T>
+template <bool forward, typename T>  // 模板
 static void
 rope_vision_sycl(const T *x, T *dst, const int ne00, const int ne01,
                  const int ne02, const int s01, const int s02, const int s03,
@@ -452,7 +452,7 @@ rope_vision_sycl(const T *x, T *dst, const int ne00, const int ne01,
     }
 }
 
-template <bool forward>
+template <bool forward>  // 模板
 void ggml_sycl_op_rope_impl(ggml_backend_sycl_context &ctx, ggml_tensor *dst,
                             const ggml_tensor *set_rows = nullptr) {
     const ggml_tensor *src0 = dst->src[0];
@@ -478,7 +478,7 @@ void ggml_sycl_op_rope_impl(ggml_backend_sycl_context &ctx, ggml_tensor *dst,
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16);
     GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16);
-    GGML_ASSERT(src0->type == dst->type ||
+    GGML_ASSERT(src0->type == dst->type ||  // 断言检查
                 (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F16));
 
     const int64_t ne00 = src0->ne[0]; // head dims
@@ -520,7 +520,7 @@ void ggml_sycl_op_rope_impl(ggml_backend_sycl_context &ctx, ggml_tensor *dst,
     const bool is_vision = mode == GGML_ROPE_TYPE_VISION;
 
     if (is_mrope) {
-        GGML_ASSERT(sections.v[0] > 0 || sections.v[1] > 0 ||
+        GGML_ASSERT(sections.v[0] > 0 || sections.v[1] > 0 ||  // 断言检查
                     sections.v[2] > 0);
     }
 
@@ -624,18 +624,18 @@ void ggml_sycl_op_rope_impl(ggml_backend_sycl_context &ctx, ggml_tensor *dst,
 }
 
 void ggml_sycl_rope(ggml_backend_sycl_context &ctx, ggml_tensor *dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);  // scope_dbg_print
 
     ggml_sycl_op_rope_impl<true>(ctx, dst);
 }
 
 void ggml_sycl_rope_back(ggml_backend_sycl_context &ctx, ggml_tensor *dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);  // scope_dbg_print
     ggml_sycl_op_rope_impl<false>(ctx, dst);
 }
 
 void ggml_sycl_rope_fused(ggml_backend_sycl_context &ctx, ggml_tensor *rope,
                           ggml_tensor *set_rows) {
-    scope_op_debug_print scope_dbg_print(__func__, rope, /*num_src=*/3);
+    scope_op_debug_print scope_dbg_print(__func__, rope, /*num_src=*/3);  // scope_dbg_print
     ggml_sycl_op_rope_impl<true>(ctx, rope, set_rows);
 }

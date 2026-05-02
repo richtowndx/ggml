@@ -1,26 +1,26 @@
-#include "ggml.h"
-#include "gguf.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "gguf.h"  // 引入 gguf.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#include "yolo-image.h"
+#include "yolo-image.h"  // 引入 yolo-image.h 头文件
 
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <ctime>
-#include <string>
-#include <vector>
-#include <algorithm>
-#include <fstream>
-#include <algorithm>
-#include <thread>
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <ctime>  // 引入 ctime 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
+#include <algorithm>  // 引入 algorithm 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <algorithm>  // 引入 algorithm 头文件
+#include <thread>  // 引入 thread 头文件
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER)  // 条件编译
 #pragma warning(disable: 4244 4267) // possible loss of data
-#endif
+#endif  // 条件编译结束
 
-struct conv2d_layer {
+struct conv2d_layer {  // 结构体定义
     struct ggml_tensor * weights;
     struct ggml_tensor * biases;
     struct ggml_tensor * scales;
@@ -31,7 +31,7 @@ struct conv2d_layer {
     bool activate = true; // true for leaky relu, false for linear
 };
 
-struct yolo_model {
+struct yolo_model {  // 结构体定义
     int width = 416;
     int height = 416;
     std::vector<conv2d_layer> conv2d_layers;
@@ -40,7 +40,7 @@ struct yolo_model {
     struct ggml_context * ctx;
 };
 
-struct yolo_layer {
+struct yolo_layer {  // 结构体定义
     int classes = 80;
     std::vector<int> mask;
     std::vector<float> anchors;
@@ -64,11 +64,11 @@ struct yolo_layer {
     }
 };
 
-struct box {
+struct box {  // 结构体定义
     float x, y, w, h;
 };
 
-struct detection {
+struct detection {  // 结构体定义
     box bbox;
     std::vector<float> prob;
     float objectness;
@@ -76,18 +76,18 @@ struct detection {
 
 static bool load_model(const std::string & fname, yolo_model & model) {
     struct ggml_context * tmp_ctx = nullptr;
-    struct gguf_init_params gguf_params = {
+    struct gguf_init_params gguf_params = {  // 结构体定义
         /*.no_alloc   =*/ false,
         /*.ctx        =*/ &tmp_ctx,
     };
     gguf_context * gguf_ctx = gguf_init_from_file(fname.c_str(), gguf_params);
     if (!gguf_ctx) {
         fprintf(stderr, "%s: gguf_init_from_file() failed\n", __func__);
-        return false;
+        return false;  // 返回
     }
 
     int num_tensors = gguf_get_n_tensors(gguf_ctx);
-    struct ggml_init_params params {
+    struct ggml_init_params params {  // 结构体定义
             /*.mem_size   =*/ ggml_tensor_overhead() * num_tensors,
             /*.mem_buffer =*/ NULL,
             /*.no_alloc   =*/ true,
@@ -135,24 +135,24 @@ static bool load_model(const std::string & fname, yolo_model & model) {
             model.conv2d_layers[i].rolling_variance = ggml_get_tensor(model.ctx, name);
         }
     }
-    return true;
+    return true;  // 返回
 }
 
-static bool load_labels(const char * filename, std::vector<std::string> & labels)
+static bool load_labels(const char * filename, std::vector<std::string> & labels)  // load_labels
 {
     std::ifstream file_in(filename);
     if (!file_in) {
-        return false;
+        return false;  // 返回
     }
     std::string line;
     while (std::getline(file_in, line)) {
         labels.push_back(line);
     }
     GGML_ASSERT(labels.size() == 80);
-    return true;
+    return true;  // 返回
 }
 
-static bool load_alphabet(std::vector<yolo_image> & alphabet)
+static bool load_alphabet(std::vector<yolo_image> & alphabet)  // load_alphabet
 {
     alphabet.resize(8 * 128);
     for (int j = 0; j < 8; j++) {
@@ -161,14 +161,14 @@ static bool load_alphabet(std::vector<yolo_image> & alphabet)
             snprintf(fname, sizeof(fname), "data/labels/%d_%d.png", i, j);
             if (!load_image(fname, alphabet[j*128 + i])) {
                 fprintf(stderr, "Cannot load '%s'\n", fname);
-                return false;
+                return false;  // 返回
             }
         }
     }
-    return true;
+    return true;  // 返回
 }
 
-static ggml_tensor * apply_conv2d(ggml_context * ctx, ggml_tensor * input, const conv2d_layer & layer)
+static ggml_tensor * apply_conv2d(ggml_context * ctx, ggml_tensor * input, const conv2d_layer & layer)  // apply_conv2d
 {
     struct ggml_tensor * result = ggml_conv_2d(ctx, layer.weights, input, 1, 1, layer.padding, layer.padding, 1, 1);
     if (layer.batch_normalize) {
@@ -180,10 +180,10 @@ static ggml_tensor * apply_conv2d(ggml_context * ctx, ggml_tensor * input, const
     if (layer.activate) {
         result = ggml_leaky_relu(ctx, result, 0.1f, true);
     }
-    return result;
+    return result;  // 返回
 }
 
-static void activate_array(float * x, const int n)
+static void activate_array(float * x, const int n)  // activate_array
 {
     // logistic activation
     for (int i = 0; i < n; i++) {
@@ -191,7 +191,7 @@ static void activate_array(float * x, const int n)
     }
 }
 
-static void apply_yolo(yolo_layer & layer)
+static void apply_yolo(yolo_layer & layer)  // apply_yolo
 {
     int w = layer.w;
     int h = layer.h;
@@ -205,7 +205,7 @@ static void apply_yolo(yolo_layer & layer)
     }
 }
 
-static box get_yolo_box(const yolo_layer & layer, int n, int index, int i, int j, int lw, int lh, int w, int h, int stride)
+static box get_yolo_box(const yolo_layer & layer, int n, int index, int i, int j, int lw, int lh, int w, int h, int stride)  // get_yolo_box
 {
     const float * predictions = layer.predictions.data();
     box b;
@@ -213,10 +213,10 @@ static box get_yolo_box(const yolo_layer & layer, int n, int index, int i, int j
     b.y = (j + predictions[index + 1*stride]) / lh;
     b.w = exp(predictions[index + 2*stride]) * layer.anchors[2*n]   / w;
     b.h = exp(predictions[index + 3*stride]) * layer.anchors[2*n+1] / h;
-    return b;
+    return b;  // 返回
 }
 
-static void correct_yolo_box(box & b, int im_w, int im_h, int net_w, int net_h)
+static void correct_yolo_box(box & b, int im_w, int im_h, int net_w, int net_h)  // correct_yolo_box
 {
     int new_w = 0;
     int new_h = 0;
@@ -233,7 +233,7 @@ static void correct_yolo_box(box & b, int im_w, int im_h, int net_w, int net_h)
     b.h *= (float)net_h/new_h;
 }
 
-static void get_yolo_detections(const yolo_layer & layer, std::vector<detection> & detections, int im_w, int im_h, int netw, int neth, float thresh)
+static void get_yolo_detections(const yolo_layer & layer, std::vector<detection> & detections, int im_w, int im_h, int netw, int neth, float thresh)  // get_yolo_detections
 {
     int w = layer.w;
     int h = layer.h;
@@ -265,7 +265,7 @@ static void get_yolo_detections(const yolo_layer & layer, std::vector<detection>
     }
 }
 
-static float overlap(float x1, float w1, float x2, float w2)
+static float overlap(float x1, float w1, float x2, float w2)  // overlap
 {
     float l1 = x1 - w1/2;
     float l2 = x2 - w2/2;
@@ -273,31 +273,31 @@ static float overlap(float x1, float w1, float x2, float w2)
     float r1 = x1 + w1/2;
     float r2 = x2 + w2/2;
     float right = r1 < r2 ? r1 : r2;
-    return right - left;
+    return right - left;  // 返回
 }
 
-static float box_intersection(const box & a, const box & b)
+static float box_intersection(const box & a, const box & b)  // box_intersection
 {
     float w = overlap(a.x, a.w, b.x, b.w);
     float h = overlap(a.y, a.h, b.y, b.h);
     if (w < 0 || h < 0) return 0;
     float area = w*h;
-    return area;
+    return area;  // 返回
 }
 
-static float box_union(const box & a, const box & b)
+static float box_union(const box & a, const box & b)  // box_union
 {
     float i = box_intersection(a, b);
     float u = a.w*a.h + b.w*b.h - i;
-    return u;
+    return u;  // 返回
 }
 
-static float box_iou(const box & a, const box & b)
+static float box_iou(const box & a, const box & b)  // box_iou
 {
-    return box_intersection(a, b)/box_union(a, b);
+    return box_intersection(a, b)/box_union(a, b);  // box_intersection
 }
 
-static void do_nms_sort(std::vector<detection> & dets, int classes, float thresh)
+static void do_nms_sort(std::vector<detection> & dets, int classes, float thresh)  // do_nms_sort
 {
     int k = (int)dets.size()-1;
     for (int i = 0; i <= k; ++i) {
@@ -310,7 +310,7 @@ static void do_nms_sort(std::vector<detection> & dets, int classes, float thresh
     int total = k+1;
     for (int k = 0; k < classes; ++k) {
         std::sort(dets.begin(), dets.begin()+total, [=](const detection & a, const detection & b) {
-            return a.prob[k] > b.prob[k];
+            return a.prob[k] > b.prob[k];  // 返回
         });
         for (int i = 0; i < total; ++i) {
             if (dets[i].prob[k] == 0) {
@@ -327,7 +327,7 @@ static void do_nms_sort(std::vector<detection> & dets, int classes, float thresh
     }
 }
 
-static float get_color(int c, int x, int max)
+static float get_color(int c, int x, int max)  // get_color
 {
     float colors[6][3] = { {1,0,1}, {0,0,1}, {0,1,1}, {0,1,0}, {1,1,0}, {1,0,0} };
     float ratio = ((float)x/max)*5;
@@ -335,10 +335,10 @@ static float get_color(int c, int x, int max)
     int j = ceil(ratio);
     ratio -= i;
     float r = (1-ratio) * colors[i][c] + ratio*colors[j][c];
-    return r;
+    return r;  // 返回
 }
 
-static void draw_detections(yolo_image & im, const std::vector<detection> & dets, float thresh, const std::vector<std::string> & labels, const std::vector<yolo_image> & alphabet)
+static void draw_detections(yolo_image & im, const std::vector<detection> & dets, float thresh, const std::vector<std::string> & labels, const std::vector<yolo_image> & alphabet)  // draw_detections
 {
     int classes = (int)labels.size();
     for (int i = 0; i < (int)dets.size(); i++) {
@@ -386,7 +386,7 @@ static void draw_detections(yolo_image & im, const std::vector<detection> & dets
     }
 }
 
-static void print_shape(int layer, const ggml_tensor * t)
+static void print_shape(int layer, const ggml_tensor * t)  // print_shape
 {
     printf("Layer %2d output shape:  %3d x %3d x %4d x %3d\n", layer, (int)t->ne[0], (int)t->ne[1], (int)t->ne[2], (int)t->ne[3]);
 }
@@ -450,10 +450,10 @@ static struct ggml_cgraph * build_graph(struct ggml_context * ctx_cgraph, const 
 
     ggml_build_forward_expand(gf, layer_15);
     ggml_build_forward_expand(gf, layer_22);
-    return gf;
+    return gf;  // 返回
 }
 
-void detect(yolo_image & img, struct ggml_cgraph * gf, const yolo_model & model, float thresh, const std::vector<std::string> & labels, const std::vector<yolo_image> & alphabet)
+void detect(yolo_image & img, struct ggml_cgraph * gf, const yolo_model & model, float thresh, const std::vector<std::string> & labels, const std::vector<yolo_image> & alphabet)  // detect
 {
     std::vector<detection> detections;
     yolo_image sized = letterbox_image(img, model.width, model.height);
@@ -462,7 +462,7 @@ void detect(yolo_image & img, struct ggml_cgraph * gf, const yolo_model & model,
 
     if (ggml_backend_graph_compute(model.backend, gf) != GGML_STATUS_SUCCESS) {
         fprintf(stderr, "%s: ggml_backend_graph_compute() failed\n", __func__);
-        return;
+        return;  // 返回
     }
 
     struct ggml_tensor * layer_15 = ggml_graph_get_tensor(gf, "layer_15");
@@ -479,7 +479,7 @@ void detect(yolo_image & img, struct ggml_cgraph * gf, const yolo_model & model,
     draw_detections(img, detections, thresh, labels, alphabet);
 }
 
-struct yolo_params {
+struct yolo_params {  // 结构体定义
     float thresh          = 0.5;
     std::string model     = "yolov3-tiny.gguf";
     std::string fname_inp = "input.jpg";
@@ -509,7 +509,7 @@ bool yolo_params_parse(int argc, char ** argv, yolo_params & params) {
             params.thresh = std::stof(argv[++i]);
             if (params.thresh < 0 || params.thresh > 1) {
                 fprintf(stderr, "error: invalid threshold: %.2f\n", params.thresh);
-                return false;
+                return false;  // 返回
             }
         } else if (arg == "-m" || arg == "--model") {
             params.model = argv[++i];
@@ -519,16 +519,16 @@ bool yolo_params_parse(int argc, char ** argv, yolo_params & params) {
             params.fname_out = argv[++i];
         } else if (arg == "-t" || arg == "--threads") {
             if (++i >= argc) {
-                return false;
+                return false;  // 返回
             }
             params.n_threads = std::stoi(argv[i]);
             if (params.n_threads <= 0) {
                 fprintf(stderr, "error: invalid number of threads: %d\n", params.n_threads);
-                return false;
+                return false;  // 返回
             }
         } else if (arg == "-d" || arg == "--device") {
             if (++i >= argc) {
-                return false;
+                return false;  // 返回
             }
             params.device = argv[i];
             if (ggml_backend_dev_by_name(params.device.c_str()) == nullptr) {
@@ -540,7 +540,7 @@ bool yolo_params_parse(int argc, char ** argv, yolo_params & params) {
                     ggml_backend_dev_memory(dev, &free, &total);
                     printf("  %s: %s (%zu MiB, %zu MiB free)\n", ggml_backend_dev_name(dev), ggml_backend_dev_description(dev), total / 1024 / 1024, free / 1024 / 1024);
                 }
-                return false;
+                return false;  // 返回
             }
         } else if (arg == "-h" || arg == "--help") {
             yolo_print_usage(argc, argv, params);
@@ -552,7 +552,7 @@ bool yolo_params_parse(int argc, char ** argv, yolo_params & params) {
         }
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static ggml_backend_t create_backend(const yolo_params & params) {
@@ -564,7 +564,7 @@ static ggml_backend_t create_backend(const yolo_params & params) {
             backend = ggml_backend_dev_init(dev, nullptr);
             if (!backend) {
                 fprintf(stderr, "Failed to create backend for device %s\n", params.device.c_str());
-                return nullptr;
+                return nullptr;  // 返回
             }
         }
     }
@@ -593,10 +593,10 @@ static ggml_backend_t create_backend(const yolo_params & params) {
         }
     }
 
-    return backend;
+    return backend;  // 返回
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[])  // main
 {
     ggml_backend_load_all();
     ggml_time_init();
@@ -604,35 +604,35 @@ int main(int argc, char *argv[])
 
     yolo_params params;
     if (!yolo_params_parse(argc, argv, params)) {
-        return 1;
+        return 1;  // 返回
     }
     model.backend = create_backend(params);
     if (!model.backend) {
         fprintf(stderr, "Failed to create backend\n");
-        return 1;
+        return 1;  // 返回
     }
 
     if (!load_model(params.model, model)) {
         fprintf(stderr, "%s: failed to load model from '%s'\n", __func__, params.model.c_str());
-        return 1;
+        return 1;  // 返回
     }
-    yolo_image img(0,0,0);
+    yolo_image img(0,0,0);  // img
     if (!load_image(params.fname_inp.c_str(), img)) {
         fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, params.fname_inp.c_str());
-        return 1;
+        return 1;  // 返回
     }
     std::vector<std::string> labels;
     if (!load_labels("data/coco.names", labels)) {
         fprintf(stderr, "%s: failed to load labels from 'data/coco.names'\n", __func__);
-        return 1;
+        return 1;  // 返回
     }
     std::vector<yolo_image> alphabet;
     if (!load_alphabet(alphabet)) {
         fprintf(stderr, "%s: failed to load alphabet\n", __func__);
-        return 1;
+        return 1;  // 返回
     }
 
-    struct ggml_init_params params0 = {
+    struct ggml_init_params params0 = {  // 结构体定义
         /*.mem_size   =*/ ggml_tensor_overhead()*GGML_DEFAULT_GRAPH_SIZE + ggml_graph_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true, // the tensors will be allocated later by ggml_gallocr_alloc_graph()
@@ -648,7 +648,7 @@ int main(int argc, char *argv[])
     const int64_t t_detect_ms = ggml_time_ms() - t_start_ms;
     if (!save_image(img, params.fname_out.c_str(), 80)) {
         fprintf(stderr, "%s: failed to save image to '%s'\n", __func__, params.fname_out.c_str());
-        return 1;
+        return 1;  // 返回
     }
     printf("Detected objects saved in '%s' (time: %f sec.)\n", params.fname_out.c_str(), t_detect_ms / 1000.0f);
 
@@ -657,5 +657,5 @@ int main(int argc, char *argv[])
     ggml_free(model.ctx);
     ggml_backend_buffer_free(model.buffer);
     ggml_backend_free(model.backend);
-    return 0;
+    return 0;  // 返回
 }

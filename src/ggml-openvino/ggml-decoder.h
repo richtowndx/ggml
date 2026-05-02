@@ -1,18 +1,18 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "ggml-quants.h"
-#include "ggml.h"
-#include "openvino/decoder.h"
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "openvino/decoder.h"  // 引入 openvino/decoder.h 头文件
 
-#include <cstdint>
-#include <cstring>
-#include <map>
-#include <memory>
-#include <openvino/core/partial_shape.hpp>
-#include <optional>
-#include <vector>
+#include <cstdint>  // 引入 cstdint 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <map>  // 引入 map 头文件
+#include <memory>  // 引入 memory 头文件
+#include <openvino/core/partial_shape.hpp>  // 引入 openvino/core/partial_shape.hpp 头文件
+#include <optional>  // 引入 optional 头文件
+#include <vector>  // 引入 vector 头文件
 
-struct ModelParams {
+struct ModelParams {  // 结构体定义
     int ctx = -1;
     int ctx_swa = -1;
     int ctx_per_seq = -1;
@@ -28,7 +28,7 @@ struct ModelParams {
     size_t kv_buffer_ctx_id = 0;
 
     bool same_rope_params(const ModelParams & other) const {
-        return memcmp(rope_params, other.rope_params, sizeof(int32_t) * 15) == 0;
+        return memcmp(rope_params, other.rope_params, sizeof(int32_t) * 15) == 0;  // memcmp
     }
 
     bool can_reuse_dynamically(const ModelParams & other) const { return same_rope_params(other); }
@@ -38,7 +38,7 @@ struct ModelParams {
     bool kv_buffer_changed(const ModelParams & other) const { return kv_buffer_ctx_id != other.kv_buffer_ctx_id; }
 };
 
-struct ComputeParams {
+struct ComputeParams {  // 结构体定义
     int n_seq_active = 1;
     int seq_active_start = 0;
     int attention_size = -1;
@@ -49,9 +49,9 @@ struct ComputeParams {
     int output_len = 1;
 };
 
-class GgmlOvDecoder : public ov::frontend::ggml::GgmlDecoder {
+class GgmlOvDecoder : public ov::frontend::ggml::GgmlDecoder {  // 类定义
 public:
-    struct NodeInfo {
+    struct NodeInfo {  // 结构体定义
         ggml_tensor * node;
         std::string node_name;
         std::string node_op_type;
@@ -75,8 +75,8 @@ public:
     // Naive graph decoder
     GgmlOvDecoder(ggml_cgraph * cgraph, std::map<std::string, std::shared_ptr<ov::Node>> & model_weights);
 
-    virtual ov::Any get_attribute(const std::string & name) const override {
-        return nullptr;
+    virtual ov::Any get_attribute(const std::string & name) const override {  // 虚函数
+        return nullptr;  // 返回
         GGML_UNUSED(name);
     }
 
@@ -90,7 +90,7 @@ public:
 
     virtual size_t get_input_size(int node_idx) const override;
 
-    virtual void get_input_node(size_t input_port_idx,
+    virtual void get_input_node(size_t input_port_idx,  // 虚函数
                                 std::string & producer_name,
                                 std::string & producer_output_port_name,
                                 size_t & producer_output_port_index) const override {
@@ -124,41 +124,41 @@ public:
 
     ggml_tensor * get_input_ggml_tensor(const std::string & name) const { return m_inputs.at(name); }
 
-    virtual int get_op_case(int node_idx) const override { return m_node_info_list[node_idx].node_op_case; }
+    virtual int get_op_case(int node_idx) const override { return m_node_info_list[node_idx].node_op_case; }  // 虚函数
 
-    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_inputs() const override {
-        return m_model_inputs;
+    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_inputs() const override {  // 虚函数
+        return m_model_inputs;  // 返回
     }
 
-    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_extra_inputs() const override {
-        return m_model_extra_inputs;
+    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_extra_inputs() const override {  // 虚函数
+        return m_model_extra_inputs;  // 返回
     }
 
-    virtual const std::map<std::string, std::shared_ptr<ov::Tensor>> & get_model_extra_input_values() const {
-        return m_model_extra_input_values;
+    virtual const std::map<std::string, std::shared_ptr<ov::Tensor>> & get_model_extra_input_values() const {  // 虚函数
+        return m_model_extra_input_values;  // 返回
     }
 
-    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_weights() const override {
-        return m_model_weights;
+    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_weights() const override {  // 虚函数
+        return m_model_weights;  // 返回
     }
 
-    virtual std::vector<std::string> get_model_output_names() const override {
-        return m_model_output_names;
+    virtual std::vector<std::string> get_model_output_names() const override {  // 虚函数
+        return m_model_output_names;  // 返回
     }
 
     const std::map<std::string, ggml_tensor *> & get_model_outputs() const { return m_model_outputs; }
 
-    virtual int get_ctx_size() const { return m_model_params.ctx; }
+    virtual int get_ctx_size() const { return m_model_params.ctx; }  // 虚函数
 
-    virtual int get_ctx_swa_size() const { return m_model_params.ctx_swa; }
+    virtual int get_ctx_swa_size() const { return m_model_params.ctx_swa; }  // 虚函数
 
-    virtual int get_ctx_per_seq() const { return m_model_params.ctx_per_seq; }
+    virtual int get_ctx_per_seq() const { return m_model_params.ctx_per_seq; }  // 虚函数
 
-    virtual int get_ctx_per_seq_swa() const { return m_model_params.ctx_per_seq_swa; }
+    virtual int get_ctx_per_seq_swa() const { return m_model_params.ctx_per_seq_swa; }  // 虚函数
 
-    virtual int get_n_seq() const { return m_model_params.n_seq; }
+    virtual int get_n_seq() const { return m_model_params.n_seq; }  // 虚函数
 
-    virtual int is_swa_layer(int layer) const override {
+    virtual int is_swa_layer(int layer) const override {  // 虚函数
         return std::find(m_model_params.swa_layers.begin(), m_model_params.swa_layers.end(), layer) !=
                m_model_params.swa_layers.end();
     }
@@ -167,26 +167,26 @@ public:
 
     int get_input_len() const { return m_compute_params.input_len; }
 
-    virtual int32_t * get_rope_params() const override { return const_cast<int32_t *>(m_model_params.rope_params); }
+    virtual int32_t * get_rope_params() const override { return const_cast<int32_t *>(m_model_params.rope_params); }  // 虚函数
 
     virtual std::map<std::string, std::string> get_kv_param_res_names() const override;
 
-    virtual bool is_static() const override { return m_is_static; }
+    virtual bool is_static() const override { return m_is_static; }  // 虚函数
 
-    virtual bool is_stateful() const override { return m_is_stateful; }
+    virtual bool is_stateful() const override { return m_is_stateful; }  // 虚函数
 
     ov::PartialShape get_graph_input_shape(const ggml_tensor * op, const ggml_tensor * input) const;
 
-    static void dump_cgraph(const ggml_cgraph * cgraph, std::string & filename);
+    static void dump_cgraph(const ggml_cgraph * cgraph, std::string & filename);  // dump_cgraph
 
     static std::shared_ptr<ov::Node> create_weight_node(ggml_tensor * tensor, bool naive = false);
 
     static std::map<std::string, std::shared_ptr<ov::Node>> create_weight_nodes(ggml_cgraph * cgraph,
                                                                                 bool naive = false);
 
-    const ggml_tensor * get_tensor_used_op(const ggml_tensor * tensor) const;
+    const ggml_tensor * get_tensor_used_op(const ggml_tensor * tensor) const;  // get_tensor_used_op
 
-    const ggml_tensor * get_tensor_from_name(const std::string & name) const;
+    const ggml_tensor * get_tensor_from_name(const std::string & name) const;  // get_tensor_from_name
 
     void clear_model_weights() { m_model_weights.clear(); }
 
@@ -210,20 +210,20 @@ public:
     static std::vector<size_t> get_stride(const ggml_tensor * tensor);
     static ov::element::Type get_ov_type(const ggml_tensor * tensor);
     static std::string compute_op_type(const ggml_tensor * node);
-    void add_extra_inputs();
+    void add_extra_inputs();  // add_extra_inputs
 
-    void update_io(ggml_cgraph * cgraph);
+    void update_io(ggml_cgraph * cgraph);  // update_io
 
     inline static bool is_inp_tok(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_GET_ROWS && tensor == op->src[1] && op->src[0]->op == GGML_OP_NONE;
+        return op->op == GGML_OP_GET_ROWS && tensor == op->src[1] && op->src[0]->op == GGML_OP_NONE;  // 返回
     }
 
     inline static bool is_inp_pos(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_ROPE && tensor == op->src[1];
+        return op->op == GGML_OP_ROPE && tensor == op->src[1];  // 返回
     }
 
     inline static bool is_inp_emb(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return tensor->op == GGML_OP_GET_ROWS && op->op == GGML_OP_RMS_NORM;
+        return tensor->op == GGML_OP_GET_ROWS && op->op == GGML_OP_RMS_NORM;  // 返回
     }
 
     inline static bool is_inp_mask(const ggml_tensor * tensor, const ggml_tensor * op) {
@@ -231,48 +231,48 @@ public:
     }
 
     inline static bool is_rope_freqs_weight(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_ROPE && tensor == op->src[2];
+        return op->op == GGML_OP_ROPE && tensor == op->src[2];  // 返回
     }
 
     inline static bool is_kvcache(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_SET_ROWS && op->src[2] == tensor;
+        return op->op == GGML_OP_SET_ROWS && op->src[2] == tensor;  // 返回
     }
 
     inline static bool is_kv_idx(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_SET_ROWS && op->src[1] == tensor;
+        return op->op == GGML_OP_SET_ROWS && op->src[1] == tensor;  // 返回
     }
 
     inline static bool is_output_idx(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_GET_ROWS && tensor == op->src[1] && op->src[0]->op != GGML_OP_NONE;
+        return op->op == GGML_OP_GET_ROWS && tensor == op->src[1] && op->src[0]->op != GGML_OP_NONE;  // 返回
     }
 
     static std::string get_graph_input_ov_name(const ggml_tensor * tensor, const ggml_tensor * op) {
         if (is_inp_tok(tensor, op)) {
-            return "inp_tokens";
+            return "inp_tokens";  // 返回
         }
         if (is_inp_pos(tensor, op)) {
-            return "inp_pos";
+            return "inp_pos";  // 返回
         }
         if (is_inp_emb(tensor, op)) {
-            return "embd";
+            return "embd";  // 返回
         }
         if (is_output_idx(tensor, op)) {
-            return "inp_out_ids";
+            return "inp_out_ids";  // 返回
         }
         if (is_inp_mask(tensor, op)) {
             return std::string(tensor->name).find("swa") == std::string::npos ? "self_kq_mask" : "self_kq_mask_swa";
         }
-        return tensor->name;
+        return tensor->name;  // 返回
     }
 
 private:
-    void set_input_output();
-    int compute_op_case(const ggml_tensor * node) const;
-    bool node_is_used_as_src(const int node_idx);
-    void compute_model_inputs();
-    void compute_model_outputs();
+    void set_input_output();  // set_input_output
+    int compute_op_case(const ggml_tensor * node) const;  // compute_op_case
+    bool node_is_used_as_src(const int node_idx);  // node_is_used_as_src
+    void compute_model_inputs();  // compute_model_inputs
+    void compute_model_outputs();  // compute_model_outputs
 
-    void validate_cgraph() const;
+    void validate_cgraph() const;  // validate_cgraph
 
     ggml_cgraph * m_cgraph = nullptr;
     std::map<std::string, ggml_tensor *> m_inputs;
@@ -289,6 +289,6 @@ private:
     ComputeParams m_compute_params;
 };
 
-void print_tensor_address_map(const ggml_cgraph * cgraph);
+void print_tensor_address_map(const ggml_cgraph * cgraph);  // print_tensor_address_map
 
-int extract_layer_from_name(const std::string & name);
+int extract_layer_from_name(const std::string & name);  // extract_layer_from_name

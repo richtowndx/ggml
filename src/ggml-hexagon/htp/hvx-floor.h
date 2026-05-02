@@ -1,17 +1,17 @@
-#ifndef HVX_FLOOR_H
-#define HVX_FLOOR_H
+#ifndef HVX_FLOOR_H  // 如果未定义 HVX_FLOOR_H 则编译
+#define HVX_FLOOR_H  // 宏定义 HVX_FLOOR_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <stdbool.h>  // 引入 stdbool.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
 
-#include "hvx-base.h"
+#include "hvx-base.h"  // 引入 hvx-base.h 头文件
 
-#define IEEE_VSF_EXPLEN   (8)
-#define IEEE_VSF_EXPBIAS  (127)
-#define IEEE_VSF_EXPMASK  (0xFF)
-#define IEEE_VSF_MANTLEN  (23)
-#define IEEE_VSF_MANTMASK (0x7FFFFF)
-#define IEEE_VSF_MIMPMASK (0x800000)
+#define IEEE_VSF_EXPLEN   (8)  // 宏定义 IEEE_VSF_EXPLEN
+#define IEEE_VSF_EXPBIAS  (127)  // 宏定义 IEEE_VSF_EXPBIAS
+#define IEEE_VSF_EXPMASK  (0xFF)  // 宏定义 IEEE_VSF_EXPMASK
+#define IEEE_VSF_MANTLEN  (23)  // 宏定义 IEEE_VSF_MANTLEN
+#define IEEE_VSF_MANTMASK (0x7FFFFF)  // 宏定义 IEEE_VSF_MANTMASK
+#define IEEE_VSF_MIMPMASK (0x800000)  // 宏定义 IEEE_VSF_MIMPMASK
 
 static inline HVX_Vector hvx_vec_truncate_f32(HVX_Vector in_vec) {
     HVX_Vector mask_mant_v  = Q6_V_vsplat_R(IEEE_VSF_MANTMASK);
@@ -94,7 +94,7 @@ static inline HVX_Vector hvx_vec_floor_f32(HVX_Vector in_vec) {
     vout = Q6_V_vmux_QVV(q_negexp_pos, const_zero_v, vout);    // expval<0 x>0 -> 0
     vout = Q6_V_vmux_QVV(q_negexp_neg, const_negone_v, vout);  // expval<0 x<0 -> -1
 
-    return vout;
+    return vout;  // 返回
 }
 
-#endif /* HVX_FLOOR_H */
+#endif /* HVX_FLOOR_H */  // 条件编译结束

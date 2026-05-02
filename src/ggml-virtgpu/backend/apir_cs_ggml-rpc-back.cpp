@@ -1,11 +1,11 @@
-#include "ggml-backend-impl.h"
-#include "ggml-impl.h"
-#include "shared/apir_cs_rpc.h"
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "shared/apir_cs_rpc.h"  // 引入 shared/apir_cs_rpc.h 头文件
 
-#include <cinttypes>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#include <cinttypes>  // 引入 cinttypes 头文件
+#include <unordered_map>  // 引入 unordered_map 头文件
+#include <unordered_set>  // 引入 unordered_set 头文件
+#include <vector>  // 引入 vector 头文件
 
 std::unordered_set<ggml_backend_buffer_t> backend_buffers;
 
@@ -16,15 +16,15 @@ void apir_track_backend_buffer(ggml_backend_buffer_t buffer) {
 bool apir_untrack_backend_buffer(ggml_backend_buffer_t buffer) {
     auto it = backend_buffers.find(buffer);
     if (it == backend_buffers.end()) {
-        return false;
+        return false;  // 返回
     }
 
     backend_buffers.erase(it);
-    return true;
+    return true;  // 返回
 }
 
 std::unordered_set<ggml_backend_buffer_t> apir_get_track_backend_buffers() {
-    return backend_buffers;
+    return backend_buffers;  // 返回
 }
 
 ggml_tensor * apir_deserialize_tensor(ggml_context * ctx, const apir_rpc_tensor * tensor) {
@@ -60,7 +60,7 @@ ggml_tensor * apir_deserialize_tensor(ggml_context * ctx, const apir_rpc_tensor 
     result->flags = tensor->flags;
     result->data  = reinterpret_cast<void *>(tensor_data);
     ggml_set_name(result, tensor->name);
-    return result;
+    return result;  // 返回
 }
 
 ggml_tensor * apir_create_node(uint64_t                                                      id,
@@ -68,15 +68,15 @@ ggml_tensor * apir_create_node(uint64_t                                         
                                const std::unordered_map<uint64_t, const apir_rpc_tensor *> & tensor_ptrs,
                                std::unordered_map<uint64_t, ggml_tensor *> &                 tensor_map) {
     if (id == 0) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     if (tensor_map.find(id) != tensor_map.end()) {
-        return tensor_map[id];
+        return tensor_map[id];  // 返回
     }
     const apir_rpc_tensor * tensor = tensor_ptrs.at(id);
     ggml_tensor *           result = apir_deserialize_tensor(ctx, tensor);
     if (result == nullptr) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     tensor_map[id] = result;
     for (int i = 0; i < GGML_MAX_SRC; i++) {
@@ -84,7 +84,7 @@ ggml_tensor * apir_create_node(uint64_t                                         
     }
     result->view_src  = apir_create_node(tensor->view_src, ctx, tensor_ptrs, tensor_map);
     result->view_offs = tensor->view_offs;
-    return result;
+    return result;  // 返回
 }
 
 ggml_cgraph * apir_deserialize_graph(uint32_t                n_nodes,
@@ -111,5 +111,5 @@ ggml_cgraph * apir_deserialize_graph(uint32_t                n_nodes,
         graph->nodes[i] = apir_create_node(id, ctx, tensor_ptrs, tensor_map);
     }
 
-    return graph;
+    return graph;  // 返回
 }

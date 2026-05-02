@@ -20,15 +20,15 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef CANN_ACL_TENSOR_H
-#define CANN_ACL_TENSOR_H
+#ifndef CANN_ACL_TENSOR_H  // 如果未定义 CANN_ACL_TENSOR_H 则编译
+#define CANN_ACL_TENSOR_H  // 宏定义 CANN_ACL_TENSOR_H
 
-#include "common.h"
+#include "common.h"  // 引入 common.h 头文件
 
-#include <aclnn/aclnn_base.h>
+#include <aclnn/aclnn_base.h>  // 引入 aclnn/aclnn_base.h 头文件
 
-#include <algorithm>
-#include <cstring>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cstring>  // 引入 cstring 头文件
 
 /**
  * @brief	Maps a ggml_type to its corresponding aclDataType.
@@ -42,10 +42,10 @@
  * @return	The corresponding aclDataType. If the input type is not recognized,
  *			ACL_DT_UNDEFINED is returned.
  */
-aclDataType ggml_cann_type_mapping(ggml_type type);
+aclDataType ggml_cann_type_mapping(ggml_type type);  // ggml_cann_type_mapping
 
 // Deleter for acl objects.
-template <typename T, aclError (*DestroyFunc)(const T *)> struct acl_deleter {
+template <typename T, aclError (*DestroyFunc)(const T *)> struct acl_deleter {  // 模板
     void operator()(T * ptr) const noexcept {
         if (ptr) {
             ACL_CHECK(DestroyFunc(ptr));
@@ -53,10 +53,10 @@ template <typename T, aclError (*DestroyFunc)(const T *)> struct acl_deleter {
     }
 };
 
-using acl_tensor_ptr      = std::unique_ptr<aclTensor, acl_deleter<aclTensor, aclDestroyTensor>>;
-using acl_int_array_ptr   = std::unique_ptr<aclIntArray, acl_deleter<aclIntArray, aclDestroyIntArray>>;
-using acl_scalar_ptr      = std::unique_ptr<aclScalar, acl_deleter<aclScalar, aclDestroyScalar>>;
-using acl_tensor_list_ptr = std::unique_ptr<aclTensorList, acl_deleter<aclTensorList, aclDestroyTensorList>>;
+using acl_tensor_ptr      = std::unique_ptr<aclTensor, acl_deleter<aclTensor, aclDestroyTensor>>;  // using 声明
+using acl_int_array_ptr   = std::unique_ptr<aclIntArray, acl_deleter<aclIntArray, aclDestroyIntArray>>;  // using 声明
+using acl_scalar_ptr      = std::unique_ptr<aclScalar, acl_deleter<aclScalar, aclDestroyScalar>>;  // using 声明
+using acl_tensor_list_ptr = std::unique_ptr<aclTensorList, acl_deleter<aclTensorList, aclDestroyTensorList>>;  // using 声明
 
 /**
  * @brief   Creates an ACL tensor from a ggml_tensor with optional shape.
@@ -104,7 +104,7 @@ acl_tensor_ptr ggml_cann_create_tensor(const ggml_tensor * tensor,
  * @param   offset      Offset in bytes for the ACL tensor data. Defaults to 0.
  * @return  Pointer to the created ACL tensor.
  */
-template <typename TYPE>
+template <typename TYPE>  // 模板
 acl_tensor_ptr ggml_cann_create_tensor(void *      data_ptr,
                                        aclDataType dtype,
                                        TYPE        type_size,
@@ -132,7 +132,7 @@ acl_tensor_ptr ggml_cann_create_tensor(void *      data_ptr,
     aclTensor * raw =
         aclCreateTensor(tmp_ne, dims, dtype, tmp_stride, offset / type_size, format, &acl_storage_len, 1, data_ptr);
 
-    return acl_tensor_ptr(raw);
+    return acl_tensor_ptr(raw);  // acl_tensor_ptr
 }
 
 /**
@@ -148,7 +148,7 @@ acl_tensor_ptr ggml_cann_create_tensor(void *      data_ptr,
  *
  * @return A smart pointer managing the created ACL int array.
  */
-acl_int_array_ptr ggml_cann_create_int_array(const int64_t * value, uint64_t size);
+acl_int_array_ptr ggml_cann_create_int_array(const int64_t * value, uint64_t size);  // ggml_cann_create_int_array
 
 /**
  * @brief Create an ACL scalar resource wrapped in a smart pointer.
@@ -163,7 +163,7 @@ acl_int_array_ptr ggml_cann_create_int_array(const int64_t * value, uint64_t siz
  *
  * @return A smart pointer managing the created ACL scalar.
  */
-acl_scalar_ptr ggml_cann_create_scalar(void * value, aclDataType dataType);
+acl_scalar_ptr ggml_cann_create_scalar(void * value, aclDataType dataType);  // ggml_cann_create_scalar
 
 /**
  * @brief Create an ACL tensor list from multiple tensor smart pointers.
@@ -190,14 +190,14 @@ acl_scalar_ptr ggml_cann_create_scalar(void * value, aclDataType dataType);
  * @note This implementation is C++11 compatible. The ownership-release process is
  *       executed using a pack expansion inside an initializer list.
  */
-template <typename... acl_tensor_ptr> acl_tensor_list_ptr ggml_cann_create_tensor_list(acl_tensor_ptr &&... tensors) {
+template <typename... acl_tensor_ptr> acl_tensor_list_ptr ggml_cann_create_tensor_list(acl_tensor_ptr &&... tensors) {  // 模板
     aclTensor *     raw_tensors[] = { tensors.get()... };
     aclTensorList * raw           = aclCreateTensorList(raw_tensors, sizeof...(tensors));
     // aclTensor will release by aclTensorList, so release ownership without
     // destroying the tensor
     int             dummy[]       = { (tensors.release(), 0)... };
     GGML_UNUSED(dummy);
-    return acl_tensor_list_ptr(raw);
+    return acl_tensor_list_ptr(raw);  // acl_tensor_list_ptr
 }
 
 /**
@@ -216,7 +216,7 @@ template <typename... acl_tensor_ptr> acl_tensor_list_ptr ggml_cann_create_tenso
  *          to 1. If such a dimension is found, broadcasting is required to align t1
  *          with t0 for element-wise operations.
  */
-bool ggml_cann_need_bcast(const ggml_tensor * t0, const ggml_tensor * t1);
+bool ggml_cann_need_bcast(const ggml_tensor * t0, const ggml_tensor * t1);  // ggml_cann_need_bcast
 
 /**
  * @brief   Computes broadcast shapes and strides for two ggml_tensors.
@@ -287,7 +287,7 @@ int64_t ggml_cann_get_bcast_shape(const ggml_tensor * src0,
     int64_t bcast_dims = ggml_cann_get_bcast_shape(src0, src1, bcast_##src0##_ne, bcast_##src1##_ne, \
                                                    bcast_##src0##_nb, bcast_##src1##_nb);
 
-#define BCAST_PARAM(tensor) bcast_##tensor##_ne, bcast_##tensor##_nb, bcast_dims
+#define BCAST_PARAM(tensor) bcast_##tensor##_ne, bcast_##tensor##_nb, bcast_dims  // 宏定义 BCAST_PARAM
 
 /**
  * @brief Calculates broadcast shapes for matrix multiplication.
@@ -344,6 +344,6 @@ int64_t ggml_cann_get_mulmat_bcast_shape(const int64_t * input_ne,
         input->ne, weight->ne, dst->ne, input->nb, weight->nb, dst->nb, bcast_##input##_ne, bcast_##weight##_ne, \
         bcast_##dst##_ne, bcast_##input##_nb, bcast_##weight##_nb, bcast_##dst##_nb);
 
-#define BCAST_MUL_MAT_PARAM(tensor) bcast_##tensor##_ne, bcast_##tensor##_nb, bcast_dims
+#define BCAST_MUL_MAT_PARAM(tensor) bcast_##tensor##_ne, bcast_##tensor##_nb, bcast_dims  // 宏定义 BCAST_MUL_MAT_PARAM
 
-#endif  // CANN_ACL_TENSOR_H
+#endif  // CANN_ACL_TENSOR_H  // 条件编译结束

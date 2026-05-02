@@ -1,13 +1,13 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "input_model.h"
-#include "node_context.h"
+#include "input_model.h"  // 引入 input_model.h 头文件
+#include "node_context.h"  // 引入 node_context.h 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
 
-class TranslateSession {
+class TranslateSession {  // 类定义
 public:
     TranslateSession(const frontend::InputModel::Ptr& input_model,
                      const std::unordered_map<std::string, CreatorFunction>& translator_map, bool naive = false);

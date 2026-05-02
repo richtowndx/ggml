@@ -1,21 +1,21 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "ggml.h"
-#include "openvino/runtime/core.hpp"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "openvino/runtime/core.hpp"  // 引入 openvino/runtime/core.hpp 头文件
 
-#define CL_TARGET_OPENCL_VERSION 300
-#include <CL/cl.h>
+#define CL_TARGET_OPENCL_VERSION 300  // 宏定义 CL_TARGET_OPENCL_VERSION
+#include <CL/cl.h>  // 引入 CL/cl.h 头文件
 
-#include <cstdlib>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/runtime/remote_context.hpp>
-#include <openvino/runtime/tensor.hpp>
-#include <optional>
-#include <string>
+#include <cstdlib>  // 引入 cstdlib 头文件
+#include <memory>  // 引入 memory 头文件
+#include <openvino/core/node.hpp>  // 引入 openvino/core/node.hpp 头文件
+#include <openvino/runtime/remote_context.hpp>  // 引入 openvino/runtime/remote_context.hpp 头文件
+#include <openvino/runtime/tensor.hpp>  // 引入 openvino/runtime/tensor.hpp 头文件
+#include <optional>  // 引入 optional 头文件
+#include <string>  // 引入 string 头文件
 
 // ExtraQuantType enum - defines requantization target formats
-enum class ExtraQuantType { F16, Q4_0_C, Q8_1_C, Q4_0_128, Q8_0_C, Q8_0_32 };
+enum class ExtraQuantType { F16, Q4_0_C, Q8_1_C, Q4_0_128, Q8_0_C, Q8_0_32 };  // 枚举定义
 
 ov::Core & ov_singleton_core();
 
@@ -26,10 +26,10 @@ std::optional<ov::RemoteContext> ggml_openvino_get_remote_context();
 const ov::AnyMap & ggml_openvino_get_compile_config();
 
 // Get the OpenCL command queue for GPU operations (returns nullptr for CPU/NPU)
-cl_command_queue ggml_openvino_get_cl_queue();
+cl_command_queue ggml_openvino_get_cl_queue();  // ggml_openvino_get_cl_queue
 
 // Intel USM extension function type
-typedef cl_int(CL_API_CALL * clEnqueueMemFillINTEL_fn)(cl_command_queue queue,
+typedef cl_int(CL_API_CALL * clEnqueueMemFillINTEL_fn)(cl_command_queue queue,  // 类型定义
                                                        void * dst_ptr,
                                                        const void * pattern,
                                                        size_t pattern_size,
@@ -38,7 +38,7 @@ typedef cl_int(CL_API_CALL * clEnqueueMemFillINTEL_fn)(cl_command_queue queue,
                                                        const cl_event * event_wait_list,
                                                        cl_event * event);
 
-typedef cl_int(CL_API_CALL * clEnqueueMemcpyINTEL_fn)(cl_command_queue queue,
+typedef cl_int(CL_API_CALL * clEnqueueMemcpyINTEL_fn)(cl_command_queue queue,  // 类型定义
                                                       cl_bool blocking,
                                                       void * dst_ptr,
                                                       const void * src_ptr,
@@ -48,17 +48,17 @@ typedef cl_int(CL_API_CALL * clEnqueueMemcpyINTEL_fn)(cl_command_queue queue,
                                                       cl_event * event);
 
 // Get the clEnqueueMemFillINTEL function pointer (returns nullptr if not available)
-clEnqueueMemFillINTEL_fn ggml_openvino_get_clEnqueueMemFillINTEL();
+clEnqueueMemFillINTEL_fn ggml_openvino_get_clEnqueueMemFillINTEL();  // ggml_openvino_get_clEnqueueMemFillINTEL
 
 // Get the clEnqueueMemcpyINTEL function pointer (returns nullptr if not available)
-clEnqueueMemcpyINTEL_fn ggml_openvino_get_clEnqueueMemcpyINTEL();
+clEnqueueMemcpyINTEL_fn ggml_openvino_get_clEnqueueMemcpyINTEL();  // ggml_openvino_get_clEnqueueMemcpyINTEL
 
 // =====================================================
 // Global Device Configuration (singleton)
 // =====================================================
 // Initialized once during backend init from GGML_OPENVINO_DEVICE env var
 
-struct ggml_openvino_device_config {
+struct ggml_openvino_device_config {  // 结构体定义
     std::string device_name = "CPU";
     bool is_npu = false;
     bool initialized = false;
@@ -66,7 +66,7 @@ struct ggml_openvino_device_config {
     ov::AnyMap compile_config;
     cl_command_queue cl_queue = nullptr;
 
-    void init();
+    void init();  // init
     ~ggml_openvino_device_config();
 };
 
@@ -74,13 +74,13 @@ struct ggml_openvino_device_config {
 ggml_openvino_device_config & ggml_openvino_get_device_config();
 
 // Initialize device config (call during backend init)
-void ggml_openvino_init_device_config();
+void ggml_openvino_init_device_config();  // ggml_openvino_init_device_config
 
 // Get the device name
 const std::string & ggml_openvino_get_device_name();
 
 // Check if running on NPU
-bool ggml_openvino_is_npu();
+bool ggml_openvino_is_npu();  // ggml_openvino_is_npu
 
 // Get requantization type for a tensor type (returns nullopt if no requant needed)
 std::optional<ExtraQuantType> ggml_openvino_get_requant_type(const ggml_tensor * tensor, bool no_requant = false);
@@ -94,8 +94,8 @@ std::optional<ExtraQuantType> ggml_openvino_get_requant_type(const ggml_tensor *
 // 2. ov::Tensor wrappers for KV cache / compute tensors (for direct use with infer_request)
 
 // Base class for OpenVINO tensor extra data
-struct ggml_openvino_extra_base {
-    enum class Type { WEIGHT, QUANTIZED_WEIGHT, TENSOR };
+struct ggml_openvino_extra_base {  // 结构体定义
+    enum class Type { WEIGHT, QUANTIZED_WEIGHT, TENSOR };  // 枚举定义
     Type type;
     virtual ~ggml_openvino_extra_base() = default;
 protected:
@@ -103,7 +103,7 @@ protected:
 };
 
 // Extra data for F16/F32/BF16 weight tensors - stores the pre-built weight node
-struct ggml_openvino_weight_extra : public ggml_openvino_extra_base {
+struct ggml_openvino_weight_extra : public ggml_openvino_extra_base {  // 结构体定义
     ov::Tensor weights;                     // The underlying weight data tensor
     std::shared_ptr<ov::Node> weight_node;  // Pre-built OpenVINO weight node
 
@@ -114,7 +114,7 @@ struct ggml_openvino_weight_extra : public ggml_openvino_extra_base {
 };
 
 // Extra data for quantized weight tensors - stores extracted weights/scales/zp and weight node
-struct ggml_openvino_quantized_weight_extra : public ggml_openvino_extra_base {
+struct ggml_openvino_quantized_weight_extra : public ggml_openvino_extra_base {  // 结构体定义
     ov::Tensor weights;   // U4 or U8 extracted weights
     ov::Tensor scales;    // F16 scales
     ov::Tensor zp;        // U4 or U8 zero points (same type as weights)
@@ -129,10 +129,10 @@ struct ggml_openvino_quantized_weight_extra : public ggml_openvino_extra_base {
 };
 
 // Extra data for KV cache / compute tensors - stores ov::Tensor for infer_request
-struct ggml_openvino_tensor_extra : public ggml_openvino_extra_base {
+struct ggml_openvino_tensor_extra : public ggml_openvino_extra_base {  // 结构体定义
     std::shared_ptr<ov::Tensor> tensor;  // For direct use with infer_request
 
-    explicit ggml_openvino_tensor_extra(std::shared_ptr<ov::Tensor> t)
+    explicit ggml_openvino_tensor_extra(std::shared_ptr<ov::Tensor> t)  // ggml_openvino_tensor_extra
         : ggml_openvino_extra_base(Type::TENSOR), tensor(std::move(t)) {}
 };
 
@@ -142,7 +142,7 @@ struct ggml_openvino_tensor_extra : public ggml_openvino_extra_base {
 // For quantized tensors, we need extra space to store extracted weights, scales, and zero points.
 // Returns the total size needed in the buffer for extracted data.
 
-struct ggml_openvino_extracted_layout {
+struct ggml_openvino_extracted_layout {  // 结构体定义
     size_t total_size = 0;      // Total bytes needed
     size_t weights_offset = 0;  // Offset to weights in buffer
     size_t weights_size = 0;    // Size of weights in bytes
@@ -160,18 +160,18 @@ struct ggml_openvino_extracted_layout {
 };
 
 // Calculate the buffer layout for extracted quantized data
-ggml_openvino_extracted_layout ggml_openvino_get_extracted_layout(const ggml_tensor * tensor, bool use_bias = false);
+ggml_openvino_extracted_layout ggml_openvino_get_extracted_layout(const ggml_tensor * tensor, bool use_bias = false);  // ggml_openvino_get_extracted_layout
 
-ggml_openvino_tensor_extra * ggml_openvino_create_tensor_extra(const ggml_tensor * tensor, bool is_remote);
+ggml_openvino_tensor_extra * ggml_openvino_create_tensor_extra(const ggml_tensor * tensor, bool is_remote);  // ggml_openvino_create_tensor_extra
 
 // Register an extra with the tensor's OpenVINO buffer context for proper lifetime management.
 // This sets tensor->extra and tracks the extra in the buffer context for cleanup.
-void ggml_openvino_buffer_register_extra(ggml_tensor * tensor, ggml_openvino_extra_base * extra);
+void ggml_openvino_buffer_register_extra(ggml_tensor * tensor, ggml_openvino_extra_base * extra);  // ggml_openvino_buffer_register_extra
 
 // =====================================================
 // OpenVINO Backend Context and Interface
 // =====================================================
-struct ggml_backend_openvino_context {
+struct ggml_backend_openvino_context {  // 结构体定义
     int device = 0;
     std::string name = "OpenVINO";
     std::string description = "OpenVINO Backend Context";

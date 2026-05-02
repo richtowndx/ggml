@@ -1,20 +1,20 @@
-#include "ggml.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-#include "common.h"
-#include "common-ggml.h"
+#include "common.h"  // 引入 common.h 头文件
+#include "common-ggml.h"  // 引入 common-ggml.h 头文件
 
-#include <cassert>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <map>
-#include <string>
-#include <vector>
-#include <regex>
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <map>  // 引入 map 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
+#include <regex>  // 引入 regex 头文件
 
 // default hparams (GPT-J 6B)
-struct gptj_hparams {
+struct gptj_hparams {  // 结构体定义
     int32_t n_vocab = 50400;
     int32_t n_ctx   = 2048;
     int32_t n_embd  = 4096;
@@ -33,13 +33,13 @@ bool gptj_model_quantize(const std::string & fname_inp, const std::string & fnam
     auto finp = std::ifstream(fname_inp, std::ios::binary);
     if (!finp) {
         fprintf(stderr, "%s: failed to open '%s' for reading\n", __func__, fname_inp.c_str());
-        return false;
+        return false;  // 返回
     }
 
     auto fout = std::ofstream(fname_out, std::ios::binary);
     if (!fout) {
         fprintf(stderr, "%s: failed to open '%s' for writing\n", __func__, fname_out.c_str());
-        return false;
+        return false;  // 返回
     }
 
     // verify magic
@@ -48,7 +48,7 @@ bool gptj_model_quantize(const std::string & fname_inp, const std::string & fnam
         finp.read((char *) &magic, sizeof(magic));
         if (magic != GGML_FILE_MAGIC) {
             fprintf(stderr, "%s: invalid model file '%s' (bad magic)\n", __func__, fname_inp.c_str());
-            return false;
+            return false;  // 返回
         }
 
         fout.write((char *) &magic, sizeof(magic));
@@ -97,7 +97,7 @@ bool gptj_model_quantize(const std::string & fname_inp, const std::string & fnam
         if (n_vocab != hparams.n_vocab) {
             fprintf(stderr, "%s: invalid model file '%s' (bad vocab size %d != %d)\n",
                     __func__, fname_inp.c_str(), n_vocab, hparams.n_vocab);
-            return false;
+            return false;  // 返回
         }
 
         std::string word;
@@ -122,13 +122,13 @@ bool gptj_model_quantize(const std::string & fname_inp, const std::string & fnam
 
     if (!ggml_common_quantize_0(finp, fout, ftype, to_quant, {})) {
         fprintf(stderr, "%s: failed to quantize model '%s'\n", __func__, fname_inp.c_str());
-        return false;
+        return false;  // 返回
     }
 
     finp.close();
     fout.close();
 
-    return true;
+    return true;  // 返回
 }
 
 // usage:
@@ -138,12 +138,12 @@ int main(int argc, char ** argv) {
     if (argc != 4) {
         fprintf(stderr, "usage: %s model-f32.bin model-quant.bin type\n", argv[0]);
         ggml_print_ftypes(stderr);
-        return 1;
+        return 1;  // 返回
     }
 
     // needed to initialize f16 tables
     {
-        struct ggml_init_params params = { 0, NULL, false };
+        struct ggml_init_params params = { 0, NULL, false };  // 结构体定义
         struct ggml_context * ctx = ggml_init(params);
         ggml_free(ctx);
     }
@@ -163,7 +163,7 @@ int main(int argc, char ** argv) {
 
         if (!gptj_model_quantize(fname_inp, fname_out, ggml_ftype(ftype))) {
             fprintf(stderr, "%s: failed to quantize model from '%s'\n", __func__, fname_inp.c_str());
-            return 1;
+            return 1;  // 返回
         }
 
         t_quantize_us = ggml_time_us() - t_start_us;
@@ -178,5 +178,5 @@ int main(int argc, char ** argv) {
         printf("%s:    total time = %8.2f ms\n", __func__, (t_main_end_us - t_main_start_us)/1000.0f);
     }
 
-    return 0;
+    return 0;  // 返回
 }

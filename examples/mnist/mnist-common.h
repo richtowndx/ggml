@@ -1,40 +1,40 @@
-#include <algorithm>
-#include <cstdint>
-#include <random>
-#include <string>
-#include <thread>
-#include <vector>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <random>  // 引入 random 头文件
+#include <string>  // 引入 string 头文件
+#include <thread>  // 引入 thread 头文件
+#include <vector>  // 引入 vector 头文件
 
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
-#include "ggml.h"
-#include "gguf.h"
-#include "ggml-cpu.h"
-#include "ggml-opt.h"
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "gguf.h"  // 引入 gguf.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-opt.h"  // 引入 ggml-opt.h 头文件
 
-#define MNIST_NTRAIN 60000
-#define MNIST_NTEST  10000
+#define MNIST_NTRAIN 60000  // 宏定义 MNIST_NTRAIN
+#define MNIST_NTEST  10000  // 宏定义 MNIST_NTEST
 
 // Gradient accumulation can be achieved by setting the logical batch size to a multiple of the physical one.
 // The logical batch size determines how many datapoints are used for a gradient update.
 // The physical batch size determines how many datapoints are processed in parallel, larger values utilize compute better but need more memory.
-#define MNIST_NBATCH_LOGICAL  1000
-#define MNIST_NBATCH_PHYSICAL  500
+#define MNIST_NBATCH_LOGICAL  1000  // 宏定义 MNIST_NBATCH_LOGICAL
+#define MNIST_NBATCH_PHYSICAL  500  // 宏定义 MNIST_NBATCH_PHYSICAL
 
 static_assert(MNIST_NBATCH_LOGICAL % MNIST_NBATCH_PHYSICAL == 0, "MNIST_NBATCH_LOGICAL % MNIST_NBATCH_PHYSICAL != 0");
 static_assert(MNIST_NTRAIN % MNIST_NBATCH_LOGICAL == 0, "MNIST_NTRAIN % MNIST_NBATCH_LOGICAL != 0");
 static_assert(MNIST_NTEST  % MNIST_NBATCH_LOGICAL == 0, "MNIST_NTRAIN % MNIST_NBATCH_LOGICAL != 0");
 
-#define MNIST_HW       28
-#define MNIST_NINPUT   (MNIST_HW*MNIST_HW)
-#define MNIST_NCLASSES 10
+#define MNIST_HW       28  // 宏定义 MNIST_HW
+#define MNIST_NINPUT   (MNIST_HW*MNIST_HW)  // 宏定义 MNIST_NINPUT
+#define MNIST_NCLASSES 10  // 宏定义 MNIST_NCLASSES
 
-#define MNIST_NHIDDEN  500
+#define MNIST_NHIDDEN  500  // 宏定义 MNIST_NHIDDEN
 
 // NCB = number of channels base
-#define MNIST_CNN_NCB 8
+#define MNIST_CNN_NCB 8  // 宏定义 MNIST_CNN_NCB
 
-struct mnist_model {
+struct mnist_model {  // 结构体定义
     std::string arch;
     ggml_backend_sched_t backend_sched;
     std::vector<ggml_backend_t> backends;
@@ -120,7 +120,7 @@ struct mnist_model {
 
         {
             const size_t size_meta = 1024*ggml_tensor_overhead();
-            struct ggml_init_params params = {
+            struct ggml_init_params params = {  // 结构体定义
                 /*.mem_size   =*/ size_meta,
                 /*.mem_buffer =*/ nullptr,
                 /*.no_alloc   =*/ true,
@@ -131,7 +131,7 @@ struct mnist_model {
         {
             // The compute context needs a total of 3 compute graphs: forward pass + backwards pass (with/without optimizer step).
             const size_t size_meta = GGML_DEFAULT_GRAPH_SIZE*ggml_tensor_overhead() + 3*ggml_graph_overhead();
-            struct ggml_init_params params = {
+            struct ggml_init_params params = {  // 结构体定义
                 /*.mem_size   =*/ size_meta,
                 /*.mem_buffer =*/ nullptr,
                 /*.no_alloc   =*/ true,
@@ -154,13 +154,13 @@ struct mnist_model {
     }
 };
 
-bool mnist_image_load(const std::string & fname, ggml_opt_dataset_t dataset);
-void mnist_image_print(FILE * f, ggml_opt_dataset_t dataset, const int iex);
-bool mnist_label_load(const std::string & fname, ggml_opt_dataset_t dataset);
+bool mnist_image_load(const std::string & fname, ggml_opt_dataset_t dataset);  // mnist_image_load
+void mnist_image_print(FILE * f, ggml_opt_dataset_t dataset, const int iex);  // mnist_image_print
+bool mnist_label_load(const std::string & fname, ggml_opt_dataset_t dataset);  // mnist_label_load
 
-mnist_model       mnist_model_init_from_file(const std::string & fname, const std::string & backend, const int nbatch_logical, const int nbatch_physical);
-mnist_model       mnist_model_init_random(const std::string & arch, const std::string & backend, const int nbatch_logical, const int nbatch_physical);
-void              mnist_model_build(mnist_model & model);
-ggml_opt_result_t mnist_model_eval(mnist_model & model, ggml_opt_dataset_t dataset);
-void              mnist_model_train(mnist_model & model, ggml_opt_dataset_t dataset, const int nepoch, const float val_split);
-void              mnist_model_save(mnist_model & model, const std::string & fname);
+mnist_model       mnist_model_init_from_file(const std::string & fname, const std::string & backend, const int nbatch_logical, const int nbatch_physical);  // mnist_model_init_from_file
+mnist_model       mnist_model_init_random(const std::string & arch, const std::string & backend, const int nbatch_logical, const int nbatch_physical);  // mnist_model_init_random
+void              mnist_model_build(mnist_model & model);  // mnist_model_build
+ggml_opt_result_t mnist_model_eval(mnist_model & model, ggml_opt_dataset_t dataset);  // mnist_model_eval
+void              mnist_model_train(mnist_model & model, ggml_opt_dataset_t dataset, const int nepoch, const float val_split);  // mnist_model_train
+void              mnist_model_save(mnist_model & model, const std::string & fname);  // mnist_model_save

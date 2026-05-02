@@ -1,4 +1,4 @@
-#include "virtgpu-forward-impl.h"
+#include "virtgpu-forward-impl.h"  // 引入 virtgpu-forward-impl.h 头文件
 
 void * apir_buffer_get_base(virtgpu * gpu, apir_buffer_context_t * buffer_context) {
     apir_encoder *        encoder;
@@ -67,7 +67,7 @@ void apir_buffer_set_tensor(virtgpu *               gpu,
         virtgpu_shmem_destroy(gpu, shmem);
     }
 
-    return;
+    return;  // 返回
 }
 
 void apir_buffer_get_tensor(virtgpu *               gpu,
@@ -140,7 +140,7 @@ bool apir_buffer_cpy_tensor(virtgpu *               gpu,
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return ret_val;
+    return ret_val;  // 返回
 }
 
 void apir_buffer_clear(virtgpu * gpu, apir_buffer_context_t * buffer_context, uint8_t value) {

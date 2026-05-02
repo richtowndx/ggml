@@ -1,19 +1,19 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#include "../node_context.h"  // 引入 ../node_context.h 头文件
+#include "../op_table.h"  // 引入 ../op_table.h 头文件
+#include "../utils.h"  // 引入 ../utils.h 头文件
 
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/unsqueeze.hpp>
+#include <openvino/core/node.hpp>  // 引入 openvino/core/node.hpp 头文件
+#include <openvino/core/node_output.hpp>  // 引入 openvino/core/node_output.hpp 头文件
+#include <openvino/op/constant.hpp>  // 引入 openvino/op/constant.hpp 头文件
+#include <openvino/op/convert.hpp>  // 引入 openvino/op/convert.hpp 头文件
+#include <openvino/op/gather.hpp>  // 引入 openvino/op/gather.hpp 头文件
+#include <openvino/op/squeeze.hpp>  // 引入 openvino/op/squeeze.hpp 头文件
+#include <openvino/op/unsqueeze.hpp>  // 引入 openvino/op/unsqueeze.hpp 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
+namespace op {  // 命名空间
 
 OutputVector translate_get_rows(const NodeContext & context) {
     num_inputs_check(context, 2, 2);
@@ -60,7 +60,7 @@ OutputVector translate_get_rows(const NodeContext & context) {
     if (!(context.is_stateful())) {
         res = std::make_shared<ov::op::v0::Unsqueeze>(res, ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    return rename_outputs_with_suffix({res}, context.get_name());  // 返回
 }
 
 }  // namespace op

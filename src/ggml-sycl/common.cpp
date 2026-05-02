@@ -10,10 +10,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "common.hpp"
+#include "common.hpp"  // 引入 common.hpp 头文件
 
-#include "ggml-backend-impl.h"
-#include "ggml-impl.h"
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
 
 int get_current_device_id() {
   return dpct::dev_mgr::instance().current_device_id();
@@ -21,7 +21,7 @@ int get_current_device_id() {
 
 void* ggml_sycl_host_malloc(size_t size) try {
   if (getenv("GGML_SYCL_NO_PINNED") != nullptr) {
-    return nullptr;
+    return nullptr;  // 返回
   }
 
   void* ptr = nullptr;
@@ -32,10 +32,10 @@ void* ggml_sycl_host_malloc(size_t size) try {
   if (err != 0) {
     // clear the error
     GGML_LOG_ERROR("WARNING: failed to allocate %.2f MB of pinned memory: %s\n", size / 1024.0 / 1024.0,    "syclGetErrorString is not supported");
-    return nullptr;
+    return nullptr;  // 返回
   }
 
-  return ptr;
+  return ptr;  // 返回
 } catch (sycl::exception const& exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
@@ -63,7 +63,7 @@ int64_t downsample_sycl_global_range(int64_t accumulate_block_num, int64_t block
       sycl_down_blk_size /= 2;
       global_range = accumulate_block_num * sycl_down_blk_size;
   }
-  return sycl_down_blk_size;
+  return sycl_down_blk_size;  // 返回
 }
 
 void release_extra_gpu(ggml_tensor_extra_gpu * extra, std::vector<queue_ptr> streams) {

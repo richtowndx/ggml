@@ -1,15 +1,15 @@
-#include "ggml.h"
-#include "gguf.h"
-#include "ggml-cpu.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "gguf.h"  // 引入 gguf.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#include <algorithm>
-#include <cmath>
-#include <numeric>
-#include <stdexcept>
-#include <string>
-#include <vector>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <numeric>  // 引入 numeric 头文件
+#include <stdexcept>  // 引入 stdexcept 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
 
 static const char * magika_labels[] = {
     "ai",                 "apk",                "appleplist",         "asm",                "asp",
@@ -37,7 +37,7 @@ static const char * magika_labels[] = {
     "yaml",               "zip",                "zlibstream"
 };
 
-struct magika_hparams {
+struct magika_hparams {  // 结构体定义
     const int block_size = 4096;
     const int beg_size = 512;
     const int mid_size = 512;
@@ -48,7 +48,7 @@ struct magika_hparams {
     const int padding_token = 256;
 };
 
-struct magika_model {
+struct magika_model {  // 结构体定义
     ~magika_model() {
         ggml_backend_buffer_free(buf_w);
         ggml_backend_free(backend);
@@ -80,19 +80,19 @@ struct magika_model {
     struct ggml_context * ctx_w = nullptr;
 };
 
-struct ggml_tensor * checked_get_tensor(struct ggml_context * ctx, const char * name) {
+struct ggml_tensor * checked_get_tensor(struct ggml_context * ctx, const char * name) {  // 结构体定义
     struct ggml_tensor * tensor = ggml_get_tensor(ctx, name);
     if (!tensor) {
         fprintf(stderr, "%s: tensor '%s' not found\n", __func__, name);
         throw std::runtime_error("ggml_get_tensor() failed");
     }
-    return tensor;
+    return tensor;  // 返回
 }
 
 bool magika_model_load(const std::string & fname, magika_model & model) {
     auto & ctx = model.ctx_w;
 
-    struct gguf_init_params params = {
+    struct gguf_init_params params = {  // 结构体定义
         /*.no_alloc   =*/ true,
         /*.ctx        =*/ &ctx,
     };
@@ -100,14 +100,14 @@ bool magika_model_load(const std::string & fname, magika_model & model) {
     struct gguf_context * ctx_gguf = gguf_init_from_file(fname.c_str(), params);
     if (!ctx_gguf) {
         fprintf(stderr, "%s: gguf_init_from_file() failed\n", __func__);
-        return false;
+        return false;  // 返回
     }
 
     model.buf_w = ggml_backend_alloc_ctx_tensors(ctx, model.backend);
     if (!model.buf_w) {
         fprintf(stderr, "%s: ggml_backend_alloc_ctx_tensors() failed\n", __func__);
         gguf_free(ctx_gguf);
-        return false;
+        return false;  // 返回
     }
 
     try {
@@ -131,14 +131,14 @@ bool magika_model_load(const std::string & fname, magika_model & model) {
     } catch (const std::exception & e) {
         fprintf(stderr, "%s: %s\n", __func__, e.what());
         gguf_free(ctx_gguf);
-        return false;
+        return false;  // 返回
     }
 
     FILE * f = fopen(fname.c_str(), "rb");
     if (!f) {
         fprintf(stderr, "%s: fopen() failed\n", __func__);
         gguf_free(ctx_gguf);
-        return false;
+        return false;  // 返回
     }
 
     const int n_tensors = gguf_get_n_tensors(ctx_gguf);
@@ -158,14 +158,14 @@ bool magika_model_load(const std::string & fname, magika_model & model) {
             fprintf(stderr, "%s: fseek() failed\n", __func__);
             gguf_free(ctx_gguf);
             fclose(f);
-            return false;
+            return false;  // 返回
         }
 
         if (fread(buf.data(), 1, buf.size(), f) != buf.size()) {
             fprintf(stderr, "%s: fread() failed\n", __func__);
             gguf_free(ctx_gguf);
             fclose(f);
-            return false;
+            return false;  // 返回
         }
 
         ggml_backend_tensor_set(tensor, buf.data(), 0, buf.size());
@@ -175,7 +175,7 @@ bool magika_model_load(const std::string & fname, magika_model & model) {
 
     gguf_free(ctx_gguf);
 
-    return true;
+    return true;  // 返回
 }
 
 struct ggml_cgraph * magika_graph(
@@ -187,7 +187,7 @@ struct ggml_cgraph * magika_graph(
     static size_t buf_size = ggml_tensor_overhead()*GGML_DEFAULT_GRAPH_SIZE + ggml_graph_overhead();
     static std::vector<uint8_t> buf(buf_size);
 
-    struct ggml_init_params params = {
+    struct ggml_init_params params = {  // 结构体定义
         /*.mem_size   =*/ buf_size,
         /*.mem_buffer =*/ buf.data(),
         /*.no_alloc   =*/ true,
@@ -247,7 +247,7 @@ struct ggml_cgraph * magika_graph(
 
     ggml_build_forward_expand(gf, cur);
 
-    return gf;
+    return gf;  // 返回
 }
 
 bool magika_eval(
@@ -262,7 +262,7 @@ bool magika_eval(
 
     if (!ggml_gallocr_alloc_graph(alloc, gf)) {
         fprintf(stderr, "%s: ggml_gallocr_alloc_graph() failed\n", __func__);
-        return false;
+        return false;  // 返回
     }
 
     struct ggml_tensor * input = ggml_graph_get_tensor(gf, "input");
@@ -271,7 +271,7 @@ bool magika_eval(
         FILE * f = fopen(fnames[i].c_str(), "rb");
         if (!f) {
             fprintf(stderr, "%s: fopen() failed\n", __func__);
-            return false;
+            return false;  // 返回
         }
         fseek(f, 0, SEEK_END);
         long fsize = ftell(f);
@@ -323,7 +323,7 @@ bool magika_eval(
 
     if (ggml_backend_graph_compute(model.backend, gf) != GGML_STATUS_SUCCESS) {
         fprintf(stderr, "%s: ggml_backend_graph_compute() failed\n", __func__);
-        return false;
+        return false;  // 返回
     }
 
     struct ggml_tensor * target_label_probs = ggml_graph_get_tensor(gf, "target_label_probs");
@@ -347,13 +347,13 @@ bool magika_eval(
         printf("\n");
     }
 
-    return true;
+    return true;  // 返回
 }
 
 int main(int argc, const char ** argv) {
     if (argc < 3) {
         fprintf(stderr, "usage: %s <model> <file1> [<file2> ...]\n", argv[0]);
-        return 1;
+        return 1;  // 返回
     }
 
     const char * model_fname = argv[1];
@@ -365,10 +365,10 @@ int main(int argc, const char ** argv) {
     magika_model model;
     if (!magika_model_load(model_fname, model)) {
         fprintf(stderr, "magika_model_load() failed\n");
-        return 1;
+        return 1;  // 返回
     }
 
     magika_eval(model, fnames);
 
-    return 0;
+    return 0;  // 返回
 }

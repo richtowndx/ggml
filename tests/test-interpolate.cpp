@@ -1,23 +1,23 @@
-#include <ggml.h>
-#include <ggml-cpu.h>
-#include <ggml-alloc.h>
-#include <ggml-backend.h>
-#include <ggml-cpp.h>
+#include <ggml.h>  // 引入 ggml.h 头文件
+#include <ggml-cpu.h>  // 引入 ggml-cpu.h 头文件
+#include <ggml-alloc.h>  // 引入 ggml-alloc.h 头文件
+#include <ggml-backend.h>  // 引入 ggml-backend.h 头文件
+#include <ggml-cpp.h>  // 引入 ggml-cpp.h 头文件
 
-#include <cassert>
-#include <cmath>
-#include <cstdio>
-#include <array>
-#include <vector>
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <array>  // 引入 array 头文件
+#include <vector>  // 引入 vector 头文件
 
 bool check_equal(const float * result, const float * expected, int64_t n) {
     for (int i = 0; i < n; i++) {
         if(std::abs(result[i] - expected[i]) > 1e-4) {
             printf("result[%d] %f != %f expected[%d]\n", i, result[i], expected[i], i);
-            return false;
+            return false;  // 返回
         }
     }
-    return true;
+    return true;  // 返回
 }
 
 bool test_interpolate(char const* name,
@@ -57,7 +57,7 @@ bool test_interpolate(char const* name,
     bool passed = check_equal(res_values.data(), expected, ggml_nelements(res));
 
     printf("ggml_interpolate(%s): %s\n", name, passed ? "\033[32mPASSED\033[0m" : "\033[31mFAILED\033[0m");
-    return passed;
+    return passed;  // 返回
 }
 
 const float input_upscale[] = {
@@ -162,5 +162,5 @@ int main() {
         {3, 2, 2, 1}, expected_downscale_bilinear_align_corners,
         GGML_SCALE_MODE_BILINEAR | GGML_SCALE_FLAG_ALIGN_CORNERS);
 
-    return passed ? 0 : 1;
+    return passed ? 0 : 1;  // 返回
 }

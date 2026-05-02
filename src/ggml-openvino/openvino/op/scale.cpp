@@ -1,16 +1,16 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#include "../node_context.h"  // 引入 ../node_context.h 头文件
+#include "../op_table.h"  // 引入 ../op_table.h 头文件
+#include "../utils.h"  // 引入 ../utils.h 头文件
 
-#include <openvino/op/add.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/multiply.hpp>
-#include <vector>
+#include <openvino/op/add.hpp>  // 引入 openvino/op/add.hpp 头文件
+#include <openvino/op/constant.hpp>  // 引入 openvino/op/constant.hpp 头文件
+#include <openvino/op/multiply.hpp>  // 引入 openvino/op/multiply.hpp 头文件
+#include <vector>  // 引入 vector 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
+namespace op {  // 命名空间
 
 OutputVector translate_scale(const NodeContext & context) {
     num_inputs_check(context, 1, 1);
@@ -32,7 +32,7 @@ OutputVector translate_scale(const NodeContext & context) {
         res = scaled;
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    return rename_outputs_with_suffix({res}, context.get_name());  // 返回
 }
 
 }  // namespace op

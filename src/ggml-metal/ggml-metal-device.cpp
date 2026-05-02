@@ -1,21 +1,21 @@
-#include "ggml-metal-device.h"
+#include "ggml-metal-device.h"  // 引入 ggml-metal-device.h 头文件
 
-#include "ggml-metal-impl.h"
+#include "ggml-metal-impl.h"  // 引入 ggml-metal-impl.h 头文件
 
-#include "ggml-impl.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
 
-#include <cassert>
-#include <memory>
-#include <string>
-#include <unordered_map>
+#include <cassert>  // 引入 cassert 头文件
+#include <memory>  // 引入 memory 头文件
+#include <string>  // 引入 string 头文件
+#include <unordered_map>  // 引入 unordered_map 头文件
 
-struct ggml_metal_device_deleter {
+struct ggml_metal_device_deleter {  // 结构体定义
     void operator()(ggml_metal_device_t ctx) {
         ggml_metal_device_free(ctx);
     }
 };
 
-typedef std::unique_ptr<ggml_metal_device, ggml_metal_device_deleter> ggml_metal_device_ptr;
+typedef std::unique_ptr<ggml_metal_device, ggml_metal_device_deleter> ggml_metal_device_ptr;  // 类型定义
 
 ggml_metal_device_t ggml_metal_device_get(int device) {
     static std::vector<ggml_metal_device_ptr> devs;
@@ -25,19 +25,19 @@ ggml_metal_device_t ggml_metal_device_get(int device) {
     return devs.back().get();
 }
 
-struct ggml_metal_pipelines {
+struct ggml_metal_pipelines {  // 结构体定义
     std::unordered_map<std::string, ggml_metal_pipeline_t> data;
 };
 
 ggml_metal_pipelines_t ggml_metal_pipelines_init(void) {
     ggml_metal_pipelines_t res = new ggml_metal_pipelines();
 
-    return res;
+    return res;  // 返回
 }
 
 void ggml_metal_pipelines_free(ggml_metal_pipelines_t ppls) {
     if (!ppls) {
-        return;
+        return;  // 返回
     }
 
     for (auto it = ppls->data.begin(); it != ppls->data.end(); ++it) {
@@ -53,13 +53,13 @@ void ggml_metal_pipelines_add(ggml_metal_pipelines_t ppls, const char * name, gg
 
 ggml_metal_pipeline_t ggml_metal_pipelines_get(ggml_metal_pipelines_t ppls, const char * name) {
     if (ppls->data.find(name) == ppls->data.end()) {
-        return nullptr;
+        return nullptr;  // 返回
     }
 
-    return ppls->data[name];
+    return ppls->data[name];  // 返回
 }
 
-struct ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_base(ggml_metal_library_t lib, ggml_op op) {
+struct ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_base(ggml_metal_library_t lib, ggml_op op) {  // 结构体定义
     char base[256];
     char name[256];
 
@@ -78,7 +78,7 @@ struct ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_base(ggml
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_cpy(ggml_metal_library_t lib, ggml_type tsrc, ggml_type tdst) {
@@ -93,7 +93,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_cpy(ggml_metal_l
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_pool_1d(ggml_metal_library_t lib, const ggml_tensor * op, ggml_op_pool op_pool) {
@@ -118,7 +118,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_pool_1d(ggml_met
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_pool_2d(ggml_metal_library_t lib, const ggml_tensor * op, ggml_op_pool op_pool) {
@@ -143,7 +143,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_pool_2d(ggml_met
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_get_rows(ggml_metal_library_t lib, ggml_type tsrc) {
@@ -158,7 +158,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_get_rows(ggml_me
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_set_rows(ggml_metal_library_t lib, ggml_type tidx, ggml_type tdst) {
@@ -173,7 +173,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_set_rows(ggml_me
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_diag(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -193,7 +193,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_diag(ggml_metal_
     res.nsg  = 1;
     res.smem = 0;
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_repeat(ggml_metal_library_t lib, ggml_type tsrc) {
@@ -208,7 +208,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_repeat(ggml_meta
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_unary(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -280,7 +280,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_unary(ggml_metal
     res.c4  = is_c4;
     res.cnt = is_cnt;
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_glu(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -312,7 +312,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_glu(ggml_metal_l
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_sum(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -329,7 +329,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_sum(ggml_metal_l
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_sum_rows(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -373,7 +373,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_sum_rows(ggml_me
 
     res.c4  = is_c4;
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_cumsum_blk(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -390,7 +390,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_cumsum_blk(ggml_
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_cumsum_add(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -407,7 +407,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_cumsum_add(ggml_
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_tri(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -429,7 +429,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_tri(ggml_metal_l
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_soft_max(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -456,7 +456,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_soft_max(ggml_me
 
     res.smem = 32*sizeof(float);
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_ssm_conv(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -483,7 +483,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_ssm_conv(ggml_me
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_ssm_conv_batched(ggml_metal_library_t lib, const ggml_tensor * op, int ssm_conv_bs) {
@@ -515,7 +515,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_ssm_conv_batched
         ggml_metal_cv_free(cv);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_ssm_scan(ggml_metal_library_t lib, const ggml_tensor * op)  {
@@ -541,7 +541,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_ssm_scan(ggml_me
     // Total: nsg * (32 + 2) floats
     res.smem = (32 + 2)*sizeof(float)*nsg;
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_rwkv(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -579,7 +579,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_rwkv(ggml_metal_
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_gated_delta_net(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -614,7 +614,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_gated_delta_net(
 
     res.nsg = nsg;
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_solve_tri(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -644,7 +644,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_solve_tri(ggml_m
     res.nsg  = nsg;
     res.smem = GGML_PAD(GGML_PAD(n, 32)*nsg*sizeof(float), 16);
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_mul_mv_ext(ggml_metal_library_t lib, ggml_type tsrc0, ggml_type tsrc1, int nsg, int nxpsg, int r1ptg) {
@@ -666,7 +666,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_mul_mv_ext(ggml_
         ggml_metal_cv_free(cv);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_mul_mm(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -717,7 +717,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_mul_mm(ggml_meta
 
     res.nsg = N_MM_SIMD_GROUP_X * N_MM_SIMD_GROUP_Y;
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_mul_mv(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -896,7 +896,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_mul_mv(ggml_meta
     res.nsg  = nsg;
     res.smem = smem;
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_mul_mm_id_map0(ggml_metal_library_t lib, int ne02, int ne20) {
@@ -913,7 +913,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_mul_mm_id_map0(g
 
     res.smem = (size_t) ne02*ne20*sizeof(uint16_t);
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_mul_mm_id(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -941,7 +941,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_mul_mm_id(ggml_m
 
     res.smem = 8192;
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_mul_mv_id(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1113,7 +1113,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_mul_mv_id(ggml_m
     res.nsg  = nsg;
     res.smem = smem;
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_argmax(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1134,7 +1134,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_argmax(ggml_meta
 
     res.smem = 32*(sizeof(float) + sizeof(int32_t));
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_argsort(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1160,7 +1160,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_argsort(ggml_met
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_argsort_merge(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1186,7 +1186,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_argsort_merge(gg
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 // note: reuse the argsort kernel for top_k
@@ -1214,7 +1214,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_top_k(ggml_metal
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_top_k_merge(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1240,7 +1240,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_top_k_merge(ggml
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_flash_attn_ext_pad(
@@ -1283,7 +1283,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_flash_attn_ext_p
         ggml_metal_cv_free(cv);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_flash_attn_ext_blk(
@@ -1326,7 +1326,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_flash_attn_ext_b
         ggml_metal_cv_free(cv);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_flash_attn_ext(
@@ -1391,7 +1391,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_flash_attn_ext(
         ggml_metal_cv_free(cv);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_flash_attn_ext_vec(
@@ -1452,7 +1452,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_flash_attn_ext_v
         ggml_metal_cv_free(cv);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_flash_attn_ext_vec_reduce(
@@ -1480,7 +1480,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_flash_attn_ext_v
         ggml_metal_cv_free(cv);
     }
 
-    return res;
+    return res;  // 返回
 
     GGML_UNUSED(op);
 }
@@ -1528,7 +1528,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_bin(ggml_metal_l
     res.c4  = is_c4;
     res.cnt = is_rb;
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_bin_one(ggml_metal_library_t lib, ggml_op op) {
@@ -1561,7 +1561,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_bin_one(ggml_met
         ggml_metal_cv_free(cv);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_l2_norm(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1586,7 +1586,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_l2_norm(ggml_met
     res.c4   = is_c4;
     res.smem = 32*sizeof(float);
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_group_norm(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1607,7 +1607,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_group_norm(ggml_
 
     res.smem = 32*sizeof(float);
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_norm(ggml_metal_library_t lib, const ggml_tensor * op, int n_fuse) {
@@ -1650,7 +1650,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_norm(ggml_metal_
 
     res.smem = 32*sizeof(float);
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_rope(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1691,7 +1691,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_rope(ggml_metal_
         ggml_metal_cv_free(cv);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_im2col(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1712,7 +1712,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_im2col(ggml_meta
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_conv_transpose_1d(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1735,7 +1735,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_conv_transpose_1
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_conv_transpose_2d(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1758,7 +1758,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_conv_transpose_2
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_conv_2d(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1780,7 +1780,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_conv_2d(ggml_met
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_conv_3d(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1802,7 +1802,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_conv_3d(ggml_met
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_upscale(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1836,7 +1836,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_upscale(ggml_met
         ggml_metal_cv_free(cv);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_roll(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1853,7 +1853,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_roll(ggml_metal_
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_pad(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1867,12 +1867,12 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_pad(ggml_metal_l
 
     ggml_metal_pipeline_with_params res = ggml_metal_library_get_pipeline(lib, name);
     if (res.pipeline) {
-        return res;
+        return res;  // 返回
     }
 
     res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_pad_reflect_1d(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1889,7 +1889,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_pad_reflect_1d(g
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_arange(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1906,7 +1906,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_arange(ggml_meta
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_timestep_embedding(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1923,7 +1923,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_timestep_embeddi
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_opt_step_adamw(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1940,7 +1940,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_opt_step_adamw(g
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_opt_step_sgd(ggml_metal_library_t lib, const ggml_tensor * op) {
@@ -1957,7 +1957,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_opt_step_sgd(ggm
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_memset(ggml_metal_library_t lib, const ggml_tensor *  op) {
@@ -1974,7 +1974,7 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_memset(ggml_meta
         res = ggml_metal_library_compile_pipeline(lib, base, name, nullptr);
     }
 
-    return res;
+    return res;  // 返回
 }
 
 ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_count_equal(ggml_metal_library_t lib, const ggml_tensor *  op) {
@@ -2014,5 +2014,5 @@ ggml_metal_pipeline_with_params ggml_metal_library_get_pipeline_count_equal(ggml
     res.smem = 32 * sizeof(int32_t);
     res.nsg  = nsg;
 
-    return res;
+    return res;  // 返回
 }

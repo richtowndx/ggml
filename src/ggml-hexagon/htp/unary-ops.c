@@ -2,24 +2,24 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
 
-#include <math.h>
-#include <string.h>
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#include "hex-dma.h"
-#include "hvx-exp.h"
-#include "hvx-sigmoid.h"
-#include "hvx-utils.h"
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
+#include "hvx-exp.h"  // 引入 hvx-exp.h 头文件
+#include "hvx-sigmoid.h"  // 引入 hvx-sigmoid.h 头文件
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-ops.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
 
-struct htp_unary_context {
+struct htp_unary_context {  // 结构体定义
     struct htp_ops_context * octx;
 
     // Precomputed values
@@ -49,7 +49,7 @@ static inline size_t unary_row_offset(uint32_t ir,
     const uint32_t i1 = ir % ne1;
     const uint32_t i2 = (ir / ne1) % ne2;
     const uint32_t i3 = ir / (ne1 * ne2);
-    return i1 * nb1 + i2 * nb2 + i3 * nb3;
+    return i1 * nb1 + i2 * nb2 + i3 * nb3;  // 返回
 }
 // Safe DMA block size from row `ir`: clamp to the tighter dim-1 slice
 // boundary of src and dst so the nb1 stride stays valid for all rows.
@@ -72,7 +72,7 @@ static inline uint32_t unary_block_size(uint32_t ir,
         limit = MIN(limit, dst_slice_end - ir);
     }
 
-    return limit;
+    return limit;  // 返回
 }
 
 #define htp_unary_preamble            \
@@ -322,7 +322,7 @@ static void unary_job_f32_per_thread(unsigned int nth, unsigned int ith, void * 
 
     // no work for this thread
     if (src0_start_row >= src0_end_row) {
-        return;
+        return;  // 返回
     }
 
     uint64_t t1, t2;
@@ -350,7 +350,7 @@ static void unary_job_f32_per_thread(unsigned int nth, unsigned int ith, void * 
     if (BLOCK == 0) {
         FARF(ERROR, "unary-f32 : current VTCM reservation %zu is too small for even 1 row per thread, needed at least %zu\n",
              octx->src0_spad.size_per_thread, src0_row_size_aligned);
-        return;
+        return;  // 返回
     }
 
     dma_queue * dma_queue = octx->ctx->dma[ith];
@@ -472,7 +472,7 @@ static int execute_op_unary_f32(struct htp_ops_context * octx) {
 
         default:
             FARF(ERROR, "Unsupported unary Op %u\n", octx->op);
-            return HTP_STATUS_NO_SUPPORT;
+            return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     const uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
@@ -495,7 +495,7 @@ static int execute_op_unary_f32(struct htp_ops_context * octx) {
     if (vtcm_row_per_thread == 0) {
         FARF(ERROR, "unary-%s : current VTCM reservation %zu is too small, needed %zu\n", op_type, octx->ctx->vtcm_size,
              spad_size_per_row * n_threads);
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        return HTP_STATUS_VTCM_TOO_SMALL;  // 返回
     }
 
     octx->src0_spad.size_per_thread = src0_row_size_aligned * vtcm_row_per_thread * 2;
@@ -512,7 +512,7 @@ static int execute_op_unary_f32(struct htp_ops_context * octx) {
          octx->src0_spad.size, octx->src1_spad.size, octx->dst_spad.size);
 
     if (!(octx->flags & HTP_OPFLAGS_SKIP_COMPUTE)) {
-        struct htp_unary_context uctx = {
+        struct htp_unary_context uctx = {  // 结构体定义
             .octx                  = octx,
             .src0_nrows_per_thread = (src0_nrows + n_threads - 1) / n_threads,
             .src0_nrows            = src0_nrows,
@@ -536,7 +536,7 @@ static int execute_op_unary_f32(struct htp_ops_context * octx) {
         worker_pool_run_func(octx->ctx->worker_pool, unary_job_f32_per_thread, &uctx, n_threads);
     }
 
-    return err;
+    return err;  // 返回
 }
 
 int op_unary(struct htp_ops_context * octx) {
@@ -552,5 +552,5 @@ int op_unary(struct htp_ops_context * octx) {
             break;
     }
 
-    return err;
+    return err;  // 返回
 }

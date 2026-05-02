@@ -1,12 +1,12 @@
-#include <sycl/sycl.hpp>
-#include <sycl/ext/oneapi/work_group_static.hpp>
-#include "dpct/helper.hpp"
-#include "common.hpp"
-#include "fattn-common.hpp"
-#include "fattn-tile.hpp"
-#include <cmath>
-#include <float.h>
-namespace syclex = sycl::ext::oneapi::experimental;
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
+#include <sycl/ext/oneapi/work_group_static.hpp>  // 引入 sycl/ext/oneapi/work_group_static.hpp 头文件
+#include "dpct/helper.hpp"  // 引入 dpct/helper.hpp 头文件
+#include "common.hpp"  // 引入 common.hpp 头文件
+#include "fattn-common.hpp"  // 引入 fattn-common.hpp 头文件
+#include "fattn-tile.hpp"  // 引入 fattn-tile.hpp 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <float.h>  // 引入 float.h 头文件
+namespace syclex = sycl::ext::oneapi::experimental;  // 命名空间
 
 void ggml_sycl_flash_attn_ext_tile(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     const ggml_tensor * K = dst->src[1];

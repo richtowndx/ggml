@@ -15,39 +15,39 @@
 // ##############################
 
 
-#include <ggml.h>
-#include <ggml-alloc.h>
-#include <ggml-backend.h>
-#include <ggml-cpp.h>
+#include <ggml.h>  // 引入 ggml.h 头文件
+#include <ggml-alloc.h>  // 引入 ggml-alloc.h 头文件
+#include <ggml-backend.h>  // 引入 ggml-backend.h 头文件
+#include <ggml-cpp.h>  // 引入 ggml-cpp.h 头文件
 
-#include <algorithm>
-#include <array>
-#include <cfloat>
-#include <cinttypes>
-#include <cstdarg>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
-#include <future>
-#include <fstream>
-#include <memory>
-#include <random>
-#include <regex>
-#include <set>
-#include <sstream>
-#include <string>
-#include <string_view>
-#include <thread>
-#include <vector>
-#include <unordered_map>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <array>  // 引入 array 头文件
+#include <cfloat>  // 引入 cfloat 头文件
+#include <cinttypes>  // 引入 cinttypes 头文件
+#include <cstdarg>  // 引入 cstdarg 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstdlib>  // 引入 cstdlib 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <ctime>  // 引入 ctime 头文件
+#include <future>  // 引入 future 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <memory>  // 引入 memory 头文件
+#include <random>  // 引入 random 头文件
+#include <regex>  // 引入 regex 头文件
+#include <set>  // 引入 set 头文件
+#include <sstream>  // 引入 sstream 头文件
+#include <string>  // 引入 string 头文件
+#include <string_view>  // 引入 string_view 头文件
+#include <thread>  // 引入 thread 头文件
+#include <vector>  // 引入 vector 头文件
+#include <unordered_map>  // 引入 unordered_map 头文件
 
-#ifdef __EMSCRIPTEN__
-#   define N_THREADS 1
-#else
-#   define N_THREADS std::thread::hardware_concurrency()
-#endif
+#ifdef __EMSCRIPTEN__  // 如果定义了 __EMSCRIPTEN__ 则编译
+#   define N_THREADS 1  // 宏定义 N_THREADS
+#else  // 否则
+#   define N_THREADS std::thread::hardware_concurrency()  // 宏定义 N_THREADS
+#endif  // 条件编译结束
 
 static void init_tensor_uniform(ggml_tensor * tensor, float min = -1.0f, float max = 1.0f) {
     size_t nels = ggml_nelements(tensor);
@@ -62,7 +62,7 @@ static void init_tensor_uniform(ggml_tensor * tensor, float min = -1.0f, float m
             vec.reserve(n_threads);
             //for (size_t i = 0; i < n_threads; i++) { vec.emplace_back(1234 + i); } // fixed seed
             for (size_t i = 0; i < n_threads; i++) { vec.emplace_back(rd()); }
-            return vec;
+            return vec;  // 返回
         }();
 
         auto init_thread = [&](size_t ith, size_t start, size_t end) {
@@ -271,7 +271,7 @@ static std::vector<float> tensor_to_float(const ggml_tensor * t) {
         }
     }
 
-    return tv;
+    return tv;  // 返回
 }
 
 // normalized mean squared error = mse(a, b) / mse(a, 0)
@@ -287,11 +287,11 @@ static double nmse(const float * a, const float * b, size_t n) {
         mse_a_0 += a_i * a_i;
     }
 
-    return mse_a_b / mse_a_0;
+    return mse_a_b / mse_a_0;  // 返回
 }
 
 // difference between 2 sets (Jaccard distance, 0 - no difference, 1 - no overlap)
-template <typename T>
+template <typename T>  // 模板
 static double jdst(const T * a, const T * b, size_t n) {
     std::unordered_map<T, size_t> set_a;
     std::unordered_map<T, size_t> set_b;
@@ -349,21 +349,21 @@ static double mean_abs_asymm(const float * a, const float * b, const size_t n, c
         nvalid++;
     }
 
-    return sum/nvalid;
+    return sum/nvalid;  // 返回
 }
 
 // utils for printing the variables of the test cases
 
 static std::string var_to_str(const std::string & x) {
-    return x;
+    return x;  // 返回
 }
 
-template<typename T>
+template<typename T>  // 模板
 static std::string var_to_str(const T & x) {
     return std::to_string(x);
 }
 
-template<typename T, size_t N>
+template<typename T, size_t N>  // 模板
 static std::string var_to_str(const T (&x)[N]) {
     std::string s = "[";
     for (size_t i = 0; i < N; i++) {
@@ -373,10 +373,10 @@ static std::string var_to_str(const T (&x)[N]) {
         s += var_to_str(x[i]);
     }
     s += "]";
-    return s;
+    return s;  // 返回
 }
 
-template<typename T, size_t N>
+template<typename T, size_t N>  // 模板
 static std::string var_to_str(const std::array<T, N> & x) {
     std::string s = "[";
     for (size_t i = 0; i < N; i++) {
@@ -386,15 +386,15 @@ static std::string var_to_str(const std::array<T, N> & x) {
         s += var_to_str(x[i]);
     }
     s += "]";
-    return s;
+    return s;  // 返回
 }
 
 static std::string var_to_str(ggml_type type) {
-    return ggml_type_name(type);
+    return ggml_type_name(type);  // ggml_type_name
 }
 
 static std::string var_to_str(ggml_prec prec) {
-    return prec == GGML_PREC_F32 ? "f32" : "def";
+    return prec == GGML_PREC_F32 ? "f32" : "def";  // 返回
 }
 
 static std::string var_to_str(ggml_op_pool pool) {
@@ -419,43 +419,43 @@ static std::string var_to_str(ggml_scale_mode mode) {
     if (mode & GGML_SCALE_FLAG_ANTIALIAS) {
         str += "|antialias";
     }
-    return str;
+    return str;  // 返回
 }
 
-#define VAR_TO_STR(x) (#x "=" + var_to_str(x))
+#define VAR_TO_STR(x) (#x "=" + var_to_str(x))  // 宏定义 VAR_TO_STR
 
-#define VARS_TO_STR1(a) VAR_TO_STR(a)
-#define VARS_TO_STR2(a, b) VAR_TO_STR(a) + "," + VAR_TO_STR(b)
-#define VARS_TO_STR3(a, b, c) VAR_TO_STR(a) + "," + VARS_TO_STR2(b, c)
-#define VARS_TO_STR4(a, b, c, d) VAR_TO_STR(a) + "," + VARS_TO_STR3(b, c, d)
-#define VARS_TO_STR5(a, b, c, d, e) VAR_TO_STR(a) + "," + VARS_TO_STR4(b, c, d, e)
-#define VARS_TO_STR6(a, b, c, d, e, f) VAR_TO_STR(a) + "," + VARS_TO_STR5(b, c, d, e, f)
-#define VARS_TO_STR7(a, b, c, d, e, f, g) VAR_TO_STR(a) + "," + VARS_TO_STR6(b, c, d, e, f, g)
-#define VARS_TO_STR8(a, b, c, d, e, f, g, h) VAR_TO_STR(a) + "," + VARS_TO_STR7(b, c, d, e, f, g, h)
-#define VARS_TO_STR9(a, b, c, d, e, f, g, h, i) VAR_TO_STR(a) + "," + VARS_TO_STR8(b, c, d, e, f, g, h, i)
-#define VARS_TO_STR10(a, b, c, d, e, f, g, h, i, j) VAR_TO_STR(a) + "," + VARS_TO_STR9(b, c, d, e, f, g, h, i, j)
-#define VARS_TO_STR11(a, b, c, d, e, f, g, h, i, j, k) VAR_TO_STR(a) + "," + VARS_TO_STR10(b, c, d, e, f, g, h, i, j, k)
-#define VARS_TO_STR12(a, b, c, d, e, f, g, h, i, j, k, l) VAR_TO_STR(a) + "," + VARS_TO_STR11(b, c, d, e, f, g, h, i, j, k, l)
-#define VARS_TO_STR13(a, b, c, d, e, f, g, h, i, j, k, l, m) VAR_TO_STR(a) + "," + VARS_TO_STR12(b, c, d, e, f, g, h, i, j, k, l, m)
-#define VARS_TO_STR14(a, b, c, d, e, f, g, h, i, j, k, l, m, n) VAR_TO_STR(a) + "," + VARS_TO_STR13(b, c, d, e, f, g, h, i, j, k, l, m, n)
-#define VARS_TO_STR15(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o) VAR_TO_STR(a) + "," + VARS_TO_STR14(b, c, d, e, f, g, h, i, j, k, l, m, n, o)
-#define VARS_TO_STR16(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) VAR_TO_STR(a) + "," + VARS_TO_STR15(b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
+#define VARS_TO_STR1(a) VAR_TO_STR(a)  // 宏定义 VARS_TO_STR1
+#define VARS_TO_STR2(a, b) VAR_TO_STR(a) + "," + VAR_TO_STR(b)  // 宏定义 VARS_TO_STR2
+#define VARS_TO_STR3(a, b, c) VAR_TO_STR(a) + "," + VARS_TO_STR2(b, c)  // 宏定义 VARS_TO_STR3
+#define VARS_TO_STR4(a, b, c, d) VAR_TO_STR(a) + "," + VARS_TO_STR3(b, c, d)  // 宏定义 VARS_TO_STR4
+#define VARS_TO_STR5(a, b, c, d, e) VAR_TO_STR(a) + "," + VARS_TO_STR4(b, c, d, e)  // 宏定义 VARS_TO_STR5
+#define VARS_TO_STR6(a, b, c, d, e, f) VAR_TO_STR(a) + "," + VARS_TO_STR5(b, c, d, e, f)  // 宏定义 VARS_TO_STR6
+#define VARS_TO_STR7(a, b, c, d, e, f, g) VAR_TO_STR(a) + "," + VARS_TO_STR6(b, c, d, e, f, g)  // 宏定义 VARS_TO_STR7
+#define VARS_TO_STR8(a, b, c, d, e, f, g, h) VAR_TO_STR(a) + "," + VARS_TO_STR7(b, c, d, e, f, g, h)  // 宏定义 VARS_TO_STR8
+#define VARS_TO_STR9(a, b, c, d, e, f, g, h, i) VAR_TO_STR(a) + "," + VARS_TO_STR8(b, c, d, e, f, g, h, i)  // 宏定义 VARS_TO_STR9
+#define VARS_TO_STR10(a, b, c, d, e, f, g, h, i, j) VAR_TO_STR(a) + "," + VARS_TO_STR9(b, c, d, e, f, g, h, i, j)  // 宏定义 VARS_TO_STR10
+#define VARS_TO_STR11(a, b, c, d, e, f, g, h, i, j, k) VAR_TO_STR(a) + "," + VARS_TO_STR10(b, c, d, e, f, g, h, i, j, k)  // 宏定义 VARS_TO_STR11
+#define VARS_TO_STR12(a, b, c, d, e, f, g, h, i, j, k, l) VAR_TO_STR(a) + "," + VARS_TO_STR11(b, c, d, e, f, g, h, i, j, k, l)  // 宏定义 VARS_TO_STR12
+#define VARS_TO_STR13(a, b, c, d, e, f, g, h, i, j, k, l, m) VAR_TO_STR(a) + "," + VARS_TO_STR12(b, c, d, e, f, g, h, i, j, k, l, m)  // 宏定义 VARS_TO_STR13
+#define VARS_TO_STR14(a, b, c, d, e, f, g, h, i, j, k, l, m, n) VAR_TO_STR(a) + "," + VARS_TO_STR13(b, c, d, e, f, g, h, i, j, k, l, m, n)  // 宏定义 VARS_TO_STR14
+#define VARS_TO_STR15(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o) VAR_TO_STR(a) + "," + VARS_TO_STR14(b, c, d, e, f, g, h, i, j, k, l, m, n, o)  // 宏定义 VARS_TO_STR15
+#define VARS_TO_STR16(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) VAR_TO_STR(a) + "," + VARS_TO_STR15(b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)  // 宏定义 VARS_TO_STR16
 
-#ifdef GGML_USE_SYCL
+#ifdef GGML_USE_SYCL  // 如果定义了 GGML_USE_SYCL 则编译
 static bool inline _isinf(float f) {
     return (*(uint32_t *)&f & 0x7fffffff) == 0x7f800000;
 }
-#else
+#else  // 否则
 static bool inline _isinf(float f) { return std::isinf(f); }
-#endif
+#endif  // 条件编译结束
 
 // accept FLT_MAX as infinity
 static bool isinf_or_max(float f) {
-    return _isinf(f) || f == FLT_MAX || f == -FLT_MAX;
+    return _isinf(f) || f == FLT_MAX || f == -FLT_MAX;  // _isinf
 }
 
 static bool ggml_is_view_op(enum ggml_op op) {
-    return op == GGML_OP_VIEW || op == GGML_OP_RESHAPE || op == GGML_OP_PERMUTE || op == GGML_OP_TRANSPOSE;
+    return op == GGML_OP_VIEW || op == GGML_OP_RESHAPE || op == GGML_OP_PERMUTE || op == GGML_OP_TRANSPOSE;  // 返回
 }
 
 static bool backend_has_feature(ggml_backend_t backend, const char * feature_name) {
@@ -464,23 +464,23 @@ static bool backend_has_feature(ggml_backend_t backend, const char * feature_nam
 
     auto get_features = (ggml_backend_get_features_t) ggml_backend_reg_get_proc_address(reg, "ggml_backend_get_features");
     if (!get_features) {
-        return false;
+        return false;  // 返回
     }
 
     const ggml_backend_feature * features = get_features(reg);
     if (!features) {
-        return false;
+        return false;  // 返回
     }
 
     for (const ggml_backend_feature * f = features; f->name; ++f) {
         if (strcmp(f->name, feature_name) == 0 && strcmp(f->value, "1") == 0) {
-            return true;
+            return true;  // 返回
         }
     }
-    return false;
+    return false;  // 返回
 }
 
-enum test_mode {
+enum test_mode {  // 枚举定义
     MODE_TEST,
     MODE_PERF,
     MODE_GRAD,
@@ -488,16 +488,16 @@ enum test_mode {
 };
 
 // Output format support similar to llama-bench
-enum output_formats { CONSOLE, SQL, CSV };
+enum output_formats { CONSOLE, SQL, CSV };  // 枚举定义
 
 static const char * output_format_str(output_formats format) {
     switch (format) {
         case CONSOLE:
-            return "console";
+            return "console";  // 返回
         case SQL:
-            return "sql";
+            return "sql";  // 返回
         case CSV:
-            return "csv";
+            return "csv";  // 返回
         default:
             GGML_ABORT("invalid output format");
     }
@@ -511,13 +511,13 @@ static bool output_format_from_str(const std::string & s, output_formats & forma
     } else if (s == "csv") {
         format = CSV;
     } else {
-        return false;
+        return false;  // 返回
     }
-    return true;
+    return true;  // 返回
 }
 
 // Test result structure for SQL output
-struct test_result {
+struct test_result {  // 结构体定义
     std::string test_time;
     std::string build_commit;
     std::string backend_name;
@@ -589,26 +589,26 @@ struct test_result {
             "passed",    "error_message", "time_us",      "flops",   "bandwidth_gb_s", "memory_kb", "n_runs",
             "device_description", "backend_reg_name"
         };
-        return fields;
+        return fields;  // 返回
     }
 
-    enum field_type { STRING, BOOL, INT, FLOAT };
+    enum field_type { STRING, BOOL, INT, FLOAT };  // 枚举定义
 
     static field_type get_field_type(const std::string & field) {
         if (field == "supported" || field == "passed") {
-            return BOOL;
+            return BOOL;  // 返回
         }
         if (field == "memory_kb" || field == "n_runs") {
-            return INT;
+            return INT;  // 返回
         }
         if (field == "time_us" || field == "flops" || field == "bandwidth_gb_s") {
-            return FLOAT;
+            return FLOAT;  // 返回
         }
-        return STRING;
+        return STRING;  // 返回
     }
 
     std::vector<std::string> get_values() const {
-        return { test_time,
+        return { test_time,  // 返回
                  build_commit,
                  backend_name,
                  op_name,
@@ -628,9 +628,9 @@ struct test_result {
 };
 
 // Printer classes for different output formats
-enum class test_status_t { NOT_SUPPORTED, OK, FAIL, SKIPPED };
+enum class test_status_t { NOT_SUPPORTED, OK, FAIL, SKIPPED };  // 枚举定义
 
-struct test_operation_info {
+struct test_operation_info {  // 结构体定义
     std::string   op_name;
     std::string   op_params;
     std::string   backend_name;
@@ -710,7 +710,7 @@ struct test_operation_info {
     void set_large_tensor_skip() { is_large_tensor_skip = true; }
 };
 
-struct test_summary_info {
+struct test_summary_info {  // 结构体定义
     size_t tests_passed;
     size_t tests_total;
     bool   is_backend_summary = false;  // true for backend summary, false for test summary
@@ -723,7 +723,7 @@ struct test_summary_info {
         is_backend_summary(is_backend_summary) {}
 };
 
-struct testing_start_info {
+struct testing_start_info {  // 结构体定义
     size_t device_count;
 
     testing_start_info() = default;
@@ -731,7 +731,7 @@ struct testing_start_info {
     testing_start_info(size_t device_count) : device_count(device_count) {}
 };
 
-struct backend_init_info {
+struct backend_init_info {  // 结构体定义
     size_t      device_index;
     size_t      total_devices;
     std::string device_name;
@@ -758,7 +758,7 @@ struct backend_init_info {
         has_memory_info(has_memory_info) {}
 };
 
-struct backend_status_info {
+struct backend_status_info {  // 结构体定义
     std::string   backend_name;
     test_status_t status;
 
@@ -769,7 +769,7 @@ struct backend_status_info {
         status(status) {}
 };
 
-struct overall_summary_info {
+struct overall_summary_info {  // 结构体定义
     size_t backends_passed;
     size_t backends_total;
     bool   all_passed;
@@ -782,33 +782,33 @@ struct overall_summary_info {
         all_passed(all_passed) {}
 };
 
-struct printer {
-    virtual ~printer() {}
+struct printer {  // 结构体定义
+    virtual ~printer() {}  // 虚函数
 
     FILE * fout = stdout;
 
-    virtual void print_header() {}
+    virtual void print_header() {}  // 虚函数
 
     virtual void print_test_result(const test_result & result) = 0;
 
-    virtual void print_footer() {}
+    virtual void print_footer() {}  // 虚函数
 
-    virtual void print_operation(const test_operation_info & info) { (void) info; }
+    virtual void print_operation(const test_operation_info & info) { (void) info; }  // 虚函数
 
-    virtual void print_summary(const test_summary_info & info) { (void) info; }
+    virtual void print_summary(const test_summary_info & info) { (void) info; }  // 虚函数
 
-    virtual void print_testing_start(const testing_start_info & info) { (void) info; }
+    virtual void print_testing_start(const testing_start_info & info) { (void) info; }  // 虚函数
 
-    virtual void print_backend_init(const backend_init_info & info) { (void) info; }
+    virtual void print_backend_init(const backend_init_info & info) { (void) info; }  // 虚函数
 
-    virtual void print_backend_status(const backend_status_info & info) { (void) info; }
+    virtual void print_backend_status(const backend_status_info & info) { (void) info; }  // 虚函数
 
-    virtual void print_overall_summary(const overall_summary_info & info) { (void) info; }
+    virtual void print_overall_summary(const overall_summary_info & info) { (void) info; }  // 虚函数
 
-    virtual void print_failed_tests(const std::vector<std::string> & failed_tests) { (void) failed_tests; }
+    virtual void print_failed_tests(const std::vector<std::string> & failed_tests) { (void) failed_tests; }  // 虚函数
 };
 
-struct console_printer : public printer {
+struct console_printer : public printer {  // 结构体定义
     void print_test_result(const test_result & result) override {
         if (result.test_mode == "test") {
             print_test_console(result);
@@ -826,7 +826,7 @@ struct console_printer : public printer {
         // Handle large tensor skip first
         if (info.is_large_tensor_skip) {
             printf("skipping large tensors for speed \n");
-            return;
+            return;  // 返回
         }
 
         // Handle not supported status
@@ -836,7 +836,7 @@ struct console_printer : public printer {
             } else {
                 printf("not supported [%s]\n", info.backend_name.c_str());
             }
-            return;
+            return;  // 返回
         }
 
         // Handle errors and additional information
@@ -900,7 +900,7 @@ struct console_printer : public printer {
 
         if (info.skipped) {
             printf("  %s\n", info.skip_reason.c_str());
-            return;
+            return;  // 返回
         }
 
         if (!info.description.empty()) {
@@ -925,7 +925,7 @@ struct console_printer : public printer {
 
     void print_failed_tests(const std::vector<std::string> & failed_tests) override {
         if (failed_tests.empty()) {
-            return;
+            return;  // 返回
         }
 
         printf("\nFailing tests:\n");
@@ -942,7 +942,7 @@ struct console_printer : public printer {
         if (!result.supported) {
             printf("not supported [%s] ", result.backend_name.c_str());
             printf("\n");
-            return;
+            return;  // 返回
         }
 
         if (result.passed) {
@@ -958,7 +958,7 @@ struct console_printer : public printer {
 
         if (!result.supported) {
             printf("not supported\n");
-            return;
+            return;  // 返回
         }
 
         // align while also leaving some margin for variations in parameters
@@ -983,7 +983,7 @@ struct console_printer : public printer {
                 } else {
                     snprintf(buf, sizeof(buf), "%6.2f kFLOP", flops / 1e3);
                 }
-                return buf;
+                return buf;  // 返回
             };
             uint64_t op_flops_per_run = result.flops * result.time_us / 1e6;
             printf("%s/run - \033[1;34m%sS\033[0m", format_flops(op_flops_per_run).c_str(),
@@ -1006,16 +1006,16 @@ struct console_printer : public printer {
     }
 };
 
-struct sql_printer : public printer {
+struct sql_printer : public printer {  // 结构体定义
     static std::string get_sql_field_type(const std::string & field) {
         switch (test_result::get_field_type(field)) {
             case test_result::STRING:
-                return "TEXT";
+                return "TEXT";  // 返回
             case test_result::BOOL:
             case test_result::INT:
-                return "INTEGER";
+                return "INTEGER";  // 返回
             case test_result::FLOAT:
-                return "REAL";
+                return "REAL";  // 返回
             default:
                 GGML_ABORT("invalid field type");
         }
@@ -1046,7 +1046,7 @@ struct sql_printer : public printer {
     }
 };
 
-struct csv_printer : public printer {
+struct csv_printer : public printer {  // 结构体定义
     void print_header() override {
 
         std::vector<std::string> fields     = test_result::get_fields();
@@ -1085,7 +1085,7 @@ struct csv_printer : public printer {
     }
 
     static std::vector<std::string> get_fields_csv() {
-        return {
+        return {  // 返回
             "op_name",
             "op_params",
             "supported",
@@ -1110,73 +1110,73 @@ static std::unique_ptr<printer> create_printer(output_formats format) {
     GGML_ABORT("invalid output format");
 }
 
-struct test_case {
-    virtual ~test_case() {}
+struct test_case {  // 结构体定义
+    virtual ~test_case() {}  // 虚函数
 
-    virtual std::string op_desc(ggml_tensor * t) {
-        return ggml_op_desc(t);
+    virtual std::string op_desc(ggml_tensor * t) {  // 虚函数
+        return ggml_op_desc(t);  // ggml_op_desc
     }
 
-    virtual std::string vars() {
-        return "";
+    virtual std::string vars() {  // 虚函数
+        return "";  // 返回
     }
 
     virtual ggml_tensor * build_graph(ggml_context * ctx) = 0;
 
-    virtual double max_nmse_err() {
-        return 1e-7;
+    virtual double max_nmse_err() {  // 虚函数
+        return 1e-7;  // 返回
     }
 
-    virtual double max_nmse_err(ggml_backend_t backend) {
+    virtual double max_nmse_err(ggml_backend_t backend) {  // 虚函数
         GGML_UNUSED(backend);
-        return max_nmse_err();
+        return max_nmse_err();  // max_nmse_err
     }
 
-    virtual double max_maa_err() {
-        return 1e-4;
+    virtual double max_maa_err() {  // 虚函数
+        return 1e-4;  // 返回
     }
 
-    virtual double max_err() {
-        return max_nmse_err();
+    virtual double max_err() {  // 虚函数
+        return max_nmse_err();  // max_nmse_err
     }
 
-    virtual double max_err(ggml_backend_t backend) {
-        return max_nmse_err(backend);
+    virtual double max_err(ggml_backend_t backend) {  // 虚函数
+        return max_nmse_err(backend);  // max_nmse_err
     }
 
-    virtual double err(const float * a, const float * b, size_t n) {
-        return nmse(a, b, n);
+    virtual double err(const float * a, const float * b, size_t n) {  // 虚函数
+        return nmse(a, b, n);  // nmse
     }
 
-    virtual float grad_eps() {
-        return 1e-1f;
+    virtual float grad_eps() {  // 虚函数
+        return 1e-1f;  // 返回
     }
 
     // If false, estimate gradient with 2 points, neglects 3rd order derivative and higher.
     // If true,  estimate gradient with 4 points, neglects 5th order derivative and higher.
-    virtual bool grad_precise() {
-        return false;
+    virtual bool grad_precise() {  // 虚函数
+        return false;  // 返回
     }
 
     // Skip gradient checks if total number of gradients to be checked is larger than this (to speed up the tests).
-    virtual int64_t grad_nmax() {
-        return 10000;
+    virtual int64_t grad_nmax() {  // 虚函数
+        return 10000;  // 返回
     }
 
     // No effect if empty.
     // If not empty, skip all gradient checks where the numerical result does not match any of the values.
     // Needed for dealing with noncontinuous gradients (e.g. ReLU) where estimation using finite differences is unreliable.
-    virtual std::vector<float> grad_expect() {
-        return {};
+    virtual std::vector<float> grad_expect() {  // 虚函数
+        return {};  // 返回
     }
 
-    virtual void initialize_tensors(ggml_context * ctx) {
+    virtual void initialize_tensors(ggml_context * ctx) {  // 虚函数
         for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
             init_tensor_uniform(t);
         }
     }
 
-    virtual size_t op_size(ggml_tensor * t) {
+    virtual size_t op_size(ggml_tensor * t) {  // 虚函数
         size_t size = ggml_nbytes(t);
         // add source tensors
         for (int i = 0; i < GGML_MAX_SRC; i++) {
@@ -1184,16 +1184,16 @@ struct test_case {
                 size += ggml_nbytes(t->src[i]);
             }
         }
-        return size;
+        return size;  // 返回
     }
 
-    virtual uint64_t op_flops(ggml_tensor * t) {
+    virtual uint64_t op_flops(ggml_tensor * t) {  // 虚函数
         GGML_UNUSED(t);
-        return 0;
+        return 0;  // 返回
     }
 
-    virtual bool run_whole_graph() { return false; }
-    virtual std::vector<ggml_tensor *> fusion_test_nodes() { return {}; }
+    virtual bool run_whole_graph() { return false; }  // 虚函数
+    virtual std::vector<ggml_tensor *> fusion_test_nodes() { return {}; }  // 虚函数
 
     ggml_cgraph * gf = nullptr;
     ggml_cgraph * gb = nullptr;
@@ -1208,7 +1208,7 @@ struct test_case {
 
     void add_sentinel(ggml_context * ctx) {
         if (mode == MODE_PERF || mode == MODE_GRAD || mode == MODE_SUPPORT) {
-            return;
+            return;  // 返回
         }
         ggml_tensor * sentinel = ::ggml_new_tensor_1d(ctx, GGML_TYPE_F32, sentinel_size);
         ggml_format_name(sentinel, "sent_%zu", sentinels.size());
@@ -1220,31 +1220,31 @@ struct test_case {
     ggml_tensor * ggml_new_tensor(ggml_context * ctx, ggml_type type, int n_dims, const int64_t * ne) {
         ggml_tensor * t = ::ggml_new_tensor(ctx, type, n_dims, ne);
         add_sentinel(ctx);
-        return t;
+        return t;  // 返回
     }
 
     ggml_tensor * ggml_new_tensor_1d(ggml_context * ctx, ggml_type type, int64_t ne0) {
         ggml_tensor * t = ::ggml_new_tensor_1d(ctx, type, ne0);
         add_sentinel(ctx);
-        return t;
+        return t;  // 返回
     }
 
     ggml_tensor * ggml_new_tensor_2d(ggml_context * ctx, ggml_type type, int64_t ne0, int64_t ne1) {
         ggml_tensor * t = ::ggml_new_tensor_2d(ctx, type, ne0, ne1);
         add_sentinel(ctx);
-        return t;
+        return t;  // 返回
     }
 
     ggml_tensor * ggml_new_tensor_3d(ggml_context * ctx, ggml_type type, int64_t ne0, int64_t ne1, int64_t ne2) {
         ggml_tensor * t = ::ggml_new_tensor_3d(ctx, type, ne0, ne1, ne2);
         add_sentinel(ctx);
-        return t;
+        return t;  // 返回
     }
 
     ggml_tensor * ggml_new_tensor_4d(ggml_context * ctx, ggml_type type, int64_t ne0, int64_t ne1, int64_t ne2, int64_t ne3) {
         ggml_tensor * t = ::ggml_new_tensor_4d(ctx, type, ne0, ne1, ne2, ne3);
         add_sentinel(ctx);
-        return t;
+        return t;  // 返回
     }
 
     // Checks an op against the test filter, which is a comma separated list of OP names or specific variations
@@ -1261,19 +1261,19 @@ struct test_case {
                     comma_pos = filter.find_first_of(',', rparen_pos);
                     const auto op_filter = filter.substr(0, comma_pos);
                     if (op_filter == op_full_name) {
-                        return true;
+                        return true;  // 返回
                     }
                 } else {
                     const auto op_filter = filter.substr(0, comma_pos);
                     if (op_filter == op_name) {
-                        return true;
+                        return true;  // 返回
                     }
                 }
                 filter = comma_pos != std::string_view::npos ? filter.substr(comma_pos + 1) : "";
             }
-            return false;
+            return false;  // 返回
         } else {
-            return true;
+            return true;  // 返回
         }
     }
 
@@ -1302,7 +1302,7 @@ struct test_case {
         if (!matches_filter(out, op_names_filter)) {
             //printf("  %s: skipping\n", op_desc(out).c_str());
             ggml_free(ctx);
-            return test_status_t::SKIPPED;
+            return test_status_t::SKIPPED;  // 返回
         }
 
         // check if the backends support the ops
@@ -1318,7 +1318,7 @@ struct test_case {
 
         if (!supported) {
             // Create test result for unsupported operation
-            test_result result(ggml_backend_name(backend1), current_op_name, vars(), "test",
+            test_result result(ggml_backend_name(backend1), current_op_name, vars(), "test",  // result
                              false, false, "not supported");
 
             if (output_printer) {
@@ -1326,7 +1326,7 @@ struct test_case {
             }
 
             ggml_free(ctx);
-            return test_status_t::NOT_SUPPORTED;
+            return test_status_t::NOT_SUPPORTED;  // 返回
         }
 
         // post-graph sentinel
@@ -1338,7 +1338,7 @@ struct test_case {
         if (buf == NULL) {
             printf("failed to allocate tensors [%s] ", ggml_backend_name(backend1));
             ggml_free(ctx);
-            return test_status_t::FAIL;
+            return test_status_t::FAIL;  // 返回
         }
 
         // build graph
@@ -1353,7 +1353,7 @@ struct test_case {
         initialize_tensors(ctx);
 
         // compare
-        struct callback_userdata {
+        struct callback_userdata {  // 结构体定义
             bool   ok;
             test_case * tc;
             ggml_backend_t backend1;
@@ -1382,7 +1382,7 @@ struct test_case {
                 if (memcmp(t1_data.data(), t2_data.data(), ggml_nbytes(t1)) != 0) {
                     printf("sentinel mismatch: %s ", t1->name);
                     ud->ok = false;
-                    return true;
+                    return true;  // 返回
                 }
             }
 
@@ -1394,7 +1394,7 @@ struct test_case {
                 if (std::isnan(f1[i]) || std::isnan(f2[i])) {
                     printf("[%s] NaN at index %zu (%s=%f %s=%f) ", ggml_op_desc(t1), i, bn1, f1[i], bn2, f2[i]);
                     ud->ok = false;
-                    return true;
+                    return true;  // 返回
                 }
                 // check for infs: both must be inf of the same sign, or both must be finite
                 if (isinf_or_max(f1[i]) || isinf_or_max(f2[i])) {
@@ -1402,12 +1402,12 @@ struct test_case {
                         if (std::signbit(f1[i]) != std::signbit(f2[i])) {
                             printf("[%s] inf sign mismatch: %s=%f %s=%f ", ggml_op_desc(t1), bn1, f1[i], bn2, f2[i]);
                             ud->ok = false;
-                            return true;
+                            return true;  // 返回
                         }
                     } else {
                         printf("[%s] inf mismatch: %s=%f %s=%f ", ggml_op_desc(t1), bn1, f1[i], bn2, f2[i]);
                         ud->ok = false;
-                        return true;
+                        return true;  // 返回
                     }
                 }
             }
@@ -1422,7 +1422,7 @@ struct test_case {
                 //exit(1);
                 ud->ok = false;
             }
-            return true;
+            return true;  // 返回
 
             GGML_UNUSED(index);
         };
@@ -1442,14 +1442,14 @@ struct test_case {
         // Create test result
         bool        test_passed = ud.ok && cmp_ok;
         std::string error_msg   = test_passed ? "" : (!cmp_ok ? "compare failed" : "test failed");
-        test_result result(ggml_backend_name(backend1), current_op_name, vars(), "test", supported, test_passed,
+        test_result result(ggml_backend_name(backend1), current_op_name, vars(), "test", supported, test_passed,  // result
                            error_msg);
 
         if (output_printer) {
             output_printer->print_test_result(result);
         }
 
-        return test_passed ? test_status_t::OK : test_status_t::FAIL;
+        return test_passed ? test_status_t::OK : test_status_t::FAIL;  // 返回
     }
 
     bool eval_perf(ggml_backend_t backend, const char * op_names_filter, printer * output_printer) {
@@ -1462,32 +1462,32 @@ struct test_case {
             /* .mem_base = */ NULL,
             /* .no_alloc = */ true,
         };
-        ggml_context_ptr ctx(ggml_init(params)); // smart ptr
+        ggml_context_ptr ctx(ggml_init(params)); // smart ptr  // ctx
         GGML_ASSERT(ctx);
 
         ggml_tensor * out             = build_graph(ctx.get());
         current_op_name               = op_desc(out);
         if (!matches_filter(out, op_names_filter)) {
             //printf("  %s: skipping\n", op_desc(out).c_str());
-            return true;
+            return true;  // 返回
         }
 
         if (!ggml_backend_supports_op(backend, out)) {
             // Create test result for unsupported performance test
-            test_result result(ggml_backend_name(backend), current_op_name, vars(), "perf", false, false,
+            test_result result(ggml_backend_name(backend), current_op_name, vars(), "perf", false, false,  // result
                                "not supported");
 
             output_printer->print_test_result(result);
 
-            return true;
+            return true;  // 返回
         }
 
         // allocate
-        ggml_backend_buffer_ptr buf(ggml_backend_alloc_ctx_tensors(ctx.get(), backend)); // smart ptr
+        ggml_backend_buffer_ptr buf(ggml_backend_alloc_ctx_tensors(ctx.get(), backend)); // smart ptr  // buf
 
         if (buf == NULL) {
             printf("failed to allocate tensors\n");
-            return false;
+            return false;  // 返回
         }
 
         // randomize tensors
@@ -1501,7 +1501,7 @@ struct test_case {
         ggml_status status = ggml_backend_graph_compute(backend, gf);
         if (status != GGML_STATUS_SUCCESS) {
             fprintf(stderr, "%s: ggml_backend_graph_compute failed. status=%s \n", __func__, ggml_status_to_string(status));
-            return false;
+            return false;  // 返回
         }
 
         // determine number of runs
@@ -1538,7 +1538,7 @@ struct test_case {
                     size += ggml_nbytes(t->src[i]);
                 }
             }
-            return size;
+            return size;  // 返回
         };
         for (int i = 0; i < ggml_graph_n_nodes(gf); ++i) {
             if (ggml_is_view_op(ggml_graph_node(gf, i)->op) || ggml_graph_node(gf, i) == out) {
@@ -1556,7 +1556,7 @@ struct test_case {
             ggml_status status = ggml_backend_graph_compute(backend, gf);
             if (status != GGML_STATUS_SUCCESS) {
                 fprintf(stderr, "%s: ggml_backend_graph_compute failed. status=%s \n", __func__, ggml_status_to_string(status));
-                return false;
+                return false;  // 返回
             }
             int64_t end_time = ggml_time_us();
 
@@ -1572,14 +1572,14 @@ struct test_case {
             (op_flops(out) == 0) ? total_mem / (total_time_us / 1e6) / 1024.0 / 1024.0 / 1024.0 : 0.0;
         size_t calculated_memory_kb = op_size(out) / 1024;
 
-        test_result result(ggml_backend_name(backend), current_op_name, vars(), "perf", true, true, "", avg_time_us,
+        test_result result(ggml_backend_name(backend), current_op_name, vars(), "perf", true, true, "", avg_time_us,  // result
                            calculated_flops, calculated_bandwidth, calculated_memory_kb, total_runs);
 
         if (output_printer) {
             output_printer->print_test_result(result);
         }
 
-        return true;
+        return true;  // 返回
     }
 
     bool eval_support(ggml_backend_t backend, const char * op_names_filter, printer * output_printer) {
@@ -1592,7 +1592,7 @@ struct test_case {
             /* .mem_base = */ NULL,
             /* .no_alloc = */ true,
         };
-        ggml_context_ptr ctx(ggml_init(params)); // smart ptr
+        ggml_context_ptr ctx(ggml_init(params)); // smart ptr  // ctx
         GGML_ASSERT(ctx);
 
         gf = ggml_new_graph_custom(ctx.get(), graph_nodes, false);
@@ -1601,7 +1601,7 @@ struct test_case {
         current_op_name   = op_desc(out);
 
         if (!matches_filter(out, op_names_filter)) {
-            return true;
+            return true;  // 返回
         }
 
         bool supported = ggml_backend_supports_op(backend, out);
@@ -1609,12 +1609,12 @@ struct test_case {
         std::string device_desc = ggml_backend_dev_description(ggml_backend_get_device(backend));
         std::string backend_reg_name = ggml_backend_reg_name(ggml_backend_dev_backend_reg(ggml_backend_get_device(backend)));
 
-        test_result result(ggml_backend_name(backend), current_op_name, vars(), "support", supported, supported,
+        test_result result(ggml_backend_name(backend), current_op_name, vars(), "support", supported, supported,  // result
                            supported ? "yes" : "no", 0.0, 0.0, 0.0, 0, 0, device_desc, backend_reg_name);
 
         output_printer->print_test_result(result);
 
-        return true;
+        return true;  // 返回
     }
 
     bool eval_grad(ggml_backend_t backend, const char * op_names_filter, printer * output_printer) {
@@ -1626,7 +1626,7 @@ struct test_case {
             /* .mem_base = */ NULL,
             /* .no_alloc = */ true,
         };
-        ggml_context_ptr ctx(ggml_init(params)); // smart ptr
+        ggml_context_ptr ctx(ggml_init(params)); // smart ptr  // ctx
         GGML_ASSERT(ctx);
 
         gf = ggml_new_graph_custom(ctx.get(), GGML_DEFAULT_GRAPH_SIZE, true);
@@ -1635,14 +1635,14 @@ struct test_case {
         ggml_tensor * out = build_graph(ctx.get());
 
         if (!matches_filter(out, op_names_filter) || out->op == GGML_OP_OPT_STEP_ADAMW) {
-            return true;
+            return true;  // 返回
         }
 
         if (out->type != GGML_TYPE_F32) {
             output_printer->print_operation(test_operation_info(op_desc(out), vars(), ggml_backend_name(backend),
                                                                 test_status_t::NOT_SUPPORTED,
                                                                 out->name + std::string("->type != FP32")));
-            return true;
+            return true;  // 返回
         }
 
         // Print operation info first
@@ -1676,7 +1676,7 @@ struct test_case {
         if (!supported) {
             output_printer->print_operation(test_operation_info(op_desc(out), vars(), ggml_backend_name(backend),
                                                                 test_status_t::NOT_SUPPORTED, failure_reason));
-            return true;
+            return true;  // 返回
         }
 
         int64_t ngrads = 0;
@@ -1686,10 +1686,10 @@ struct test_case {
             }
         }
         if (ngrads > grad_nmax()) {
-            test_operation_info info(op_desc(out), vars(), ggml_backend_name(backend));
+            test_operation_info info(op_desc(out), vars(), ggml_backend_name(backend));  // info
             info.set_large_tensor_skip();
             output_printer->print_operation(info);
-            return true;
+            return true;  // 返回
         }
 
 
@@ -1726,16 +1726,16 @@ struct test_case {
             }
         }
         if (!supported) {
-            return true;
+            return true;  // 返回
         }
 
         // allocate
-        ggml_backend_buffer_ptr buf(ggml_backend_alloc_ctx_tensors(ctx.get(), backend)); // smart ptr
+        ggml_backend_buffer_ptr buf(ggml_backend_alloc_ctx_tensors(ctx.get(), backend)); // smart ptr  // buf
         if (buf == NULL) {
-            test_operation_info info(op_desc(out), vars(), ggml_backend_name(backend));
+            test_operation_info info(op_desc(out), vars(), ggml_backend_name(backend));  // info
             info.set_error("allocation", "");
             output_printer->print_operation(info);
-            return false;
+            return false;  // 返回
         }
 
         initialize_tensors(ctx.get()); // Randomizes all tensors (including gradients).
@@ -1744,12 +1744,12 @@ struct test_case {
         ggml_status status = ggml_backend_graph_compute(backend, gf);
         if (status != GGML_STATUS_SUCCESS) {
             fprintf(stderr, "%s: ggml_backend_graph_compute failed. status=%s \n", __func__, ggml_status_to_string(status));
-            return false;
+            return false;  // 返回
         }
         status = ggml_backend_graph_compute(backend, gb);
         if (status != GGML_STATUS_SUCCESS) {
             fprintf(stderr, "%s: ggml_backend_graph_compute failed. status=%s \n", __func__, ggml_status_to_string(status));
-            return false;
+            return false;  // 返回
         }
 
         bool ok = true;
@@ -1772,7 +1772,7 @@ struct test_case {
             for (int64_t i = 0; i < ne; ++i) { // gradient algebraic
                 // check for nans
                 if (!std::isfinite(ga[i])) {
-                    test_operation_info info(op_desc(out), vars(), ggml_backend_name(backend));
+                    test_operation_info info(op_desc(out), vars(), ggml_backend_name(backend));  // info
                     info.set_gradient_info(i, bn, ga[i]);
                     output_printer->print_operation(info);
                     ok = false;
@@ -1803,7 +1803,7 @@ struct test_case {
                 status = ggml_backend_graph_compute(backend, gf);
                 if (status != GGML_STATUS_SUCCESS) {
                     fprintf(stderr, "%s: ggml_backend_graph_compute failed. status=%s \n", __func__, ggml_status_to_string(status));
-                    return false;
+                    return false;  // 返回
                 }
                 ggml_backend_tensor_get(out, &fu, 0, ggml_nbytes(out));
 
@@ -1811,7 +1811,7 @@ struct test_case {
                 status = ggml_backend_graph_compute(backend, gf);
                 if (status != GGML_STATUS_SUCCESS) {
                     fprintf(stderr, "%s: ggml_backend_graph_compute failed. status=%s \n", __func__, ggml_status_to_string(status));
-                    return false;
+                    return false;  // 返回
                 }
                 ggml_backend_tensor_get(out, &fd, 0, ggml_nbytes(out));
 
@@ -1820,7 +1820,7 @@ struct test_case {
                     status = ggml_backend_graph_compute(backend, gf);
                     if (status != GGML_STATUS_SUCCESS) {
                         fprintf(stderr, "%s: ggml_backend_graph_compute failed. status=%s \n", __func__, ggml_status_to_string(status));
-                        return false;
+                        return false;  // 返回
                     }
                     ggml_backend_tensor_get(out, &fuh, 0, ggml_nbytes(out));
 
@@ -1828,7 +1828,7 @@ struct test_case {
                     status = ggml_backend_graph_compute(backend, gf);
                     if (status != GGML_STATUS_SUCCESS) {
                         fprintf(stderr, "%s: ggml_backend_graph_compute failed. status=%s \n", __func__, ggml_status_to_string(status));
-                        return false;
+                        return false;  // 返回
                     }
                     ggml_backend_tensor_get(out, &fdh, 0, ggml_nbytes(out));
 
@@ -1842,7 +1842,7 @@ struct test_case {
 
             const double err = mean_abs_asymm(gn.data(), ga.data(), gn.size(), expect);
             if (err > max_maa_err()) {
-                test_operation_info info(op_desc(out), vars(), ggml_backend_name(backend));
+                test_operation_info info(op_desc(out), vars(), ggml_backend_name(backend));  // info
                 info.set_maa_error(err, max_maa_err());
                 output_printer->print_operation(info);
                 ok = false;
@@ -1854,7 +1854,7 @@ struct test_case {
         }
 
         // Create final test result
-        test_operation_info final_info(op_desc(out), vars(), ggml_backend_name(backend));
+        test_operation_info final_info(op_desc(out), vars(), ggml_backend_name(backend));  // final_info
         if (!ok) {
             final_info.set_compare_failure();
         }
@@ -1862,10 +1862,10 @@ struct test_case {
         output_printer->print_operation(final_info);
 
         if (ok) {
-            return true;
+            return true;  // 返回
         }
 
-        return false;
+        return false;  // 返回
     }
 };
 
@@ -1878,7 +1878,7 @@ struct test_case {
 // The following is an example showing the bare minimum for creating a test for a GGML op.
 
 // GGML_OP_EXAMPLE
-struct test_example : public test_case {
+struct test_example : public test_case {  // 结构体定义
     // Always define these 2 or variants thereof:
     const ggml_type type; // The type of the input tensors.
     const std::array<int64_t, 4> ne; // The shape of the input tensors.
@@ -1889,7 +1889,7 @@ struct test_example : public test_case {
     // In most cases these are just the properties of the struct that you defined above.
     // This is needed for info prints.
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     // Define a constructor for the struct.
@@ -1913,7 +1913,7 @@ struct test_example : public test_case {
         ggml_set_name(out, "out");
 
         // Step 3: return the output tensor.
-        return out;
+        return out;  // 返回
     }
     // In order to also check the gradients for your op, add calls like ggml_set_param(a)
     // immediately after you create the tensors.
@@ -1922,14 +1922,14 @@ struct test_example : public test_case {
 
 
 // GGML_OP_UNARY
-struct test_unary : public test_case {
+struct test_unary : public test_case {  // 结构体定义
     const ggml_unary_op op;
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     int v; // view (1 : non-contiguous a)
 
     std::string vars() override {
-        return VARS_TO_STR3(type, ne_a, v);
+        return VARS_TO_STR3(type, ne_a, v);  // VARS_TO_STR3
     }
 
     test_unary(ggml_unary_op op,
@@ -1969,7 +1969,7 @@ struct test_unary : public test_case {
         ggml_tensor * out = ggml_unary(ctx, a, op);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -1980,26 +1980,26 @@ struct test_unary : public test_case {
     }
 
     float grad_eps() override {
-        return 15.0f;
+        return 15.0f;  // 返回
     }
 
     std::vector<float> grad_expect() override {
         if (op == GGML_UNARY_OP_ABS) {
-            return {-1.0f, 1.0f};
+            return {-1.0f, 1.0f};  // 返回
         }
         if (op == GGML_UNARY_OP_SGN || op == GGML_UNARY_OP_STEP) {
-            return {0.0f};
+            return {0.0f};  // 返回
         }
         if (op == GGML_UNARY_OP_RELU) {
-            return {0.0f, 1.0f};
+            return {0.0f, 1.0f};  // 返回
         }
-        return {};
+        return {};  // 返回
     }
 
 };
 
 // GGML_OP_GLU
-struct test_glu : public test_case {
+struct test_glu : public test_case {  // 结构体定义
     const ggml_glu_op op;
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
@@ -2007,7 +2007,7 @@ struct test_glu : public test_case {
     bool swapped;
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne_a, v, swapped);
+        return VARS_TO_STR4(type, ne_a, v, swapped);  // VARS_TO_STR4
     }
 
     test_glu(ggml_glu_op op,
@@ -2034,7 +2034,7 @@ struct test_glu : public test_case {
         ggml_tensor * out = ggml_glu(ctx, a, op, swapped);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -2045,14 +2045,14 @@ struct test_glu : public test_case {
     }
 };
 
-struct test_glu_split : public test_case {
+struct test_glu_split : public test_case {  // 结构体定义
     const ggml_glu_op op;
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     int v; // view (1 : non-contiguous a)
 
     std::string vars() override {
-        return VARS_TO_STR3(type, ne_a, v) + ",split";
+        return VARS_TO_STR3(type, ne_a, v) + ",split";  // VARS_TO_STR3
     }
 
     test_glu_split(ggml_glu_op op,
@@ -2092,7 +2092,7 @@ struct test_glu_split : public test_case {
         ggml_tensor * out = ggml_glu_split(ctx, a, b, op);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -2103,7 +2103,7 @@ struct test_glu_split : public test_case {
     }
 };
 
-struct test_swiglu_oai : public test_case {
+struct test_swiglu_oai : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     int v; // view (1 : non-contiguous a)
@@ -2111,7 +2111,7 @@ struct test_swiglu_oai : public test_case {
     float limit;
 
     std::string vars() override {
-        return VARS_TO_STR5(type, ne_a, v, alpha, limit);
+        return VARS_TO_STR5(type, ne_a, v, alpha, limit);  // VARS_TO_STR5
     }
 
     test_swiglu_oai(ggml_type type = GGML_TYPE_F32,
@@ -2152,7 +2152,7 @@ struct test_swiglu_oai : public test_case {
         ggml_tensor * out = ggml_swiglu_oai(ctx, a, b, alpha, limit);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -2164,7 +2164,7 @@ struct test_swiglu_oai : public test_case {
 };
 
 // GGML_OP_GET_ROWS
-struct test_get_rows : public test_case {
+struct test_get_rows : public test_case {  // 结构体定义
     const ggml_type type;
     const int n; // cols
     const int m; // rows
@@ -2174,7 +2174,7 @@ struct test_get_rows : public test_case {
     const bool v; // view (non-contiguous src1)
 
     std::string vars() override {
-        return VARS_TO_STR7(type, n, m, r, be1, be2, v);
+        return VARS_TO_STR7(type, n, m, r, be1, be2, v);  // VARS_TO_STR7
     }
 
     test_get_rows(ggml_type type = GGML_TYPE_F32, int n = 10, int m = 5, int r = 3, int be1 = 1, int be2 = 1, bool v = false)
@@ -2200,7 +2200,7 @@ struct test_get_rows : public test_case {
         ggml_tensor * out = ggml_get_rows(ctx, in, rows);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -2221,7 +2221,7 @@ struct test_get_rows : public test_case {
 };
 
 // GGML_OP_GET_ROWS_BACK
-struct test_get_rows_back : public test_case {
+struct test_get_rows_back : public test_case {  // 结构体定义
     const ggml_type type;
     const int n; // cols
     const int m; // rows
@@ -2230,7 +2230,7 @@ struct test_get_rows_back : public test_case {
     const bool v; // view (non-contiguous src1)
 
     std::string vars() override {
-        return VARS_TO_STR6(type, n, m, r, b, v);
+        return VARS_TO_STR6(type, n, m, r, b, v);  // VARS_TO_STR6
     }
 
     test_get_rows_back(ggml_type type = GGML_TYPE_F32, int n = 10, int m = 5, int r = 3, int b = 1, bool v = false)
@@ -2253,7 +2253,7 @@ struct test_get_rows_back : public test_case {
         ggml_tensor * out = ggml_get_rows_back(ctx, grad, rows, in_forward);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -2302,7 +2302,7 @@ static void init_set_rows_row_ids(ggml_tensor * t, int num_rows) {
 }
 
 // GGML_OP_SET_ROWS
-struct test_set_rows : public test_case {
+struct test_set_rows : public test_case {  // 结构体定义
     const ggml_type type;
     const ggml_type type_idx;
     const std::array<int64_t, 4> ne;
@@ -2311,7 +2311,7 @@ struct test_set_rows : public test_case {
     const bool v; // view (non-contiguous src1)
 
     std::string vars() override {
-        return VARS_TO_STR6(type, type_idx, ne, nr23, r, v);
+        return VARS_TO_STR6(type, type_idx, ne, nr23, r, v);  // VARS_TO_STR6
     }
 
     test_set_rows(ggml_type type,
@@ -2340,7 +2340,7 @@ struct test_set_rows : public test_case {
         ggml_tensor * out = ggml_set_rows(ctx, dst, src, row_idxs);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -2373,14 +2373,14 @@ struct test_set_rows : public test_case {
             }
             err_estimate *= err_estimate;
             err_estimate /= 0.25f*float(ne[0] * r * ne[2]*nr23[0] * ne[3]*nr23[1]);
-            return err_estimate;
+            return err_estimate;  // 返回
         }
-        return 1e-7;
+        return 1e-7;  // 返回
     }
 };
 
 // GGML_OP_ROPE + GGML_OP_VIEW + GGML_OP_SET_ROWS
-struct test_rope_set_rows : public test_case {
+struct test_rope_set_rows : public test_case {  // 结构体定义
     const ggml_type type;
     const ggml_type type_idx;
     const std::array<int64_t, 4> ne_a;
@@ -2389,12 +2389,12 @@ struct test_rope_set_rows : public test_case {
     const int n_dims{128};
 
     std::string vars() override {
-        return VARS_TO_STR4(type, type_idx, ne_a, mode);
+        return VARS_TO_STR4(type, type_idx, ne_a, mode);  // VARS_TO_STR4
     }
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "ROPE_SET_ROWS";
+        return "ROPE_SET_ROWS";  // 返回
     }
 
     bool run_whole_graph() override { return true; }
@@ -2451,7 +2451,7 @@ struct test_rope_set_rows : public test_case {
         ggml_tensor * out = ggml_set_rows(ctx, dst, view, row_idxs);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -2482,7 +2482,7 @@ struct test_rope_set_rows : public test_case {
 };
 
 // GGML_OP_RMS_NORM + GGML_OP_MUL + GGML_OP_ROPE (+ GGML_OP_VIEW + GGML_OP_SET_ROWS)
-struct test_rms_norm_mul_rope : public test_case {
+struct test_rms_norm_mul_rope : public test_case {  // 结构体定义
     const std::array<int64_t, 4> ne;
     const float eps;
     const bool multi_add; // test a sequence of adds feeding into rms_norm
@@ -2491,13 +2491,13 @@ struct test_rms_norm_mul_rope : public test_case {
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "RMS_NORM_MUL_ROPE";
+        return "RMS_NORM_MUL_ROPE";  // 返回
     }
 
     bool run_whole_graph() override { return true; }
 
     std::string vars() override {
-        return VARS_TO_STR5(ne, eps, multi_add, set_rows, mode);
+        return VARS_TO_STR5(ne, eps, multi_add, set_rows, mode);  // VARS_TO_STR5
     }
 
     test_rms_norm_mul_rope(std::array<int64_t, 4> ne, float eps = 1e-6f, bool multi_add = false,
@@ -2536,7 +2536,7 @@ struct test_rms_norm_mul_rope : public test_case {
             out = rope;
         }
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -2555,12 +2555,12 @@ struct test_rms_norm_mul_rope : public test_case {
 };
 
 // GGML_OP_ARGMAX
-struct test_argmax : public test_case {
+struct test_argmax : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_argmax(ggml_type type = GGML_TYPE_F32,
@@ -2574,7 +2574,7 @@ struct test_argmax : public test_case {
         ggml_tensor * out = ggml_argmax(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -2598,17 +2598,17 @@ struct test_argmax : public test_case {
     }
 
     double max_nmse_err() override {
-        return 0.0;
+        return 0.0;  // 返回
     }
 };
 
 // GGML_OP_COUNT_EQUAL
-struct test_count_equal : public test_case {
+struct test_count_equal : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_count_equal(ggml_type type = GGML_TYPE_F32,
@@ -2631,11 +2631,11 @@ struct test_count_equal : public test_case {
         ggml_tensor * out = ggml_count_equal(ctx, a_argmax, b_argmax);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     double max_nmse_err() override {
-        return 0.0;
+        return 0.0;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -2660,17 +2660,17 @@ struct test_count_equal : public test_case {
 };
 
 // GGML_OP_REPEAT
-struct test_repeat : public test_case {
+struct test_repeat : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const std::array<int, 4> nr;
 
     std::string vars() override {
-        return VARS_TO_STR3(type, ne, nr);
+        return VARS_TO_STR3(type, ne, nr);  // VARS_TO_STR3
     }
 
     size_t op_size(ggml_tensor * t) override {
-        return ggml_nbytes(t) * 2;
+        return ggml_nbytes(t) * 2;  // ggml_nbytes
     }
 
     test_repeat(ggml_type type = GGML_TYPE_F32,
@@ -2689,23 +2689,23 @@ struct test_repeat : public test_case {
         ggml_tensor * out = ggml_repeat(ctx, src, target);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_REPEAT_BACK
-struct test_repeat_back : public test_case {
+struct test_repeat_back : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const std::array<int, 4> nr;
     const bool v; // whether src is a noncontiguous view
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne, nr, v);
+        return VARS_TO_STR4(type, ne, nr, v);  // VARS_TO_STR4
     }
 
     size_t op_size(ggml_tensor * t) override {
-        return ggml_nbytes(t) * 2;
+        return ggml_nbytes(t) * 2;  // ggml_nbytes
     }
 
     test_repeat_back(ggml_type type = GGML_TYPE_F32,
@@ -2742,12 +2742,12 @@ struct test_repeat_back : public test_case {
         ggml_tensor * out = ggml_repeat_back(ctx, src, target);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_DUP
-struct test_dup : public test_case {
+struct test_dup : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const std::array<int64_t, 4> permute;
@@ -2756,7 +2756,7 @@ struct test_dup : public test_case {
     std::string vars() override {
         std::string v = VARS_TO_STR2(type, ne);
         if (_use_permute) v += "," + VAR_TO_STR(permute);
-        return v;
+        return v;  // 返回
     }
 
     test_dup(ggml_type type = GGML_TYPE_F32,
@@ -2778,12 +2778,12 @@ struct test_dup : public test_case {
         ggml_tensor * out = ggml_dup(ctx, src);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_SET
-struct test_set : public test_case {
+struct test_set : public test_case {  // 结构体定义
     const ggml_type type_src;
     const ggml_type type_dst;
     const std::array<int64_t, 4> ne;
@@ -2791,11 +2791,11 @@ struct test_set : public test_case {
     const bool inplace;
 
     std::string vars() override {
-        return VARS_TO_STR5(type_src, type_dst, ne, dim, inplace);
+        return VARS_TO_STR5(type_src, type_dst, ne, dim, inplace);  // VARS_TO_STR5
     }
 
     size_t op_size(ggml_tensor * t) override {
-        return ggml_nbytes(t) + ggml_nbytes(t->src[0]);
+        return ggml_nbytes(t) + ggml_nbytes(t->src[0]);  // ggml_nbytes
     }
 
     test_set(ggml_type type_src = GGML_TYPE_F32, ggml_type type_dst = GGML_TYPE_F32,
@@ -2831,12 +2831,12 @@ struct test_set : public test_case {
         }
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_CPY
-struct test_cpy : public test_case {
+struct test_cpy : public test_case {  // 结构体定义
     const ggml_type type_src;
     const ggml_type type_dst;
     const std::array<int64_t, 4> ne;
@@ -2847,12 +2847,12 @@ struct test_cpy : public test_case {
     bool _src_transpose;
 
     std::string vars() override {
-        return VARS_TO_STR6(type_src, type_dst, ne, permute_src, permute_dst, _src_transpose);
+        return VARS_TO_STR6(type_src, type_dst, ne, permute_src, permute_dst, _src_transpose);  // VARS_TO_STR6
     }
 
     double max_nmse_err() override {
         if (type_src == type_dst) {
-            return 0.0;
+            return 0.0;  // 返回
         }
         if (type_dst == GGML_TYPE_Q4_0 || type_dst == GGML_TYPE_Q4_1 || type_dst == GGML_TYPE_IQ4_NL ||
             type_dst == GGML_TYPE_Q5_0 || type_dst == GGML_TYPE_Q5_1 || type_dst == GGML_TYPE_Q8_0) {
@@ -2873,13 +2873,13 @@ struct test_cpy : public test_case {
             }
             err_estimate *= err_estimate;
             err_estimate /= (150.0f*150.0f*0.25f)*float(ne[0] * ne[1] * ne[2] * ne[3]);
-            return err_estimate;
+            return err_estimate;  // 返回
         }
-        return 1e-6;
+        return 1e-6;  // 返回
     }
 
     size_t op_size(ggml_tensor * t) override {
-        return ggml_nbytes(t) + ggml_nbytes(t->src[0]);
+        return ggml_nbytes(t) + ggml_nbytes(t->src[0]);  // ggml_nbytes
     }
 
     test_cpy(ggml_type type_src = GGML_TYPE_F32, ggml_type type_dst = GGML_TYPE_F32,
@@ -2918,7 +2918,7 @@ struct test_cpy : public test_case {
         ggml_tensor * out = ggml_cpy(ctx, src, dst);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -2930,13 +2930,13 @@ struct test_cpy : public test_case {
 };
 
 // GGML_OP_CONT
-struct test_cont : public test_case {
+struct test_cont : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     bool use_view_slice;
 
     std::string vars() override {
-        return VARS_TO_STR3(type, ne, use_view_slice);
+        return VARS_TO_STR3(type, ne, use_view_slice);  // VARS_TO_STR3
     }
 
     test_cont(ggml_type type = GGML_TYPE_F32,
@@ -2963,7 +2963,7 @@ struct test_cont : public test_case {
         ggml_tensor * out = ggml_cont(ctx, dst);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
@@ -2971,7 +2971,7 @@ struct test_cont : public test_case {
 // GGML_OP_SUB
 // GGML_OP_MUL
 // GGML_OP_DIV
-struct test_bin_bcast : public test_case {
+struct test_bin_bcast : public test_case {  // 结构体定义
     using op_t = ggml_tensor * (*) (ggml_context *, ggml_tensor *, ggml_tensor *);
     op_t op;
     const ggml_type type;
@@ -2984,11 +2984,11 @@ struct test_bin_bcast : public test_case {
     bool run_whole_graph() override { return nf > 1; }
 
     std::string vars() override {
-        return VARS_TO_STR6(type, ne, nr, nf, perm1, src_overlap);
+        return VARS_TO_STR6(type, ne, nr, nf, perm1, src_overlap);  // VARS_TO_STR6
     }
 
     size_t op_size(ggml_tensor * t) override {
-        return ggml_nbytes(t) * 3;
+        return ggml_nbytes(t) * 3;  // ggml_nbytes
     }
 
     test_bin_bcast(op_t op, ggml_type type = GGML_TYPE_F32,
@@ -3040,7 +3040,7 @@ struct test_bin_bcast : public test_case {
 
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -3059,16 +3059,16 @@ struct test_bin_bcast : public test_case {
     }
 
     bool grad_precise() override {
-        return op == ggml_div;
+        return op == ggml_div;  // 返回
     }
 
     double max_maa_err() override {
-        return op == ggml_add ? 1e-4 : 1e-3;
+        return op == ggml_add ? 1e-4 : 1e-3;  // 返回
     }
 };
 
 // GGML_OP_ADD_ID
-struct test_add_id : public test_case {
+struct test_add_id : public test_case {  // 结构体定义
     const ggml_type type_a;
     const ggml_type type_b;
     const int64_t n_embd;
@@ -3077,11 +3077,11 @@ struct test_add_id : public test_case {
     const int64_t n_token;
 
     std::string vars() override {
-        return VARS_TO_STR6(type_a, type_b, n_embd, n_experts, n_experts_used, n_token);
+        return VARS_TO_STR6(type_a, type_b, n_embd, n_experts, n_experts_used, n_token);  // VARS_TO_STR6
     }
 
     size_t op_size(ggml_tensor * t) override {
-        return ggml_nbytes(t) + ggml_nbytes(t->src[0]) + ggml_nbytes(t->src[2]);
+        return ggml_nbytes(t) + ggml_nbytes(t->src[0]) + ggml_nbytes(t->src[2]);  // ggml_nbytes
     }
 
     test_add_id(ggml_type type_a = GGML_TYPE_F32,
@@ -3104,7 +3104,7 @@ struct test_add_id : public test_case {
 
         ggml_tensor * out = ggml_add_id(ctx, a, b, ids);
         ggml_set_name(out, "out");
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -3130,7 +3130,7 @@ struct test_add_id : public test_case {
 };
 
 // GGML_OP_SCALE
-struct test_scale : public test_case {
+struct test_scale : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     float scale;
@@ -3138,7 +3138,7 @@ struct test_scale : public test_case {
     bool inplace;
 
     std::string vars() override {
-        return VARS_TO_STR5(type, ne, scale, bias, inplace);
+        return VARS_TO_STR5(type, ne, scale, bias, inplace);  // VARS_TO_STR5
     }
 
     test_scale(ggml_type type = GGML_TYPE_F32,
@@ -3161,25 +3161,25 @@ struct test_scale : public test_case {
         }
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_SCALE + GGML_UNARY_OP_TANH + GGML_OP_SCALE
-struct test_softcap : public test_case {
+struct test_softcap : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     float softcap;
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "SOFTCAP";
+        return "SOFTCAP";  // 返回
     }
 
     bool run_whole_graph() override { return true; }
 
     std::string vars() override {
-        return VARS_TO_STR3(type, ne, softcap);
+        return VARS_TO_STR3(type, ne, softcap);  // VARS_TO_STR3
     }
 
     test_softcap(ggml_type type = GGML_TYPE_F32,
@@ -3196,18 +3196,18 @@ struct test_softcap : public test_case {
         ggml_tensor * out = ggml_scale(ctx, ggml_tanh(ctx, ggml_scale(ctx, a, 1.0f / softcap)), softcap);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_SILU_BACK
-struct test_silu_back : public test_case {
+struct test_silu_back : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     float eps;
 
     std::string vars() override {
-        return VARS_TO_STR3(type, ne, eps);
+        return VARS_TO_STR3(type, ne, eps);  // VARS_TO_STR3
     }
 
     test_silu_back(ggml_type type = GGML_TYPE_F32,
@@ -3225,23 +3225,23 @@ struct test_silu_back : public test_case {
         ggml_tensor * out = ggml_silu_back(ctx, a, grad);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_NORM
-struct test_norm : public test_case {
+struct test_norm : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const bool v; // whether a is a non-contiguous view
     const float eps;
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne, v, eps);
+        return VARS_TO_STR4(type, ne, v, eps);  // VARS_TO_STR4
     }
 
     test_norm(ggml_type type = GGML_TYPE_F32,
@@ -3262,12 +3262,12 @@ struct test_norm : public test_case {
         ggml_tensor * out = ggml_norm(ctx, a, eps);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_NORM + GGML_OP_MUL + GGML_OP_ADD
-struct test_norm_mul_add : public test_case {
+struct test_norm_mul_add : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     float eps;
@@ -3275,13 +3275,13 @@ struct test_norm_mul_add : public test_case {
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "NORM_MUL_ADD";
+        return "NORM_MUL_ADD";  // 返回
     }
 
     bool run_whole_graph() override { return true; }
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne, eps, broadcast);
+        return VARS_TO_STR4(type, ne, eps, broadcast);  // VARS_TO_STR4
     }
 
     test_norm_mul_add(ggml_type type = GGML_TYPE_F32,
@@ -3306,11 +3306,11 @@ struct test_norm_mul_add : public test_case {
         ggml_tensor * m = ggml_mul(ctx, n, w);
         ggml_tensor * out = ggml_add(ctx, m, b);
         ggml_set_name(out, "out");
-        return out;
+        return out;  // 返回
     }
 };
 // GGML_OP_RMS_NORM
-struct test_rms_norm : public test_case {
+struct test_rms_norm : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const bool v; // whether a is a non-contiguous view
@@ -3318,7 +3318,7 @@ struct test_rms_norm : public test_case {
     const bool inplace; // whether to do the operation inplace
 
     std::string vars() override {
-        return VARS_TO_STR5(type, ne, v, eps, inplace);
+        return VARS_TO_STR5(type, ne, v, eps, inplace);  // VARS_TO_STR5
     }
 
     test_rms_norm(ggml_type type = GGML_TYPE_F32,
@@ -3346,7 +3346,7 @@ struct test_rms_norm : public test_case {
         }
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -3356,22 +3356,22 @@ struct test_rms_norm : public test_case {
     }
 
     float grad_eps() override {
-        return 1.0f;
+        return 1.0f;  // 返回
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_RMS_NORM_BACK
-struct test_rms_norm_back : public test_case {
+struct test_rms_norm_back : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const float eps;
 
     std::string vars() override {
-        return VARS_TO_STR3(type, ne, eps);
+        return VARS_TO_STR3(type, ne, eps);  // VARS_TO_STR3
     }
 
     test_rms_norm_back(ggml_type type = GGML_TYPE_F32,
@@ -3389,7 +3389,7 @@ struct test_rms_norm_back : public test_case {
         ggml_tensor * out = ggml_rms_norm_back(ctx, a, b, eps);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -3400,7 +3400,7 @@ struct test_rms_norm_back : public test_case {
 };
 
 // GGML_OP_RMS_NORM + GGML_OP_MUL + GGML_OP_ADD
-struct test_rms_norm_mul_add : public test_case {
+struct test_rms_norm_mul_add : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const float eps;
@@ -3409,13 +3409,13 @@ struct test_rms_norm_mul_add : public test_case {
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "RMS_NORM_MUL_ADD";
+        return "RMS_NORM_MUL_ADD";  // 返回
     }
 
     bool run_whole_graph() override { return true; }
 
     std::string vars() override {
-        return VARS_TO_STR5(type, ne, eps, broadcast, multi_add);
+        return VARS_TO_STR5(type, ne, eps, broadcast, multi_add);  // VARS_TO_STR5
     }
 
     test_rms_norm_mul_add(ggml_type type = GGML_TYPE_F32,
@@ -3445,7 +3445,7 @@ struct test_rms_norm_mul_add : public test_case {
         ggml_tensor * out = ggml_add(ctx, ggml_mul(ctx, ggml_rms_norm(ctx, a, eps), b), c);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -3455,16 +3455,16 @@ struct test_rms_norm_mul_add : public test_case {
     }
 
     float grad_eps() override {
-        return 1.0f;
+        return 1.0f;  // 返回
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_ADD + GGML_OP_RMS_NORM (fused operation)
-struct test_add_rms_norm : public test_case {
+struct test_add_rms_norm : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const float eps;
@@ -3472,13 +3472,13 @@ struct test_add_rms_norm : public test_case {
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "ADD_RMS_NORM";
+        return "ADD_RMS_NORM";  // 返回
     }
 
     bool run_whole_graph() override { return true; }
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne, eps, broadcast);
+        return VARS_TO_STR4(type, ne, eps, broadcast);  // VARS_TO_STR4
     }
 
     test_add_rms_norm(ggml_type type = GGML_TYPE_F32,
@@ -3504,7 +3504,7 @@ struct test_add_rms_norm : public test_case {
         ggml_tensor * out = ggml_rms_norm(ctx, add_result, eps);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -3514,28 +3514,28 @@ struct test_add_rms_norm : public test_case {
     }
 
     float grad_eps() override {
-        return 1.0f;
+        return 1.0f;  // 返回
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_UNARY(RELU) + GGML_OP_SQR (fused operation)
-struct test_relu_sqr : public test_case {
+struct test_relu_sqr : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "RELU_SQR";
+        return "RELU_SQR";  // 返回
     }
 
     bool run_whole_graph() override { return true; }
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_relu_sqr(ggml_type type = GGML_TYPE_F32,
@@ -3552,18 +3552,18 @@ struct test_relu_sqr : public test_case {
         ggml_tensor * out = ggml_sqr(ctx, r);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_SSM_CONV
-struct test_ssm_conv : public test_case {
+struct test_ssm_conv : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     const std::array<int64_t, 4> ne_b;
 
     std::string vars() override {
-        return VARS_TO_STR3(type, ne_a, ne_b);
+        return VARS_TO_STR3(type, ne_a, ne_b);  // VARS_TO_STR3
     }
 
     test_ssm_conv(ggml_type type = GGML_TYPE_F32,
@@ -3575,12 +3575,12 @@ struct test_ssm_conv : public test_case {
         ggml_tensor * a   = ggml_new_tensor(ctx, type, 4, ne_a.data());
         ggml_tensor * b   = ggml_new_tensor(ctx, type, 4, ne_b.data());
         ggml_tensor * out = ggml_ssm_conv(ctx, a, b);
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_SSM_CONV + GGML_OP_ADD (channel-wise bias, optional) + GGML_OP_UNARY(SILU) (fused operation)
-struct test_ssm_conv_bias_silu : public test_case {
+struct test_ssm_conv_bias_silu : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     const std::array<int64_t, 4> ne_b;
@@ -3588,13 +3588,13 @@ struct test_ssm_conv_bias_silu : public test_case {
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "SSM_CONV_BIAS_SILU";
+        return "SSM_CONV_BIAS_SILU";  // 返回
     }
 
     bool run_whole_graph() override { return true; }
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne_a, ne_b, fuse_bias);
+        return VARS_TO_STR4(type, ne_a, ne_b, fuse_bias);  // VARS_TO_STR4
     }
 
     test_ssm_conv_bias_silu(ggml_type type, std::array<int64_t, 4> ne_a, std::array<int64_t, 4> ne_b,
@@ -3618,12 +3618,12 @@ struct test_ssm_conv_bias_silu : public test_case {
         out = ggml_silu(ctx, out);
 
         ggml_set_name(out, "out");
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_SSM_SCAN
-struct test_ssm_scan : public test_case {
+struct test_ssm_scan : public test_case {  // 结构体定义
     const ggml_type type;
 
     const int64_t d_state;
@@ -3635,7 +3635,7 @@ struct test_ssm_scan : public test_case {
     const bool    xbc_overlap;
 
     std::string vars() override {
-        return VARS_TO_STR8(type, d_state, head_dim, n_head, n_group, n_seq_tokens, n_seqs, xbc_overlap);
+        return VARS_TO_STR8(type, d_state, head_dim, n_head, n_group, n_seq_tokens, n_seqs, xbc_overlap);  // VARS_TO_STR8
     }
 
     test_ssm_scan(ggml_type type = GGML_TYPE_F32,
@@ -3671,7 +3671,7 @@ struct test_ssm_scan : public test_case {
         }
         ggml_tensor * ids = ggml_new_tensor_1d(ctx, GGML_TYPE_I32,  n_seqs);
         ggml_tensor * out = ggml_ssm_scan(ctx, s, x, dt, A, B, C, ids);
-        return out;
+        return out;  // 返回
     }
 
     // similar to test_mul_mat_id
@@ -3698,7 +3698,7 @@ struct test_ssm_scan : public test_case {
 };
 
 // GGML_OP_RWKV_WKV6
-struct test_rwkv_wkv6 : public test_case {
+struct test_rwkv_wkv6 : public test_case {  // 结构体定义
     const ggml_type type;
 
     const int64_t head_count;
@@ -3707,7 +3707,7 @@ struct test_rwkv_wkv6 : public test_case {
     const int64_t n_seqs;
 
     std::string vars() override {
-        return VARS_TO_STR5(type, head_count, head_size, n_seq_tokens, n_seqs);
+        return VARS_TO_STR5(type, head_count, head_size, n_seq_tokens, n_seqs);  // VARS_TO_STR5
     }
 
     test_rwkv_wkv6(ggml_type type = GGML_TYPE_F32,
@@ -3723,12 +3723,12 @@ struct test_rwkv_wkv6 : public test_case {
         ggml_tensor * td  = ggml_new_tensor(ctx, type, 3, std::vector<int64_t>{ head_size, head_count, n_tokens }.data());
         ggml_tensor * s   = ggml_new_tensor(ctx, type, 2, std::vector<int64_t>{ head_size * head_size * head_count, n_seqs }.data());
         ggml_tensor * out = ggml_rwkv_wkv6(ctx, k, v, r, tf, td, s);
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_GATED_DELTA_NET
-struct test_gated_delta_net : public test_case {
+struct test_gated_delta_net : public test_case {  // 结构体定义
     const ggml_type type;
 
     const int64_t head_count;
@@ -3740,7 +3740,7 @@ struct test_gated_delta_net : public test_case {
     const bool    kda;
 
     std::string vars() override {
-        return VARS_TO_STR8(type, head_count, head_size, n_seq_tokens, n_seqs, v_repeat, permuted, kda);
+        return VARS_TO_STR8(type, head_count, head_size, n_seq_tokens, n_seqs, v_repeat, permuted, kda);  // VARS_TO_STR8
     }
 
     test_gated_delta_net(ggml_type type = GGML_TYPE_F32,
@@ -3768,12 +3768,12 @@ struct test_gated_delta_net : public test_case {
         ggml_tensor * beta  = ggml_new_tensor_4d(ctx, type, 1, head_count * v_repeat, n_seq_tokens, n_seqs);
         ggml_tensor * state = ggml_new_tensor_2d(ctx, type, head_size * v_repeat * head_size * head_count, n_seqs);
         ggml_tensor * out   = ggml_gated_delta_net(ctx, q, k, v, g, beta, state);
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_GATED_LINEAR_ATTN
-struct test_gla : public test_case {
+struct test_gla : public test_case {  // 结构体定义
     const ggml_type type;
 
     const int64_t head_count;
@@ -3782,7 +3782,7 @@ struct test_gla : public test_case {
     const int64_t n_seqs;
 
     std::string vars() override {
-        return VARS_TO_STR5(type, head_count, head_size, n_seq_tokens, n_seqs);
+        return VARS_TO_STR5(type, head_count, head_size, n_seq_tokens, n_seqs);  // VARS_TO_STR5
     }
 
     test_gla(ggml_type type = GGML_TYPE_F32,
@@ -3797,12 +3797,12 @@ struct test_gla : public test_case {
         ggml_tensor * g   = ggml_new_tensor(ctx, type, 3, std::vector<int64_t>{ head_size, head_count, n_tokens }.data());
         ggml_tensor * s   = ggml_new_tensor(ctx, type, 2, std::vector<int64_t>{ head_size * head_size * head_count, n_seqs }.data());
         ggml_tensor * out = ggml_gated_linear_attn(ctx, k, v, q, g, s, pow(head_size, -0.5));
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_RWKV_WKV7
-struct test_rwkv_wkv7 : public test_case {
+struct test_rwkv_wkv7 : public test_case {  // 结构体定义
     const ggml_type type;
 
     const int64_t head_count;
@@ -3811,7 +3811,7 @@ struct test_rwkv_wkv7 : public test_case {
     const int64_t n_seqs;
 
     std::string vars() override {
-        return VARS_TO_STR5(type, head_count, head_size, n_seq_tokens, n_seqs);
+        return VARS_TO_STR5(type, head_count, head_size, n_seq_tokens, n_seqs);  // VARS_TO_STR5
     }
 
     test_rwkv_wkv7(ggml_type type = GGML_TYPE_F32,
@@ -3831,12 +3831,12 @@ struct test_rwkv_wkv7 : public test_case {
         b = ggml_l2_norm(ctx, b, 1e-7F);
         ggml_tensor * s   = ggml_new_tensor(ctx, type, 2, std::vector<int64_t>{ head_size * head_size * head_count, n_seqs }.data());
         ggml_tensor * out = ggml_rwkv_wkv7(ctx, r, w, k, v, a, b, s);
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_MUL_MAT
-struct test_mul_mat : public test_case {
+struct test_mul_mat : public test_case {  // 结构体定义
     const ggml_type type_a;
     const ggml_type type_b;
     const int64_t m;
@@ -3849,28 +3849,28 @@ struct test_mul_mat : public test_case {
     const uint32_t o; // number of outputs
 
     std::string vars() override {
-        return VARS_TO_STR10(type_a, type_b, m, n, k, bs, nr, per, k_v, o);
+        return VARS_TO_STR10(type_a, type_b, m, n, k, bs, nr, per, k_v, o);  // VARS_TO_STR10
     }
 
     double max_nmse_err() override {
-        return 5e-4;
+        return 5e-4;  // 返回
     }
 
     double max_nmse_err(ggml_backend_t backend) override {
         // for blackwell we quantize activations to mxfp4 instead of q8_1 so we add higher tolerance
         if ((type_a == GGML_TYPE_MXFP4 || type_a == GGML_TYPE_NVFP4) && backend_has_feature(backend, "BLACKWELL_NATIVE_FP4")) {
-            return 2e-2;
+            return 2e-2;  // 返回
         }
-        return max_nmse_err();
+        return max_nmse_err();  // max_nmse_err
     }
 
     int64_t grad_nmax() override {
-        return 20000;
+        return 20000;  // 返回
     }
 
     uint64_t op_flops(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return 2 * m * n * k * bs[0] * nr[0] * bs[1] * nr[1];
+        return 2 * m * n * k * bs[0] * nr[0] * bs[1] * nr[1];  // 返回
     }
 
     test_mul_mat(ggml_type type_a = GGML_TYPE_F32, ggml_type type_b = GGML_TYPE_F32,
@@ -3941,14 +3941,14 @@ struct test_mul_mat : public test_case {
             out = ggml_add(ctx, out, out2);
         }
 
-        return out;
+        return out;  // 返回
     }
 
     bool run_whole_graph() override { return o > 1; }
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return ggml_op_name(GGML_OP_MUL_MAT);
+        return ggml_op_name(GGML_OP_MUL_MAT);  // ggml_op_name
     }
 };
 
@@ -3974,7 +3974,7 @@ static void init_mul_mat_id_tensors(ggml_context * ctx, int n_mats) {
 }
 
 // GGML_OP_MUL_MAT_ID
-struct test_mul_mat_id : public test_case {
+struct test_mul_mat_id : public test_case {  // 结构体定义
     const ggml_type type_a;
     const ggml_type type_b;
     const int n_mats;
@@ -3985,24 +3985,24 @@ struct test_mul_mat_id : public test_case {
     const int64_t k;
 
     std::string vars() override {
-        return VARS_TO_STR8(type_a, type_b, n_mats, n_used, b, m, n, k);
+        return VARS_TO_STR8(type_a, type_b, n_mats, n_used, b, m, n, k);  // VARS_TO_STR8
     }
 
     double max_nmse_err() override {
-        return 5e-4;
+        return 5e-4;  // 返回
     }
 
     double max_nmse_err(ggml_backend_t backend) override {
         // for blackwell we quantize activations to mxfp4 instead of q8_1 so we add higher tolerance
         if ((type_a == GGML_TYPE_MXFP4 || type_a == GGML_TYPE_NVFP4) && backend_has_feature(backend, "BLACKWELL_NATIVE_FP4")) {
-            return 2e-2;
+            return 2e-2;  // 返回
         }
-        return max_nmse_err();
+        return max_nmse_err();  // max_nmse_err
     }
 
     uint64_t op_flops(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return 2 * m * k * n * n_used;
+        return 2 * m * k * n * n_used;  // 返回
     }
 
     test_mul_mat_id(ggml_type type_a = GGML_TYPE_F32, ggml_type type_b = GGML_TYPE_F32,
@@ -4031,7 +4031,7 @@ struct test_mul_mat_id : public test_case {
         ggml_tensor * out = ggml_mul_mat_id(ctx, as, b, ids);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -4040,7 +4040,7 @@ struct test_mul_mat_id : public test_case {
 };
 
 // GGML_OP_MUL_MAT_ID + GGML_OP_ADD or GGML_OP_MUL
-struct test_mul_mat_id_fusion : public test_case {
+struct test_mul_mat_id_fusion : public test_case {  // 结构体定义
     const ggml_type type_a;
     const ggml_type type_b;
     const int n_mats;
@@ -4053,16 +4053,16 @@ struct test_mul_mat_id_fusion : public test_case {
     const bool mul;
 
     std::string vars() override {
-        return VARS_TO_STR10(type_a, type_b, n_mats, n_used, b, m, n, k, o, mul);
+        return VARS_TO_STR10(type_a, type_b, n_mats, n_used, b, m, n, k, o, mul);  // VARS_TO_STR10
     }
 
     double max_nmse_err() override {
-        return 5e-4;
+        return 5e-4;  // 返回
     }
 
     uint64_t op_flops(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return 2 * m * k * n * n_used;
+        return 2 * m * k * n * n_used;  // 返回
     }
 
     test_mul_mat_id_fusion(ggml_type type_a = GGML_TYPE_F32, ggml_type type_b = GGML_TYPE_F32,
@@ -4105,7 +4105,7 @@ struct test_mul_mat_id_fusion : public test_case {
             out = ggml_mul(ctx, out, m);
         }
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -4116,12 +4116,12 @@ struct test_mul_mat_id_fusion : public test_case {
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "MUL_MAT_ID_FUSION";
+        return "MUL_MAT_ID_FUSION";  // 返回
     }
 };
 
 // GGML_OP_OUT_PROD
-struct test_out_prod : public test_case {
+struct test_out_prod : public test_case {  // 结构体定义
     const ggml_type type_a;
     const ggml_type type_b;
     const int64_t m;
@@ -4132,11 +4132,11 @@ struct test_out_prod : public test_case {
     const bool trans_b;
 
     std::string vars() override {
-        return VARS_TO_STR8(type_a, type_b, m, n, k, bs, nr, trans_b);
+        return VARS_TO_STR8(type_a, type_b, m, n, k, bs, nr, trans_b);  // VARS_TO_STR8
     }
 
     double max_nmse_err() override {
-        return 5e-4;
+        return 5e-4;  // 返回
     }
 
     test_out_prod(ggml_type type_a = GGML_TYPE_F32, ggml_type type_b = GGML_TYPE_F32,
@@ -4162,17 +4162,17 @@ struct test_out_prod : public test_case {
         ggml_tensor * out = ggml_out_prod(ctx, a, b);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_SQR
-struct test_sqr : public test_case {
+struct test_sqr : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_sqr(ggml_type type = GGML_TYPE_F32,
@@ -4187,21 +4187,21 @@ struct test_sqr : public test_case {
         ggml_tensor * out = ggml_sqr(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     float grad_eps() override {
-        return 0.1f * 0.25f*ne[0]*ne[1]*ne[2]*ne[3]; // 10% of expected value of sum.
+        return 0.1f * 0.25f*ne[0]*ne[1]*ne[2]*ne[3]; // 10% of expected value of sum.  // 返回
     }
 };
 
 // GGML_OP_SQRT
-struct test_sqrt : public test_case {
+struct test_sqrt : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_sqrt(ggml_type type = GGML_TYPE_F32,
@@ -4216,7 +4216,7 @@ struct test_sqrt : public test_case {
         ggml_tensor * out = ggml_sqrt(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -4227,21 +4227,21 @@ struct test_sqrt : public test_case {
     }
 
     float grad_eps() override {
-        return 20.0f;
+        return 20.0f;  // 返回
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_LOG
-struct test_log : public test_case {
+struct test_log : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_log(ggml_type type = GGML_TYPE_F32,
@@ -4256,7 +4256,7 @@ struct test_log : public test_case {
         ggml_tensor * out = ggml_log(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -4267,17 +4267,17 @@ struct test_log : public test_case {
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_SIN
-struct test_sin : public test_case {
+struct test_sin : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_sin(ggml_type type = GGML_TYPE_F32,
@@ -4292,7 +4292,7 @@ struct test_sin : public test_case {
         ggml_tensor * out = ggml_sin(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -4302,25 +4302,25 @@ struct test_sin : public test_case {
     }
 
     double max_maa_err() override {
-        return 1e-3;
+        return 1e-3;  // 返回
     }
 
     float grad_eps() override {
-        return 0.2f;
+        return 0.2f;  // 返回
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_COS
-struct test_cos : public test_case {
+struct test_cos : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_cos(ggml_type type = GGML_TYPE_F32,
@@ -4335,7 +4335,7 @@ struct test_cos : public test_case {
         ggml_tensor * out = ggml_cos(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -4345,27 +4345,27 @@ struct test_cos : public test_case {
     }
 
     double max_maa_err() override {
-        return 1e-3;
+        return 1e-3;  // 返回
     }
 
     float grad_eps() override {
-        return 0.2f;
+        return 0.2f;  // 返回
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_CLAMP
-struct test_clamp : public test_case {
+struct test_clamp : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     float min;
     float max;
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne, min, max);
+        return VARS_TO_STR4(type, ne, min, max);  // VARS_TO_STR4
     }
 
     test_clamp(ggml_type type = GGML_TYPE_F32,
@@ -4380,25 +4380,25 @@ struct test_clamp : public test_case {
         ggml_tensor * out = ggml_clamp(ctx, a, min, max);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     float grad_eps() override {
-        return 1e-2f;
+        return 1e-2f;  // 返回
     }
 
     std::vector<float> grad_expect() override {
-        return {0.0f, 1.0f};
+        return {0.0f, 1.0f};  // 返回
     }
 };
 
 // GGML_OP_FLOOR
-struct test_floor : public test_case {
+struct test_floor : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_floor(ggml_type type = GGML_TYPE_F32,
@@ -4413,7 +4413,7 @@ struct test_floor : public test_case {
         ggml_tensor * out = ggml_floor(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -4424,12 +4424,12 @@ struct test_floor : public test_case {
 };
 
 // GGML_OP_CEIL
-struct test_ceil : public test_case {
+struct test_ceil : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_ceil(ggml_type type = GGML_TYPE_F32,
@@ -4444,7 +4444,7 @@ struct test_ceil : public test_case {
         ggml_tensor * out = ggml_ceil(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -4455,12 +4455,12 @@ struct test_ceil : public test_case {
 };
 
 // GGML_OP_ROUND
-struct test_round : public test_case {
+struct test_round : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_round(ggml_type type = GGML_TYPE_F32,
@@ -4475,7 +4475,7 @@ struct test_round : public test_case {
         ggml_tensor * out = ggml_round(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -4486,12 +4486,12 @@ struct test_round : public test_case {
 };
 
 // GGML_OP_TRUNC
-struct test_trunc : public test_case {
+struct test_trunc : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_trunc(ggml_type type = GGML_TYPE_F32,
@@ -4506,7 +4506,7 @@ struct test_trunc : public test_case {
         ggml_tensor * out = ggml_trunc(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -4517,13 +4517,13 @@ struct test_trunc : public test_case {
 };
 
 // GGML_OP_DIAG_MASK_INF
-struct test_diag_mask_inf : public test_case {
+struct test_diag_mask_inf : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const int n_past;
 
     std::string vars() override {
-        return VARS_TO_STR3(type, ne, n_past);
+        return VARS_TO_STR3(type, ne, n_past);  // VARS_TO_STR3
     }
 
     test_diag_mask_inf(ggml_type type = GGML_TYPE_F32,
@@ -4539,12 +4539,12 @@ struct test_diag_mask_inf : public test_case {
         ggml_tensor * out = ggml_diag_mask_inf(ctx, a, n_past);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_SOFT_MAX
-struct test_soft_max : public test_case {
+struct test_soft_max : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const bool mask;
@@ -4556,13 +4556,13 @@ struct test_soft_max : public test_case {
     const bool inplace;
 
     std::string vars() override {
-        return VARS_TO_STR9(type, ne, mask, sinks, m_prec, nr23, scale, max_bias, inplace);
+        return VARS_TO_STR9(type, ne, mask, sinks, m_prec, nr23, scale, max_bias, inplace);  // VARS_TO_STR9
     }
 
     // the 1024 test with bias occasionally fails:
     // SOFT_MAX(type=f32,ne=[1024,16,1,1],mask=1,scale=1.000000,max_bias=8.000000): [SOFT_MAX] NMSE = 0.000000103 > 0.000000100 FAIL
-    virtual double max_nmse_err() override {
-        return 1e-6;
+    virtual double max_nmse_err() override {  // 虚函数
+        return 1e-6;  // 返回
     }
 
     test_soft_max(ggml_type type = GGML_TYPE_F32,
@@ -4602,23 +4602,23 @@ struct test_soft_max : public test_case {
         ggml_soft_max_add_sinks(out, sinks);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_SOFT_MAX_BACK
-struct test_soft_max_back : public test_case {
+struct test_soft_max_back : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const float scale;
     const float max_bias;
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne, scale, max_bias);
+        return VARS_TO_STR4(type, ne, scale, max_bias);  // VARS_TO_STR4
     }
 
     test_soft_max_back(ggml_type type = GGML_TYPE_F32,
@@ -4637,12 +4637,12 @@ struct test_soft_max_back : public test_case {
         ggml_tensor * out = ggml_soft_max_ext_back(ctx, a, b, scale, max_bias);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_ROPE + GGML_OP_ROPE_BACK
-struct test_rope : public test_case {
+struct test_rope : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     int n_dims;
@@ -4658,7 +4658,7 @@ struct test_rope : public test_case {
 
     std::string vars() override {
         // forward can be inferred from the op, does not need to be printed
-        return VARS_TO_STR11(type, ne_a, n_dims, mode, n_ctx, fs, ef, af, ff, v, inplace);
+        return VARS_TO_STR11(type, ne_a, n_dims, mode, n_ctx, fs, ef, af, ff, v, inplace);  // VARS_TO_STR11
     }
 
     test_rope(ggml_type type = GGML_TYPE_F32,
@@ -4746,7 +4746,7 @@ struct test_rope : public test_case {
         }
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -4771,16 +4771,16 @@ struct test_rope : public test_case {
     }
 
     double max_maa_err() override {
-        return 1e-3;
+        return 1e-3;  // 返回
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_POOL2D
-struct test_pool2d : public test_case {
+struct test_pool2d : public test_case {  // 结构体定义
     enum ggml_op_pool pool_type;
     const ggml_type type_input;
     const std::array<int64_t, 4> ne_input;
@@ -4795,7 +4795,7 @@ struct test_pool2d : public test_case {
     const int p1;
 
     std::string vars() override {
-        return VARS_TO_STR9(pool_type, type_input, ne_input, k0, k1, s0, s1, p0, p1);
+        return VARS_TO_STR9(pool_type, type_input, ne_input, k0, k1, s0, s1, p0, p1);  // VARS_TO_STR9
     }
 
     test_pool2d(ggml_op_pool pool_type = GGML_OP_POOL_AVG,
@@ -4814,12 +4814,12 @@ struct test_pool2d : public test_case {
         ggml_tensor * out = ggml_pool_2d(ctx, input, pool_type, k0, k1, s0, s1, p0, p1);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_POOL1D
-struct test_pool1d : public test_case {
+struct test_pool1d : public test_case {  // 结构体定义
     enum ggml_op_pool pool_type;
     const ggml_type type_input;
     const std::array<int64_t, 4> ne_input;
@@ -4828,7 +4828,7 @@ struct test_pool1d : public test_case {
     const int p0;
 
     std::string vars() override {
-        return VARS_TO_STR6(pool_type, type_input, ne_input, k0, s0, p0);
+        return VARS_TO_STR6(pool_type, type_input, ne_input, k0, s0, p0);  // VARS_TO_STR6
     }
 
     test_pool1d(ggml_op_pool pool_type = GGML_OP_POOL_AVG,
@@ -4845,12 +4845,12 @@ struct test_pool1d : public test_case {
         ggml_tensor * out = ggml_pool_1d(ctx, input, pool_type, k0, s0, p0);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_CONV_TRANSPOSE_1D
-struct test_conv_transpose_1d : public test_case {
+struct test_conv_transpose_1d : public test_case {  // 结构体定义
     const std::array<int64_t, 4> ne_input;
     const std::array<int64_t, 4> ne_kernel;
 
@@ -4859,7 +4859,7 @@ struct test_conv_transpose_1d : public test_case {
     const int d0; // dilation
 
     std::string vars() override {
-        return VARS_TO_STR5(ne_input, ne_kernel, s0, p0, d0);
+        return VARS_TO_STR5(ne_input, ne_kernel, s0, p0, d0);  // VARS_TO_STR5
     }
 
     test_conv_transpose_1d(std::array<int64_t, 4> ne_input = {197, 32, 1, 1}, // [input_width, input_channels, 1 /* assert in cpu kernel*/, 1 (should be batch)]
@@ -4877,12 +4877,12 @@ struct test_conv_transpose_1d : public test_case {
         ggml_tensor * out = ggml_conv_transpose_1d(ctx, kernel, input, s0, p0, d0);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_CONV_TRANSPOSE_2D
-struct test_conv_transpose_2d : public test_case {
+struct test_conv_transpose_2d : public test_case {  // 结构体定义
     // Dimensions
     const std::array<int64_t, 4> ne_input;
     const std::array<int64_t, 4> ne_kernel;
@@ -4891,11 +4891,11 @@ struct test_conv_transpose_2d : public test_case {
     const ggml_type kernel_type;
 
     std::string vars() override {
-        return VARS_TO_STR4(kernel_type, ne_input, ne_kernel, stride);
+        return VARS_TO_STR4(kernel_type, ne_input, ne_kernel, stride);  // VARS_TO_STR4
     }
 
     double max_nmse_err() override {
-        return 5e-4; // The default 1e-7 is too small for Vulkan.
+        return 5e-4; // The default 1e-7 is too small for Vulkan.  // 返回
     }
 
     test_conv_transpose_2d(
@@ -4915,12 +4915,12 @@ struct test_conv_transpose_2d : public test_case {
         ggml_tensor * out = ggml_conv_transpose_2d_p0(ctx, kernel, input, stride);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_IM2COL
-struct test_im2col : public test_case {
+struct test_im2col : public test_case {  // 结构体定义
     const ggml_type type_input;
     const ggml_type type_kernel;
     const ggml_type dst_type;
@@ -4939,7 +4939,7 @@ struct test_im2col : public test_case {
     const bool is_2D;
 
     std::string vars() override {
-        return VARS_TO_STR12(type_input, type_kernel, dst_type, ne_input, ne_kernel, s0, s1, p0, p1, d0, d1, is_2D);
+        return VARS_TO_STR12(type_input, type_kernel, dst_type, ne_input, ne_kernel, s0, s1, p0, p1, d0, d1, is_2D);  // VARS_TO_STR12
     }
 
     test_im2col(ggml_type type_input = GGML_TYPE_F32, ggml_type type_kernel = GGML_TYPE_F16, ggml_type dst_type = GGML_TYPE_F32,
@@ -4962,12 +4962,12 @@ struct test_im2col : public test_case {
         ggml_tensor * out = ggml_im2col(ctx, kernel, input, s0, s1, p0, p1, d0, d1, is_2D, dst_type);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_IM2COL_3D
-struct test_im2col_3d : public test_case {
+struct test_im2col_3d : public test_case {  // 结构体定义
     const ggml_type type_input;
     const ggml_type type_kernel;
     const ggml_type dst_type;
@@ -4990,7 +4990,7 @@ struct test_im2col_3d : public test_case {
     const bool v;
 
     std::string vars() override {
-        return VARS_TO_STR16(type_input, type_kernel, dst_type, ne_input, ne_kernel, IC, s0, s1, s2, p0, p1, p2, d0, d1, d2, v);
+        return VARS_TO_STR16(type_input, type_kernel, dst_type, ne_input, ne_kernel, IC, s0, s1, s2, p0, p1, p2, d0, d1, d2, v);  // VARS_TO_STR16
     }
 
     test_im2col_3d(ggml_type type_input = GGML_TYPE_F32, ggml_type type_kernel = GGML_TYPE_F16, ggml_type dst_type = GGML_TYPE_F32,
@@ -5019,12 +5019,12 @@ struct test_im2col_3d : public test_case {
         ggml_tensor * out = ggml_im2col_3d(ctx, kernel, input, IC, s0, s1, s2, p0, p1, p2, d0, d1, d2, dst_type);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // CONV_2D
-struct test_conv_2d : public test_case {
+struct test_conv_2d : public test_case {  // 结构体定义
     const std::array<int64_t, 4> ne_input;
     const std::array<int64_t, 4> ne_kernel;
     const ggml_type              type_kernel;
@@ -5045,11 +5045,11 @@ struct test_conv_2d : public test_case {
     // IM2COL -> MUL_MM graph will be built.
 
     std::string vars() override {
-        return VARS_TO_STR10(ne_input, ne_kernel, type_kernel, stride0, stride1, padding0, padding1, dilation0, dilation1, cwhn);
+        return VARS_TO_STR10(ne_input, ne_kernel, type_kernel, stride0, stride1, padding0, padding1, dilation0, dilation1, cwhn);  // VARS_TO_STR10
     }
 
     double max_nmse_err() override {
-        return 5e-4;
+        return 5e-4;  // 返回
     }
 
     uint64_t op_flops(ggml_tensor * t) override {
@@ -5112,12 +5112,12 @@ struct test_conv_2d : public test_case {
         ggml_tensor * out =
             ggml_conv_2d_direct(ctx, kernel, input, stride0, stride1, padding0, padding1, dilation0, dilation1);
         ggml_set_name(out, "out");
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_CONV_2D_DW
-struct test_conv_2d_dw : public test_case {
+struct test_conv_2d_dw : public test_case {  // 结构体定义
     const std::array<int64_t, 4> ne_input;
     const std::array<int64_t, 4> ne_kernel;
     const int stride;
@@ -5126,7 +5126,7 @@ struct test_conv_2d_dw : public test_case {
     const bool cwhn;
 
     std::string vars() override {
-        return VARS_TO_STR6(ne_input, ne_kernel, stride, padding, dilation, cwhn);
+        return VARS_TO_STR6(ne_input, ne_kernel, stride, padding, dilation, cwhn);  // VARS_TO_STR6
     }
 
     test_conv_2d_dw(std::array<int64_t, 4> ne_input = {64, 64, 16, 1},
@@ -5154,12 +5154,12 @@ struct test_conv_2d_dw : public test_case {
             ctx, kernel, input,
             stride, stride, padding, padding, dilation, dilation);
         ggml_set_name(out, "out");
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_CONV_3D
-struct test_conv_3d : public test_case {
+struct test_conv_3d : public test_case {  // 结构体定义
     // Logical 5D dimensions
     const int64_t N, IC, ID, IH, IW;
     const int64_t OC, KD, KH, KW;
@@ -5172,16 +5172,16 @@ struct test_conv_3d : public test_case {
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "CONV_3D";
+        return "CONV_3D";  // 返回
     }
 
     std::string vars() override {
-        return VARS_TO_STR11(N, IC, ID, IH, IW, OC, KD, KH, KW, s0, s1) + "," +
+        return VARS_TO_STR11(N, IC, ID, IH, IW, OC, KD, KH, KW, s0, s1) + "," +  // VARS_TO_STR11
                VARS_TO_STR8(s2, p0, p1, p2, d0, d1, d2, type_kernel);
     }
 
     double max_nmse_err() override {
-        return 5e-4;
+        return 5e-4;  // 返回
     }
 
     uint64_t op_flops(ggml_tensor * t) override {
@@ -5223,12 +5223,12 @@ struct test_conv_3d : public test_case {
 
         ggml_tensor * out = ggml_conv_3d_direct(ctx, kernel, input, s0, s1, s2, p0, p1, p2, d0, d1, d2, (int)IC, (int)N, (int)OC);
         ggml_set_name(out, "out");
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_CONCAT
-struct test_concat : public test_case {
+struct test_concat : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     const int64_t ne_b_d;
@@ -5236,7 +5236,7 @@ struct test_concat : public test_case {
     const int v; // view (1 << 0: non-cont a, 1 << 1: non-cont b)
 
     std::string vars() override {
-        return VARS_TO_STR5(type, ne_a, ne_b_d, dim, v);
+        return VARS_TO_STR5(type, ne_a, ne_b_d, dim, v);  // VARS_TO_STR5
     }
 
     test_concat(ggml_type type = GGML_TYPE_F32,
@@ -5276,18 +5276,18 @@ struct test_concat : public test_case {
         ggml_tensor * out = ggml_concat(ctx, a, b, dim);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_ARGSORT
-struct test_argsort : public test_case {
+struct test_argsort : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     ggml_sort_order order;
 
     std::string vars() override {
-        return VARS_TO_STR3(type, ne, order);
+        return VARS_TO_STR3(type, ne, order);  // VARS_TO_STR3
     }
 
     test_argsort(ggml_type type = GGML_TYPE_F32,
@@ -5302,7 +5302,7 @@ struct test_argsort : public test_case {
         ggml_tensor * out = ggml_argsort(ctx, a, order);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -5335,7 +5335,7 @@ struct test_argsort : public test_case {
 };
 
 // GGML_OP_TOP_K
-struct test_top_k : public test_case {
+struct test_top_k : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const int k;
@@ -5343,7 +5343,7 @@ struct test_top_k : public test_case {
     ggml_tensor * input {};
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne, k, ties);
+        return VARS_TO_STR4(type, ne, k, ties);  // VARS_TO_STR4
     }
 
     test_top_k(ggml_type type = GGML_TYPE_F32,
@@ -5352,7 +5352,7 @@ struct test_top_k : public test_case {
         : type(type), ne(ne), k(k), ties(ties) {}
 
     double max_err() override {
-        return 0.0;
+        return 0.0;  // 返回
     }
 
     // When there are ties, only validate the final result.
@@ -5400,7 +5400,7 @@ struct test_top_k : public test_case {
                     diff += 1;
                 }
             }
-            return diff;
+            return diff;  // 返回
         } else {
             std::vector<int32_t> ia(n);
             std::vector<int32_t> ib(n);
@@ -5430,7 +5430,7 @@ struct test_top_k : public test_case {
         ggml_tensor * out = ggml_top_k(ctx, a, k);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -5455,13 +5455,13 @@ struct test_top_k : public test_case {
     }
 };
 
-enum MoeGatingFunc {
+enum MoeGatingFunc {  // 枚举定义
     GATING_FUNC_SOFTMAX,
     GATING_FUNC_SIGMOID,
     GATING_FUNC_SOFTMAX_WEIGHT,
 };
 
-struct test_topk_moe : public test_case {
+struct test_topk_moe : public test_case {  // 结构体定义
     const std::array<int64_t, 4> ne;
     const int n_expert_used;
     const bool with_norm;
@@ -5490,7 +5490,7 @@ struct test_topk_moe : public test_case {
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "TOPK_MOE";
+        return "TOPK_MOE";  // 返回
     }
 
     bool run_whole_graph() override { return true; }
@@ -5540,7 +5540,7 @@ struct test_topk_moe : public test_case {
         }
 
         ggml_set_name(weights, "weights");
-        return weights;
+        return weights;  // 返回
     }
     // Verify two outputs
     std::vector<ggml_tensor *> fusion_test_nodes() override { return { selected_experts, weights }; }
@@ -5555,11 +5555,11 @@ struct test_topk_moe : public test_case {
         }
         std::sort(a2.begin(), a2.end());
         std::sort(b2.begin(), b2.end());
-        return nmse(a2.data(), b2.data(), n);
+        return nmse(a2.data(), b2.data(), n);  // nmse
     }
 };
 
-struct test_mul_mat_vec_fusion : public test_case {
+struct test_mul_mat_vec_fusion : public test_case {  // 结构体定义
     const ggml_type type;
     const ggml_glu_op glu_op;
     const int64_t m;
@@ -5583,12 +5583,12 @@ struct test_mul_mat_vec_fusion : public test_case {
     }
 
     std::string vars() override {
-        return VARS_TO_STR12(type, glu_op, m, n, k, use_id, n_mats, n_used, b, with_bias, with_gate, batch_dims);
+        return VARS_TO_STR12(type, glu_op, m, n, k, use_id, n_mats, n_used, b, with_bias, with_gate, batch_dims);  // VARS_TO_STR12
     }
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "MUL_MAT_VEC_FUSION";
+        return "MUL_MAT_VEC_FUSION";  // 返回
     }
 
     bool run_whole_graph() override { return true; }
@@ -5604,7 +5604,7 @@ struct test_mul_mat_vec_fusion : public test_case {
                 out = ggml_glu_split(ctx, ffn_gate, ffn_up, glu_op);
             }
         }
-        return out;
+        return out;  // 返回
     }
 
     ggml_tensor * build_graph(ggml_context * ctx) override {
@@ -5639,7 +5639,7 @@ struct test_mul_mat_vec_fusion : public test_case {
             out = ggml_add(ctx, out, bias2);
 
             ggml_set_name(out, "out");
-            return out;
+            return out;  // 返回
         } else {
             ggml_tensor * gates = ggml_new_tensor_3d(ctx, type, k, n, n_mats);
             ggml_tensor * ups   = ggml_new_tensor_3d(ctx, type, k, n, n_mats);
@@ -5671,7 +5671,7 @@ struct test_mul_mat_vec_fusion : public test_case {
             out = ggml_mul(ctx, out, scale);
 
             ggml_set_name(out, "out");
-            return out;
+            return out;  // 返回
         }
     }
 
@@ -5686,12 +5686,12 @@ struct test_mul_mat_vec_fusion : public test_case {
     }
 
     double max_nmse_err() override {
-        return 5e-3;
+        return 5e-3;  // 返回
     }
 };
 
 // GGML_OP_SUM
-struct test_sum : public test_case {
+struct test_sum : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const std::array<int64_t, 4> permute;
@@ -5700,7 +5700,7 @@ struct test_sum : public test_case {
     std::string vars() override {
         std::string v = VARS_TO_STR2(type, ne);
         if (_use_permute) v += "," + VAR_TO_STR(permute);
-        return v;
+        return v;  // 返回
     }
 
     test_sum(ggml_type type = GGML_TYPE_F32,
@@ -5722,7 +5722,7 @@ struct test_sum : public test_case {
         ggml_tensor * out = ggml_sum(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     float grad_eps() override {
@@ -5738,14 +5738,14 @@ struct test_sum : public test_case {
 };
 
 // GGML_OP_SUM_ROWS
-struct test_sum_rows : public test_case {
+struct test_sum_rows : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const bool permute;
     const bool slice;
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne, permute, slice);
+        return VARS_TO_STR4(type, ne, permute, slice);  // VARS_TO_STR4
     }
 
     test_sum_rows(ggml_type type = GGML_TYPE_F32,
@@ -5770,17 +5770,17 @@ struct test_sum_rows : public test_case {
         ggml_tensor * out = ggml_sum_rows(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_MEAN
-struct test_mean : public test_case {
+struct test_mean : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_mean(ggml_type type = GGML_TYPE_F32,
@@ -5795,11 +5795,11 @@ struct test_mean : public test_case {
         ggml_tensor * out = ggml_mean(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     float grad_eps() override {
-        return 0.1f * ne[0]*ne[1]*ne[2]*ne[3];
+        return 0.1f * ne[0]*ne[1]*ne[2]*ne[3];  // 返回
     }
 
     // Don't center the distribution around zero. Helps to avoid catastrophic cancellation.
@@ -5811,7 +5811,7 @@ struct test_mean : public test_case {
 };
 
 // GGML_OP_UPSCALE
-struct test_upscale : public test_case {
+struct test_upscale : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const int32_t scale_factor;
@@ -5819,7 +5819,7 @@ struct test_upscale : public test_case {
     const ggml_scale_mode mode;
 
     std::string vars() override {
-        return VARS_TO_STR5(type, ne, scale_factor, mode, transpose);
+        return VARS_TO_STR5(type, ne, scale_factor, mode, transpose);  // VARS_TO_STR5
     }
 
     test_upscale(ggml_type type = GGML_TYPE_F32,
@@ -5839,19 +5839,19 @@ struct test_upscale : public test_case {
         ggml_tensor * out = ggml_upscale(ctx, a, scale_factor, mode);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_UPSCALE (via ggml_interpolate)
-struct test_interpolate : public test_case {
+struct test_interpolate : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const std::array<int64_t, 4> ne_tgt;
     const ggml_scale_mode mode = GGML_SCALE_MODE_NEAREST;
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne, ne_tgt, mode);
+        return VARS_TO_STR4(type, ne, ne_tgt, mode);  // VARS_TO_STR4
     }
 
     test_interpolate(ggml_type type = GGML_TYPE_F32,
@@ -5867,19 +5867,19 @@ struct test_interpolate : public test_case {
         ggml_tensor * out = ggml_interpolate(ctx, a, ne_tgt[0], ne_tgt[1],ne_tgt[2], ne_tgt[3], mode);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_GROUP_NORM
-struct test_group_norm : public test_case {
+struct test_group_norm : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const int32_t num_groups;
     const float eps;
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne, num_groups, eps);
+        return VARS_TO_STR4(type, ne, num_groups, eps);  // VARS_TO_STR4
     }
 
     test_group_norm(ggml_type type = GGML_TYPE_F32,
@@ -5895,12 +5895,12 @@ struct test_group_norm : public test_case {
         ggml_tensor * out = ggml_group_norm(ctx, a, num_groups, eps);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_GROUP_NORM + GGML_OP_MUL + GGML_OP_ADD
-struct test_group_norm_mul_add : public test_case {
+struct test_group_norm_mul_add : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     int num_groups;
@@ -5908,13 +5908,13 @@ struct test_group_norm_mul_add : public test_case {
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "GROUP_NORM_MUL_ADD";
+        return "GROUP_NORM_MUL_ADD";  // 返回
     }
 
     bool run_whole_graph() override { return true; }
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne, num_groups, eps);
+        return VARS_TO_STR4(type, ne, num_groups, eps);  // VARS_TO_STR4
     }
 
     test_group_norm_mul_add(ggml_type type = GGML_TYPE_F32,
@@ -5933,19 +5933,19 @@ struct test_group_norm_mul_add : public test_case {
         ggml_tensor * m = ggml_mul(ctx, n, w);
         ggml_tensor * out = ggml_add(ctx, m, b);
         ggml_set_name(out, "out");
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_L2_NORM
-struct test_l2_norm : public test_case {
+struct test_l2_norm : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
     const float eps;
     bool v;
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne, eps, v);
+        return VARS_TO_STR4(type, ne, eps, v);  // VARS_TO_STR4
     }
 
     test_l2_norm(ggml_type type = GGML_TYPE_F32,
@@ -5966,19 +5966,19 @@ struct test_l2_norm : public test_case {
         ggml_tensor * out = ggml_l2_norm(ctx, a, eps);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_ACC
-struct test_acc : public test_case {
+struct test_acc : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     const std::array<int64_t, 4> ne_b;
     const int64_t stride_dim;
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne_a, ne_b, stride_dim);
+        return VARS_TO_STR4(type, ne_a, ne_b, stride_dim);  // VARS_TO_STR4
     }
 
     test_acc(ggml_type type = GGML_TYPE_F32,
@@ -6017,12 +6017,12 @@ struct test_acc : public test_case {
         ggml_tensor * out = ggml_acc(ctx, a, b, a->nb[1], a->nb[2], a->nb[3], 0);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_PAD
-struct test_pad : public test_case {
+struct test_pad : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     const int pad_0;
@@ -6030,7 +6030,7 @@ struct test_pad : public test_case {
     const bool circular;
 
     std::string vars() override {
-        return VARS_TO_STR5(type, ne_a, pad_0, pad_1, circular);
+        return VARS_TO_STR5(type, ne_a, pad_0, pad_1, circular);  // VARS_TO_STR5
     }
 
     test_pad(ggml_type type = GGML_TYPE_F32,
@@ -6047,12 +6047,12 @@ struct test_pad : public test_case {
             : ggml_pad(ctx, a, pad_0, pad_1, 0, 0);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_PAD (with extension)
-struct test_pad_ext : public test_case {
+struct test_pad_ext : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     const int lp0;
@@ -6067,7 +6067,7 @@ struct test_pad_ext : public test_case {
     const bool circular;
 
     std::string vars() override {
-        return VARS_TO_STR12(type, ne_a, lp0, rp0, lp1, rp1, lp2, rp2, lp3, rp3, tfrm, circular);
+        return VARS_TO_STR12(type, ne_a, lp0, rp0, lp1, rp1, lp2, rp2, lp3, rp3, tfrm, circular);  // VARS_TO_STR12
     }
 
     test_pad_ext(ggml_type type = GGML_TYPE_F32,
@@ -6095,19 +6095,19 @@ struct test_pad_ext : public test_case {
             : ggml_pad_ext         (ctx, a, lp0, rp0, lp1, rp1, lp2, rp2, lp3, rp3);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_PAD_REFLECT_1D
-struct test_pad_reflect_1d : public test_case {
+struct test_pad_reflect_1d : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     const int pad_0;
     const int pad_1;
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne_a, pad_0, pad_1);
+        return VARS_TO_STR4(type, ne_a, pad_0, pad_1);  // VARS_TO_STR4
     }
 
     test_pad_reflect_1d(ggml_type type = GGML_TYPE_F32,
@@ -6122,19 +6122,19 @@ struct test_pad_reflect_1d : public test_case {
         ggml_tensor * out = ggml_pad_reflect_1d(ctx, a, pad_0, pad_1);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_ROLL
-struct test_roll : public test_case {
+struct test_roll : public test_case {  // 结构体定义
     const int shift0;
     const int shift1;
     const int shift3;
     const int shift4;
 
     std::string vars() override {
-        return VARS_TO_STR4(shift0, shift1, shift3, shift4);
+        return VARS_TO_STR4(shift0, shift1, shift3, shift4);  // VARS_TO_STR4
     }
 
     test_roll(int shift0 = 3, int shift1 = -2, int shift3 = 1, int shift4 = -1)
@@ -6148,19 +6148,19 @@ struct test_roll : public test_case {
         ggml_tensor * out = ggml_roll(ctx, a, shift0, shift1, shift3, shift4);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_ARANGE
-struct test_arange : public test_case {
+struct test_arange : public test_case {  // 结构体定义
     const ggml_type type;
     const float start;
     const float stop;
     const float step;
 
     std::string vars() override {
-        return VARS_TO_STR4(type, start, stop, step);
+        return VARS_TO_STR4(type, start, stop, step);  // VARS_TO_STR4
     }
 
     test_arange(ggml_type type = GGML_TYPE_F32,
@@ -6171,19 +6171,19 @@ struct test_arange : public test_case {
         ggml_tensor * out = ggml_arange(ctx, start, stop, step);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_TIMESTEP_EMBEDDING
-struct test_timestep_embedding : public test_case {
+struct test_timestep_embedding : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     const int dim;
     const int max_period;
 
     std::string vars() override {
-        return VARS_TO_STR4(type, ne_a, dim, max_period);
+        return VARS_TO_STR4(type, ne_a, dim, max_period);  // VARS_TO_STR4
     }
 
     test_timestep_embedding(ggml_type type = GGML_TYPE_F32,
@@ -6198,18 +6198,18 @@ struct test_timestep_embedding : public test_case {
         ggml_tensor * out = ggml_timestep_embedding(ctx, a, dim, max_period);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_LEAKY_RELU
-struct test_leaky_relu : public test_case {
+struct test_leaky_relu : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne_a;
     const float negative_slope;
 
     std::string vars() override {
-        return VARS_TO_STR3(type, ne_a, negative_slope);
+        return VARS_TO_STR3(type, ne_a, negative_slope);  // VARS_TO_STR3
     }
 
     test_leaky_relu(ggml_type type = GGML_TYPE_F32,
@@ -6224,12 +6224,12 @@ struct test_leaky_relu : public test_case {
         ggml_tensor * out = ggml_leaky_relu(ctx, a, negative_slope, true);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_FLASH_ATTN_EXT
-struct test_flash_attn_ext : public test_case {
+struct test_flash_attn_ext : public test_case {  // 结构体定义
     const int64_t hsk; // K head size
     const int64_t hsv; // V head size
     const int64_t nh; // num heads
@@ -6249,11 +6249,11 @@ struct test_flash_attn_ext : public test_case {
     std::array<int32_t, 4> permute;
 
     std::string vars() override {
-        return VARS_TO_STR14(hsk, hsv, nh, nr23, kv, nb, mask, sinks, max_bias, logit_softcap, prec, type_K, type_V, permute);
+        return VARS_TO_STR14(hsk, hsv, nh, nr23, kv, nb, mask, sinks, max_bias, logit_softcap, prec, type_K, type_V, permute);  // VARS_TO_STR14
     }
 
     double max_nmse_err() override {
-        return 5e-4;
+        return 5e-4;  // 返回
     }
 
     uint64_t op_flops(ggml_tensor * t) override {
@@ -6289,7 +6289,7 @@ struct test_flash_attn_ext : public test_case {
             if (permute != std::array<int32_t, 4>{0, 1, 2, 3}) {
                 t = ggml_permute(ctx, t, permute[0], permute[1], permute[2], permute[3]);
             }
-            return t;
+            return t;  // 返回
         };
 
         ggml_tensor * q = create_permuted(GGML_TYPE_F32, hsk_padded, nb, nh*nr23[0], nr23[1], false);
@@ -6330,7 +6330,7 @@ struct test_flash_attn_ext : public test_case {
         ggml_flash_attn_ext_set_prec (out, prec);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -6347,17 +6347,17 @@ struct test_flash_attn_ext : public test_case {
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_CROSS_ENTROPY_LOSS
-struct test_cross_entropy_loss : public test_case {
+struct test_cross_entropy_loss : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_cross_entropy_loss(ggml_type type = GGML_TYPE_F32,
@@ -6380,7 +6380,7 @@ struct test_cross_entropy_loss : public test_case {
         ggml_tensor * out = ggml_cross_entropy_loss(ctx, logits, labels);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -6391,21 +6391,21 @@ struct test_cross_entropy_loss : public test_case {
     }
 
     float grad_eps() override {
-        return 1.0f;
+        return 1.0f;  // 返回
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_CROSS_ENTROPY_LOSS_BACK
-struct test_cross_entropy_loss_back : public test_case {
+struct test_cross_entropy_loss_back : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_cross_entropy_loss_back(ggml_type type = GGML_TYPE_F32,
@@ -6429,17 +6429,17 @@ struct test_cross_entropy_loss_back : public test_case {
         ggml_tensor * out = ggml_cross_entropy_loss_back(ctx, grad, logits, labels);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_OPT_STEP_ADAMW
-struct test_opt_step_adamw : public test_case {
+struct test_opt_step_adamw : public test_case {  // 结构体定义
     const ggml_type type;
     const std::array<int64_t, 4> ne;
 
     std::string vars() override {
-        return VARS_TO_STR2(type, ne);
+        return VARS_TO_STR2(type, ne);  // VARS_TO_STR2
     }
 
     test_opt_step_adamw(ggml_type type = GGML_TYPE_F32,
@@ -6466,7 +6466,7 @@ struct test_opt_step_adamw : public test_case {
         ggml_tensor * out = ggml_opt_step_adamw(ctx, a, grad, grad_m, grad_v, adamw_params);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -6476,12 +6476,12 @@ struct test_opt_step_adamw : public test_case {
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_OPT_STEP_SGD
-struct test_opt_step_sgd : public test_case {
+struct test_opt_step_sgd : public test_case {  // 结构体定义
     const ggml_type              type;
     const std::array<int64_t, 4> ne;
 
@@ -6506,7 +6506,7 @@ struct test_opt_step_sgd : public test_case {
 
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -6516,12 +6516,12 @@ struct test_opt_step_sgd : public test_case {
     }
 
     bool grad_precise() override {
-        return true;
+        return true;  // 返回
     }
 };
 
 // GGML_OP_CUMSUM
-struct test_cumsum : public test_case {
+struct test_cumsum : public test_case {  // 结构体定义
     const ggml_type              type;
     const std::array<int64_t, 4> ne;
 
@@ -6540,7 +6540,7 @@ struct test_cumsum : public test_case {
 
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -6551,7 +6551,7 @@ struct test_cumsum : public test_case {
 };
 
 // GGML_OP_XIELU
-struct test_xielu : public test_case {
+struct test_xielu : public test_case {  // 结构体定义
     const ggml_type              type;
     const std::array<int64_t, 4> ne;
 
@@ -6575,7 +6575,7 @@ struct test_xielu : public test_case {
 
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -6586,7 +6586,7 @@ struct test_xielu : public test_case {
 };
 
 // GGML_OP_TRI
-struct test_tri : public test_case {
+struct test_tri : public test_case {  // 结构体定义
     const ggml_type              type;
     const std::array<int64_t, 4> ne;
     const ggml_tri_type          tri_type;
@@ -6608,7 +6608,7 @@ struct test_tri : public test_case {
 
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -6619,7 +6619,7 @@ struct test_tri : public test_case {
 };
 
 // GGML_OP_FILL
-struct test_fill : public test_case {
+struct test_fill : public test_case {  // 结构体定义
     const ggml_type              type;
     const std::array<int64_t, 4> ne;
     float                        c;
@@ -6639,12 +6639,12 @@ struct test_fill : public test_case {
 
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // GGML_OP_SOLVE_TRI
-struct test_solve_tri : public test_case {
+struct test_solve_tri : public test_case {  // 结构体定义
     const ggml_type              type;
     const std::array<int64_t, 4> ne_lhs;
     const std::array<int64_t, 4> ne_rhs;
@@ -6678,7 +6678,7 @@ struct test_solve_tri : public test_case {
         ggml_tensor * out = ggml_solve_tri(ctx, a, b, true, true, false);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -6694,7 +6694,7 @@ struct test_solve_tri : public test_case {
 };
 
 // GGML_OP_DIAG
-struct test_diag : public test_case {
+struct test_diag : public test_case {  // 结构体定义
     const ggml_type              type;
     const std::array<int64_t, 4> ne;
 
@@ -6713,12 +6713,12 @@ struct test_diag : public test_case {
         ggml_tensor * out = ggml_diag(ctx, a);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 };
 
 // Deserializable generic test case
-struct input_tensor {
+struct input_tensor {  // 结构体定义
     ggml_type type;
     std::array<int64_t, 4> ne;
     std::array<size_t, 4> nb; // strides (0 = use default contiguous strides)
@@ -6726,13 +6726,13 @@ struct input_tensor {
 
 static bool is_non_contiguous(const input_tensor & src) {
     if (src.nb[0] == 0) {
-        return false;
+        return false;  // 返回
     }
     const size_t default_nb0 = ggml_type_size(src.type);
     const size_t default_nb1 = default_nb0 * (src.ne[0] / ggml_blck_size(src.type));
     const size_t default_nb2 = default_nb1 * src.ne[1];
     const size_t default_nb3 = default_nb2 * src.ne[2];
-    return src.nb[0] != default_nb0 ||
+    return src.nb[0] != default_nb0 ||  // 返回
            src.nb[1] != default_nb1 ||
            src.nb[2] != default_nb2 ||
            src.nb[3] != default_nb3;
@@ -6768,7 +6768,7 @@ static std::string var_to_str(const std::array<int32_t, GGML_MAX_OP_PARAMS / siz
 }
 
 
-struct test_generic_op : public test_case {
+struct test_generic_op : public test_case {  // 结构体定义
     const ggml_op op;
     const ggml_type type;
     const std::array<int64_t, 4> ne;
@@ -6779,10 +6779,10 @@ struct test_generic_op : public test_case {
 
     std::string vars() override {
         if (name.empty()) {
-            return VARS_TO_STR4(type, ne, op_params, sources);
+            return VARS_TO_STR4(type, ne, op_params, sources);  // VARS_TO_STR4
         }
 
-        return VARS_TO_STR5(name, type, ne, op_params, sources);
+        return VARS_TO_STR5(name, type, ne, op_params, sources);  // VARS_TO_STR5
     }
 
     test_generic_op(ggml_op op, ggml_type type, std::array<int64_t, 4> ne,
@@ -6849,7 +6849,7 @@ struct test_generic_op : public test_case {
         memcpy(out->op_params, op_params.data(), GGML_MAX_OP_PARAMS);
         ggml_set_name(out, "out");
 
-        return out;
+        return out;  // 返回
     }
 
     double max_nmse_err() override {
@@ -6863,11 +6863,11 @@ struct test_generic_op : public test_case {
         case GGML_OP_CONV_3D:
         case GGML_OP_SET_ROWS:
         case GGML_OP_CPY:
-            return 5e-4;
+            return 5e-4;  // 返回
         case GGML_OP_SOFT_MAX:
-            return 1e-6;
+            return 1e-6;  // 返回
         case GGML_OP_RWKV_WKV7:
-            return 5e-3;
+            return 5e-3;  // 返回
         case GGML_OP_FLASH_ATTN_EXT:
         {
             // Scale error with kv length to account for accumulating floating point error
@@ -6875,7 +6875,7 @@ struct test_generic_op : public test_case {
             return 5e-4 * std::max(1.0, kv / 20000.0);
         }
         default:
-            return 1e-7;
+            return 1e-7;  // 返回
         }
     }
 
@@ -6948,12 +6948,12 @@ struct test_generic_op : public test_case {
 };
 
 
-enum llm_norm_type {
+enum llm_norm_type {  // 枚举定义
     LLM_NORM,
     LLM_NORM_RMS,
 };
 
-struct llama_hparams {
+struct llama_hparams {  // 结构体定义
     uint32_t n_vocab;
     uint32_t n_embd;
     uint32_t n_head;
@@ -6978,12 +6978,12 @@ struct llama_hparams {
     static constexpr int32_t kv_head = 1;  // index of where we store new KV data in the cache
 
     uint32_t n_embd_gqa() const { // dimension of key embeddings across all k-v heads
-        return n_embd_head * n_head_kv;
+        return n_embd_head * n_head_kv;  // 返回
     }
 };
 
 // LLM base class
-struct test_llm : public test_case {
+struct test_llm : public test_case {  // 结构体定义
     llama_hparams hp;
 
 protected:
@@ -7006,7 +7006,7 @@ public:
         if (mb) {
             cur = ggml_add(ctx, cur, mb);
         }
-        return cur;
+        return cur;  // 返回
     }
 
     void llm_build_kv_store(
@@ -7014,7 +7014,7 @@ public:
              struct ggml_tensor * k_l,
              struct ggml_tensor * v_l,
              struct ggml_tensor * k_cur,
-             struct ggml_tensor * v_cur) {
+             struct ggml_tensor * v_cur) {  // 结构体定义
         // compute the transposed [n_tokens, n_embd] V matrix
         struct ggml_tensor * v_cur_t = ggml_transpose(ctx, ggml_reshape_2d(ctx, v_cur, hp.n_embd_gqa(), hp.n_tokens));
 
@@ -7067,7 +7067,7 @@ public:
         struct ggml_tensor * wo = ggml_new_tensor_2d(ctx, GGML_TYPE_Q4_0, hp.n_embd, hp.n_embd);
         cur = ggml_mul_mat(ctx, wo, cur);
 
-        return cur;
+        return cur;  // 返回
     }
 
     void initialize_tensors(ggml_context * ctx) override {
@@ -7087,7 +7087,7 @@ public:
 };
 
 // Llama
-struct test_llama : public test_llm {
+struct test_llama : public test_llm {  // 结构体定义
     static constexpr float freq_base = 10000.0f;
     static constexpr float freq_scale = 1.0f;
     static constexpr float ext_factor = 0.0f;
@@ -7098,16 +7098,16 @@ struct test_llama : public test_llm {
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "LLAMA";
+        return "LLAMA";  // 返回
     }
 
     std::string vars() override {
         auto n_tokens = hp.n_tokens;
-        return VARS_TO_STR1(n_tokens);
+        return VARS_TO_STR1(n_tokens);  // VARS_TO_STR1
     }
 
     double max_nmse_err() override {
-        return 2e-3;
+        return 2e-3;  // 返回
     }
 
     bool run_whole_graph() override { return fused; }
@@ -7209,12 +7209,12 @@ struct test_llama : public test_llm {
         ggml_tensor * output = ggml_new_tensor_2d(ctx, GGML_TYPE_Q4_0, hp.n_embd, hp.n_vocab);
         cur = ggml_mul_mat(ctx, output, cur);
 
-        return cur;
+        return cur;  // 返回
     }
 };
 
 // Falcon
-struct test_falcon : public test_llm {
+struct test_falcon : public test_llm {  // 结构体定义
     static constexpr float freq_base = 10000.0f;
     static constexpr float freq_scale = 1.0f;
     static constexpr float ext_factor = 0.0f;
@@ -7224,16 +7224,16 @@ struct test_falcon : public test_llm {
 
     std::string op_desc(ggml_tensor * t) override {
         GGML_UNUSED(t);
-        return "FALCON";
+        return "FALCON";  // 返回
     }
 
     std::string vars() override {
         auto n_tokens = hp.n_tokens;
-        return VARS_TO_STR1(n_tokens);
+        return VARS_TO_STR1(n_tokens);  // VARS_TO_STR1
     }
 
     double max_nmse_err() override {
-        return 2e-3;
+        return 2e-3;  // 返回
     }
 
     test_falcon(int n_tokens = 1)
@@ -7333,7 +7333,7 @@ struct test_falcon : public test_llm {
         ggml_tensor * output = ggml_new_tensor_2d(ctx, GGML_TYPE_Q8_0, hp.n_embd, hp.n_vocab);
         cur = ggml_mul_mat(ctx, output, cur);
 
-        return cur;
+        return cur;  // 返回
     }
 };
 
@@ -7383,10 +7383,10 @@ static const ggml_type other_types[] = {
     GGML_TYPE_BF16,
 };
 
-#ifdef _MSC_VER
+#ifdef _MSC_VER  // 如果定义了 _MSC_VER 则编译
 // Workaround long compile time with msvc
 #pragma optimize("", off)
-#endif
+#endif  // 条件编译结束
 
 // Test cases for evaluation: should try to cover edge cases while using small input sizes to keep the runtime low
 static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
@@ -7530,12 +7530,12 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
         }
     }
 
-#if 0
+#if 0  // 条件编译
     // >4GB im2col destination. Too slow to run by default.
     // Test cases taken from Wan2.1 T2V 1.3B.
     test_cases.emplace_back(new test_im2col   (GGML_TYPE_F32, GGML_TYPE_F32, GGML_TYPE_F32, {832, 480, 192, 4}, {3, 3, 192, 96}, 1, 1, 1, 1, 1, 1, true));
     test_cases.emplace_back(new test_im2col_3d(GGML_TYPE_F32, GGML_TYPE_F32, GGML_TYPE_F32, {834, 482, 6, 96},  {3, 3,3, 9216}, 96, 1, 1, 1, 0, 0, 0, 1, 1, 1, false));
-#endif
+#endif  // 条件编译结束
 
     // im2col 1D
     test_cases.emplace_back(new test_im2col(GGML_TYPE_F32, GGML_TYPE_F32, GGML_TYPE_F32, {3000, 128, 1, 1}, {3, 128, 1280, 1}, 1, 0, 1, 0, 1, 0, false));
@@ -7614,7 +7614,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     }
 
 // Conv_2D test cases
-#ifdef DETAILED_TESTS
+#ifdef DETAILED_TESTS  // 如果定义了 DETAILED_TESTS 则编译
     // Probably we do not have enough time to execute these in the pipeline.
     uint32_t iwh_idx  = 0;
     uint32_t kwh_idx  = 1;
@@ -7654,7 +7654,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
                 kernel_type, 1, 1, 0, 0, 1, 1, false));
         }
     }
-#endif
+#endif  // 条件编译结束
 
     // CONV_2D:
     auto calc_conv_output_size = [](int64_t ins, int64_t ks, int s, int p, int d) -> int64_t {
@@ -8063,7 +8063,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_gla(GGML_TYPE_F32, 32, 64, 32, 4));
     test_cases.emplace_back(new test_gla(GGML_TYPE_F32, 32, 64, 128, 4));
 
-#if 0
+#if 0  // 条件编译
     // > 4GB A matrix. Too slow to be enabled by default.
     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F16, GGML_TYPE_F16,  900000,  3, 2592, {1, 1}, {1, 1}));
     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F16, GGML_TYPE_F16, 1700000, 96, 2592, {1, 1}, {1, 1}));
@@ -8074,7 +8074,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_mul_mat_id(GGML_TYPE_Q8_0, GGML_TYPE_F32, 128, 128, false, 8192, 1, 5120)); // Llama-4-Maverick-17B-128E-PAB-Q8_0
     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_Q8_0, GGML_TYPE_F32, 8192, 1, 5120, {128, 1}, {1, 1}));
     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_Q8_0, GGML_TYPE_F32, 8192, 512, 5120, {128, 1}, {1, 1}));
-#endif
+#endif  // 条件编译结束
 
     for (ggml_type type_a : all_types) {
         for (int i = 1; i < 10; ++i) {
@@ -8082,7 +8082,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
         }
     }
 
-#if 0
+#if 0  // 条件编译
     {
         // Test paths in OpenCL
         std::vector<int> ns = {32, 64, 128, 256, 512, 1024, 4096};
@@ -8093,9 +8093,9 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
             }
         }
     }
-#endif
+#endif  // 条件编译结束
 
-#if 1
+#if 1  // 条件编译
     for (ggml_type type_a : base_types) {
         for (ggml_type type_b : {GGML_TYPE_F32, GGML_TYPE_F16}) {
             std::vector<int> ks = { 256 };
@@ -8155,7 +8155,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
             test_cases.emplace_back(new test_mul_mat(type_a, type_b, 16, 1, 256, {1,  1}, {1, 1}));
         }
     }
-#else
+#else  // 否则
     // m = a rows
     // n = b rows
     // k = cols
@@ -8172,7 +8172,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
             }
         }
     }
-#endif
+#endif  // 条件编译结束
 
     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F16, GGML_TYPE_F32,  64, 2,  128, { 8,  1}, {1, 1}));
     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F16, GGML_TYPE_F32,  83, 2,  128, { 8,  1}, {4, 1}));
@@ -8193,7 +8193,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
 
     test_cases.emplace_back(new test_mul_mat(GGML_TYPE_Q8_0, GGML_TYPE_F32, 6, 4096, 5120, {1, 1}, {1, 1}));
 
-#if 0
+#if 0  // 条件编译
     // test the mat-mat path for Metal
     for (int k = 1; k < 512; ++k) {
         test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F16, GGML_TYPE_F32, 64, 127, k, {12,1}, {1,1}));
@@ -8207,7 +8207,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
         test_cases.emplace_back(new test_mul_mat_id(GGML_TYPE_F32, GGML_TYPE_F32, 16, 16, false, 50, 200, k));
         test_cases.emplace_back(new test_mul_mat_id(GGML_TYPE_F32, GGML_TYPE_F32, 16, 16, true, 50, 200, k));
     }
-#endif
+#endif  // 条件编译结束
 
     for (auto bs2 : {1,3}) {
         for (auto bs : {1,2,4,8}) {
@@ -8357,7 +8357,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_diag_mask_inf(GGML_TYPE_F32, {10, 10, 3, 1}, 5));
     test_cases.emplace_back(new test_diag_mask_inf(GGML_TYPE_F32, {10, 10, 3, 2}, 5));
 
-#if 0
+#if 0  // 条件编译
     std::uniform_int_distribution<> dist_ne1(1, 50);
     int exponent = 1;
     while (exponent < (1 << 17)) {
@@ -8371,7 +8371,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
 
         exponent <<= 1;
     }
-#endif
+#endif  // 条件编译结束
     for (bool mask : {false, true}) {
         for (bool sinks : {false, true}) {
             for (float max_bias : {0.0f, 8.0f}) {
@@ -8813,20 +8813,20 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 64, 4, 2, 1, true,  true));
     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 16, 4, 2, 1, true,  true));
 
-#if 0
+#if 0  // 条件编译
     // these tests are disabled to save execution time, sbut they can be handy for debugging
     test_cases.emplace_back(new test_llama(2, true));
     test_cases.emplace_back(new test_llama(1));
     test_cases.emplace_back(new test_llama(2));
     test_cases.emplace_back(new test_falcon(1));
     test_cases.emplace_back(new test_falcon(2));
-#endif
+#endif  // 条件编译结束
 
-    return test_cases;
+    return test_cases;  // 返回
 }
-#ifdef _MSC_VER
+#ifdef _MSC_VER  // 如果定义了 _MSC_VER 则编译
 #pragma optimize("", on)
-#endif
+#endif  // 条件编译结束
 
 // Test cases for performance evaluation: should be representative of real-world use cases
 static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
@@ -9103,7 +9103,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 128, 1024, 1)); // 4h PP-1024
     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 32, 128, 64, 1, 1, false, true)); // KDA PP-64
 
-    return test_cases;
+    return test_cases;  // 返回
 }
 
 static std::vector<std::unique_ptr<test_case>> make_test_cases_from_file(const char * path) {
@@ -9167,14 +9167,14 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_from_file(const c
         test_cases.emplace_back(new test_generic_op(op, type, ne, op_params, sources, std::move(name)));
     }
 
-    return test_cases;
+    return test_cases;  // 返回
 }
 
 static bool test_backend(ggml_backend_t backend, test_mode mode, const char * op_names_filter, const char * params_filter,
                          printer * output_printer, const char * test_file_path) {
     auto filter_test_cases = [](std::vector<std::unique_ptr<test_case>> & test_cases, const char * params_filter) {
         if (params_filter == nullptr) {
-            return;
+            return;  // 返回
         }
 
         std::regex params_filter_regex(params_filter);
@@ -9211,10 +9211,10 @@ static bool test_backend(ggml_backend_t backend, test_mode mode, const char * op
     if (mode == MODE_TEST) {
         ggml_backend_t backend_cpu = ggml_backend_init_by_type(GGML_BACKEND_DEVICE_TYPE_CPU, NULL);
         if (backend_cpu == NULL) {
-            test_operation_info info("", "", "CPU");
+            test_operation_info info("", "", "CPU");  // info
             info.set_error("backend", "Failed to initialize CPU backend");
             output_printer->print_operation(info);
-            return false;
+            return false;  // 返回
         }
         // Use reference implementation on the CPU backend for comparison
         using ggml_backend_cpu_set_use_ref_t = void (*)(ggml_backend_t, bool);
@@ -9244,7 +9244,7 @@ static bool test_backend(ggml_backend_t backend, test_mode mode, const char * op
 
         ggml_backend_free(backend_cpu);
 
-        return n_ok == tests_run;
+        return n_ok == tests_run;  // 返回
     }
 
     if (mode == MODE_GRAD) {
@@ -9263,7 +9263,7 @@ static bool test_backend(ggml_backend_t backend, test_mode mode, const char * op
         for (auto & test : test_cases) {
             test->eval_perf(backend, op_names_filter, output_printer);
         }
-        return true;
+        return true;  // 返回
     }
 
     if (mode == MODE_SUPPORT) {
@@ -9278,7 +9278,7 @@ static bool test_backend(ggml_backend_t backend, test_mode mode, const char * op
         for (auto & test : test_cases) {
             test->eval_support(backend, op_names_filter, output_printer);
         }
-        return true;
+        return true;  // 返回
     }
 
     GGML_ABORT("fatal error");
@@ -9422,48 +9422,48 @@ int main(int argc, char ** argv) {
                 op_names_filter = argv[++i];
             } else {
                 usage(argv);
-                return 1;
+                return 1;  // 返回
             }
         } else if (strcmp(argv[i], "-b") == 0) {
             if (i + 1 < argc) {
                 backend_filter = argv[++i];
             } else {
                 usage(argv);
-                return 1;
+                return 1;  // 返回
             }
         } else if (strcmp(argv[i], "-p") == 0) {
             if (i + 1 < argc) {
                 params_filter = argv[++i];
             } else {
                 usage(argv);
-                return 1;
+                return 1;  // 返回
             }
         } else if (strcmp(argv[i], "--output") == 0) {
             if (i + 1 < argc) {
                 if (!output_format_from_str(argv[++i], output_format)) {
                     usage(argv);
-                    return 1;
+                    return 1;  // 返回
                 }
             } else {
                 usage(argv);
-                return 1;
+                return 1;  // 返回
             }
         } else if (strcmp(argv[i], "--list-ops") == 0) {
             list_all_ops();
-            return 0;
+            return 0;  // 返回
         } else if (strcmp(argv[i], "--show-coverage") == 0) {
             show_test_coverage();
-            return 0;
+            return 0;  // 返回
         } else if (strcmp(argv[i], "--test-file") == 0) {
             if (i + 1 < argc) {
                 test_file_path = argv[++i];
             } else {
                 usage(argv);
-                return 1;
+                return 1;  // 返回
             }
         } else {
             usage(argv);
-            return 1;
+            return 1;  // 返回
         }
     }
 
@@ -9534,8 +9534,8 @@ int main(int argc, char ** argv) {
         overall_summary_info(n_ok, ggml_backend_dev_count(), n_ok == ggml_backend_dev_count()));
 
     if (n_ok != ggml_backend_dev_count()) {
-        return 1;
+        return 1;  // 返回
     }
 
-    return 0;
+    return 0;  // 返回
 }

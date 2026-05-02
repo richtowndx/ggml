@@ -1,19 +1,19 @@
-#include "ggml.h"
-#include "ggml-cpu.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#ifdef GGML_USE_CUDA
-#include "ggml-cuda.h"
-#endif
+#ifdef GGML_USE_CUDA  // 如果定义了 GGML_USE_CUDA 则编译
+#include "ggml-cuda.h"  // 引入 ggml-cuda.h 头文件
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_METAL
-#include "ggml-metal.h"
-#endif
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
+#include "ggml-metal.h"  // 引入 ggml-metal.h 头文件
+#endif  // 条件编译结束
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <string.h>  // 引入 string.h 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
 
 
 static void ggml_log_callback_default(ggml_log_level level, const char * text, void * user_data) {
@@ -23,13 +23,13 @@ static void ggml_log_callback_default(ggml_log_level level, const char * text, v
     fflush(stderr);
 }
 
-struct ggml_context* make_ctx(void) {
-    struct ggml_init_params params = {
+struct ggml_context* make_ctx(void) {  // 结构体定义
+    struct ggml_init_params params = {  // 结构体定义
         /*.mem_size   =*/ 2 * 1024 * 1024,
         /*.mem_buffer =*/ nullptr,
         /*.no_alloc.  =*/ false
     };
-    return ggml_init(params);
+    return ggml_init(params);  // ggml_init
 }
 
 void check_tensor(struct ggml_tensor * t, float * expected_t_d, int ne0, int ne1, int ne2) {
@@ -60,7 +60,7 @@ void test_pad_reflect_1d(bool use_gpu) {
     ggml_gallocr_t gallocr;
 
     // initialize the backend
-#ifdef GGML_USE_CUDA
+#ifdef GGML_USE_CUDA  // 如果定义了 GGML_USE_CUDA 则编译
     if (use_gpu) {
         fprintf(stderr, "%s: using CUDA backend\n", __func__);
         backend = ggml_backend_cuda_init(0);
@@ -68,9 +68,9 @@ void test_pad_reflect_1d(bool use_gpu) {
             fprintf(stderr, "%s: ggml_backend_cuda_init() failed\n", __func__);
         }
     }
-#endif
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_METAL
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
     if (use_gpu) {
         fprintf(stderr, "%s: using Metal backend\n", __func__);
         backend = ggml_backend_metal_init();
@@ -78,7 +78,7 @@ void test_pad_reflect_1d(bool use_gpu) {
             fprintf(stderr, "%s: ggml_backend_metal_init() failed\n", __func__);
         }
     }
-#endif
+#endif  // 条件编译结束
 
     if (!backend) {
         fprintf(stderr, "%s: using CPU backend\n", __func__);
@@ -209,5 +209,5 @@ int main(int argc, const char * argv[]) {
         use_gpu = strcmp(argv[1], "--gpu") == 0;
     }
     test_pad_reflect_1d(use_gpu);
-    return 0;
+    return 0;  // 返回
 }

@@ -1,117 +1,117 @@
-#include "ggml-vulkan.h"
-#include <vulkan/vulkan_core.h>
-#if defined(GGML_VULKAN_RUN_TESTS) || defined(GGML_VULKAN_CHECK_RESULTS)
-#include <chrono>
-#include "ggml-cpu.h"
-#endif
+#include "ggml-vulkan.h"  // 引入 ggml-vulkan.h 头文件
+#include <vulkan/vulkan_core.h>  // 引入 vulkan/vulkan_core.h 头文件
+#if defined(GGML_VULKAN_RUN_TESTS) || defined(GGML_VULKAN_CHECK_RESULTS)  // 条件编译
+#include <chrono>  // 引入 chrono 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#endif  // 条件编译结束
 
 // See https://github.com/KhronosGroup/Vulkan-Hpp?tab=readme-ov-file#extensions--per-device-function-pointers-
-#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1  // 宏定义 VULKAN_HPP_DISPATCH_LOADER_DYNAMIC
 // We use VULKAN_HPP_DEFAULT_DISPATCHER, but not VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 // to avoid conflicts with applications or other libraries who might use it.
-#if VK_HEADER_VERSION >= 301
-namespace vk::detail { class DispatchLoaderDynamic; }
-using vk::detail::DispatchLoaderDynamic;
-#else
-namespace vk { class DispatchLoaderDynamic; }
-using vk::DispatchLoaderDynamic;
-#endif
+#if VK_HEADER_VERSION >= 301  // 条件编译
+namespace vk::detail { class DispatchLoaderDynamic; }  // 命名空间
+using vk::detail::DispatchLoaderDynamic;  // using 声明
+#else  // 否则
+namespace vk { class DispatchLoaderDynamic; }  // 命名空间
+using vk::DispatchLoaderDynamic;  // using 声明
+#endif  // 条件编译结束
 DispatchLoaderDynamic & ggml_vk_default_dispatcher();
-#define VULKAN_HPP_DEFAULT_DISPATCHER ggml_vk_default_dispatcher()
+#define VULKAN_HPP_DEFAULT_DISPATCHER ggml_vk_default_dispatcher()  // 宏定义 VULKAN_HPP_DEFAULT_DISPATCHER
 
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.hpp>  // 引入 vulkan/vulkan.hpp 头文件
 
 // SPIR-V Headers: different SDK installations expose different include paths.
 // LunarG Vulkan SDK on Windows typically provides <spirv-headers/spirv.hpp>.
 // Linux packages, MSYS2 and MinGW often use the Khronos layout <spirv/unified1/spirv.hpp>.
-#if __has_include(<spirv/unified1/spirv.hpp>)
-#    include <spirv/unified1/spirv.hpp>
-#elif __has_include(<spirv-headers/spirv.hpp>)
-#    include <spirv-headers/spirv.hpp>
-#elif __has_include(<spirv.hpp>)
-#    include <spirv.hpp>
-#else
+#if __has_include(<spirv/unified1/spirv.hpp>)  // 条件编译
+#    include <spirv/unified1/spirv.hpp>  // 引入 spirv/unified1/spirv.hpp 头文件
+#elif __has_include(<spirv-headers/spirv.hpp>)  // 否则如果
+#    include <spirv-headers/spirv.hpp>  // 引入 spirv-headers/spirv.hpp 头文件
+#elif __has_include(<spirv.hpp>)  // 否则如果
+#    include <spirv.hpp>  // 引入 spirv.hpp 头文件
+#else  // 否则
      // Fallback to let the compiler throw a standard "file not found" error
-#    include <spirv/unified1/spirv.hpp>
-#endif
+#    include <spirv/unified1/spirv.hpp>  // 引入 spirv/unified1/spirv.hpp 头文件
+#endif  // 条件编译结束
 
-#include <algorithm>
-#include <cmath>
-#include <iomanip>
-#include <iostream>
-#include <tuple>
-#include <vector>
-#include <deque>
-#include <sstream>
-#include <utility>
-#include <memory>
-#include <limits>
-#include <map>
-#include <set>
-#include <unordered_map>
-#include <memory>
-#include <mutex>
-#include <future>
-#include <thread>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <iomanip>  // 引入 iomanip 头文件
+#include <iostream>  // 引入 iostream 头文件
+#include <tuple>  // 引入 tuple 头文件
+#include <vector>  // 引入 vector 头文件
+#include <deque>  // 引入 deque 头文件
+#include <sstream>  // 引入 sstream 头文件
+#include <utility>  // 引入 utility 头文件
+#include <memory>  // 引入 memory 头文件
+#include <limits>  // 引入 limits 头文件
+#include <map>  // 引入 map 头文件
+#include <set>  // 引入 set 头文件
+#include <unordered_map>  // 引入 unordered_map 头文件
+#include <memory>  // 引入 memory 头文件
+#include <mutex>  // 引入 mutex 头文件
+#include <future>  // 引入 future 头文件
+#include <thread>  // 引入 thread 头文件
 
-#if defined(_MSC_VER)
-# define NOMINMAX 1
-# include <windows.h>
-# define YIELD() YieldProcessor()
-#elif defined(__clang__) || defined(__GNUC__)
+#if defined(_MSC_VER)  // 条件编译
+# define NOMINMAX 1  // 宏定义 NOMINMAX
+# include <windows.h>  // 引入 windows.h 头文件
+# define YIELD() YieldProcessor()  // 宏定义 YIELD
+#elif defined(__clang__) || defined(__GNUC__)  // 否则如果
 # if defined(__x86_64__) ||defined(__i386__)
-#  include <immintrin.h>
-#  define YIELD() _mm_pause()
+#  include <immintrin.h>  // 引入 immintrin.h 头文件
+#  define YIELD() _mm_pause()  // 宏定义 YIELD
 # elif defined(__arm__) || defined(__aarch64__)
 #  if defined(__clang__)
-#   include <arm_acle.h>
-#   define YIELD() __yield()
+#   include <arm_acle.h>  // 引入 arm_acle.h 头文件
+#   define YIELD() __yield()  // 宏定义 YIELD
 #  else
-#   define YIELD() asm volatile("yield")
+#   define YIELD() asm volatile("yield")  // 宏定义 YIELD
 #  endif
 # endif
-#endif
+#endif  // 条件编译结束
 
-#if !defined(YIELD)
-#define YIELD()
-#endif
+#if !defined(YIELD)  // 条件编译
+#define YIELD()  // 宏定义 YIELD
+#endif  // 条件编译结束
 
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
 
-#include "ggml-vulkan-shaders.hpp"
+#include "ggml-vulkan-shaders.hpp"  // 引入 ggml-vulkan-shaders.hpp 头文件
 
 // remove this once it's more widely available in the SDK
-#if !defined(VK_KHR_shader_bfloat16)
+#if !defined(VK_KHR_shader_bfloat16)  // 条件编译
 
-#define VK_KHR_shader_bfloat16 1
-#define VK_KHR_SHADER_BFLOAT16_SPEC_VERSION                          1
-#define VK_KHR_SHADER_BFLOAT16_EXTENSION_NAME                        "VK_KHR_shader_bfloat16"
-#define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_BFLOAT16_FEATURES_KHR ((VkStructureType)1000141000)
-#define VK_COMPONENT_TYPE_BFLOAT16_KHR                               ((VkComponentTypeKHR)1000141000)
+#define VK_KHR_shader_bfloat16 1  // 宏定义 VK_KHR_shader_bfloat16
+#define VK_KHR_SHADER_BFLOAT16_SPEC_VERSION                          1  // 宏定义 VK_KHR_SHADER_BFLOAT16_SPEC_VERSION
+#define VK_KHR_SHADER_BFLOAT16_EXTENSION_NAME                        "VK_KHR_shader_bfloat16"  // 宏定义 VK_KHR_SHADER_BFLOAT16_EXTENSION_NAME
+#define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_BFLOAT16_FEATURES_KHR ((VkStructureType)1000141000)  // 宏定义 VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_BFLOAT16_FEATURES_KHR
+#define VK_COMPONENT_TYPE_BFLOAT16_KHR                               ((VkComponentTypeKHR)1000141000)  // 宏定义 VK_COMPONENT_TYPE_BFLOAT16_KHR
 
-typedef struct VkPhysicalDeviceShaderBfloat16FeaturesKHR {
+typedef struct VkPhysicalDeviceShaderBfloat16FeaturesKHR {  // 类型定义
     VkStructureType                       sType;
     void*                                 pNext;
     VkBool32                              shaderBFloat16Type;
     VkBool32                              shaderBFloat16DotProduct;
     VkBool32                              shaderBFloat16CooperativeMatrix;
 } VkPhysicalDeviceShaderBfloat16FeaturesKHR;
-#endif
+#endif  // 条件编译结束
 
-#define ROUNDUP_POW2(M, N) (((M) + (N) - 1) & ~((N) - 1))
-#define CEIL_DIV(M, N) (((M) + (N)-1) / (N))
+#define ROUNDUP_POW2(M, N) (((M) + (N) - 1) & ~((N) - 1))  // 宏定义 ROUNDUP_POW2
+#define CEIL_DIV(M, N) (((M) + (N)-1) / (N))  // 宏定义 CEIL_DIV
 static bool is_pow2(uint32_t x) { return x > 1 && (x & (x-1)) == 0; }
 
-#define VK_VENDOR_ID_AMD 0x1002
-#define VK_VENDOR_ID_APPLE 0x106b
-#define VK_VENDOR_ID_INTEL 0x8086
-#define VK_VENDOR_ID_NVIDIA 0x10de
-#define VK_VENDOR_ID_QUALCOMM 0x5143
+#define VK_VENDOR_ID_AMD 0x1002  // 宏定义 VK_VENDOR_ID_AMD
+#define VK_VENDOR_ID_APPLE 0x106b  // 宏定义 VK_VENDOR_ID_APPLE
+#define VK_VENDOR_ID_INTEL 0x8086  // 宏定义 VK_VENDOR_ID_INTEL
+#define VK_VENDOR_ID_NVIDIA 0x10de  // 宏定义 VK_VENDOR_ID_NVIDIA
+#define VK_VENDOR_ID_QUALCOMM 0x5143  // 宏定义 VK_VENDOR_ID_QUALCOMM
 
-#define VK_DEVICE_DESCRIPTOR_POOL_SIZE 256
+#define VK_DEVICE_DESCRIPTOR_POOL_SIZE 256  // 宏定义 VK_DEVICE_DESCRIPTOR_POOL_SIZE
 
-#define GGML_VK_MAX_NODES 8192
+#define GGML_VK_MAX_NODES 8192  // 宏定义 GGML_VK_MAX_NODES
 
 #define VK_CHECK(err, msg)                                          \
     do {                                                            \
@@ -123,21 +123,21 @@ static bool is_pow2(uint32_t x) { return x > 1 && (x & (x-1)) == 0; }
         }                                                           \
     } while (0)
 
-#ifdef GGML_VULKAN_DEBUG
-#define VK_LOG_DEBUG(msg) std::cerr << msg << std::endl
-#else
-#define VK_LOG_DEBUG(msg) ((void) 0)
-#endif // GGML_VULKAN_DEBUG
+#ifdef GGML_VULKAN_DEBUG  // 如果定义了 GGML_VULKAN_DEBUG 则编译
+#define VK_LOG_DEBUG(msg) std::cerr << msg << std::endl  // 宏定义 VK_LOG_DEBUG
+#else  // 否则
+#define VK_LOG_DEBUG(msg) ((void) 0)  // 宏定义 VK_LOG_DEBUG
+#endif // GGML_VULKAN_DEBUG  // 条件编译结束
 
 struct ggml_backend_vk_context;
 
-#define MAX_PARAMETER_COUNT 12
+#define MAX_PARAMETER_COUNT 12  // 宏定义 MAX_PARAMETER_COUNT
 // Max number of adds that can be fused without exceeding MAX_PARAMETER_COUNT.
-#define MAX_FUSED_ADDS (MAX_PARAMETER_COUNT - 3)
+#define MAX_FUSED_ADDS (MAX_PARAMETER_COUNT - 3)  // 宏定义 MAX_FUSED_ADDS
 
-typedef std::shared_ptr<struct vk_pipeline_struct> vk_pipeline;
+typedef std::shared_ptr<struct vk_pipeline_struct> vk_pipeline;  // 类型定义
 
-struct vk_pipeline_struct {
+struct vk_pipeline_struct {  // 结构体定义
     std::string name;
     vk::ShaderModule shader_module;
     vk::PipelineLayout layout;
@@ -155,31 +155,31 @@ struct vk_pipeline_struct {
     // number of registers used, extracted from pipeline executable properties
     uint32_t register_count {};
 
-#if defined(VK_EXT_shader_64bit_indexing)
+#if defined(VK_EXT_shader_64bit_indexing)  // 条件编译
     bool is_64b_indexing {};
-#endif
+#endif  // 条件编译结束
     // linked list of pipelines for multiple compilation variants.
     // currently only used to compile a 64-bit indexing variant.
     vk_pipeline next;
 };
 
-typedef std::weak_ptr<vk_pipeline_struct> vk_pipeline_ref;
+typedef std::weak_ptr<vk_pipeline_struct> vk_pipeline_ref;  // 类型定义
 
-static void ggml_vk_destroy_pipeline(vk::Device& device, vk_pipeline& pipeline);
+static void ggml_vk_destroy_pipeline(vk::Device& device, vk_pipeline& pipeline);  // ggml_vk_destroy_pipeline
 
-struct vk_matmul_pipeline_struct {
+struct vk_matmul_pipeline_struct {  // 结构体定义
     vk_pipeline l, m, s;
     vk_pipeline a_l, a_m, a_s;
     // Returns true when all unaligned pipelines are null.
     // We only check for unaligned variants since one of the unaligned pipelines must exist
     // while aligned pipelines are optional
     bool is_empty() const {
-        return l == nullptr && m == nullptr && s == nullptr;
+        return l == nullptr && m == nullptr && s == nullptr;  // 返回
     }
 };
-typedef std::shared_ptr<vk_matmul_pipeline_struct> vk_matmul_pipeline;
+typedef std::shared_ptr<vk_matmul_pipeline_struct> vk_matmul_pipeline;  // 类型定义
 
-struct vk_matmul_pipeline2 {
+struct vk_matmul_pipeline2 {  // 结构体定义
     vk_matmul_pipeline2() {
         f16acc = std::make_shared<vk_matmul_pipeline_struct>();
         f32acc = std::make_shared<vk_matmul_pipeline_struct>();
@@ -189,21 +189,21 @@ struct vk_matmul_pipeline2 {
 };
 
 struct vk_device_struct;
-typedef std::shared_ptr<vk_device_struct> vk_device;
-typedef std::weak_ptr<vk_device_struct> vk_device_ref;
+typedef std::shared_ptr<vk_device_struct> vk_device;  // 类型定义
+typedef std::weak_ptr<vk_device_struct> vk_device_ref;  // 类型定义
 
 struct vk_buffer_struct;
-typedef std::shared_ptr<vk_buffer_struct> vk_buffer;
-typedef std::weak_ptr<vk_buffer_struct> vk_buffer_ref;
+typedef std::shared_ptr<vk_buffer_struct> vk_buffer;  // 类型定义
+typedef std::weak_ptr<vk_buffer_struct> vk_buffer_ref;  // 类型定义
 
-struct ggml_backend_vk_buffer_type_context {
+struct ggml_backend_vk_buffer_type_context {  // 结构体定义
     std::string name;
     vk_device device;
 };
 
 struct vk_queue;
 
-struct vk_command_buffer {
+struct vk_command_buffer {  // 结构体定义
     vk::CommandBuffer buf;
     uint64_t use_counter = 0;
     bool in_use = false;
@@ -211,9 +211,9 @@ struct vk_command_buffer {
 
 // Stores command pool/buffers. There's an instance of this
 // for each (context,queue) pair and for each (device,queue) pair.
-struct vk_command_pool {
-    void init(vk_device& device, vk_queue *q_);
-    void destroy(vk::Device& device);
+struct vk_command_pool {  // 结构体定义
+    void init(vk_device& device, vk_queue *q_);  // init
+    void destroy(vk::Device& device);  // destroy
 
     vk::CommandPool pool;
     // Using deque so the pointers to command buffers
@@ -233,7 +233,7 @@ struct vk_command_pool {
 // sharing the same vk::Queue.
 static std::mutex queue_mutex;
 
-struct vk_queue {
+struct vk_queue {  // 结构体定义
     uint32_t queue_family_index;
     vk::Queue queue;
 
@@ -252,11 +252,11 @@ struct vk_queue {
     }
 };
 
-static const char * ggml_backend_vk_buffer_type_name(ggml_backend_buffer_type_t buft);
-static ggml_backend_buffer_t ggml_backend_vk_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size);
-static size_t ggml_backend_vk_buffer_type_get_alignment(ggml_backend_buffer_type_t buft);
-static size_t ggml_backend_vk_buffer_type_get_max_size(ggml_backend_buffer_type_t buft);
-static size_t ggml_backend_vk_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor);
+static const char * ggml_backend_vk_buffer_type_name(ggml_backend_buffer_type_t buft);  // ggml_backend_vk_buffer_type_name
+static ggml_backend_buffer_t ggml_backend_vk_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size);  // ggml_backend_vk_buffer_type_alloc_buffer
+static size_t ggml_backend_vk_buffer_type_get_alignment(ggml_backend_buffer_type_t buft);  // ggml_backend_vk_buffer_type_get_alignment
+static size_t ggml_backend_vk_buffer_type_get_max_size(ggml_backend_buffer_type_t buft);  // ggml_backend_vk_buffer_type_get_max_size
+static size_t ggml_backend_vk_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor);  // ggml_backend_vk_buffer_type_get_alloc_size
 static ggml_backend_buffer_type_i ggml_backend_vk_buffer_type_interface = {
     /* .get_name         = */ ggml_backend_vk_buffer_type_name,
     /* .alloc_buffer     = */ ggml_backend_vk_buffer_type_alloc_buffer,
@@ -266,15 +266,15 @@ static ggml_backend_buffer_type_i ggml_backend_vk_buffer_type_interface = {
     /* .is_host          = */ NULL,
 };
 
-class vk_memory_logger;
-class vk_perf_logger;
-static void ggml_vk_destroy_buffer(vk_buffer& buf);
-static void ggml_vk_synchronize(ggml_backend_vk_context * ctx);
+class vk_memory_logger;  // 类定义
+class vk_perf_logger;  // 类定义
+static void ggml_vk_destroy_buffer(vk_buffer& buf);  // ggml_vk_destroy_buffer
+static void ggml_vk_synchronize(ggml_backend_vk_context * ctx);  // ggml_vk_synchronize
 
 static constexpr uint32_t mul_mat_vec_max_cols = 8;
 static constexpr uint32_t p021_max_gqa_ratio = 8;
 
-enum vk_device_architecture {
+enum vk_device_architecture {  // 枚举定义
     OTHER,
     AMD_GCN,
     AMD_RDNA1,
@@ -306,7 +306,7 @@ static vk_device_architecture get_device_architecture(const vk::PhysicalDevice& 
         }
 
         if (!amd_shader_core_properties || !integer_dot_product || !subgroup_size_control) {
-            return vk_device_architecture::OTHER;
+            return vk_device_architecture::OTHER;  // 返回
         }
 
         vk::PhysicalDeviceProperties2 props2;
@@ -321,17 +321,17 @@ static vk_device_architecture get_device_architecture(const vk::PhysicalDevice& 
         device.getProperties2(&props2);
 
         if (subgroup_size_control_props.maxSubgroupSize == 64 && subgroup_size_control_props.minSubgroupSize == 64) {
-            return vk_device_architecture::AMD_GCN;
+            return vk_device_architecture::AMD_GCN;  // 返回
         }
         if (subgroup_size_control_props.maxSubgroupSize == 64 && subgroup_size_control_props.minSubgroupSize == 32) {
             // RDNA
             if (shader_core_props_amd.wavefrontsPerSimd == 20) {
-                return vk_device_architecture::AMD_RDNA1;
+                return vk_device_architecture::AMD_RDNA1;  // 返回
             }
             if (integer_dot_props.integerDotProduct4x8BitPackedMixedSignednessAccelerated) {
-                return vk_device_architecture::AMD_RDNA3;
+                return vk_device_architecture::AMD_RDNA3;  // 返回
             }
-            return vk_device_architecture::AMD_RDNA2;
+            return vk_device_architecture::AMD_RDNA2;  // 返回
         }
     } else if (props.vendorID == VK_VENDOR_ID_INTEL) {
         const std::vector<vk::ExtensionProperties> ext_props = device.enumerateDeviceExtensionProperties();
@@ -345,7 +345,7 @@ static vk_device_architecture get_device_architecture(const vk::PhysicalDevice& 
         }
 
         if (!subgroup_size_control) {
-            return vk_device_architecture::OTHER;
+            return vk_device_architecture::OTHER;  // 返回
         }
 
         vk::PhysicalDeviceProperties2 props2;
@@ -359,7 +359,7 @@ static vk_device_architecture get_device_architecture(const vk::PhysicalDevice& 
             // Minimum subgroup size matches the SIMD width so we distinguish architecture by checking this value.
             // https://www.intel.com/content/www/us/en/content-details/824434/2024-intel-tech-tour-xe2-and-lunar-lake-s-gpu.html
             // https://www.intel.com/content/www/us/en/docs/oneapi/optimization-guide-gpu/2025-0/intel-xe-gpu-architecture.html
-            return vk_device_architecture::INTEL_XE2;
+            return vk_device_architecture::INTEL_XE2;  // 返回
         }
     } else if (props.vendorID == VK_VENDOR_ID_NVIDIA) {
         const std::vector<vk::ExtensionProperties> ext_props = device.enumerateDeviceExtensionProperties();
@@ -377,7 +377,7 @@ static vk_device_architecture get_device_architecture(const vk::PhysicalDevice& 
         }
 
         if (!cooperative_matrix) {
-            return vk_device_architecture::NVIDIA_PRE_TURING;
+            return vk_device_architecture::NVIDIA_PRE_TURING;  // 返回
         }
 
         if (sm_builtins) {
@@ -390,21 +390,21 @@ static vk_device_architecture get_device_architecture(const vk::PhysicalDevice& 
 
             // Turing has 32, following architectures have 48
             if (sm_props.shaderWarpsPerSM == 32) {
-                return vk_device_architecture::NVIDIA_TURING;
+                return vk_device_architecture::NVIDIA_TURING;  // 返回
             }
         }
     }
-    return vk_device_architecture::OTHER;
+    return vk_device_architecture::OTHER;  // 返回
 }
 
-enum vk_conv_shapes {
+enum vk_conv_shapes {  // 枚举定义
     CONV_SHAPE_128x128,
     CONV_SHAPE_64x32,
     CONV_SHAPE_32x256,
     CONV_SHAPE_COUNT,
 };
 
-struct vk_conv_block_size {
+struct vk_conv_block_size {  // 结构体定义
     uint32_t K;
     uint32_t NPQ;
     uint32_t CRS;
@@ -417,19 +417,19 @@ vk_conv_block_size vk_conv_block_sizes[CONV_SHAPE_COUNT] = {
     {  32, 256, 16 }, // CONV_SHAPE_32x256
 };
 
-enum dmmv_wg_sizes {
+enum dmmv_wg_sizes {  // 枚举定义
     DMMV_WG_SIZE_SUBGROUP,
     DMMV_WG_SIZE_LARGE,
     DMMV_WG_SIZE_COUNT,
 };
 
-enum FaCodePath {
+enum FaCodePath {  // 枚举定义
     FA_SCALAR,
     FA_COOPMAT1,
     FA_COOPMAT2,
 };
 
-struct vk_fa_pipeline_state {
+struct vk_fa_pipeline_state {  // 结构体定义
     uint32_t HSK, HSV;
     uint32_t Br, Bc;
     uint32_t D_split, row_split;
@@ -449,7 +449,7 @@ struct vk_fa_pipeline_state {
     }
 };
 
-struct vk_conv2d_pipeline_state {
+struct vk_conv2d_pipeline_state {  // 结构体定义
     vk_conv2d_pipeline_state(uint32_t s0, uint32_t s1, uint32_t p0, uint32_t p1, uint32_t d0, uint32_t d1, uint32_t KW, uint32_t KH)
         : s0(s0), s1(s1), p0(p0), p1(p1), d0(d0), d1(d1), KW(KW), KH(KH) {}
 
@@ -461,7 +461,7 @@ struct vk_conv2d_pipeline_state {
     }
 };
 
-struct vk_solve_tri_pipeline_state {
+struct vk_solve_tri_pipeline_state {  // 结构体定义
     vk_solve_tri_pipeline_state(uint32_t N, uint32_t K)
         : N(N), K(K) {}
 
@@ -473,7 +473,7 @@ struct vk_solve_tri_pipeline_state {
     }
 };
 
-enum shader_reduction_mode {
+enum shader_reduction_mode {  // 枚举定义
     SHADER_REDUCTION_MODE_SHMEM,
     SHADER_REDUCTION_MODE_HYBRID,
     SHADER_REDUCTION_MODE_SUBGROUP,
@@ -575,7 +575,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_late_softmax
     { 5, 0, 4 }, // reshape->src[0]  == soft_max
 };
 
-enum topk_moe_mode {
+enum topk_moe_mode {  // 枚举定义
     TOPK_MOE_EARLY_SOFTMAX,
     TOPK_MOE_EARLY_SOFTMAX_NORM,
     TOPK_MOE_LATE_SOFTMAX,
@@ -596,7 +596,7 @@ static constexpr std::initializer_list<std::array<int, 3>> rms_norm_mul_rope_vie
 };
 
 
-struct vk_device_struct {
+struct vk_device_struct {  // 结构体定义
     std::recursive_mutex mutex;
 
     vk::PhysicalDevice physical_device;
@@ -925,7 +925,7 @@ void vk_command_pool::destroy(vk::Device& device) {
     cmd_buffers.clear();
 }
 
-struct vk_buffer_struct {
+struct vk_buffer_struct {  // 结构体定义
     vk::Buffer buffer = VK_NULL_HANDLE;
     vk::DeviceMemory device_memory = VK_NULL_HANDLE;
     vk::MemoryPropertyFlags memory_property_flags;
@@ -937,7 +937,7 @@ struct vk_buffer_struct {
 
     ~vk_buffer_struct() {
         if (size == 0) {
-            return;
+            return;  // 返回
         }
         VK_LOG_DEBUG("~vk_buffer_struct(" << buffer << ", " << size << ")");
 
@@ -946,17 +946,17 @@ struct vk_buffer_struct {
     }
 };
 
-struct vk_subbuffer {
+struct vk_subbuffer {  // 结构体定义
     vk_buffer buffer;
     uint64_t offset;
     uint64_t size;
 
     operator vk::DescriptorBufferInfo() const {
-        return { buffer->buffer, offset, size };
+        return { buffer->buffer, offset, size };  // 返回
     }
 };
 
-struct vk_semaphore {
+struct vk_semaphore {  // 结构体定义
     vk::Semaphore s;
     uint64_t value;
 };
@@ -965,7 +965,7 @@ struct vk_semaphore {
 // event_wait and a timeline semaphore for event_synchronize. Polling on an event for
 // event_synchronize wouldn't be sufficient to wait for command buffers to complete,
 // and would lead to validation errors.
-struct vk_event {
+struct vk_event {  // 结构体定义
     std::vector<vk::Event> events_free; // Events available for reuse
     std::vector<vk::Event> events_submitted; // Events that are fully submitted and can be reused on next synchronize
     vk::Event event;
@@ -976,15 +976,15 @@ struct vk_event {
     uint64_t cmd_buffer_use_counter = 0;
 };
 
-struct vk_submission {
+struct vk_submission {  // 结构体定义
     vk_command_buffer* buffer = nullptr;
     std::vector<vk_semaphore> wait_semaphores;
     std::vector<vk_semaphore> signal_semaphores;
 };
 
-typedef std::vector<vk_submission> vk_sequence;
+typedef std::vector<vk_submission> vk_sequence;  // 类型定义
 
-struct vk_mat_mat_push_constants {
+struct vk_mat_mat_push_constants {  // 结构体定义
     uint32_t M; uint32_t N; uint32_t K;
     uint32_t stride_a; uint32_t stride_b; uint32_t stride_d;
     uint32_t batch_stride_a; uint32_t batch_stride_b; uint32_t batch_stride_d;
@@ -994,12 +994,12 @@ struct vk_mat_mat_push_constants {
     uint32_t padded_N;
 };
 
-#define MAT_VEC_FUSION_FLAGS_BIAS0 0x1
-#define MAT_VEC_FUSION_FLAGS_BIAS1 0x2
-#define MAT_VEC_FUSION_FLAGS_SCALE0 0x4
-#define MAT_VEC_FUSION_FLAGS_SCALE1 0x8
+#define MAT_VEC_FUSION_FLAGS_BIAS0 0x1  // 宏定义 MAT_VEC_FUSION_FLAGS_BIAS0
+#define MAT_VEC_FUSION_FLAGS_BIAS1 0x2  // 宏定义 MAT_VEC_FUSION_FLAGS_BIAS1
+#define MAT_VEC_FUSION_FLAGS_SCALE0 0x4  // 宏定义 MAT_VEC_FUSION_FLAGS_SCALE0
+#define MAT_VEC_FUSION_FLAGS_SCALE1 0x8  // 宏定义 MAT_VEC_FUSION_FLAGS_SCALE1
 
-struct vk_mat_vec_push_constants {
+struct vk_mat_vec_push_constants {  // 结构体定义
     uint32_t ncols;
     uint32_t stride_a;
     uint32_t stride_b;
@@ -1015,7 +1015,7 @@ struct vk_mat_vec_push_constants {
     uint32_t broadcast3;
 };
 
-struct vk_mat_vec_p021_push_constants {
+struct vk_mat_vec_p021_push_constants {  // 结构体定义
     uint32_t ncols_x;
     uint32_t nrows_x;
     uint32_t nchannels_x;
@@ -1025,7 +1025,7 @@ struct vk_mat_vec_p021_push_constants {
     uint32_t fusion_flags;
 };
 
-struct vk_mat_vec_nc_push_constants {
+struct vk_mat_vec_nc_push_constants {  // 结构体定义
     uint32_t ncols_x;
     uint32_t nrows_x;
     uint32_t row_stride_x;
@@ -1041,14 +1041,14 @@ struct vk_mat_vec_nc_push_constants {
     uint32_t fusion_flags;
 };
 
-struct vk_mat_mat_id_push_constants {
+struct vk_mat_mat_id_push_constants {  // 结构体定义
     uint32_t M; uint32_t N; uint32_t K;
     uint32_t stride_a; uint32_t stride_b; uint32_t stride_d;
     uint32_t batch_stride_a; uint32_t batch_stride_b; uint32_t batch_stride_d;
     uint32_t nei0; uint32_t nei1; uint32_t nbi1; uint32_t ne11;
     uint32_t padded_N;
 };
-struct vk_mat_vec_id_push_constants {
+struct vk_mat_vec_id_push_constants {  // 结构体定义
     uint32_t ncols;
     uint32_t stride_a;
     uint32_t stride_b;
@@ -1063,7 +1063,7 @@ struct vk_mat_vec_id_push_constants {
     uint32_t nbi1;
 };
 
-struct vk_flash_attn_push_constants {
+struct vk_flash_attn_push_constants {  // 结构体定义
     uint32_t N;
     uint32_t KV;
 
@@ -1105,7 +1105,7 @@ struct vk_flash_attn_push_constants {
 };
 static_assert(sizeof(vk_flash_attn_push_constants) <= 128, "sizeof(vk_flash_attn_push_constants) must be <= 128");
 
-struct vk_op_push_constants {
+struct vk_op_push_constants {  // 结构体定义
     uint32_t KX;
     uint32_t KY;
     float param1;
@@ -1114,7 +1114,7 @@ struct vk_op_push_constants {
     float param4;
 };
 
-struct vk_op_count_experts_push_constants {
+struct vk_op_count_experts_push_constants {  // 结构体定义
     uint32_t ne00;
     uint32_t ne01;
     uint32_t nb00;
@@ -1122,7 +1122,7 @@ struct vk_op_count_experts_push_constants {
     uint32_t a_offset;
 };
 
-struct vk_op_glu_push_constants {
+struct vk_op_glu_push_constants {  // 结构体定义
     uint32_t N;
     uint32_t ne00;
     uint32_t ne20;
@@ -1141,7 +1141,7 @@ struct vk_op_glu_push_constants {
     uint32_t ne12;
 };
 
-struct vk_op_unary_push_constants {
+struct vk_op_unary_push_constants {  // 结构体定义
     uint32_t ne;
     uint32_t ne00; uint32_t ne01; uint32_t ne02; uint32_t ne03; uint32_t nb00; uint32_t nb01; uint32_t nb02; uint32_t nb03;
     uint32_t ne10; uint32_t ne11; uint32_t ne12; uint32_t ne13; uint32_t nb10; uint32_t nb11; uint32_t nb12; uint32_t nb13;
@@ -1184,10 +1184,10 @@ static vk_op_unary_push_constants vk_op_unary_push_constants_init(const ggml_ten
     p.nb12 = (uint32_t)(dst->nb[2] / dst_tsize);
     p.nb13 = (uint32_t)(dst->nb[3] / dst_tsize);
 
-    return p; // offsets are initialized later in ggml_vk_op
+    return p; // offsets are initialized later in ggml_vk_op  // 返回
 }
 
-struct vk_op_pad_push_constants {
+struct vk_op_pad_push_constants {  // 结构体定义
     uint32_t ne;
     uint32_t ne00; uint32_t ne01; uint32_t ne02; uint32_t ne03; uint32_t nb00; uint32_t nb01; uint32_t nb02; uint32_t nb03;
     uint32_t ne10; uint32_t ne11; uint32_t ne12; uint32_t ne13; uint32_t nb10; uint32_t nb11; uint32_t nb12; uint32_t nb13;
@@ -1237,7 +1237,7 @@ static vk_op_pad_push_constants vk_op_pad_push_constants_init(const ggml_tensor 
     p.rp3 = dst->op_params[7];
     p.circular = dst->op_params[8];
 
-    return p; // fastdiv values and offsets are initialized later in ggml_vk_op
+    return p; // fastdiv values and offsets are initialized later in ggml_vk_op  // 返回
 }
 
 // See https://gmplib.org/~tege/divcnst-pldi94.pdf figure 4.1.
@@ -1246,7 +1246,7 @@ static vk_op_pad_push_constants vk_op_pad_push_constants_init(const ggml_tensor 
 // and a shift:
 //
 // n/d = (mulhi(n, mp) + n) >> L;
-static void init_fastdiv_values(uint32_t d, uint32_t &mp, uint32_t &L)
+static void init_fastdiv_values(uint32_t d, uint32_t &mp, uint32_t &L)  // init_fastdiv_values
 {
     // compute L = ceil(log2(d));
     L = 0;
@@ -1257,12 +1257,12 @@ static void init_fastdiv_values(uint32_t d, uint32_t &mp, uint32_t &L)
     mp = (uint32_t)((uint64_t{1} << 32) * ((uint64_t{1} << L) - d) / d + 1);
 }
 
-template <typename T> void init_pushconst_fastdiv(T &p) {
+template <typename T> void init_pushconst_fastdiv(T &p) {  // 模板
     GGML_UNUSED(p);
     static_assert(!std::is_const<T>::value, "unexpected type");
 }
 
-template <> void init_pushconst_fastdiv(vk_op_unary_push_constants &p) {
+template <> void init_pushconst_fastdiv(vk_op_unary_push_constants &p) {  // 模板
     // Compute magic values to divide by these six numbers.
     init_fastdiv_values(p.ne02*p.ne01*p.ne00,  p.ne0_012mp,    p.ne0_012L);
     init_fastdiv_values(p.ne01*p.ne00,         p.ne0_01mp,     p.ne0_01L);
@@ -1272,7 +1272,7 @@ template <> void init_pushconst_fastdiv(vk_op_unary_push_constants &p) {
     init_fastdiv_values(p.ne10,                p.ne1_0mp,      p.ne1_0L);
 }
 
-struct vk_op_binary_push_constants {
+struct vk_op_binary_push_constants {  // 结构体定义
     uint32_t ne;
     uint32_t ne00; uint32_t ne01; uint32_t ne02; uint32_t ne03; uint32_t nb00; uint32_t nb01; uint32_t nb02; uint32_t nb03;
     uint32_t ne10; uint32_t ne11; uint32_t ne12; uint32_t ne13; uint32_t nb10; uint32_t nb11; uint32_t nb12; uint32_t nb13;
@@ -1281,7 +1281,7 @@ struct vk_op_binary_push_constants {
     float param1; float param2; int32_t param3;
 };
 
-struct vk_op_multi_add_push_constants {
+struct vk_op_multi_add_push_constants {  // 结构体定义
     // shape for dst
     uint32_t ne20; uint32_t ne21; uint32_t ne22; uint32_t ne23;
 
@@ -1294,7 +1294,7 @@ struct vk_op_multi_add_push_constants {
 static_assert(MAX_PARAMETER_COUNT == 12);
 static_assert(sizeof(vk_op_multi_add_push_constants) <= 256);
 
-struct vk_op_topk_moe_push_constants {
+struct vk_op_topk_moe_push_constants {  // 结构体定义
     uint32_t n_rows;
     uint32_t n_experts_push;
     uint32_t n_expert_used;
@@ -1307,7 +1307,7 @@ struct vk_op_topk_moe_push_constants {
     float output_bias;
 };
 
-struct vk_op_add_id_push_constants {
+struct vk_op_add_id_push_constants {  // 结构体定义
     uint32_t ne0;
     uint32_t ne1;
     uint32_t s01;
@@ -1316,13 +1316,13 @@ struct vk_op_add_id_push_constants {
     uint32_t s21;
 };
 
-struct vk_op_diag_mask_push_constants {
+struct vk_op_diag_mask_push_constants {  // 结构体定义
     uint32_t ncols;
     uint32_t rows_per_channel;
     int32_t n_past;
 };
 
-struct vk_op_rope_push_constants {
+struct vk_op_rope_push_constants {  // 结构体定义
     uint32_t rope_mode;
     uint32_t nrows;
     uint32_t n_dims;
@@ -1350,12 +1350,12 @@ struct vk_op_rope_push_constants {
 static_assert(sizeof(vk_op_rope_push_constants) <= 128, "sizeof(vk_op_rope_push_constants) must be <= 128");
 
 // For fused rms_norm+mul+rope(+view+set_rows)
-struct vk_op_rms_norm_mul_rope_push_constants {
+struct vk_op_rms_norm_mul_rope_push_constants {  // 结构体定义
     vk_op_binary_push_constants bin;
     vk_op_rope_push_constants rope;
 };
 
-struct vk_op_soft_max_push_constants {
+struct vk_op_soft_max_push_constants {  // 结构体定义
     uint32_t KX;
     uint32_t KY;
     uint32_t ne00;
@@ -1375,7 +1375,7 @@ struct vk_op_soft_max_push_constants {
     uint32_t has_sinks;
 };
 
-struct vk_op_argsort_push_constants {
+struct vk_op_argsort_push_constants {  // 结构体定义
     uint32_t ncols;
     uint32_t ncols_padded;
     uint32_t ncols_padded_log2;
@@ -1387,7 +1387,7 @@ struct vk_op_argsort_push_constants {
     uint32_t inner_end;
 };
 
-struct vk_op_topk_push_constants {
+struct vk_op_topk_push_constants {  // 结构体定义
     uint32_t orig_ncols;
     uint32_t ncols_input;
     uint32_t ncols_output;
@@ -1397,7 +1397,7 @@ struct vk_op_topk_push_constants {
     uint32_t last_pass;
 };
 
-struct vk_op_im2col_push_constants {
+struct vk_op_im2col_push_constants {  // 结构体定义
     uint64_t dst_addr;
     uint32_t batch_offset; uint32_t offset_delta;
     uint32_t IC;
@@ -1412,7 +1412,7 @@ struct vk_op_im2col_push_constants {
     uint32_t batch_IC;
 };
 
-struct vk_op_im2col_3d_push_constants {
+struct vk_op_im2col_3d_push_constants {  // 结构体定义
     uint64_t dst_addr;
     uint32_t nb10;
     uint32_t nb11;
@@ -1444,13 +1444,13 @@ struct vk_op_im2col_3d_push_constants {
     uint32_t misalign_offsets;
 };
 
-struct vk_op_timestep_embedding_push_constants {
+struct vk_op_timestep_embedding_push_constants {  // 结构体定义
     uint32_t nb1;
     uint32_t dim;
     uint32_t max_period;
 };
 
-struct vk_op_conv_transpose_1d_push_constants {
+struct vk_op_conv_transpose_1d_push_constants {  // 结构体定义
     uint32_t Cout;
     uint32_t Cin;
     uint32_t K;
@@ -1465,7 +1465,7 @@ struct vk_op_conv_transpose_1d_push_constants {
     int32_t s0;
 };
 
-struct vk_op_pool2d_push_constants {
+struct vk_op_pool2d_push_constants {  // 结构体定义
     uint32_t IW; uint32_t IH;
     uint32_t OW; uint32_t OH;
     uint32_t OC;
@@ -1476,20 +1476,20 @@ struct vk_op_pool2d_push_constants {
     int32_t p0; int32_t p1;
 };
 
-struct vk_op_rwkv_wkv6_push_constants {
+struct vk_op_rwkv_wkv6_push_constants {  // 结构体定义
     uint32_t B;
     uint32_t T;
     uint32_t C;
     uint32_t H;
 };
 
-struct vk_op_rwkv_wkv7_push_constants {
+struct vk_op_rwkv_wkv7_push_constants {  // 结构体定义
     uint32_t B;
     uint32_t T;
     uint32_t C;
     uint32_t H;
 };
-struct vk_op_gated_delta_net_push_constants {
+struct vk_op_gated_delta_net_push_constants {  // 结构体定义
     uint32_t H;
     uint32_t n_tokens;
     uint32_t n_seqs;
@@ -1501,21 +1501,21 @@ struct vk_op_gated_delta_net_push_constants {
     float scale;
 };
 
-struct vk_op_ssm_scan_push_constants {
+struct vk_op_ssm_scan_push_constants {  // 结构体定义
     uint32_t nb02, nb03, nb12, nb13;
     uint32_t nb21, nb22, nb31;
     uint32_t nb42, nb43, nb52, nb53;
     uint32_t s_off;
     uint32_t n_head, d_head, n_group, n_tok;
 };
-struct vk_op_ssm_conv_push_constants {
+struct vk_op_ssm_conv_push_constants {  // 结构体定义
     uint32_t nb01, nb02;
     uint32_t nb11;
     uint32_t dst_nb0, dst_nb1, dst_nb2;
     uint32_t nc, ncs, nr, n_t, n_s;
 };
 
-struct vk_op_conv2d_push_constants {
+struct vk_op_conv2d_push_constants {  // 结构体定义
     uint32_t Cout;
     uint32_t Cin;
     uint32_t N;
@@ -1542,13 +1542,13 @@ struct vk_op_conv2d_push_constants {
     uint32_t OWOHmp; uint32_t OWOHL;
 };
 
-template <> void init_pushconst_fastdiv(vk_op_conv2d_push_constants &p) {
+template <> void init_pushconst_fastdiv(vk_op_conv2d_push_constants &p) {  // 模板
     // Compute magic values to divide by OW, OW*OH
     init_fastdiv_values(p.OW,       p.OWmp,    p.OWL);
     init_fastdiv_values(p.OW*p.OH,  p.OWOHmp,  p.OWOHL);
 }
 
-struct vk_op_conv2d_dw_push_constants {
+struct vk_op_conv2d_dw_push_constants {  // 结构体定义
     uint32_t ne;
     uint32_t batches;
     uint32_t channels;
@@ -1566,7 +1566,7 @@ struct vk_op_conv2d_dw_push_constants {
     int32_t dilation_y;
 };
 
-struct vk_op_upscale_push_constants {
+struct vk_op_upscale_push_constants {  // 结构体定义
     uint32_t ne; uint32_t a_offset; uint32_t d_offset;
     uint32_t ne00; uint32_t ne01;
     uint32_t nb00; uint32_t nb01; uint32_t nb02; uint32_t nb03;
@@ -1600,20 +1600,20 @@ static vk_op_sum_rows_push_constants vk_op_sum_rows_push_constants_init(const gg
     p.nb12 = (uint32_t)dst->nb[2] / type_size;
     p.nb13 = (uint32_t)dst->nb[3] / type_size;
     p.weight = 1.0f;
-    return p;
+    return p;  // 返回
 }
 
-template <> void init_pushconst_fastdiv(vk_op_sum_rows_push_constants &p) {
+template <> void init_pushconst_fastdiv(vk_op_sum_rows_push_constants &p) {  // 模板
     init_fastdiv_values(p.ne01*p.ne02, p.ne0_12mp, p.ne0_12L);
     init_fastdiv_values(p.ne01,        p.ne0_1mp,  p.ne0_1L);
 }
 
-struct vk_quantize_q8_1_push_constants {
+struct vk_quantize_q8_1_push_constants {  // 结构体定义
     uint32_t ne;
     uint32_t num_blocks;
 };
 
-struct vk_op_flash_attn_split_k_reduce_push_constants {
+struct vk_op_flash_attn_split_k_reduce_push_constants {  // 结构体定义
     uint32_t D;
     uint32_t ne1;
     uint32_t ne2;
@@ -1622,7 +1622,7 @@ struct vk_op_flash_attn_split_k_reduce_push_constants {
     uint32_t sinks;
 };
 
-struct vk_op_flash_attn_mask_opt_push_constants {
+struct vk_op_flash_attn_mask_opt_push_constants {  // 结构体定义
     uint32_t nem0;
     uint32_t nem1;
     uint32_t nem2;
@@ -1635,7 +1635,7 @@ struct vk_op_flash_attn_mask_opt_push_constants {
 };
 
 // Allow pre-recording command buffers
-struct vk_staging_memcpy {
+struct vk_staging_memcpy {  // 结构体定义
     vk_staging_memcpy(void * _dst, const void * _src, size_t _n) : dst(_dst), src(_src), n(_n) {}
 
     void * dst;
@@ -1643,7 +1643,7 @@ struct vk_staging_memcpy {
     size_t n;
 };
 
-struct vk_staging_memset {
+struct vk_staging_memset {  // 结构体定义
     vk_staging_memset(void * _dst, uint32_t _val, size_t _n) : dst(_dst), val(_val), n(_n) {}
 
     void * dst;
@@ -1651,7 +1651,7 @@ struct vk_staging_memset {
     size_t n;
 };
 
-struct vk_context_struct {
+struct vk_context_struct {  // 结构体定义
     vk_submission * s;
     std::vector<vk_sequence> seqs;
 
@@ -1663,23 +1663,23 @@ struct vk_context_struct {
 
     vk_command_pool * p {};
 };
-typedef std::shared_ptr<vk_context_struct> vk_context;
-typedef std::weak_ptr<vk_context_struct> vk_context_ref;
+typedef std::shared_ptr<vk_context_struct> vk_context;  // 类型定义
+typedef std::weak_ptr<vk_context_struct> vk_context_ref;  // 类型定义
 
-struct ggml_vk_garbage_collector {
+struct ggml_vk_garbage_collector {  // 结构体定义
     std::vector<vk_semaphore> tl_semaphores;
     std::vector<vk_semaphore> semaphores;
     std::vector<vk::Event> events;
     std::vector<vk_context> contexts;
 };
 
-static void ggml_vk_preallocate_buffers(ggml_backend_vk_context * ctx, vk_context subctx);
-static void ggml_vk_load_shaders(vk_device& device);
-static void ggml_pipeline_allocate_descriptor_sets(ggml_backend_vk_context * ctx);
+static void ggml_vk_preallocate_buffers(ggml_backend_vk_context * ctx, vk_context subctx);  // ggml_vk_preallocate_buffers
+static void ggml_vk_load_shaders(vk_device& device);  // ggml_vk_load_shaders
+static void ggml_pipeline_allocate_descriptor_sets(ggml_backend_vk_context * ctx);  // ggml_pipeline_allocate_descriptor_sets
 
 static bool vk_memory_logger_enabled = false;
 
-#define VK_LOG_MEMORY(msg) if (vk_memory_logger_enabled) { std::cerr << "ggml_vulkan memory: " << msg << std::endl; }
+#define VK_LOG_MEMORY(msg) if (vk_memory_logger_enabled) { std::cerr << "ggml_vulkan memory: " << msg << std::endl; }  // 宏定义 VK_LOG_MEMORY
 
 static std::string format_size(size_t size) {
     const size_t kib = 1024;
@@ -1702,11 +1702,11 @@ static std::string format_size(size_t size) {
     return oss.str();
 }
 
-class vk_memory_logger {
+class vk_memory_logger {  // 类定义
 public:
     vk_memory_logger(): total_device(0), total_host(0) {}
-    void log_allocation(vk_buffer_ref buf_ref, size_t size);
-    void log_deallocation(vk_buffer_ref buf_ref);
+    void log_allocation(vk_buffer_ref buf_ref, size_t size);  // log_allocation
+    void log_deallocation(vk_buffer_ref buf_ref);  // log_deallocation
 
 private:
     std::map<vk::Buffer, size_t> allocations; // Track allocations
@@ -1724,15 +1724,15 @@ static bool vk_enable_sync_logger = false;
 static uint32_t vk_perf_logger_frequency = 1;
 static std::string vk_pipeline_stats_filter;
 
-class vk_perf_logger {
+class vk_perf_logger {  // 类定义
   public:
     void print_timings(bool force = false) {
         if (timings.empty()) {
-            return;
+            return;  // 返回
         }
         print_count++;
         if ((print_count % vk_perf_logger_frequency) != 0 && !force) {
-            return;
+            return;  // 返回
         }
         print_count = 0;
         uint64_t total_all_op_times = 0;
@@ -1801,7 +1801,7 @@ class vk_perf_logger {
             }
             name = fusion_str + name;
             *n_flops = m * n * (k + (k - 1)) * batch;
-            return name;
+            return name;  // 返回
         }
         if (node->op == GGML_OP_CONV_2D || node->op == GGML_OP_CONV_TRANSPOSE_2D) {
             std::string   name    = ggml_op_name(node->op);
@@ -1821,13 +1821,13 @@ class vk_perf_logger {
             name += " M=Cout=" + std::to_string(size_M) + ", K=Cin*KW*KH=" + std::to_string(size_K) +
                     ", N=N*OW*OH=" + std::to_string(size_N);
             name = fusion_str + name;
-            return name;
+            return name;  // 返回
         }
         if (node->op == GGML_OP_RMS_NORM) {
             std::string   name    = ggml_op_name(node->op);
             name += "(" + std::to_string(node->ne[0]) + "," + std::to_string(node->ne[1]) + "," + std::to_string(node->ne[2]) + "," + std::to_string(node->ne[3]) + ")";
             name = fusion_str + name;
-            return name;
+            return name;  // 返回
         }
         if (node->op == GGML_OP_FLASH_ATTN_EXT) {
             const ggml_tensor * dst = node;
@@ -1890,7 +1890,7 @@ class vk_perf_logger {
     uint32_t print_count {};
 };
 
-struct ggml_backend_vk_context {
+struct ggml_backend_vk_context {  // 结构体定义
     std::string name;
 
     vk_device device;
@@ -1967,12 +1967,12 @@ static uint64_t vk_tensor_offset(const ggml_tensor * tensor) {
     return (uint8_t *) tensor->data - (uint8_t *) vk_ptr_base;
 }
 
-static uint32_t get_misalign_bytes(const ggml_backend_vk_context * ctx, const ggml_tensor * t)
+static uint32_t get_misalign_bytes(const ggml_backend_vk_context * ctx, const ggml_tensor * t)  // get_misalign_bytes
 {
     return ((vk_tensor_offset(t) + t->view_offs) & (ctx->device->properties.limits.minStorageBufferOffsetAlignment - 1));;
 }
 
-template <typename T> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, T &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
+template <typename T> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, T &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {  // 模板
     GGML_UNUSED(p);
     GGML_UNUSED(src0);
     GGML_UNUSED(src1);
@@ -1987,7 +1987,7 @@ template <typename T> void init_pushconst_tensor_offsets(ggml_backend_vk_context
     GGML_ASSERT(!dst  || get_misalign_bytes(ctx, dst) == 0);
 }
 
-template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_mat_vec_p021_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
+template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_mat_vec_p021_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {  // 模板
     const uint32_t b_offset = get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type);
     const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
 
@@ -1999,7 +1999,7 @@ template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk
     GGML_UNUSED(src3);
 }
 
-template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_mat_vec_nc_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
+template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_mat_vec_nc_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {  // 模板
     const uint32_t b_offset = get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type);
     const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
 
@@ -2011,7 +2011,7 @@ template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk
     GGML_UNUSED(src3);
 }
 
-struct ggml_backend_vk_buffer_context {
+struct ggml_backend_vk_buffer_context {  // 结构体定义
     vk_device_ref device;
     vk_buffer dev_buffer;
     std::string name;
@@ -2029,7 +2029,7 @@ struct ggml_backend_vk_buffer_context {
 
 void vk_memory_logger::log_allocation(vk_buffer_ref buf_ref, size_t size) {
     if (!vk_memory_logger_enabled) {
-        return;
+        return;  // 返回
     }
     std::lock_guard<std::mutex> guard(log_mutex);
     vk_buffer buf = buf_ref.lock();
@@ -2043,7 +2043,7 @@ void vk_memory_logger::log_allocation(vk_buffer_ref buf_ref, size_t size) {
 
 void vk_memory_logger::log_deallocation(vk_buffer_ref buf_ref) {
     if (buf_ref.expired() || buf_ref.lock()->size == 0 || !vk_memory_logger_enabled) {
-        return;
+        return;  // 返回
     }
 
     std::lock_guard<std::mutex> guard(log_mutex);
@@ -2061,7 +2061,7 @@ void vk_memory_logger::log_deallocation(vk_buffer_ref buf_ref) {
     }
 }
 
-struct vk_instance_t {
+struct vk_instance_t {  // 结构体定义
     vk::Instance instance;
 
     bool debug_utils_support = false;  // VK_EXT_debug_utils enabled
@@ -2080,23 +2080,23 @@ struct vk_instance_t {
 static bool vk_instance_initialized = false;
 static vk_instance_t vk_instance;
 
-#ifdef GGML_VULKAN_CHECK_RESULTS
+#ifdef GGML_VULKAN_CHECK_RESULTS  // 如果定义了 GGML_VULKAN_CHECK_RESULTS 则编译
 static size_t vk_skip_checks;
 static size_t vk_output_tensor;
 
-static void ggml_vk_print_tensor(const ggml_tensor * tensor, const char * name);
-static void ggml_vk_check_results_0(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int tensor_idx);
-static void ggml_vk_check_results_1(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int tensor_idx);
-#endif
+static void ggml_vk_print_tensor(const ggml_tensor * tensor, const char * name);  // ggml_vk_print_tensor
+static void ggml_vk_check_results_0(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int tensor_idx);  // ggml_vk_check_results_0
+static void ggml_vk_check_results_1(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int tensor_idx);  // ggml_vk_check_results_1
+#endif  // 条件编译结束
 
-typedef void (*ggml_vk_func_t)(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
+typedef void (*ggml_vk_func_t)(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);  // 类型定义
 
-static void ggml_backend_vk_free(ggml_backend_t backend);
+static void ggml_backend_vk_free(ggml_backend_t backend);  // ggml_backend_vk_free
 
 static VkDeviceSize ggml_vk_get_max_buffer_range(const ggml_backend_vk_context * ctx, const vk_buffer &buf, const VkDeviceSize offset) {
     const VkDeviceSize range = std::min(VkDeviceSize{buf->size - offset},
                                         VkDeviceSize{ctx->device->properties.limits.maxStorageBufferRange});
-    return range;
+    return range;  // 返回
 }
 
 // Wait for ctx->fence to be signaled.
@@ -2269,7 +2269,7 @@ static void ggml_vk_create_pipeline_func(vk_device& device, vk_pipeline& pipelin
         compute_pipeline_create_info.setPNext(&rci);
     }
 
-#if defined(VK_EXT_shader_64bit_indexing)
+#if defined(VK_EXT_shader_64bit_indexing)  // 条件编译
     vk::PipelineCreateFlags2CreateInfo pipelineFlags2CreateInfo;
     if (pipeline->is_64b_indexing)
     {
@@ -2280,7 +2280,7 @@ static void ggml_vk_create_pipeline_func(vk_device& device, vk_pipeline& pipelin
         pipelineFlags2CreateInfo.setPNext(compute_pipeline_create_info.pNext);
         compute_pipeline_create_info.setPNext(&pipelineFlags2CreateInfo);
     }
-#endif
+#endif  // 条件编译结束
 
     try {
         pipeline->pipeline = device->device.createComputePipeline(VK_NULL_HANDLE, compute_pipeline_create_info).value;
@@ -2371,7 +2371,7 @@ static void ggml_pipeline_allocate_descriptor_sets(ggml_backend_vk_context * ctx
 
     if (ctx->descriptor_sets.size() >= ctx->pipeline_descriptor_set_requirements) {
         // Enough descriptors are available
-        return;
+        return;  // 返回
     }
 
     vk_device& device = ctx->device;
@@ -2422,7 +2422,7 @@ static void ggml_vk_submit(vk_context& ctx, vk::Fence fence) {
             std::lock_guard<std::mutex> guard(queue_mutex);
             ctx->p->q->queue.submit({}, fence);
         }
-        return;
+        return;  // 返回
     }
     VK_LOG_DEBUG("ggml_vk_submit(" << ctx << ", " << fence << ")");
 
@@ -2502,35 +2502,35 @@ static uint32_t ggml_vk_find_queue_family_index(std::vector<vk::QueueFamilyPrope
     // Try with avoid preferences first
     for (uint32_t i = 0; i < qfsize; i++) {
         if (queue_family_props[i].queueCount >= min_num_queues && (compute_index < 0 || i != (uint32_t) compute_index) && queue_family_props[i].queueFlags & required && !(queue_family_props[i].queueFlags & avoid)) {
-            return i;
+            return i;  // 返回
         }
     }
 
     // Fall back to only required
     for (size_t i = 0; i < qfsize; i++) {
         if (queue_family_props[i].queueCount >= min_num_queues && (compute_index < 0 || i != (uint32_t) compute_index) && queue_family_props[i].queueFlags & required) {
-            return i;
+            return i;  // 返回
         }
     }
 
     // Fall back to reusing compute queue
     for (size_t i = 0; i < qfsize; i++) {
         if (queue_family_props[i].queueCount >= min_num_queues && queue_family_props[i].queueFlags & required) {
-            return i;
+            return i;  // 返回
         }
     }
 
     // Fall back to ignoring min_num_queries
     for (size_t i = 0; i < qfsize; i++) {
         if (queue_family_props[i].queueFlags & required) {
-            return i;
+            return i;  // 返回
         }
     }
 
     // All commands that are allowed on a queue that supports transfer operations are also allowed on a queue that supports either graphics or compute operations.
     // Thus, if the capabilities of a queue family include VK_QUEUE_GRAPHICS_BIT or VK_QUEUE_COMPUTE_BIT, then reporting the VK_QUEUE_TRANSFER_BIT capability separately for that queue family is optional.
     if (compute_index >= 0) {
-        return compute_index;
+        return compute_index;  // 返回
     }
 
     std::cerr << "ggml_vulkan: No suitable queue family index found." << std::endl;
@@ -2560,14 +2560,14 @@ static vk_context ggml_vk_create_context(ggml_backend_vk_context * ctx, vk_comma
     VK_LOG_DEBUG("ggml_vk_create_context(" << result << ")");
     ctx->gc.contexts.emplace_back(result);
     result->p = &p;
-    return result;
+    return result;  // 返回
 }
 
 static vk_context ggml_vk_create_temporary_context(vk_command_pool& p) {
     vk_context result = std::make_shared<vk_context_struct>();
     VK_LOG_DEBUG("ggml_vk_create_temporary_context(" << result << ")");
     result->p = &p;
-    return result;
+    return result;  // 返回
 }
 
 static vk_semaphore * ggml_vk_create_binary_semaphore(ggml_backend_vk_context * ctx) {
@@ -2589,14 +2589,14 @@ static vk_semaphore * ggml_vk_create_timeline_semaphore(ggml_backend_vk_context 
         vk::Semaphore semaphore = ctx->device->device.createSemaphore(ci);
         ctx->gc.tl_semaphores.push_back({ semaphore, 0 });
     }
-    return &ctx->gc.tl_semaphores[ctx->semaphore_idx++];
+    return &ctx->gc.tl_semaphores[ctx->semaphore_idx++];  // 返回
 }
 
 static vk::Event ggml_vk_create_event(ggml_backend_vk_context * ctx) {
     if (ctx->event_idx >= ctx->gc.events.size()) {
         ctx->gc.events.push_back(ctx->device->device.createEvent({}));
     }
-    return ctx->gc.events[ctx->event_idx++];
+    return ctx->gc.events[ctx->event_idx++];  // 返回
 }
 
 static void ggml_vk_command_pool_cleanup(vk_device& device, vk_command_pool& p) {
@@ -2636,7 +2636,7 @@ static std::vector<uint32_t> ggml_vk_find_memory_properties(const vk::PhysicalDe
             indices.push_back(i);
         }
     }
-    return indices;
+    return indices;  // 返回
 }
 
 static vk_buffer ggml_vk_create_buffer(vk_device& device, size_t size, const std::initializer_list<vk::MemoryPropertyFlags> & req_flags_list,
@@ -2650,7 +2650,7 @@ static vk_buffer ggml_vk_create_buffer(vk_device& device, size_t size, const std
 
     if (size == 0) {
         buf->size = 0;
-        return buf;
+        return buf;  // 返回
     }
 
     vk::BufferUsageFlags usage_flags = vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst;
@@ -2696,7 +2696,7 @@ static vk_buffer ggml_vk_create_buffer(vk_device& device, size_t size, const std
         } catch (vk::SystemError& e) {
             GGML_LOG_WARN("ggml_vulkan: Failed getMemoryHostPointerPropertiesEXT (%s)\n", e.what());
             device->device.destroyBuffer(buf->buffer);
-            return {};
+            return {};  // 返回
         }
         vk::PhysicalDeviceMemoryProperties mem_props = device->physical_device.getMemoryProperties();
 
@@ -2720,7 +2720,7 @@ static vk_buffer ggml_vk_create_buffer(vk_device& device, size_t size, const std
         if (memory_type_idx == 32) {
             GGML_LOG_WARN("ggml_vulkan: Memory type for host allocation not found\n");
             device->device.destroyBuffer(buf->buffer);
-            return {};
+            return {};  // 返回
         }
 
         buf->memory_property_flags = mem_props.memoryTypes[memory_type_idx].propertyFlags;
@@ -2793,12 +2793,12 @@ static vk_buffer ggml_vk_create_buffer(vk_device& device, size_t size, const std
 
     device->memory_logger->log_allocation(buf, size);
 
-    return buf;
+    return buf;  // 返回
 }
 
 static vk_buffer ggml_vk_create_buffer_check(vk_device& device, size_t size, vk::MemoryPropertyFlags req_flags, vk::MemoryPropertyFlags fallback_flags = vk::MemoryPropertyFlags(0)) {
     try {
-        return ggml_vk_create_buffer(device, size, {req_flags, fallback_flags});
+        return ggml_vk_create_buffer(device, size, {req_flags, fallback_flags});  // 返回
     } catch (const vk::SystemError& e) {
         std::cerr << "ggml_vulkan: Memory allocation of size " << size << " failed." << std::endl;
         std::cerr << "ggml_vulkan: " << e.what() << std::endl;
@@ -2840,12 +2840,12 @@ static vk_buffer ggml_vk_create_buffer_device(vk_device& device, size_t size) {
         throw e;
     }
 
-    return buf;
+    return buf;  // 返回
 }
 
 static void ggml_vk_destroy_buffer(vk_buffer& buf) {
     if (buf == nullptr) {
-        return;
+        return;  // 返回
     }
 
     if (buf->device != nullptr) {
@@ -2856,7 +2856,7 @@ static void ggml_vk_destroy_buffer(vk_buffer& buf) {
 }
 
 static vk_subbuffer ggml_vk_subbuffer(const ggml_backend_vk_context* ctx, const vk_buffer& buf, size_t offset = 0) {
-    return { buf, offset, ggml_vk_get_max_buffer_range(ctx, buf, offset) };
+    return { buf, offset, ggml_vk_get_max_buffer_range(ctx, buf, offset) };  // 返回
 }
 
 static void ggml_vk_sync_buffers(ggml_backend_vk_context* ctx, vk_context& subctx) {
@@ -2902,7 +2902,7 @@ static void ggml_vk_set_event(vk_context& ctx, vk::Event& event) {
 static void ggml_vk_wait_events(vk_context& ctx, std::vector<vk::Event>&& events) {
     VK_LOG_DEBUG("ggml_vk_wait_events()");
     if (events.empty()) {
-        return;
+        return;  // 返回
     }
 
     ctx->s->buffer->buf.waitEvents(
@@ -2915,7 +2915,7 @@ static void ggml_vk_wait_events(vk_context& ctx, std::vector<vk::Event>&& events
     );
 }
 
-struct vk_fa_tuning_params {
+struct vk_fa_tuning_params {  // 结构体定义
     FaCodePath path;
     uint32_t workgroup_size;
     uint32_t subgroup_size;
@@ -2935,8 +2935,8 @@ struct vk_fa_tuning_params {
     }
 };
 
-static bool ggml_vk_flash_attn_scalar_shmem_support(const vk_device& device, const vk_fa_tuning_params& params, uint32_t hsk, uint32_t hsv, bool f32acc, ggml_type kv_type);
-static bool ggml_vk_flash_attn_coopmat_shmem_support(const vk_device& device, const vk_fa_tuning_params& params, uint32_t hsk, uint32_t hsv, bool f32acc);
+static bool ggml_vk_flash_attn_scalar_shmem_support(const vk_device& device, const vk_fa_tuning_params& params, uint32_t hsk, uint32_t hsv, bool f32acc, ggml_type kv_type);  // ggml_vk_flash_attn_scalar_shmem_support
+static bool ggml_vk_flash_attn_coopmat_shmem_support(const vk_device& device, const vk_fa_tuning_params& params, uint32_t hsk, uint32_t hsv, bool f32acc);  // ggml_vk_flash_attn_coopmat_shmem_support
 
 static vk_fa_tuning_params get_fa_tuning_params_scalar(const vk_device& device, uint32_t hsk, uint32_t hsv, uint32_t n_rows, uint32_t n_kv, ggml_type kv_type, bool f32acc) {
 
@@ -3010,7 +3010,7 @@ static vk_fa_tuning_params get_fa_tuning_params_scalar(const vk_device& device, 
         }
     }
 
-    return result;
+    return result;  // 返回
 }
 
 static vk_fa_tuning_params get_fa_tuning_params_coopmat1(const vk_device& device, uint32_t hsk, uint32_t hsv, uint32_t n_rows, uint32_t n_kv, ggml_type kv_type, bool f32acc) {
@@ -3040,7 +3040,7 @@ static vk_fa_tuning_params get_fa_tuning_params_coopmat1(const vk_device& device
 
     result.shmem_staging = (device->vendor_id == VK_VENDOR_ID_NVIDIA && hsk < 256 && hsv < 256) ? 1 : 0;
 
-    return result;
+    return result;  // 返回
 }
 
 static vk_fa_tuning_params get_fa_tuning_params_coopmat2(const vk_device& device, uint32_t hsk, uint32_t hsv, uint32_t n_rows, uint32_t n_kv, ggml_type k_type, ggml_type v_type, bool f32acc) {
@@ -3068,14 +3068,14 @@ static vk_fa_tuning_params get_fa_tuning_params_coopmat2(const vk_device& device
     result.subgroup_size = device->subgroup_size;
     result.workgroup_size = (small_rows && (D % 32) == 0) ? 256 : 128;
 
-    return result;
+    return result;  // 返回
 }
 
 static vk_fa_tuning_params get_fa_tuning_params(const vk_device& device, uint32_t hsk, uint32_t hsv, uint32_t n_rows, uint32_t n_kv, ggml_type k_type, ggml_type v_type, bool f32acc) {
     // Mixed K/V is only implemented on the coopmat2 (flash_attn_cm2) path; never use scalar/cm1.
     if (k_type != v_type) {
         GGML_ASSERT(device->coopmat2);
-        return get_fa_tuning_params_coopmat2(device, hsk, hsv, n_rows, n_kv, k_type, v_type, f32acc);
+        return get_fa_tuning_params_coopmat2(device, hsk, hsv, n_rows, n_kv, k_type, v_type, f32acc);  // get_fa_tuning_params_coopmat2
     }
 
     FaCodePath path = device->coopmat2 ? FA_COOPMAT2 :
@@ -3109,11 +3109,11 @@ static vk_fa_tuning_params get_fa_tuning_params(const vk_device& device, uint32_
 
     switch (path) {
     case FA_SCALAR:
-        return get_fa_tuning_params_scalar(device, hsk, hsv, n_rows, n_kv, k_type, f32acc);
+        return get_fa_tuning_params_scalar(device, hsk, hsv, n_rows, n_kv, k_type, f32acc);  // get_fa_tuning_params_scalar
     case FA_COOPMAT1:
-        return get_fa_tuning_params_coopmat1(device, hsk, hsv, n_rows, n_kv, k_type, f32acc);
+        return get_fa_tuning_params_coopmat1(device, hsk, hsv, n_rows, n_kv, k_type, f32acc);  // get_fa_tuning_params_coopmat1
     case FA_COOPMAT2:
-        return get_fa_tuning_params_coopmat2(device, hsk, hsv, n_rows, n_kv, k_type, v_type, f32acc);
+        return get_fa_tuning_params_coopmat2(device, hsk, hsv, n_rows, n_kv, k_type, v_type, f32acc);  // get_fa_tuning_params_coopmat2
     default:
         throw std::runtime_error("unsupported FaCodePath");
     }
@@ -3131,7 +3131,7 @@ static vk_fa_pipeline_state get_fa_pipeline_state(const vk_device& device, const
 
     const uint32_t subgroup_size = params.disable_subgroups ? 0 : params.subgroup_size;
 
-    return vk_fa_pipeline_state{hsk, hsv, params.block_rows, params.block_cols, params.d_split, params.row_split, params.shmem_staging, params.path, params.workgroup_size, subgroup_size, aligned, f32acc, flags, params.limit_occupancy_shmem, k_type, v_type};
+    return vk_fa_pipeline_state{hsk, hsv, params.block_rows, params.block_cols, params.d_split, params.row_split, params.shmem_staging, params.path, params.workgroup_size, subgroup_size, aligned, f32acc, flags, params.limit_occupancy_shmem, k_type, v_type};  // 返回
 }
 
 static std::vector<uint32_t> get_fa_spec_constants(const vk_fa_pipeline_state& state) {
@@ -3139,7 +3139,7 @@ static std::vector<uint32_t> get_fa_spec_constants(const vk_fa_pipeline_state& s
         // decodeBufF32 uses a block of vec4s for a better memory access pattern.
         return t == GGML_TYPE_F32 ? 16u : (uint32_t) ggml_type_size(t);
     };
-    return {
+    return {  // 返回
         /* 0 WorkGroupSize   */ state.workgroup_size,
         /* 1 Br              */ state.Br,
         /* 2 Bc              */ state.Bc,
@@ -3211,10 +3211,10 @@ static bool ggml_vk_matmul_shmem_support(const vk_device& device, const std::vec
     VK_LOG_DEBUG("ggml_vk_matmul_shmem_support(warptile=(" << warptile[0] << "," << warptile[1] << "," << warptile[2] << "), "
                  "mul_mat_id=" << mul_mat_id << ", src0_type=" << ggml_type_name(src0_type) << ", supported=" << supported);
 
-    return supported;
+    return supported;  // 返回
 }
 
-struct GpuPipelineConfig {
+struct GpuPipelineConfig {  // 结构体定义
     // GPU architecture identifier.
     // Example: vk_device_architecture::AMD_GCN
     vk_device_architecture arch;
@@ -3265,20 +3265,20 @@ static uint32_t get_subgroup_size(const std::string &pipeline_name, const vk_dev
         if (config.arch == arch) {
             auto pipIt = config.pipelines.find(pipeline_name);
             if (pipIt != config.pipelines.end()) {
-                return pipIt->second;
+                return pipIt->second;  // 返回
             }
             std::vector<std::pair<std::string, uint32_t>> sorted_pipelines(config.pipelines.begin(), config.pipelines.end());
             std::sort(sorted_pipelines.begin(), sorted_pipelines.end(),
                       [](const auto &a, const auto &b) { return a.first.size() > b.first.size(); });
             for (const auto &entry : sorted_pipelines) {
                 if (pipeline_name.find(entry.first) != std::string::npos) {
-                    return entry.second;
+                    return entry.second;  // 返回
                 }
             }
-            return config.default_subgroup_size;
+            return config.default_subgroup_size;  // 返回
         }
     }
-    return 0; // If no matching configuration is found
+    return 0; // If no matching configuration is found  // 返回
 }
 
 static void ggml_vk_load_shaders(vk_device& device) {
@@ -3477,11 +3477,11 @@ static void ggml_vk_load_shaders(vk_device& device) {
         vk_pipeline *ptr = &base_pipeline;
 
         int num_pipelines = 1;
-#if defined(VK_EXT_shader_64bit_indexing)
+#if defined(VK_EXT_shader_64bit_indexing)  // 条件编译
         if (device->shader_64b_indexing) {
             num_pipelines = 2;
         }
-#endif
+#endif  // 条件编译结束
         for (int i = 0; i < num_pipelines; ++i, ptr = &(*ptr)->next) {
             vk_pipeline &pipeline = *ptr;
             if (!pipeline) {
@@ -3494,9 +3494,9 @@ static void ggml_vk_load_shaders(vk_device& device) {
                 pipeline->wg_denoms = wg_denoms;
                 pipeline->align = align;
                 pipeline->initialized = true;
-#if defined(VK_EXT_shader_64bit_indexing)
+#if defined(VK_EXT_shader_64bit_indexing)  // 条件编译
                 pipeline->is_64b_indexing = (i == 1);
-#endif
+#endif  // 条件编译结束
             }
 
             if (!pipeline->needed || pipeline->compiled) {
@@ -3522,7 +3522,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
     auto const &ggml_vk_create_pipeline2 = [&](vk_device& device, vk_pipeline& pipeline, const std::string &name, size_t spv_size, const void* spv_data, const char *entrypoint,
                                               uint32_t parameter_count, uint32_t push_constant_size, std::array<uint32_t, 3> wg_denoms, const std::vector<uint32_t>& specialization_constants,
                                               uint32_t align, bool disable_robustness = false, bool require_full_subgroups = false, uint32_t required_subgroup_size = 0) {
-        return ggml_vk_create_pipeline(device, pipeline, name.c_str(), spv_size, spv_data, entrypoint,
+        return ggml_vk_create_pipeline(device, pipeline, name.c_str(), spv_size, spv_data, entrypoint,  // ggml_vk_create_pipeline
                                        parameter_count, push_constant_size, wg_denoms, specialization_constants,
                                        align, disable_robustness, require_full_subgroups, required_subgroup_size);
     };
@@ -3557,7 +3557,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
         CREATE_FA(GGML_TYPE_F32, f32, FA_SCALAR, )
         CREATE_FA(GGML_TYPE_F16, f16, FA_SCALAR, )
 
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
         if (device->integer_dot_product && device->subgroup_clustered) {
             CREATE_FA(GGML_TYPE_Q4_0,     q4_0, FA_SCALAR, _int8)
             CREATE_FA(GGML_TYPE_Q8_0,     q8_0, FA_SCALAR, _int8)
@@ -3566,7 +3566,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
             CREATE_FA(GGML_TYPE_Q5_1,     q5_1, FA_SCALAR, _int8)
             CREATE_FA(GGML_TYPE_IQ4_NL, iq4_nl, FA_SCALAR, _int8)
         } else
-#endif
+#endif  // 条件编译结束
         {
             CREATE_FA(GGML_TYPE_Q4_0,     q4_0, FA_SCALAR, )
             CREATE_FA(GGML_TYPE_Q8_0,     q8_0, FA_SCALAR, )
@@ -3579,7 +3579,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
         CREATE_FA(GGML_TYPE_F32, f32, FA_SCALAR, _fp32)
         CREATE_FA(GGML_TYPE_F16, f16, FA_SCALAR, _fp32)
 
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
         if (device->integer_dot_product && device->subgroup_clustered) {
             CREATE_FA(GGML_TYPE_Q4_0,     q4_0, FA_SCALAR, _fp32_int8)
             CREATE_FA(GGML_TYPE_Q8_0,     q8_0, FA_SCALAR, _fp32_int8)
@@ -3588,7 +3588,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
             CREATE_FA(GGML_TYPE_Q5_1,     q5_1, FA_SCALAR, _fp32_int8)
             CREATE_FA(GGML_TYPE_IQ4_NL, iq4_nl, FA_SCALAR, _fp32_int8)
         } else
-#endif
+#endif  // 条件编译结束
         {
             CREATE_FA(GGML_TYPE_Q4_0,     q4_0, FA_SCALAR, _fp32)
             CREATE_FA(GGML_TYPE_Q8_0,     q8_0, FA_SCALAR, _fp32)
@@ -3598,7 +3598,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
             CREATE_FA(GGML_TYPE_IQ4_NL, iq4_nl, FA_SCALAR, _fp32)
         }
     }
-#if defined(VK_KHR_cooperative_matrix) && defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+#if defined(VK_KHR_cooperative_matrix) && defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)  // 条件编译
     if (device->coopmat1_fa_support) {
         CREATE_FA(GGML_TYPE_F32, f32, FA_COOPMAT1, _cm1)
         CREATE_FA(GGML_TYPE_F16, f16, FA_COOPMAT1, _cm1)
@@ -3609,8 +3609,8 @@ static void ggml_vk_load_shaders(vk_device& device) {
         CREATE_FA(GGML_TYPE_Q5_1, q5_1, FA_COOPMAT1, _cm1)
         CREATE_FA(GGML_TYPE_IQ4_NL, iq4_nl, FA_COOPMAT1, _cm1)
     }
-#endif
-#if defined(VK_NV_cooperative_matrix2) && defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+#endif  // 条件编译结束
+#if defined(VK_NV_cooperative_matrix2) && defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)  // 条件编译
 #define CREATE_FA_CM2_MIXED() \
         for (int fa_k_ty = 0; fa_k_ty < (int)GGML_TYPE_COUNT; ++fa_k_ty) { \
         for (auto &fa : device->pipeline_flash_attn_f32_f16[fa_k_ty]) { \
@@ -3640,12 +3640,12 @@ static void ggml_vk_load_shaders(vk_device& device) {
         CREATE_FA_CM2_MIXED();
     }
 #undef CREATE_FA_CM2_MIXED
-#endif
+#endif  // 条件编译结束
 #undef CREATE_FA
 
     const int mul_mat_id_param_count = 5;
 
-#if defined(VK_NV_cooperative_matrix2) && defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+#if defined(VK_NV_cooperative_matrix2) && defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)  // 条件编译
     if (device->coopmat2) {
 
         // Create 6 variants, {s,m,l}x{unaligned,aligned}
@@ -3663,11 +3663,11 @@ static void ggml_vk_load_shaders(vk_device& device) {
         CREATE_MM(PIPELINE_NAME . f32acc, NAMELC, , WG_DENOMS, WARPTILE, PUSHCONST, PARAMCOUNT)   \
 
         CREATE_MM2(pipeline_matmul_f16, matmul_f16, wg_denoms, warptile, vk_mat_mat_push_constants, 3)
-#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)  // 条件编译
         if (device->coopmat_bf16_support) {
             CREATE_MM(pipeline_matmul_bf16, matmul_bf16, , wg_denoms, warptile, vk_mat_mat_push_constants, 3)
         }
-#endif
+#endif  // 条件编译结束
         CREATE_MM2(pipeline_dequant_mul_mat_mat_f16[GGML_TYPE_Q1_0], matmul_q1_0_f16, mmq_wg_denoms, warptile_mmq, vk_mat_mat_push_constants, 3)
         CREATE_MM2(pipeline_dequant_mul_mat_mat_f16[GGML_TYPE_Q4_0], matmul_q4_0_f16, mmq_wg_denoms, warptile_mmq, vk_mat_mat_push_constants, 3)
         CREATE_MM2(pipeline_dequant_mul_mat_mat_f16[GGML_TYPE_Q4_1], matmul_q4_1_f16, mmq_wg_denoms, warptile_mmq, vk_mat_mat_push_constants, 3)
@@ -3694,11 +3694,11 @@ static void ggml_vk_load_shaders(vk_device& device) {
         GGML_ASSERT(device->subgroup_ballot);
 
         CREATE_MM2(pipeline_matmul_id_f16, matmul_id_subgroup_f16, wg_denoms, warptile, vk_mat_mat_id_push_constants, 5)
-#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)  // 条件编译
         if (device->coopmat_bf16_support) {
             CREATE_MM(pipeline_matmul_id_bf16, matmul_id_subgroup_bf16, , wg_denoms, warptile, vk_mat_mat_id_push_constants, 5)
         }
-#endif
+#endif  // 条件编译结束
         CREATE_MM2(pipeline_dequant_mul_mat_mat_id[GGML_TYPE_Q1_0], matmul_id_subgroup_q1_0_f16, mmqid_wg_denoms, warptile_mmqid, vk_mat_mat_id_push_constants, 5)
         CREATE_MM2(pipeline_dequant_mul_mat_mat_id[GGML_TYPE_Q4_0], matmul_id_subgroup_q4_0_f16, mmqid_wg_denoms, warptile_mmqid, vk_mat_mat_id_push_constants, 5)
         CREATE_MM2(pipeline_dequant_mul_mat_mat_id[GGML_TYPE_Q4_1], matmul_id_subgroup_q4_1_f16, mmqid_wg_denoms, warptile_mmqid, vk_mat_mat_id_push_constants, 5)
@@ -3724,8 +3724,8 @@ static void ggml_vk_load_shaders(vk_device& device) {
 #undef CREATE_MM
 #undef CREATE_MM2
     } else
-#endif  // defined(VK_NV_cooperative_matrix2) && defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
-#if defined(VK_KHR_cooperative_matrix) && defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+#endif  // defined(VK_NV_cooperative_matrix2) && defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)  // 条件编译结束
+#if defined(VK_KHR_cooperative_matrix) && defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)  // 条件编译
     if (device->coopmat_support) {
         // Create 6 variants, {s,m,l}x{unaligned,aligned}
 #define CREATE_MM(TYPE, PIPELINE_NAME, NAMELC, F16ACC, WG_DENOMS, WARPTILE, PUSHCONST, PARAMCOUNT, ID) \
@@ -3755,11 +3755,11 @@ static void ggml_vk_load_shaders(vk_device& device) {
         CREATE_MM(GGML_TYPE_F32, pipeline_matmul_f32_f16, matmul_f32_f16, , wg_denoms, warptile, vk_mat_mat_push_constants, 3, );
         CREATE_MM2(GGML_TYPE_F16, pipeline_matmul_f16, matmul_f16, wg_denoms, warptile, vk_mat_mat_push_constants, 3, );
         CREATE_MM2(GGML_TYPE_F16, pipeline_matmul_f16_f32, matmul_f16_f32, wg_denoms, warptile, vk_mat_mat_push_constants, 3, );
-#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)  // 条件编译
         if (device->coopmat_bf16_support) {
             CREATE_MM(GGML_TYPE_BF16, pipeline_matmul_bf16, matmul_bf16, , wg_denoms, warptile, vk_mat_mat_push_constants, 3, )
         }
-#endif
+#endif  // 条件编译结束
 
         if (device->coopmat_acc_f16_support) {
             CREATE_MM2(GGML_TYPE_Q1_0, pipeline_dequant_mul_mat_mat[GGML_TYPE_Q1_0], matmul_q1_0_f32, mmq_wg_denoms, warptile_mmq, vk_mat_mat_push_constants, 3, );
@@ -3816,11 +3816,11 @@ static void ggml_vk_load_shaders(vk_device& device) {
         CREATE_MM(GGML_TYPE_F32, pipeline_matmul_id_f32, matmul_id_subgroup_f32_f32, , wg_denoms, warptile, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id);
         CREATE_MM2(GGML_TYPE_F16, pipeline_matmul_id_f16, matmul_id_subgroup_f16, wg_denoms, warptile, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id);
         CREATE_MM2(GGML_TYPE_F16, pipeline_matmul_id_f16_f32, matmul_id_subgroup_f16_f32, wg_denoms, warptile, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id);
-#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)  // 条件编译
         if (device->coopmat_bf16_support) {
             CREATE_MM(GGML_TYPE_BF16, pipeline_matmul_id_bf16, matmul_id_subgroup_bf16, , wg_denoms, warptile, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id);
         }
-#endif
+#endif  // 条件编译结束
 
         CREATE_MM2(GGML_TYPE_Q1_0, pipeline_dequant_mul_mat_mat_id[GGML_TYPE_Q1_0], matmul_id_subgroup_q1_0_f32, mmq_wg_denoms, warptile_mmq, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id);
         CREATE_MM2(GGML_TYPE_Q4_0, pipeline_dequant_mul_mat_mat_id[GGML_TYPE_Q4_0], matmul_id_subgroup_q4_0_f32, mmq_wg_denoms, warptile_mmq, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id);
@@ -3847,7 +3847,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
 #undef CREATE_MM2
 #undef CREATE_MM
     } else
-#endif  // defined(VK_KHR_cooperative_matrix) && defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+#endif  // defined(VK_KHR_cooperative_matrix) && defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)  // 条件编译结束
     if (device->fp16) {
         // Create 6 variants, {s,m,l}x{unaligned,aligned}
 #define CREATE_MM(TYPE, PIPELINE_NAME, NAMELC, F16ACC, WG_DENOMS, WARPTILE, PUSHCONST, PARAMCOUNT, ID, REQSUBGROUPSIZE) \
@@ -3911,7 +3911,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
         CREATE_MM2(GGML_TYPE_MXFP4,   pipeline_dequant_mul_mat_mat[GGML_TYPE_MXFP4],   matmul_mxfp4_f32,   mmq_wg_denoms, warptile_mmq, vk_mat_mat_push_constants, 3, , 0);
         CREATE_MM2(GGML_TYPE_NVFP4,   pipeline_dequant_mul_mat_mat[GGML_TYPE_NVFP4],   matmul_nvfp4_f32,   mmq_wg_denoms, warptile_mmq, vk_mat_mat_push_constants, 3, , 0);
 
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
         if (device->integer_dot_product) {
             CREATE_MMQ(GGML_TYPE_Q4_0, pipeline_dequant_mul_mat_mat_q8_1[GGML_TYPE_Q4_0], matmul_q4_0_q8_1, mmq_wg_denoms, warptile_mmq_int, vk_mat_mat_push_constants, 3, , 0);
             CREATE_MMQ(GGML_TYPE_Q4_1, pipeline_dequant_mul_mat_mat_q8_1[GGML_TYPE_Q4_1], matmul_q4_1_q8_1, mmq_wg_denoms, warptile_mmq_int, vk_mat_mat_push_constants, 3, , 0);
@@ -3927,7 +3927,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
             CREATE_MMQ(GGML_TYPE_Q5_K, pipeline_dequant_mul_mat_mat_q8_1[GGML_TYPE_Q5_K], matmul_q5_k_q8_1, mmq_wg_denoms, warptile_mmq_int_k, vk_mat_mat_push_constants, 3, , 0);
             CREATE_MMQ(GGML_TYPE_Q6_K, pipeline_dequant_mul_mat_mat_q8_1[GGML_TYPE_Q6_K], matmul_q6_k_q8_1, mmq_wg_denoms, warptile_mmq_int_k, vk_mat_mat_push_constants, 3, , 0);
         }
-#endif
+#endif  // 条件编译结束
 
         if (device->subgroup_ballot && device->subgroup_require_full_support && subgroup_min_size_16) {
             CREATE_MM(GGML_TYPE_F32, pipeline_matmul_id_f32, matmul_id_subgroup_f32_f32, , wg_denoms, warptile_id, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, mul_mat_subgroup_size_16);
@@ -3958,7 +3958,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
             CREATE_MM2(GGML_TYPE_MXFP4,   pipeline_dequant_mul_mat_mat_id[GGML_TYPE_MXFP4],   matmul_id_subgroup_mxfp4_f32,   mmq_wg_denoms, warptile_mmqid, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, mul_mat_subgroup_size);
             CREATE_MM2(GGML_TYPE_NVFP4,   pipeline_dequant_mul_mat_mat_id[GGML_TYPE_NVFP4],   matmul_id_subgroup_nvfp4_f32,   mmq_wg_denoms, warptile_mmqid, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, mul_mat_subgroup_size);
 
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
             if (device->integer_dot_product) {
                 CREATE_MMQ(GGML_TYPE_Q4_0, pipeline_dequant_mul_mat_mat_id_q8_1[GGML_TYPE_Q4_0], matmul_id_subgroup_q4_0_q8_1, mmq_wg_denoms, warptile_mmqid_int,   vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, mul_mat_subgroup_size);
                 CREATE_MMQ(GGML_TYPE_Q4_1, pipeline_dequant_mul_mat_mat_id_q8_1[GGML_TYPE_Q4_1], matmul_id_subgroup_q4_1_q8_1, mmq_wg_denoms, warptile_mmqid_int,   vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, mul_mat_subgroup_size);
@@ -3974,7 +3974,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
                 CREATE_MMQ(GGML_TYPE_Q5_K, pipeline_dequant_mul_mat_mat_id_q8_1[GGML_TYPE_Q5_K], matmul_id_subgroup_q5_k_q8_1, mmq_wg_denoms, warptile_mmqid_int_k, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, mul_mat_subgroup_size_16);
                 CREATE_MMQ(GGML_TYPE_Q6_K, pipeline_dequant_mul_mat_mat_id_q8_1[GGML_TYPE_Q6_K], matmul_id_subgroup_q6_k_q8_1, mmq_wg_denoms, warptile_mmqid_int_k, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, mul_mat_subgroup_size_16);
             }
-#endif
+#endif  // 条件编译结束
         } else {
             CREATE_MM(GGML_TYPE_F32, pipeline_matmul_id_f32, matmul_id_f32_f32, , wg_denoms, warptile, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, 0);
             CREATE_MM2(GGML_TYPE_F16, pipeline_matmul_id_f16, matmul_id_f16, wg_denoms, warptile, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, 0);
@@ -4004,7 +4004,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
             CREATE_MM2(GGML_TYPE_MXFP4,   pipeline_dequant_mul_mat_mat_id[GGML_TYPE_MXFP4],   matmul_id_mxfp4_f32,   mmq_wg_denoms, warptile_mmqid, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, 0);
             CREATE_MM2(GGML_TYPE_NVFP4,   pipeline_dequant_mul_mat_mat_id[GGML_TYPE_NVFP4],   matmul_id_nvfp4_f32,   mmq_wg_denoms, warptile_mmqid, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, 0);
 
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
             if (device->integer_dot_product) {
                 CREATE_MMQ(GGML_TYPE_Q4_0, pipeline_dequant_mul_mat_mat_id_q8_1[GGML_TYPE_Q4_0], matmul_id_q4_0_q8_1, mmq_wg_denoms, warptile_mmqid_int,   vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, 0);
                 CREATE_MMQ(GGML_TYPE_Q4_1, pipeline_dequant_mul_mat_mat_id_q8_1[GGML_TYPE_Q4_1], matmul_id_q4_1_q8_1, mmq_wg_denoms, warptile_mmqid_int,   vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, 0);
@@ -4020,7 +4020,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
                 CREATE_MMQ(GGML_TYPE_Q5_K, pipeline_dequant_mul_mat_mat_id_q8_1[GGML_TYPE_Q5_K], matmul_id_q5_k_q8_1, mmq_wg_denoms, warptile_mmqid_int_k, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, 0);
                 CREATE_MMQ(GGML_TYPE_Q6_K, pipeline_dequant_mul_mat_mat_id_q8_1[GGML_TYPE_Q6_K], matmul_id_q6_k_q8_1, mmq_wg_denoms, warptile_mmqid_int_k, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, 0);
             }
-#endif
+#endif  // 条件编译结束
         }
 #undef CREATE_MM2
 #undef CREATE_MMQ
@@ -4080,7 +4080,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
         CREATE_MM(GGML_TYPE_MXFP4,   pipeline_dequant_mul_mat_mat[GGML_TYPE_MXFP4].f32acc,   matmul_mxfp4_f32,   , mmq_wg_denoms, warptile_mmq, vk_mat_mat_push_constants, 3, , 0);
         CREATE_MM(GGML_TYPE_NVFP4,   pipeline_dequant_mul_mat_mat[GGML_TYPE_NVFP4].f32acc,   matmul_nvfp4_f32,   , mmq_wg_denoms, warptile_mmq, vk_mat_mat_push_constants, 3, , 0);
 
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
         if (device->integer_dot_product) {
             CREATE_MMQ(GGML_TYPE_Q4_0, pipeline_dequant_mul_mat_mat_q8_1[GGML_TYPE_Q4_0].f32acc, matmul_q4_0_q8_1, mmq_wg_denoms, warptile_mmq_int, vk_mat_mat_push_constants, 3, );
             CREATE_MMQ(GGML_TYPE_Q4_1, pipeline_dequant_mul_mat_mat_q8_1[GGML_TYPE_Q4_1].f32acc, matmul_q4_1_q8_1, mmq_wg_denoms, warptile_mmq_int, vk_mat_mat_push_constants, 3, );
@@ -4094,7 +4094,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
             CREATE_MMQ(GGML_TYPE_Q5_K, pipeline_dequant_mul_mat_mat_q8_1[GGML_TYPE_Q5_K].f32acc, matmul_q5_k_q8_1, mmq_wg_denoms, warptile_mmq_int_k, vk_mat_mat_push_constants, 3, );
             CREATE_MMQ(GGML_TYPE_Q6_K, pipeline_dequant_mul_mat_mat_q8_1[GGML_TYPE_Q6_K].f32acc, matmul_q6_k_q8_1, mmq_wg_denoms, warptile_mmq_int_k, vk_mat_mat_push_constants, 3, );
         }
-#endif
+#endif  // 条件编译结束
 
         if (device->subgroup_ballot && device->subgroup_require_full_support && subgroup_min_size_16) {
             CREATE_MM(GGML_TYPE_F32, pipeline_matmul_id_f32, matmul_id_subgroup_f32_f32, , wg_denoms, warptile_id, vk_mat_mat_id_push_constants, mul_mat_id_param_count, _id, mul_mat_subgroup_size_16);
@@ -4156,9 +4156,9 @@ static void ggml_vk_load_shaders(vk_device& device) {
     }
     // reusing CREATE_MM from the fp32 path
     if ((device->coopmat2 || device->coopmat_support)
-#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)  // 条件编译
         && !device->coopmat_bf16_support
-#endif
+#endif  // 条件编译结束
         ) {
         const uint32_t s_warptile_wm = device->subgroup_size == 8 ? 8 : 32;
 
@@ -4278,7 +4278,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
             ggml_vk_create_pipeline(device, device->pipeline_dequant_mul_mat_vec_f16_f32[w][GGML_TYPE_MXFP4][i],   "mul_mat_vec_mxfp4_f16_f32",   arr_dmmv_mxfp4_f16_f32_len[reduc16],   arr_dmmv_mxfp4_f16_f32_data[reduc16],   "main", mul_mat_vec_num_bindings, sizeof(vk_mat_vec_push_constants), {rm_iq, 1, 1}, {wg_size_subgroup16, rm_iq, i+1}, 1, true, use_subgroups16, force_subgroup_size16);
             ggml_vk_create_pipeline(device, device->pipeline_dequant_mul_mat_vec_f16_f32[w][GGML_TYPE_NVFP4][i],   "mul_mat_vec_nvfp4_f16_f32",   arr_dmmv_nvfp4_f16_f32_len[reduc16],   arr_dmmv_nvfp4_f16_f32_data[reduc16],   "main", mul_mat_vec_num_bindings, sizeof(vk_mat_vec_push_constants), {rm_iq, 1, 1}, {wg_size_subgroup16, rm_iq, i+1}, 1, true, use_subgroups16, force_subgroup_size16);
 
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
             if (device->integer_dot_product) {
                 const uint32_t subgroup_size_int = (device->vendor_id == VK_VENDOR_ID_INTEL && device->subgroup_size_control) ? device->subgroup_min_size : device->subgroup_size;
                 const uint32_t wg_size_subgroup_int = (w == DMMV_WG_SIZE_SUBGROUP) ? subgroup_size_int : (subgroup_size_int * 4);
@@ -4301,7 +4301,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
                 ggml_vk_create_pipeline(device, device->pipeline_dequant_mul_mat_vec_q8_1_f32[w][GGML_TYPE_IQ1_M][i], "mul_mat_vec_iq1_m_q8_1_f32", arr_dmmv_iq1_m_q8_1_f32_len[reduc], arr_dmmv_iq1_m_q8_1_f32_data[reduc], "main", mul_mat_vec_num_bindings, sizeof(vk_mat_vec_push_constants), {1*rm_iq_int(i), 1, 1}, {wg_size_subgroup_int, 1*rm_iq_int(i), i+1}, 1, true, use_subgroups, subgroup_size_int);
 
             }
-#endif // GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT
+#endif // GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT  // 条件编译结束
         }
 
         ggml_vk_create_pipeline(device, device->pipeline_dequant_mul_mat_vec_id_f32[w][GGML_TYPE_F32 ], "mul_mat_vec_id_f32_f32",        arr_dmmv_id_f32_f32_f32_len[reduc],     arr_dmmv_id_f32_f32_f32_data[reduc],     "main", mul_mat_vec_id_num_bindings, sizeof(vk_mat_vec_id_push_constants), {1, 1, 1}, {wg_size_subgroup, 1}, 1, false, use_subgroups, force_subgroup_size);
@@ -4330,7 +4330,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
         ggml_vk_create_pipeline(device, device->pipeline_dequant_mul_mat_vec_id_f32[w][GGML_TYPE_MXFP4],   "mul_mat_vec_id_mxfp4_f32",   arr_dmmv_id_mxfp4_f32_f32_len[reduc16],   arr_dmmv_id_mxfp4_f32_f32_data[reduc16],   "main", mul_mat_vec_id_num_bindings, sizeof(vk_mat_vec_id_push_constants), {rm_iq, 1, 1}, {wg_size_subgroup16, rm_iq}, 1, true, use_subgroups16, force_subgroup_size16);
         ggml_vk_create_pipeline(device, device->pipeline_dequant_mul_mat_vec_id_f32[w][GGML_TYPE_NVFP4],   "mul_mat_vec_id_nvfp4_f32",   arr_dmmv_id_nvfp4_f32_f32_len[reduc16],   arr_dmmv_id_nvfp4_f32_f32_data[reduc16],   "main", mul_mat_vec_id_num_bindings, sizeof(vk_mat_vec_id_push_constants), {rm_iq, 1, 1}, {wg_size_subgroup16, rm_iq}, 1, true, use_subgroups16, force_subgroup_size16);
 
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
         if (device->integer_dot_product) {
             const uint32_t subgroup_size_int = (device->vendor_id == VK_VENDOR_ID_INTEL && device->subgroup_size_control) ? device->subgroup_min_size : device->subgroup_size;
             const uint32_t wg_size_subgroup_int = (w == DMMV_WG_SIZE_SUBGROUP) ? subgroup_size_int : (subgroup_size_int * 4);
@@ -4352,14 +4352,14 @@ static void ggml_vk_load_shaders(vk_device& device) {
             ggml_vk_create_pipeline(device, device->pipeline_dequant_mul_mat_vec_id_q8_1_f32[w][GGML_TYPE_IQ1_S], "mul_mat_vec_id_iq1_s_q8_1_f32", arr_dmmv_id_iq1_s_q8_1_f32_len[reduc], arr_dmmv_id_iq1_s_q8_1_f32_data[reduc], "main", mul_mat_vec_id_num_bindings, sizeof(vk_mat_vec_id_push_constants), {1*rm_iq_int(0), 1, 1}, {wg_size_subgroup_int, 1*rm_iq_int(0)}, 1, true, use_subgroups, subgroup_size_int);
             ggml_vk_create_pipeline(device, device->pipeline_dequant_mul_mat_vec_id_q8_1_f32[w][GGML_TYPE_IQ1_M], "mul_mat_vec_id_iq1_m_q8_1_f32", arr_dmmv_id_iq1_m_q8_1_f32_len[reduc], arr_dmmv_id_iq1_m_q8_1_f32_data[reduc], "main", mul_mat_vec_id_num_bindings, sizeof(vk_mat_vec_id_push_constants), {1*rm_iq_int(0), 1, 1}, {wg_size_subgroup_int, 1*rm_iq_int(0)}, 1, true, use_subgroups, subgroup_size_int);
         }
-#endif // GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT
+#endif // GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT  // 条件编译结束
     }
 
-#if !defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#if !defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
     GGML_UNUSED(rm_stdq_int);
     GGML_UNUSED(rm_kq_int);
     GGML_UNUSED(rm_iq_int);
-#endif
+#endif  // 条件编译结束
 
     // dequant shaders
     ggml_vk_create_pipeline(device, device->pipeline_dequant[GGML_TYPE_F32 ], "f32_to_f16",   dequant_f32_len,  dequant_f32_data,  "main", 2, 5 * sizeof(uint32_t), {256 * 16, 1, 1}, {}, 1);
@@ -4536,7 +4536,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
         s += std::string(src0_f16 ? "_f16" : "_f32");
         s += std::string(src1_f16 ? "_f16" : "_f32");
         s += std::string(dst_f16 ? "_f16" : "_f32");
-        return s;
+        return s;  // 返回
     };
 
 #define CREATE_BINARY(name, namemod, spec, bindings) \
@@ -4701,7 +4701,7 @@ static void ggml_vk_load_shaders(vk_device& device) {
         if (i <= device->max_workgroup_size_log2) {
             uint32_t nary_shmem = 2 * sizeof(int) * BLOCK_SIZE +
                                   sizeof(int) * device->subgroup_size +
-                                  2 * sizeof(int) +
+                                  2 * sizeof(int) +  // sizeof
                                   2 * (BLOCK_SIZE / device->subgroup_size) * sizeof(int);
             if (device->subgroup_arithmetic && device->subgroup_require_full_support && device->subgroup_shuffle && device->subgroup_ballot &&
                 nary_shmem <= device->properties.limits.maxComputeSharedMemorySize) {
@@ -4831,11 +4831,11 @@ static void ggml_vk_load_shaders(vk_device& device) {
         vk_conv_block_size conv2d_BS = vk_conv_block_sizes[s];
         bool conv2d_UNROLL = true;
 
-#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)  // 条件编译
         if (device->coopmat2) {
             conv2d_SHMEM_PAD = 8; // 8 float16_t
         }
-#endif
+#endif  // 条件编译结束
 
         if (device->vendor_id == VK_VENDOR_ID_INTEL) {
             conv2d_SHMEM_PAD = 0;
@@ -4897,11 +4897,11 @@ static void ggml_vk_load_shaders(vk_device& device) {
         CREATE_CONV(conv2d, _f16_f32, spv_suffix) \
         CREATE_CONV(conv_transpose_2d, _f32, spv_suffix) \
         CREATE_CONV(conv_transpose_2d, _f16_f32, spv_suffix)
-#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)  // 条件编译
         if (device->coopmat2) {
             CREATE_CONVS(_cm2)
         } else
-#endif
+#endif  // 条件编译结束
         if (conv2d_UNROLL) {
             CREATE_CONVS(_unroll)
         } else {
@@ -4927,8 +4927,8 @@ static void ggml_vk_load_shaders(vk_device& device) {
     }
 }
 
-static bool ggml_vk_khr_cooperative_matrix_support(const vk::PhysicalDeviceProperties& props, const vk::PhysicalDeviceDriverProperties& driver_props, vk_device_architecture arch);
-static uint32_t ggml_vk_intel_shader_core_count(const vk::PhysicalDevice& vkdev);
+static bool ggml_vk_khr_cooperative_matrix_support(const vk::PhysicalDeviceProperties& props, const vk::PhysicalDeviceDriverProperties& driver_props, vk_device_architecture arch);  // ggml_vk_khr_cooperative_matrix_support
+static uint32_t ggml_vk_intel_shader_core_count(const vk::PhysicalDevice& vkdev);  // ggml_vk_intel_shader_core_count
 
 static vk_device ggml_vk_get_device(size_t idx) {
     VK_LOG_DEBUG("ggml_vk_get_device(" << idx << ")");
@@ -4994,29 +4994,29 @@ static vk_device ggml_vk_get_device(size_t idx) {
                 pipeline_robustness = true;
             } else if (strcmp("VK_EXT_subgroup_size_control", properties.extensionName) == 0) {
                 device->subgroup_size_control = true;
-#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)  // 条件编译
             } else if (strcmp("VK_KHR_cooperative_matrix", properties.extensionName) == 0 &&
                        !getenv("GGML_VK_DISABLE_COOPMAT")) {
                 device->coopmat_support = true;
                 device->coopmat_m = 0;
                 device->coopmat_n = 0;
                 device->coopmat_k = 0;
-#endif
-#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+#endif  // 条件编译结束
+#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)  // 条件编译
             } else if (strcmp("VK_NV_cooperative_matrix2", properties.extensionName) == 0 &&
                        !getenv("GGML_VK_DISABLE_COOPMAT2")) {
                 coopmat2_support = true;
-#endif
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#endif  // 条件编译结束
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
             } else if (strcmp("VK_KHR_shader_integer_dot_product", properties.extensionName) == 0 &&
                        !getenv("GGML_VK_DISABLE_INTEGER_DOT_PRODUCT")) {
                 device->integer_dot_product = true;
-#endif
-#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)
+#endif  // 条件编译结束
+#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)  // 条件编译
             } else if (strcmp("VK_KHR_shader_bfloat16", properties.extensionName) == 0 &&
                        !getenv("GGML_VK_DISABLE_BFLOAT16")) {
                 bfloat16_support = true;
-#endif
+#endif  // 条件编译结束
             } else if (strcmp("VK_KHR_pipeline_executable_properties", properties.extensionName) == 0) {
                 pipeline_executable_properties_support = true;
             } else if (strcmp("VK_EXT_memory_priority", properties.extensionName) == 0 &&
@@ -5024,10 +5024,10 @@ static vk_device ggml_vk_get_device(size_t idx) {
                 device->memory_priority = true;
             } else if (strcmp("VK_EXT_external_memory_host", properties.extensionName) == 0) {
                 device->external_memory_host = true;
-#if defined(VK_EXT_shader_64bit_indexing)
+#if defined(VK_EXT_shader_64bit_indexing)  // 条件编译
             } else if (strcmp("VK_EXT_shader_64bit_indexing", properties.extensionName) == 0) {
                 device->shader_64b_indexing = true;
-#endif
+#endif  // 条件编译结束
             }
         }
 
@@ -5069,13 +5069,13 @@ static vk_device ggml_vk_get_device(size_t idx) {
             last_struct = (VkBaseOutStructure *)&subgroup_size_control_props;
         }
 
-#if defined(VK_NV_cooperative_matrix2)
+#if defined(VK_NV_cooperative_matrix2)  // 条件编译
         vk::PhysicalDeviceCooperativeMatrix2PropertiesNV coopmat2_props;
         if (coopmat2_support) {
             last_struct->pNext = (VkBaseOutStructure *)&coopmat2_props;
             last_struct = (VkBaseOutStructure *)&coopmat2_props;
         }
-#endif
+#endif  // 条件编译结束
 
         if (device->integer_dot_product) {
             last_struct->pNext = (VkBaseOutStructure *)&shader_integer_dot_product_props;
@@ -5156,12 +5156,12 @@ static vk_device ggml_vk_get_device(size_t idx) {
                                  (vk11_props.subgroupSupportedOperations & vk::SubgroupFeatureFlagBits::eBasic);
         device->subgroup_arithmetic = (vk11_props.subgroupSupportedStages & vk::ShaderStageFlagBits::eCompute) &&
                                       (vk11_props.subgroupSupportedOperations & vk::SubgroupFeatureFlagBits::eArithmetic);
-#ifdef __APPLE__
+#ifdef __APPLE__  // 如果定义了 __APPLE__ 则编译
         // Workaround for subgroup arithmetic failing on MoltenVK with AMD GPUs (issue 15846)
         if (device->vendor_id == VK_VENDOR_ID_AMD) {
             device->subgroup_arithmetic = false;
         }
-#endif
+#endif  // 条件编译结束
         device->subgroup_shuffle = (vk11_props.subgroupSupportedStages & vk::ShaderStageFlagBits::eCompute) &&
                                    (vk11_props.subgroupSupportedOperations & vk::SubgroupFeatureFlagBits::eShuffle);
         device->subgroup_clustered = (vk11_props.subgroupSupportedStages & vk::ShaderStageFlagBits::eCompute) &&
@@ -5261,7 +5261,7 @@ static vk_device ggml_vk_get_device(size_t idx) {
             last_struct = (VkBaseOutStructure *)&subgroup_size_control_features;
         }
 
-#if defined(VK_KHR_cooperative_matrix)
+#if defined(VK_KHR_cooperative_matrix)  // 条件编译
         VkPhysicalDeviceCooperativeMatrixFeaturesKHR coopmat_features;
         coopmat_features.pNext = nullptr;
         coopmat_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_KHR;
@@ -5271,9 +5271,9 @@ static vk_device ggml_vk_get_device(size_t idx) {
             last_struct->pNext = (VkBaseOutStructure *)&coopmat_features;
             last_struct = (VkBaseOutStructure *)&coopmat_features;
         }
-#endif
+#endif  // 条件编译结束
 
-#if defined(VK_NV_cooperative_matrix2)
+#if defined(VK_NV_cooperative_matrix2)  // 条件编译
         VkPhysicalDeviceCooperativeMatrix2FeaturesNV coopmat2_features {};
         coopmat2_features.pNext = nullptr;
         coopmat2_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_FEATURES_NV;
@@ -5282,9 +5282,9 @@ static vk_device ggml_vk_get_device(size_t idx) {
             last_struct = (VkBaseOutStructure *)&coopmat2_features;
             device_extensions.push_back("VK_NV_cooperative_matrix2");
         }
-#endif
+#endif  // 条件编译结束
 
-#if defined(VK_KHR_shader_bfloat16)
+#if defined(VK_KHR_shader_bfloat16)  // 条件编译
         VkPhysicalDeviceShaderBfloat16FeaturesKHR bfloat16_features {};
         bfloat16_features.pNext = nullptr;
         bfloat16_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_BFLOAT16_FEATURES_KHR;
@@ -5293,7 +5293,7 @@ static vk_device ggml_vk_get_device(size_t idx) {
             last_struct = (VkBaseOutStructure *)&bfloat16_features;
             device_extensions.push_back("VK_KHR_shader_bfloat16");
         }
-#endif
+#endif  // 条件编译结束
 
         VkPhysicalDeviceMaintenance4Features maint4_features {};
         maint4_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES;
@@ -5323,7 +5323,7 @@ static vk_device ggml_vk_get_device(size_t idx) {
             device_extensions.push_back("VK_EXT_external_memory_host");
         }
 
-#if defined(VK_EXT_shader_64bit_indexing)
+#if defined(VK_EXT_shader_64bit_indexing)  // 条件编译
         VkPhysicalDeviceShader64BitIndexingFeaturesEXT shader_64bit_indexing_features {};
         shader_64bit_indexing_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_64_BIT_INDEXING_FEATURES_EXT;
         if (device->shader_64b_indexing) {
@@ -5331,7 +5331,7 @@ static vk_device ggml_vk_get_device(size_t idx) {
             last_struct = (VkBaseOutStructure *)&shader_64bit_indexing_features;
             device_extensions.push_back("VK_EXT_shader_64bit_indexing");
         }
-#endif
+#endif  // 条件编译结束
 
         vkGetPhysicalDeviceFeatures2(device->physical_device, &device_features2);
 
@@ -5339,11 +5339,11 @@ static vk_device ggml_vk_get_device(size_t idx) {
 
         device->fp16 = device->fp16 && vk12_features.shaderFloat16;
 
-#if defined(VK_KHR_shader_bfloat16)
+#if defined(VK_KHR_shader_bfloat16)  // 条件编译
         device->bf16 = bfloat16_support && bfloat16_features.shaderBFloat16Type;
-#else
+#else  // 否则
         device->bf16 = false;
-#endif
+#endif  // 条件编译结束
 
         device->pipeline_robustness = pl_robustness_features.pipelineRobustness;
 
@@ -5367,13 +5367,13 @@ static vk_device ggml_vk_get_device(size_t idx) {
 
         device->subgroup_require_full_support = subgroup_size_control_features.computeFullSubgroups;
 
-#if defined(VK_KHR_cooperative_matrix)
+#if defined(VK_KHR_cooperative_matrix)  // 条件编译
         device->coopmat_support = device->coopmat_support && coopmat_features.cooperativeMatrix;
         device->coopmat1_fa_support = device->coopmat_support && device->subgroup_require_full_support;
-#endif
+#endif  // 条件编译结束
 
         if (coopmat2_support) {
-#if defined(VK_NV_cooperative_matrix2) && defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+#if defined(VK_NV_cooperative_matrix2) && defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)  // 条件编译
             if (coopmat2_features.cooperativeMatrixWorkgroupScope &&
                 coopmat2_features.cooperativeMatrixFlexibleDimensions &&
                 coopmat2_features.cooperativeMatrixReductions &&
@@ -5445,7 +5445,7 @@ static vk_device ggml_vk_get_device(size_t idx) {
                     device->coopmat2 = true;
                 }
             }
-#endif
+#endif  // 条件编译结束
         }
 
         if (!vk11_features.storageBuffer16BitAccess) {
@@ -5455,15 +5455,15 @@ static vk_device ggml_vk_get_device(size_t idx) {
 
         device_extensions.push_back("VK_KHR_16bit_storage");
 
-#ifdef GGML_VULKAN_VALIDATE
+#ifdef GGML_VULKAN_VALIDATE  // 如果定义了 GGML_VULKAN_VALIDATE 则编译
         device_extensions.push_back("VK_KHR_shader_non_semantic_info");
-#endif
+#endif  // 条件编译结束
 
         if (device->fp16) {
             device_extensions.push_back("VK_KHR_shader_float16_int8");
         }
 
-#if defined(VK_KHR_cooperative_matrix)
+#if defined(VK_KHR_cooperative_matrix)  // 条件编译
         if (device->coopmat_support) {
             // Query supported shapes
             std::vector<VkCooperativeMatrixPropertiesKHR> cm_props;
@@ -5535,7 +5535,7 @@ static vk_device ggml_vk_get_device(size_t idx) {
                     device->coopmat_int_n = prop.NSize;
                     device->coopmat_int_k = prop.KSize;
                 }
-#if defined(VK_KHR_shader_bfloat16) && defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)
+#if defined(VK_KHR_shader_bfloat16) && defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)  // 条件编译
                 if (prop.AType == VK_COMPONENT_TYPE_BFLOAT16_KHR &&
                     prop.BType == VK_COMPONENT_TYPE_BFLOAT16_KHR &&
                     prop.CType == VK_COMPONENT_TYPE_FLOAT32_KHR &&
@@ -5553,7 +5553,7 @@ static vk_device ggml_vk_get_device(size_t idx) {
                         device->coopmat_bf16_support = true;
                     }
                 }
-#endif
+#endif  // 条件编译结束
             }
 
             if (device->coopmat_m == 0 || !device->coopmat_acc_f32_support) {
@@ -5569,12 +5569,12 @@ static vk_device ggml_vk_get_device(size_t idx) {
         if (device->coopmat_support) {
             device_extensions.push_back("VK_KHR_cooperative_matrix");
         }
-#if defined(VK_KHR_shader_bfloat16)
+#if defined(VK_KHR_shader_bfloat16)  // 条件编译
         if (device->coopmat_bf16_support) {
             device_extensions.push_back("VK_KHR_shader_bfloat16");
         }
-#endif
-#endif
+#endif  // 条件编译结束
+#endif  // 条件编译结束
         device->name = GGML_VK_NAME + std::to_string(idx);
 
         device_create_info
@@ -5591,7 +5591,7 @@ static vk_device ggml_vk_get_device(size_t idx) {
         // Disable matmul tile sizes early if performance low or not supported
         for (uint32_t i = 0; i < GGML_TYPE_COUNT; ++i) {
             switch (device->vendor_id) {
-#ifndef GGML_VULKAN_RUN_TESTS
+#ifndef GGML_VULKAN_RUN_TESTS  // 如果未定义 GGML_VULKAN_RUN_TESTS 则编译
             case VK_VENDOR_ID_AMD:
                 device->mul_mat_l[i]    = device->coopmat_support && device->driver_id != vk::DriverId::eAmdProprietary;
                 device->mul_mat_m[i]    = true;
@@ -5621,7 +5621,7 @@ static vk_device ggml_vk_get_device(size_t idx) {
                 device->mul_mat_id_m[i] = true;
                 device->mul_mat_id_s[i] = false;
                 break;
-#endif
+#endif  // 条件编译结束
             default:
                 device->mul_mat_l[i] = true;
                 device->mul_mat_m[i] = true;
@@ -5692,10 +5692,10 @@ static vk_device ggml_vk_get_device(size_t idx) {
             device->mmvq_mode = 1;
         }
 
-        return device;
+        return device;  // 返回
     }
 
-    return vk_instance.devices[idx];
+    return vk_instance.devices[idx];  // 返回
 }
 
 static void ggml_vk_print_gpu_info(size_t idx) {
@@ -5726,26 +5726,26 @@ static void ggml_vk_print_gpu_info(size_t idx) {
             fp16_storage = true;
         } else if (strcmp("VK_KHR_shader_float16_int8", properties.extensionName) == 0) {
             fp16_compute = true;
-#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)  // 条件编译
        } else if (strcmp("VK_KHR_cooperative_matrix", properties.extensionName) == 0 &&
                    !getenv("GGML_VK_DISABLE_COOPMAT")) {
             coopmat_support = true;
-#endif
-#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+#endif  // 条件编译结束
+#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)  // 条件编译
         } else if (strcmp("VK_NV_cooperative_matrix2", properties.extensionName) == 0 &&
                    !getenv("GGML_VK_DISABLE_COOPMAT2")) {
             coopmat2_support = true;
-#endif
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#endif  // 条件编译结束
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
         } else if (strcmp("VK_KHR_shader_integer_dot_product", properties.extensionName) == 0 &&
                     !getenv("GGML_VK_DISABLE_INTEGER_DOT_PRODUCT")) {
             integer_dot_product = true;
-#endif
-#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)
+#endif  // 条件编译结束
+#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)  // 条件编译
         } else if (strcmp("VK_KHR_shader_bfloat16", properties.extensionName) == 0 &&
                     !getenv("GGML_VK_DISABLE_BFLOAT16")) {
             bfloat16_support = true;
-#endif
+#endif  // 条件编译结束
         }
     }
 
@@ -5792,7 +5792,7 @@ static void ggml_vk_print_gpu_info(size_t idx) {
     // Pointer to the last chain element
     last_struct = (VkBaseOutStructure *)&vk12_features;
 
-#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)  // 条件编译
     VkPhysicalDeviceCooperativeMatrixFeaturesKHR coopmat_features;
     coopmat_features.pNext = nullptr;
     coopmat_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_KHR;
@@ -5802,7 +5802,7 @@ static void ggml_vk_print_gpu_info(size_t idx) {
         last_struct->pNext = (VkBaseOutStructure *)&coopmat_features;
         last_struct = (VkBaseOutStructure *)&coopmat_features;
     }
-#endif
+#endif  // 条件编译结束
 
     VkPhysicalDeviceShaderIntegerDotProductFeaturesKHR shader_integer_dot_product_features {};
     shader_integer_dot_product_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_FEATURES_KHR;
@@ -5811,24 +5811,24 @@ static void ggml_vk_print_gpu_info(size_t idx) {
         last_struct = (VkBaseOutStructure *)&shader_integer_dot_product_features;
     }
 
-#if defined(VK_KHR_shader_bfloat16)
+#if defined(VK_KHR_shader_bfloat16)  // 条件编译
     VkPhysicalDeviceShaderBfloat16FeaturesKHR bfloat16_features {};
     bfloat16_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_BFLOAT16_FEATURES_KHR;
     if (bfloat16_support) {
         last_struct->pNext = (VkBaseOutStructure *)&bfloat16_features;
         last_struct = (VkBaseOutStructure *)&bfloat16_features;
     }
-#endif
+#endif  // 条件编译结束
 
     vkGetPhysicalDeviceFeatures2(physical_device, &device_features2);
 
     fp16 = fp16 && vk12_features.shaderFloat16;
 
-#if defined(VK_KHR_shader_bfloat16)
+#if defined(VK_KHR_shader_bfloat16)  // 条件编译
     bool bf16 = bfloat16_support && bfloat16_features.shaderBFloat16Type;
-#else
+#else  // 否则
     bool bf16 = false;
-#endif
+#endif  // 条件编译结束
 
     uint32_t default_subgroup_size = get_subgroup_size("", device_architecture);
     const size_t subgroup_size = (default_subgroup_size != 0) ? default_subgroup_size : subgroup_props.subgroupSize;
@@ -5839,9 +5839,9 @@ static void ggml_vk_print_gpu_info(size_t idx) {
                        && shader_integer_dot_product_features.shaderIntegerDotProduct;
 
     coopmat_support = coopmat_support
-#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)  // 条件编译
                    && coopmat_features.cooperativeMatrix
-#endif
+#endif  // 条件编译结束
                    && ggml_vk_khr_cooperative_matrix_support(props2.properties, driver_props, device_architecture);
 
     std::string matrix_cores = coopmat2_support ? "NV_coopmat2" : coopmat_support ? "KHR_coopmat" : "none";
@@ -5856,19 +5856,19 @@ static void ggml_vk_print_gpu_info(size_t idx) {
     }
 }
 
-static bool ggml_vk_instance_layer_settings_available();
-static bool ggml_vk_instance_portability_enumeration_ext_available(const std::vector<vk::ExtensionProperties>& instance_extensions);
-static bool ggml_vk_instance_debug_utils_ext_available(const std::vector<vk::ExtensionProperties> & instance_extensions);
-static bool ggml_vk_device_is_supported(const vk::PhysicalDevice & vkdev);
+static bool ggml_vk_instance_layer_settings_available();  // ggml_vk_instance_layer_settings_available
+static bool ggml_vk_instance_portability_enumeration_ext_available(const std::vector<vk::ExtensionProperties>& instance_extensions);  // ggml_vk_instance_portability_enumeration_ext_available
+static bool ggml_vk_instance_debug_utils_ext_available(const std::vector<vk::ExtensionProperties> & instance_extensions);  // ggml_vk_instance_debug_utils_ext_available
+static bool ggml_vk_device_is_supported(const vk::PhysicalDevice & vkdev);  // ggml_vk_device_is_supported
 
 static DispatchLoaderDynamic ggml_vk_default_dispatcher_instance;
 DispatchLoaderDynamic & ggml_vk_default_dispatcher() {
-    return ggml_vk_default_dispatcher_instance;
+    return ggml_vk_default_dispatcher_instance;  // 返回
 }
 
 static void ggml_vk_instance_init() {
     if (vk_instance_initialized) {
-        return;
+        return;  // 返回
     }
     VK_LOG_DEBUG("ggml_vk_instance_init()");
 
@@ -5886,9 +5886,9 @@ static void ggml_vk_instance_init() {
 
     const std::vector<vk::ExtensionProperties> instance_extensions = vk::enumerateInstanceExtensionProperties();
     const bool layer_settings = ggml_vk_instance_layer_settings_available();
-#ifdef __APPLE__
+#ifdef __APPLE__  // 如果定义了 __APPLE__ 则编译
     const bool portability_enumeration_ext = ggml_vk_instance_portability_enumeration_ext_available(instance_extensions);
-#endif
+#endif  // 条件编译结束
     const bool debug_utils_ext = ggml_vk_instance_debug_utils_ext_available(instance_extensions) && getenv("GGML_VK_DEBUG_MARKERS") != nullptr;
     std::vector<const char*> layers;
 
@@ -5899,11 +5899,11 @@ static void ggml_vk_instance_init() {
     if (layer_settings) {
         extensions.push_back("VK_EXT_layer_settings");
     }
-#ifdef __APPLE__
+#ifdef __APPLE__  // 如果定义了 __APPLE__ 则编译
     if (portability_enumeration_ext) {
         extensions.push_back("VK_KHR_portability_enumeration");
     }
-#endif
+#endif  // 条件编译结束
     if (debug_utils_ext) {
         extensions.push_back("VK_EXT_debug_utils");
     }
@@ -5919,11 +5919,11 @@ static void ggml_vk_instance_init() {
     };
     vk::LayerSettingsCreateInfoEXT layer_setting_info(settings);
     vk::InstanceCreateInfo instance_create_info(vk::InstanceCreateFlags{}, &app_info, layers, extensions, &layer_setting_info);
-#ifdef __APPLE__
+#ifdef __APPLE__  // 如果定义了 __APPLE__ 则编译
     if (portability_enumeration_ext) {
         instance_create_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
     }
-#endif
+#endif  // 条件编译结束
 
     vk_instance.instance = vk::createInstance(instance_create_info);
     vk_instance_initialized = true;
@@ -5978,7 +5978,7 @@ static void ggml_vk_instance_init() {
         // If no vulkan devices are found, return early
         if (devices.empty()) {
             GGML_LOG_INFO("ggml_vulkan: No devices found.\n");
-            return;
+            return;  // 返回
         }
 
         // Default to using all dedicated GPUs
@@ -6015,7 +6015,7 @@ static void ggml_vk_instance_init() {
                         );
                         bool both_molten_vk = (new_driver.driverID == vk::DriverId::eMoltenvk && old_driver.driverID == vk::DriverId::eMoltenvk);
 
-                        return same_uuid && !both_molten_vk;
+                        return same_uuid && !both_molten_vk;  // 返回
                     }
                 );
                 if (old_device == vk_instance.device_indices.end()) {
@@ -6048,9 +6048,9 @@ static void ggml_vk_instance_init() {
                             break;
                         case VK_VENDOR_ID_NVIDIA:
                             driver_priorities[vk::DriverId::eNvidiaProprietary] = 1;
-#if defined(VK_API_VERSION_1_3) && VK_HEADER_VERSION >= 235
+#if defined(VK_API_VERSION_1_3) && VK_HEADER_VERSION >= 235  // 条件编译
                             driver_priorities[vk::DriverId::eMesaNvk] = 2;
-#endif
+#endif  // 条件编译结束
                             break;
                         case VK_VENDOR_ID_QUALCOMM:
                             driver_priorities[vk::DriverId::eQualcommProprietary] = 1;
@@ -6093,7 +6093,7 @@ static void ggml_vk_instance_init() {
 
         if (vk_instance.device_indices.empty()) {
             GGML_LOG_INFO("ggml_vulkan: No devices found.\n");
-            return;
+            return;  // 返回
         }
     }
     GGML_LOG_DEBUG("ggml_vulkan: Found %zu Vulkan devices:\n", vk_instance.device_indices.size());
@@ -6152,12 +6152,12 @@ static void ggml_vk_init(ggml_backend_vk_context * ctx, size_t idx) {
         ctx->perf_logger = std::unique_ptr<vk_perf_logger>(new vk_perf_logger());
     }
 
-#ifdef GGML_VULKAN_CHECK_RESULTS
+#ifdef GGML_VULKAN_CHECK_RESULTS  // 如果定义了 GGML_VULKAN_CHECK_RESULTS 则编译
     const char* skip_checks = getenv("GGML_VULKAN_SKIP_CHECKS");
     vk_skip_checks = (skip_checks == NULL ? 0 : atoi(skip_checks));
     const char* output_tensor = getenv("GGML_VULKAN_OUTPUT_TENSOR");
     vk_output_tensor = (output_tensor == NULL ? 0 : atoi(output_tensor));
-#endif
+#endif  // 条件编译结束
 }
 
 static vk_pipeline ggml_vk_get_to_fp16(ggml_backend_vk_context * ctx, ggml_type type) {
@@ -6188,36 +6188,36 @@ static vk_pipeline ggml_vk_get_to_fp16(ggml_backend_vk_context * ctx, ggml_type 
         case GGML_TYPE_NVFP4:
             break;
         default:
-            return nullptr;
+            return nullptr;  // 返回
     }
 
-    return ctx->device->pipeline_dequant[type];
+    return ctx->device->pipeline_dequant[type];  // 返回
 }
 
 static vk_matmul_pipeline ggml_vk_get_mul_mat_mat_pipeline(ggml_backend_vk_context * ctx, ggml_type src0_type, ggml_type src1_type, ggml_prec prec) {
     VK_LOG_DEBUG("ggml_vk_get_mul_mat_mat_pipeline(" << ggml_type_name(src0_type) << ", " << ggml_type_name(src1_type) << ", " << prec << ")");
     if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_F32) {
-        return ctx->device->pipeline_matmul_f32;
+        return ctx->device->pipeline_matmul_f32;  // 返回
     }
     if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_F16) {
-        return ctx->device->pipeline_matmul_f32_f16;
+        return ctx->device->pipeline_matmul_f32_f16;  // 返回
     }
     if (src0_type == GGML_TYPE_BF16 && src1_type == GGML_TYPE_BF16) {
-        return ctx->device->pipeline_matmul_bf16;
+        return ctx->device->pipeline_matmul_bf16;  // 返回
     }
     if (prec == GGML_PREC_DEFAULT && ctx->device->fp16 && !(ctx->device->coopmat_support && !ctx->device->coopmat_acc_f16_support)) {
         if (src0_type == GGML_TYPE_F16 && src1_type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_matmul_f16_f32.f16acc;
+            return ctx->device->pipeline_matmul_f16_f32.f16acc;  // 返回
         }
         if (src0_type == GGML_TYPE_F16 && src1_type == GGML_TYPE_F16) {
-            return ctx->device->pipeline_matmul_f16.f16acc;
+            return ctx->device->pipeline_matmul_f16.f16acc;  // 返回
         }
     } else {
         if (src0_type == GGML_TYPE_F16 && src1_type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_matmul_f16_f32.f32acc;
+            return ctx->device->pipeline_matmul_f16_f32.f32acc;  // 返回
         }
         if (src0_type == GGML_TYPE_F16 && src1_type == GGML_TYPE_F16) {
-            return ctx->device->pipeline_matmul_f16.f32acc;
+            return ctx->device->pipeline_matmul_f16.f32acc;  // 返回
         }
     }
 
@@ -6226,14 +6226,14 @@ static vk_matmul_pipeline ggml_vk_get_mul_mat_mat_pipeline(ggml_backend_vk_conte
         vk_matmul_pipeline pipelines = ctx->device->pipeline_dequant_mul_mat_mat_q8_1[src0_type].f32acc;
 
         if (pipelines->is_empty()) {
-            return nullptr;
+            return nullptr;  // 返回
         }
 
-        return pipelines;
+        return pipelines;  // 返回
     }
 
     if (src1_type != GGML_TYPE_F32 && !ctx->device->coopmat2) {
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     switch (src0_type) {
@@ -6261,12 +6261,12 @@ static vk_matmul_pipeline ggml_vk_get_mul_mat_mat_pipeline(ggml_backend_vk_conte
         case GGML_TYPE_NVFP4:
             break;
         default:
-            return nullptr;
+            return nullptr;  // 返回
     }
 
     if (ctx->device->coopmat2) {
         assert(src1_type == GGML_TYPE_F16);
-        return prec == GGML_PREC_DEFAULT ? ctx->device->pipeline_dequant_mul_mat_mat_f16[src0_type].f16acc : ctx->device->pipeline_dequant_mul_mat_mat_f16[src0_type].f32acc;
+        return prec == GGML_PREC_DEFAULT ? ctx->device->pipeline_dequant_mul_mat_mat_f16[src0_type].f16acc : ctx->device->pipeline_dequant_mul_mat_mat_f16[src0_type].f32acc;  // 返回
     }
     if (ctx->device->coopmat_support) {
         return (ctx->device->fp16 && ctx->device->coopmat_acc_f16_support && prec == GGML_PREC_DEFAULT) ? ctx->device->pipeline_dequant_mul_mat_mat[src0_type].f16acc : ctx->device->pipeline_dequant_mul_mat_mat[src0_type].f32acc;
@@ -6296,7 +6296,7 @@ static vk_pipeline ggml_vk_get_dequantize_mul_mat_vec(ggml_backend_vk_context * 
             case GGML_TYPE_IQ1_M:
                 break;
             default:
-                return nullptr;
+                return nullptr;  // 返回
         }
     }
 
@@ -6328,7 +6328,7 @@ static vk_pipeline ggml_vk_get_dequantize_mul_mat_vec(ggml_backend_vk_context * 
         case GGML_TYPE_NVFP4:
             break;
         default:
-            return nullptr;
+            return nullptr;  // 返回
     }
 
     // heuristic to choose workgroup size
@@ -6352,33 +6352,33 @@ static vk_pipeline ggml_vk_get_dequantize_mul_mat_vec(ggml_backend_vk_context * 
         if (ctx->device->vendor_id == VK_VENDOR_ID_INTEL) {
             dmmv_wg = DMMV_WG_SIZE_SUBGROUP;
         }
-        return ctx->device->pipeline_dequant_mul_mat_vec_q8_1_f32[dmmv_wg][a_type][num_cols-1];
+        return ctx->device->pipeline_dequant_mul_mat_vec_q8_1_f32[dmmv_wg][a_type][num_cols-1];  // 返回
     }
 
-    return b_type == GGML_TYPE_F32 ? ctx->device->pipeline_dequant_mul_mat_vec_f32_f32[dmmv_wg][a_type][num_cols-1] : ctx->device->pipeline_dequant_mul_mat_vec_f16_f32[dmmv_wg][a_type][num_cols-1];
+    return b_type == GGML_TYPE_F32 ? ctx->device->pipeline_dequant_mul_mat_vec_f32_f32[dmmv_wg][a_type][num_cols-1] : ctx->device->pipeline_dequant_mul_mat_vec_f16_f32[dmmv_wg][a_type][num_cols-1];  // 返回
 }
 
 static vk_matmul_pipeline ggml_vk_get_mul_mat_mat_id_pipeline(ggml_backend_vk_context * ctx, ggml_type src0_type, ggml_type src1_type, ggml_prec prec) {
     VK_LOG_DEBUG("ggml_vk_get_mul_mat_mat_id_pipeline()");
     if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_F32) {
-        return ctx->device->pipeline_matmul_id_f32;
+        return ctx->device->pipeline_matmul_id_f32;  // 返回
     }
     if (src0_type == GGML_TYPE_BF16 && src1_type == GGML_TYPE_BF16) {
-        return ctx->device->pipeline_matmul_id_bf16;
+        return ctx->device->pipeline_matmul_id_bf16;  // 返回
     }
     if (prec == GGML_PREC_DEFAULT && ctx->device->fp16 && !(ctx->device->coopmat_support && !ctx->device->coopmat_acc_f16_support)) {
         if (src0_type == GGML_TYPE_F16 && src1_type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_matmul_id_f16_f32.f16acc;
+            return ctx->device->pipeline_matmul_id_f16_f32.f16acc;  // 返回
         }
         if (src0_type == GGML_TYPE_F16 && src1_type == GGML_TYPE_F16) {
-            return ctx->device->pipeline_matmul_id_f16.f16acc;
+            return ctx->device->pipeline_matmul_id_f16.f16acc;  // 返回
         }
     } else {
         if (src0_type == GGML_TYPE_F16 && src1_type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_matmul_id_f16_f32.f32acc;
+            return ctx->device->pipeline_matmul_id_f16_f32.f32acc;  // 返回
         }
         if (src0_type == GGML_TYPE_F16 && src1_type == GGML_TYPE_F16) {
-            return ctx->device->pipeline_matmul_id_f16.f32acc;
+            return ctx->device->pipeline_matmul_id_f16.f32acc;  // 返回
         }
     }
 
@@ -6387,10 +6387,10 @@ static vk_matmul_pipeline ggml_vk_get_mul_mat_mat_id_pipeline(ggml_backend_vk_co
         vk_matmul_pipeline pipelines = ctx->device->pipeline_dequant_mul_mat_mat_id_q8_1[src0_type].f32acc;
 
         if (pipelines->is_empty()) {
-            return nullptr;
+            return nullptr;  // 返回
         }
 
-        return pipelines;
+        return pipelines;  // 返回
     }
 
     GGML_ASSERT(src1_type == GGML_TYPE_F32 || (ctx->device->coopmat2 && src1_type == GGML_TYPE_F16));
@@ -6420,7 +6420,7 @@ static vk_matmul_pipeline ggml_vk_get_mul_mat_mat_id_pipeline(ggml_backend_vk_co
         case GGML_TYPE_NVFP4:
             break;
         default:
-            return nullptr;
+            return nullptr;  // 返回
     }
 
     vk_matmul_pipeline2& mmp = ctx->device->pipeline_dequant_mul_mat_mat_id[src0_type];
@@ -6430,10 +6430,10 @@ static vk_matmul_pipeline ggml_vk_get_mul_mat_mat_id_pipeline(ggml_backend_vk_co
     bool support_fp32acc = !mmp.f32acc->is_empty();
 
     if (support_fp16acc && (prefer_fp16acc || !support_fp32acc)) {
-        return mmp.f16acc;
+        return mmp.f16acc;  // 返回
     } else {
         GGML_ASSERT(support_fp32acc);
-        return mmp.f32acc;
+        return mmp.f32acc;  // 返回
     }
 }
 
@@ -6458,7 +6458,7 @@ static vk_pipeline ggml_vk_get_dequantize_mul_mat_vec_id(ggml_backend_vk_context
             case GGML_TYPE_IQ1_M:
                 break;
             default:
-                return nullptr;
+                return nullptr;  // 返回
         }
     }
 
@@ -6490,7 +6490,7 @@ static vk_pipeline ggml_vk_get_dequantize_mul_mat_vec_id(ggml_backend_vk_context
         case GGML_TYPE_NVFP4:
             break;
         default:
-            return nullptr;
+            return nullptr;  // 返回
     }
 
     // heuristic to choose workgroup size
@@ -6514,10 +6514,10 @@ static vk_pipeline ggml_vk_get_dequantize_mul_mat_vec_id(ggml_backend_vk_context
         if (ctx->device->vendor_id == VK_VENDOR_ID_INTEL) {
             dmmv_wg = DMMV_WG_SIZE_SUBGROUP;
         }
-        return ctx->device->pipeline_dequant_mul_mat_vec_id_q8_1_f32[dmmv_wg][a_type];
+        return ctx->device->pipeline_dequant_mul_mat_vec_id_q8_1_f32[dmmv_wg][a_type];  // 返回
     }
 
-    return ctx->device->pipeline_dequant_mul_mat_vec_id_f32[dmmv_wg][a_type];
+    return ctx->device->pipeline_dequant_mul_mat_vec_id_f32[dmmv_wg][a_type];  // 返回
 }
 
 static void * ggml_vk_host_malloc(vk_device& device, size_t size) {
@@ -6531,18 +6531,18 @@ static void * ggml_vk_host_malloc(vk_device& device, size_t size) {
             size/1024.0/1024.0);
         device->device.freeMemory(buf->device_memory);
         device->device.destroyBuffer(buf->buffer);
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     std::lock_guard<std::recursive_mutex> guard(device->mutex);
     device->pinned_memory.push_back(std::make_tuple(buf->ptr, size, buf));
 
-    return buf->ptr;
+    return buf->ptr;  // 返回
 }
 
 static void ggml_vk_host_free(vk_device& device, void* ptr) {
     if (ptr == nullptr) {
-        return;
+        return;  // 返回
     }
     VK_LOG_MEMORY("ggml_vk_host_free(" << ptr << ")");
     std::lock_guard<std::recursive_mutex> guard(device->mutex);
@@ -6560,7 +6560,7 @@ static void ggml_vk_host_free(vk_device& device, void* ptr) {
     }
     if (buf == nullptr) {
         fprintf(stderr, "WARNING: failed to free pinned memory: memory not in map\n");
-        return;
+        return;  // 返回
     }
 
     ggml_vk_destroy_buffer(buf);
@@ -6606,7 +6606,7 @@ static vk_subbuffer ggml_vk_tensor_subbuffer(
     offset &= ~misalign_bytes;
     size += misalign_bytes;
 
-    return vk_subbuffer{buffer, offset, size};
+    return vk_subbuffer{buffer, offset, size};  // 返回
 }
 
 // Get a command buffer from pool. Create a new one if no reusable buffer is available
@@ -6615,10 +6615,10 @@ static vk_command_buffer* ggml_vk_get_or_create_cmd_buffer(vk_device& device, vk
         if (!cmd_buffer.in_use) {
             cmd_buffer.use_counter++;
             cmd_buffer.in_use = true;
-            return &cmd_buffer;
+            return &cmd_buffer;  // 返回
         }
     }
-    return ggml_vk_create_cmd_buffer(device, pool);
+    return ggml_vk_create_cmd_buffer(device, pool);  // ggml_vk_create_cmd_buffer
 }
 
 static vk_submission ggml_vk_begin_submission(vk_device& device, vk_command_pool& p, bool one_time = true) {
@@ -6630,35 +6630,35 @@ static vk_submission ggml_vk_begin_submission(vk_device& device, vk_command_pool
         s.buffer->buf.begin({ vk::CommandBufferUsageFlags{} });
     }
 
-    return s;
+    return s;  // 返回
 }
 
-template <typename T> size_t push_constant_size(const T &t) {
+template <typename T> size_t push_constant_size(const T &t) {  // 模板
     static_assert(std::is_class<T>::value, "T must be a struct/class");
     GGML_UNUSED(t);
-    return sizeof(T);
+    return sizeof(T);  // sizeof
 }
-template <typename T> size_t push_constant_size(const std::vector<T> &t) {
+template <typename T> size_t push_constant_size(const std::vector<T> &t) {  // 模板
     GGML_UNUSED(t);
-    return sizeof(T) * t.size();
+    return sizeof(T) * t.size();  // sizeof
 }
-template <typename T, uint32_t N> size_t push_constant_size(const std::array<T, N> &t) {
+template <typename T, uint32_t N> size_t push_constant_size(const std::array<T, N> &t) {  // 模板
     GGML_UNUSED(t);
-    return sizeof(T) * N;
+    return sizeof(T) * N;  // sizeof
 }
 
-template <typename T> const T *push_constant_data(const T &t) {
+template <typename T> const T *push_constant_data(const T &t) {  // 模板
     static_assert(std::is_class<T>::value, "T must be a struct/class");
-    return &t;
+    return &t;  // 返回
 }
-template <typename T> const T *push_constant_data(const std::vector<T> &t) {
+template <typename T> const T *push_constant_data(const std::vector<T> &t) {  // 模板
     return t.data();
 }
-template <typename T, uint32_t N> const T *push_constant_data(const std::array<T, N> &t) {
+template <typename T, uint32_t N> const T *push_constant_data(const std::array<T, N> &t) {  // 模板
     return t.data();
 }
 
-template <typename T>
+template <typename T>  // 模板
 static void ggml_vk_dispatch_pipeline(ggml_backend_vk_context* ctx, vk_context& subctx, vk_pipeline& pipeline, std::initializer_list<vk::DescriptorBufferInfo> const& descriptor_buffer_infos, const T &push_constants, std::array<uint32_t, 3> elements) {
     const uint32_t wg0 = CEIL_DIV(elements[0], pipeline->wg_denoms[0]);
     const uint32_t wg1 = CEIL_DIV(elements[1], pipeline->wg_denoms[1]);
@@ -6668,7 +6668,7 @@ static void ggml_vk_dispatch_pipeline(ggml_backend_vk_context* ctx, vk_context& 
         std::cerr << "(" << buffer.buffer << ", " << buffer.offset << ", " << buffer.range << "), ";
     }
     std::cerr << "}, (" << wg0 << "," << wg1 << "," << wg2 << "))");
-    GGML_ASSERT(wg0 <= ctx->device->properties.limits.maxComputeWorkGroupCount[0] &&
+    GGML_ASSERT(wg0 <= ctx->device->properties.limits.maxComputeWorkGroupCount[0] &&  // 断言检查
                 wg1 <= ctx->device->properties.limits.maxComputeWorkGroupCount[1] &&
                 wg2 <= ctx->device->properties.limits.maxComputeWorkGroupCount[2]);
     GGML_ASSERT(ctx->descriptor_set_idx < ctx->descriptor_sets.size());
@@ -6700,7 +6700,7 @@ static void ggml_vk_end_submission(vk_submission& s, std::vector<vk_semaphore> w
 static void ggml_vk_ctx_end(vk_context& ctx) {
     VK_LOG_DEBUG("ggml_vk_ctx_end(" << ctx << ", " << ctx->seqs.size() << ")");
     if (ctx->s == nullptr) {
-        return;
+        return;  // 返回
     }
 
     ctx->s->buffer->buf.end();
@@ -6733,7 +6733,7 @@ static vk_context ggml_vk_get_compute_ctx(ggml_backend_vk_context * ctx) {
         ctx->transfer_semaphore_last_submitted = ctx->transfer_semaphore.value;
     }
 
-    return result;
+    return result;  // 返回
 }
 
 // Submit any pending transfer queue work and signal the transfer semaphore.
@@ -6741,7 +6741,7 @@ static vk_context ggml_vk_get_compute_ctx(ggml_backend_vk_context * ctx) {
 // Returns true if work was submitted.
 static bool ggml_vk_submit_transfer_ctx(ggml_backend_vk_context * ctx) {
     if (!ctx->device->async_use_transfer_queue || ctx->transfer_ctx.expired()) {
-        return false;
+        return false;  // 返回
     }
 
     vk_context cpy_ctx = ctx->transfer_ctx.lock();
@@ -6756,12 +6756,12 @@ static bool ggml_vk_submit_transfer_ctx(ggml_backend_vk_context * ctx) {
 
     ggml_vk_submit(cpy_ctx, {});
     ctx->transfer_ctx.reset();
-    return true;
+    return true;  // 返回
 }
 
 static size_t ggml_vk_align_size(size_t width, size_t align) {
     VK_LOG_DEBUG("ggml_vk_align_size(" << width << ", " << align << ")");
-    return CEIL_DIV(width, align) * align;
+    return CEIL_DIV(width, align) * align;  // CEIL_DIV
 }
 
 static void deferred_memcpy(void * dst, const void * src, size_t size, std::vector<vk_staging_memcpy>* memcpys = nullptr) {
@@ -6859,7 +6859,7 @@ static void ggml_vk_buffer_write_nc_async(ggml_backend_vk_context * ctx, vk_cont
 
         ggml_vk_sync_buffers(ctx, subctx);
         subctx->s->buffer->buf.copyBuffer(buf->buffer, dst->buffer, slices);
-        return;
+        return;  // 返回
     }
 
     if (!sync_staging) {
@@ -6923,13 +6923,13 @@ static bool ggml_vk_buffer_write_2d_async(vk_context subctx, vk_buffer& dst, siz
 
         ggml_vk_sync_buffers(nullptr, subctx);
         subctx->s->buffer->buf.copyBuffer(buf->buffer, dst->buffer, slices);
-        return true;
+        return true;  // 返回
     }
     VK_LOG_DEBUG("STAGING");
 
     if (!sync_staging) {
         // copy was not handled caller needs to fall back
-        return false;
+        return false;  // 返回
     }
 
     // Staging buffer required
@@ -6962,12 +6962,12 @@ static bool ggml_vk_buffer_write_2d_async(vk_context subctx, vk_buffer& dst, siz
             deferred_memcpy((uint8_t *)staging_buffer->ptr + i * width, (const uint8_t *) src + i * spitch, width, &subctx->in_memcpys);
         }
     }
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_vk_buffer_write_async(vk_context subctx, vk_buffer& dst, size_t offset, const void * src, size_t size, bool sync_staging = false) {
     VK_LOG_DEBUG("ggml_vk_buffer_write_async(" << size << ")");
-    return ggml_vk_buffer_write_2d_async(subctx, dst, offset, src, size, size, size, 1, sync_staging);
+    return ggml_vk_buffer_write_2d_async(subctx, dst, offset, src, size, size, size, 1, sync_staging);  // ggml_vk_buffer_write_2d_async
 }
 
 static void ggml_vk_buffer_write_2d(vk_buffer& dst, size_t offset, const void * src, size_t spitch, size_t dpitch, size_t width, size_t height) {
@@ -7041,13 +7041,13 @@ static bool ggml_vk_buffer_read_2d_async(vk_context subctx, vk_buffer& src, size
         ggml_vk_sync_buffers(nullptr, subctx);
         subctx->s->buffer->buf.copyBuffer(src->buffer, buf->buffer, slices);
 
-        return true;
+        return true;  // 返回
     }
     VK_LOG_DEBUG("STAGING");
 
     if (!sync_staging) {
         // copy was not handled caller needs to fall back
-        return false;
+        return false;  // 返回
     }
 
     // Fall back to staging buffer
@@ -7080,11 +7080,11 @@ static bool ggml_vk_buffer_read_2d_async(vk_context subctx, vk_buffer& src, size
             deferred_memcpy((uint8_t *) dst + i * dpitch, (const uint8_t *) staging_buffer->ptr + i * width, width, &subctx->out_memcpys);
         }
     }
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_vk_buffer_read_async(vk_context subctx, vk_buffer& src, size_t offset, void * dst, size_t size, bool sync_staging = false) {
-    return ggml_vk_buffer_read_2d_async(subctx, src, offset, dst, size, size, size, 1, sync_staging);
+    return ggml_vk_buffer_read_2d_async(subctx, src, offset, dst, size, size, size, 1, sync_staging);  // ggml_vk_buffer_read_2d_async
 }
 
 static void ggml_vk_buffer_read_2d(vk_buffer& src, size_t offset, void * dst, size_t spitch, size_t dpitch, size_t width, size_t height) {
@@ -7165,7 +7165,7 @@ static void ggml_vk_buffer_memset_async(vk_context& ctx, vk_buffer& dst, size_t 
     if (dst->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible &&
         dst->device->uma) {
         deferred_memset((uint8_t*)dst->ptr + offset, c, size, &ctx->memsets);
-        return;
+        return;  // 返回
     }
 
     // Fall back to GPU fillBuffer for non-UMA or non-host-visible buffers
@@ -7178,7 +7178,7 @@ static void ggml_vk_buffer_memset(vk_buffer& dst, size_t offset, uint32_t c, siz
     if (dst->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible &&
         dst->device->uma) {
         memset((uint8_t*)dst->ptr + offset, c, size);
-        return;
+        return;  // 返回
     }
 
     std::lock_guard<std::recursive_mutex> guard(dst->device->mutex);
@@ -7197,7 +7197,7 @@ static uint32_t ggml_vk_guess_split_k(ggml_backend_vk_context * ctx, uint32_t m,
     VK_LOG_DEBUG("ggml_vk_guess_split_k(" << m << ", " << n << ", " << k << ", " << disable_split_k << ")");
 
     if (disable_split_k) {
-        return 1;
+        return 1;  // 返回
     }
 
     uint32_t split_k = 1;
@@ -7232,7 +7232,7 @@ static uint32_t ggml_vk_guess_split_k(ggml_backend_vk_context * ctx, uint32_t m,
         }
     }
 
-    return split_k;
+    return split_k;  // 返回
 }
 
 static vk_pipeline ggml_vk_guess_matmul_pipeline(ggml_backend_vk_context * ctx, vk_matmul_pipeline& mmp, uint32_t m, uint32_t n, bool aligned, ggml_type src0_type, ggml_type src1_type) {
@@ -7255,30 +7255,30 @@ static vk_pipeline ggml_vk_guess_matmul_pipeline(ggml_backend_vk_context * ctx, 
                             (tiles_l <= shader_core_count / 3 && tiles_m > shader_core_count / 2);
 
         if ((ctx->device->mul_mat_l[src0_type] && (n > crossover_large && prefer_large)) || (!ctx->device->mul_mat_m[src0_type] && !ctx->device->mul_mat_s[src0_type])) {
-            return aligned ? mmp->a_l : mmp->l;
+            return aligned ? mmp->a_l : mmp->l;  // 返回
         }
         // Use medium shader when the N dimension is greater than the small shader's tile size
         uint32_t crossover_medium = mmp->s->wg_denoms[1];
         if ((ctx->device->mul_mat_m[src0_type] && (n > crossover_medium)) || !ctx->device->mul_mat_s[src0_type]) {
-            return aligned ? mmp->a_m : mmp->m;
+            return aligned ? mmp->a_m : mmp->m;  // 返回
         }
-        return aligned ? mmp->a_s : mmp->s;
+        return aligned ? mmp->a_s : mmp->s;  // 返回
     }
 
     if ((ctx->device->mul_mat_s[src0_type] && (m <= 32 || n <= 32)) || (!ctx->device->mul_mat_m[src0_type] && !ctx->device->mul_mat_l[src0_type])) {
-        return aligned ? mmp->a_s : mmp->s;
+        return aligned ? mmp->a_s : mmp->s;  // 返回
     }
     if ((ctx->device->mul_mat_m[src0_type] && (m <= 64 || n <= 64)) || !ctx->device->mul_mat_l[src0_type]) {
-        return aligned ? mmp->a_m : mmp->m;
+        return aligned ? mmp->a_m : mmp->m;  // 返回
     }
-    return aligned ? mmp->a_l : mmp->l;
+    return aligned ? mmp->a_l : mmp->l;  // 返回
 
     GGML_UNUSED(src1_type);
 }
 
 static uint32_t ggml_vk_guess_matmul_pipeline_align(ggml_backend_vk_context * ctx, vk_matmul_pipeline& mmp, int m, int n, ggml_type src0_type, ggml_type src1_type) {
     VK_LOG_DEBUG("ggml_vk_guess_matmul_pipeline_align(" << m << ", " << n << ", " << ggml_type_name(src0_type) << ", " << ggml_type_name(src1_type) << ")");
-    return ggml_vk_guess_matmul_pipeline(ctx, mmp, m, n, true, src0_type, src1_type)->align;
+    return ggml_vk_guess_matmul_pipeline(ctx, mmp, m, n, true, src0_type, src1_type)->align;  // ggml_vk_guess_matmul_pipeline
 }
 
 static void ggml_vk_matmul(
@@ -7300,7 +7300,7 @@ static void ggml_vk_matmul(
             ggml_vk_dispatch_pipeline(ctx, subctx, pipeline, { a, b, d }, pc, { m, n, groups_z });
             base_work_group_z += groups_z;
         }
-        return;
+        return;  // 返回
     }
 
     if (ctx->prealloc_split_k_need_sync) {
@@ -7337,28 +7337,28 @@ static vk_pipeline ggml_vk_guess_matmul_id_pipeline(ggml_backend_vk_context * ct
         // Use large shader when the N dimension is greater than the medium shader's tile size
         uint32_t crossover_large = mmp->m->wg_denoms[1];
         if ((ctx->device->mul_mat_id_l[src0_type] && (n > crossover_large)) || (!ctx->device->mul_mat_id_m[src0_type] && !ctx->device->mul_mat_id_s[src0_type])) {
-            return aligned ? mmp->a_l : mmp->l;
+            return aligned ? mmp->a_l : mmp->l;  // 返回
         }
         // Use medium shader when the N dimension is greater than the small shader's tile size
         uint32_t crossover_medium = mmp->s->wg_denoms[1];
         if ((ctx->device->mul_mat_id_m[src0_type] && (n > crossover_medium)) || !ctx->device->mul_mat_id_s[src0_type]) {
-            return aligned ? mmp->a_m : mmp->m;
+            return aligned ? mmp->a_m : mmp->m;  // 返回
         }
-        return aligned ? mmp->a_s : mmp->s;
+        return aligned ? mmp->a_s : mmp->s;  // 返回
     }
 
     if ((ctx->device->mul_mat_id_s[src0_type] && (m <= 32 || n <= 32)) || (!ctx->device->mul_mat_id_m[src0_type] && !ctx->device->mul_mat_id_l[src0_type])) {
-        return aligned ? mmp->a_s : mmp->s;
+        return aligned ? mmp->a_s : mmp->s;  // 返回
     }
     if ((ctx->device->mul_mat_id_m[src0_type] && (m <= 64 || n <= 64)) || !ctx->device->mul_mat_id_l[src0_type]) {
-        return aligned ? mmp->a_m : mmp->m;
+        return aligned ? mmp->a_m : mmp->m;  // 返回
     }
-    return aligned ? mmp->a_l : mmp->l;
+    return aligned ? mmp->a_l : mmp->l;  // 返回
 }
 
 static uint32_t ggml_vk_guess_matmul_id_pipeline_align(ggml_backend_vk_context * ctx, vk_matmul_pipeline& mmp, int m, int n, ggml_type src0_type) {
     VK_LOG_DEBUG("ggml_vk_guess_matmul_pipeline_align(" << m << ", " << n << ", " << ggml_type_name(src0_type) << ")");
-    return ggml_vk_guess_matmul_id_pipeline(ctx, mmp, m, n, true, src0_type)->align;
+    return ggml_vk_guess_matmul_id_pipeline(ctx, mmp, m, n, true, src0_type)->align;  // ggml_vk_guess_matmul_id_pipeline
 }
 
 static void ggml_vk_matmul_id(
@@ -7394,59 +7394,59 @@ static vk_pipeline ggml_vk_get_cpy_pipeline(ggml_backend_vk_context * ctx, const
 
     if (transpose && src->type == to) {
         if (ggml_type_size(to) == 4) {
-            return ctx->device->pipeline_cpy_transpose_32;
+            return ctx->device->pipeline_cpy_transpose_32;  // 返回
         } else if (ggml_type_size(to) == 2) {
-            return ctx->device->pipeline_cpy_transpose_16;
+            return ctx->device->pipeline_cpy_transpose_16;  // 返回
         }
     }
 
     if (src->type == GGML_TYPE_F32 && to == GGML_TYPE_F32) {
         if (contig) {
-            return ctx->device->pipeline_contig_cpy_f32_f32;
+            return ctx->device->pipeline_contig_cpy_f32_f32;  // 返回
         } else {
-            return ctx->device->pipeline_cpy_f32_f32;
+            return ctx->device->pipeline_cpy_f32_f32;  // 返回
         }
     }
     if (src->type == GGML_TYPE_F32 && to == GGML_TYPE_F16) {
         if (contig) {
-            return ctx->device->pipeline_contig_cpy_f32_f16;
+            return ctx->device->pipeline_contig_cpy_f32_f16;  // 返回
         } else {
-            return ctx->device->pipeline_cpy_f32_f16;
+            return ctx->device->pipeline_cpy_f32_f16;  // 返回
         }
     }
     if (src->type == GGML_TYPE_F16 && to == GGML_TYPE_F16) {
         if (contig) {
-            return ctx->device->pipeline_contig_cpy_f16_f16;
+            return ctx->device->pipeline_contig_cpy_f16_f16;  // 返回
         } else {
-            return ctx->device->pipeline_cpy_f16_f16;
+            return ctx->device->pipeline_cpy_f16_f16;  // 返回
         }
     }
     if (src->type == GGML_TYPE_F16 && to == GGML_TYPE_F32) {
         if (contig) {
-            return ctx->device->pipeline_contig_cpy_f16_f32;
+            return ctx->device->pipeline_contig_cpy_f16_f32;  // 返回
         } else {
-            return ctx->device->pipeline_cpy_f16_f32;
+            return ctx->device->pipeline_cpy_f16_f32;  // 返回
         }
     }
     if (src->type == GGML_TYPE_F32 && to == GGML_TYPE_BF16) {
         if (contig) {
-            return ctx->device->pipeline_contig_cpy_f32_bf16;
+            return ctx->device->pipeline_contig_cpy_f32_bf16;  // 返回
         } else {
-            return ctx->device->pipeline_cpy_f32_bf16;
+            return ctx->device->pipeline_cpy_f32_bf16;  // 返回
         }
     }
     if (src->type == GGML_TYPE_F32 && to == GGML_TYPE_I32) {
         if (contig) {
-            return ctx->device->pipeline_contig_cpy_f32_i32;
+            return ctx->device->pipeline_contig_cpy_f32_i32;  // 返回
         } else {
-            return ctx->device->pipeline_cpy_f32_i32;
+            return ctx->device->pipeline_cpy_f32_i32;  // 返回
         }
     }
     if (src->type == GGML_TYPE_I32 && to == GGML_TYPE_F32) {
         if (contig) {
-            return ctx->device->pipeline_contig_cpy_i32_f32;
+            return ctx->device->pipeline_contig_cpy_i32_f32;  // 返回
         } else {
-            return ctx->device->pipeline_cpy_i32_f32;
+            return ctx->device->pipeline_cpy_i32_f32;  // 返回
         }
     }
     if (src->type == GGML_TYPE_F32) {
@@ -7458,7 +7458,7 @@ static vk_pipeline ggml_vk_get_cpy_pipeline(ggml_backend_vk_context * ctx, const
         case GGML_TYPE_Q5_1:
         case GGML_TYPE_Q8_0:
         case GGML_TYPE_IQ4_NL:
-            return ctx->device->pipeline_cpy_f32_quant[to];
+            return ctx->device->pipeline_cpy_f32_quant[to];  // 返回
         default:
             break;
         }
@@ -7473,7 +7473,7 @@ static vk_pipeline ggml_vk_get_cpy_pipeline(ggml_backend_vk_context * ctx, const
         case GGML_TYPE_Q5_1:
         case GGML_TYPE_Q8_0:
         case GGML_TYPE_IQ4_NL:
-            return ctx->device->pipeline_cpy_quant_f32[src->type];
+            return ctx->device->pipeline_cpy_quant_f32[src->type];  // 返回
         default:
             break;
         }
@@ -7487,15 +7487,15 @@ static vk_pipeline ggml_vk_get_cpy_pipeline(ggml_backend_vk_context * ctx, const
         GGML_ASSERT(ggml_is_quantized(to) || ggml_type_size(src->type) == 2 || ggml_type_size(src->type) == 4);
         if ((ggml_type_size(src->type) % 4) == 0) {
             if (contig) {
-                return ctx->device->pipeline_contig_cpy_f32_f32;
+                return ctx->device->pipeline_contig_cpy_f32_f32;  // 返回
             } else {
-                return ctx->device->pipeline_cpy_f32_f32;
+                return ctx->device->pipeline_cpy_f32_f32;  // 返回
             }
         } else {
             if (contig) {
-                return ctx->device->pipeline_contig_cpy_f16_f16;
+                return ctx->device->pipeline_contig_cpy_f16_f16;  // 返回
             } else {
-                return ctx->device->pipeline_cpy_f16_f16;
+                return ctx->device->pipeline_cpy_f16_f16;  // 返回
             }
         }
     }
@@ -7536,7 +7536,7 @@ static void ggml_vk_cpy_to_contiguous(ggml_backend_vk_context * ctx, vk_context&
 static vk_pipeline ggml_vk_get_quantize_pipeline(ggml_backend_vk_context * ctx, ggml_type type) {
     switch(type) {
         case GGML_TYPE_Q8_1:
-            return ctx->device->pipeline_quantize_q8_1_x4;
+            return ctx->device->pipeline_quantize_q8_1_x4;  // 返回
         default:
             std::cerr << "Missing quantize pipeline for type: " << ggml_type_name(type) << std::endl;
             GGML_ABORT("fatal error");
@@ -7564,16 +7564,16 @@ static void ggml_vk_quantize_q8_1(ggml_backend_vk_context * ctx, vk_context& sub
 
 static vk_pipeline ggml_vk_get_64b_indexing_pipeline(ggml_backend_vk_context * ctx, vk_pipeline &pipeline) {
     GGML_UNUSED(ctx);
-#if defined(VK_EXT_shader_64bit_indexing)
+#if defined(VK_EXT_shader_64bit_indexing)  // 条件编译
     vk_pipeline *ptr = &pipeline;
     while (*ptr) {
         if ((*ptr)->is_64b_indexing) {
-            return *ptr;
+            return *ptr;  // 返回
         }
         ptr = &(*ptr)->next;
     }
-#endif
-    return pipeline;
+#endif  // 条件编译结束
+    return pipeline;  // 返回
 }
 
 static void ggml_vk_mul_mat_q_f16(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst, bool disable_split_k) {
@@ -7841,71 +7841,71 @@ static void ggml_vk_mul_mat_q_f16(ggml_backend_vk_context * ctx, vk_context& sub
 // Device tuning
 static bool ggml_vk_should_use_mmvq(const vk_device& device, uint32_t m, uint32_t n, uint32_t k, ggml_type src0_type) {
     if (device->mmvq_mode == 1) {
-        return true;
+        return true;  // 返回
     } else if (device->mmvq_mode == -1) {
-        return false;
+        return false;  // 返回
     }
 
     // General performance issue with q3_k and q6_k due to 2-byte alignment
     if (src0_type == GGML_TYPE_Q3_K || src0_type == GGML_TYPE_Q6_K) {
-        return false;
+        return false;  // 返回
     }
 
     // MMVQ is generally good for batches
     if (n > 1) {
-        return true;
+        return true;  // 返回
     }
 
     // Quantization overhead is not worth it for small k
     switch (device->vendor_id) {
     case VK_VENDOR_ID_NVIDIA:
         if (src0_type == GGML_TYPE_Q2_K || src0_type == GGML_TYPE_IQ1_S || src0_type == GGML_TYPE_IQ1_M) {
-            return true;
+            return true;  // 返回
         }
 
         if (k <= 4096) {
-            return false;
+            return false;  // 返回
         }
 
         switch (src0_type) {
         case GGML_TYPE_MXFP4:
         case GGML_TYPE_Q8_0:
-            return device->architecture == vk_device_architecture::NVIDIA_PRE_TURING;
+            return device->architecture == vk_device_architecture::NVIDIA_PRE_TURING;  // 返回
         default:
-            return true;
+            return true;  // 返回
         }
     case VK_VENDOR_ID_AMD:
         if (k < 2048) {
-            return false;
+            return false;  // 返回
         }
 
         switch (src0_type) {
         case GGML_TYPE_Q8_0:
-            return device->architecture == vk_device_architecture::AMD_GCN;
+            return device->architecture == vk_device_architecture::AMD_GCN;  // 返回
         default:
-            return true;
+            return true;  // 返回
         }
     case VK_VENDOR_ID_INTEL:
         if (device->driver_id == vk::DriverId::eIntelProprietaryWindows) {
             // Intel Windows proprietary driver MMVQ performance is worse than fp16, see
             // https://github.com/ggml-org/llama.cpp/issues/17628
-            return false;
+            return false;  // 返回
         }
 
         if (k < 2048) {
-            return false;
+            return false;  // 返回
         }
 
         switch (src0_type) {
         // From tests on A770 Linux, may need more tuning
         case GGML_TYPE_Q4_0:
         case GGML_TYPE_Q5_1:
-            return false;
+            return false;  // 返回
         default:
-            return true;
+            return true;  // 返回
         }
     default:
-        return true;
+        return true;  // 返回
     }
 
     GGML_UNUSED(m);
@@ -8997,7 +8997,7 @@ static bool ggml_vk_flash_attn_scalar_shmem_support(const vk_device& device, con
 
     VK_LOG_DEBUG("ggml_vk_flash_attn_scalar_shmem_support(HSK=" << hsk << ", HSV=" << hsv << ", mmq=" << mmq << ", total_size=" << total_size << ", supported=" << supported);
 
-    return supported;
+    return supported;  // 返回
 }
 
 static bool ggml_vk_flash_attn_coopmat_shmem_support(const vk_device& device, const vk_fa_tuning_params& params, uint32_t hsk, uint32_t hsv, bool f32acc) {
@@ -9040,7 +9040,7 @@ static bool ggml_vk_flash_attn_coopmat_shmem_support(const vk_device& device, co
 
     VK_LOG_DEBUG("ggml_vk_flash_attn_coopmat_shmem_support(HSK=" << hsk << ", HSV=" << hsv << ", f32acc=" << f32acc << ", total_size=" << total_size << ", supported=" << supported);
 
-    return supported;
+    return supported;  // 返回
 }
 
 static void ggml_vk_flash_attn(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * q, const ggml_tensor * k, const ggml_tensor * v, const ggml_tensor * mask, const ggml_tensor * sinks, ggml_tensor * dst) {
@@ -9274,8 +9274,8 @@ static void ggml_vk_flash_attn(ggml_backend_vk_context * ctx, vk_context& subctx
             (uint32_t)(mask->nb[2] / sizeof(ggml_fp16_t)),
             (uint32_t)(mask->nb[3] / sizeof(ggml_fp16_t)),
             mask_opt_num_dwords,
-            mask_opt_num_dwords * CEIL_DIV(nem1, Br),
-            mask_opt_num_dwords * CEIL_DIV(nem1, Br) * nem2,
+            mask_opt_num_dwords * CEIL_DIV(nem1, Br),  // CEIL_DIV
+            mask_opt_num_dwords * CEIL_DIV(nem1, Br) * nem2,  // CEIL_DIV
         };
 
         ggml_vk_dispatch_pipeline(ctx, subctx, pipeline_fa_mask_opt,
@@ -9338,7 +9338,7 @@ static void ggml_vk_flash_attn(ggml_backend_vk_context * ctx, vk_context& subctx
 
 static vk_conv_shapes ggml_vk_conv_select_shape(ggml_backend_vk_context * ctx, uint32_t K, uint32_t NPQ) {
     auto n_tiles = [&](vk_conv_shapes s) {
-        return CEIL_DIV(K, vk_conv_block_sizes[s].K)
+        return CEIL_DIV(K, vk_conv_block_sizes[s].K)  // CEIL_DIV
             * CEIL_DIV(NPQ, vk_conv_block_sizes[s].NPQ);
     };
 
@@ -9347,11 +9347,11 @@ static vk_conv_shapes ggml_vk_conv_select_shape(ggml_backend_vk_context * ctx, u
     const uint32_t shader_core_count = ctx->device->shader_core_count > 0 ? ctx->device->shader_core_count : 32;
 
     if (K > 64 && n_tiles(CONV_SHAPE_128x128) >= shader_core_count * 2) {
-        return CONV_SHAPE_128x128;
+        return CONV_SHAPE_128x128;  // 返回
     } else if (K <= 32 && n_tiles(CONV_SHAPE_32x256) >= shader_core_count * 2) {
-        return CONV_SHAPE_32x256;
+        return CONV_SHAPE_32x256;  // 返回
     } else {
-        return CONV_SHAPE_64x32;
+        return CONV_SHAPE_64x32;  // 返回
     }
 }
 
@@ -9362,26 +9362,26 @@ static vk_pipeline ggml_vk_op_get_pipeline(ggml_backend_vk_context * ctx, const 
         if (src0->type == GGML_TYPE_I32) {
             // i32 src only supports i32 result
             GGML_ASSERT(dst->type == GGML_TYPE_I32);
-            return ctx->device->pipeline_get_rows[src0->type];
+            return ctx->device->pipeline_get_rows[src0->type];  // 返回
         }
         if (dst->type == GGML_TYPE_F16) {
-            return ctx->device->pipeline_get_rows[src0->type];
+            return ctx->device->pipeline_get_rows[src0->type];  // 返回
         }
         if (dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_get_rows_f32[src0->type];
+            return ctx->device->pipeline_get_rows_f32[src0->type];  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_ACC:
         if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_acc_f32;
+            return ctx->device->pipeline_acc_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_SET:
         if (src0->type == src1->type && src0->type == dst->type &&
             (src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_I32)) {
-            return ctx->device->pipeline_set_f32;
+            return ctx->device->pipeline_set_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_ADD:
     case GGML_OP_SUB:
     case GGML_OP_MUL:
@@ -9389,273 +9389,273 @@ static vk_pipeline ggml_vk_op_get_pipeline(ggml_backend_vk_context * ctx, const 
         if ((src0->type != GGML_TYPE_F32 && src0->type != GGML_TYPE_F16) ||
             (src1->type != GGML_TYPE_F32 && src1->type != GGML_TYPE_F16) ||
             (dst->type != GGML_TYPE_F32 && dst->type != GGML_TYPE_F16)) {
-            return nullptr;
+            return nullptr;  // 返回
         }
         switch (op) {
         case GGML_OP_ADD:
         {
             if (ctx->num_additional_fused_ops > 0) {
                 if (ctx->do_add_rms_partials) {
-                    return ctx->device->pipeline_multi_add_rms[ctx->num_additional_fused_ops];
+                    return ctx->device->pipeline_multi_add_rms[ctx->num_additional_fused_ops];  // 返回
                 } else {
-                    return ctx->device->pipeline_multi_add[ctx->num_additional_fused_ops];
+                    return ctx->device->pipeline_multi_add[ctx->num_additional_fused_ops];  // 返回
                 }
             }
             if (ctx->do_add_rms_partials) {
                 auto pipelines = ggml_are_same_shape(src0, src1) ? ctx->device->pipeline_add_rms_norepeat : ctx->device->pipeline_add_rms;
-                return pipelines[src0->type == GGML_TYPE_F16][src1->type == GGML_TYPE_F16][dst->type == GGML_TYPE_F16];
+                return pipelines[src0->type == GGML_TYPE_F16][src1->type == GGML_TYPE_F16][dst->type == GGML_TYPE_F16];  // 返回
             } else {
                 auto pipelines = ggml_are_same_shape(src0, src1) ? ctx->device->pipeline_add_norepeat : ctx->device->pipeline_add;
-                return pipelines[src0->type == GGML_TYPE_F16][src1->type == GGML_TYPE_F16][dst->type == GGML_TYPE_F16];
+                return pipelines[src0->type == GGML_TYPE_F16][src1->type == GGML_TYPE_F16][dst->type == GGML_TYPE_F16];  // 返回
             }
         }
         case GGML_OP_SUB:
         {
             auto pipelines = ggml_are_same_shape(src0, src1) ? ctx->device->pipeline_sub_norepeat : ctx->device->pipeline_sub;
-            return pipelines[src0->type == GGML_TYPE_F16][src1->type == GGML_TYPE_F16][dst->type == GGML_TYPE_F16];
+            return pipelines[src0->type == GGML_TYPE_F16][src1->type == GGML_TYPE_F16][dst->type == GGML_TYPE_F16];  // 返回
         }
         case GGML_OP_MUL:
         {
             auto pipelines = ggml_are_same_shape(src0, src1) ? ctx->device->pipeline_mul_norepeat : ctx->device->pipeline_mul;
-            return pipelines[src0->type == GGML_TYPE_F16][src1->type == GGML_TYPE_F16][dst->type == GGML_TYPE_F16];
+            return pipelines[src0->type == GGML_TYPE_F16][src1->type == GGML_TYPE_F16][dst->type == GGML_TYPE_F16];  // 返回
         }
         case GGML_OP_DIV:
         {
             auto pipelines = ggml_are_same_shape(src0, src1) ? ctx->device->pipeline_div_norepeat : ctx->device->pipeline_div;
-            return pipelines[src0->type == GGML_TYPE_F16][src1->type == GGML_TYPE_F16][dst->type == GGML_TYPE_F16];
+            return pipelines[src0->type == GGML_TYPE_F16][src1->type == GGML_TYPE_F16][dst->type == GGML_TYPE_F16];  // 返回
         }
         default:
             break;
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_ADD_ID:
         if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_I32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_add_id_f32;
+            return ctx->device->pipeline_add_id_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_CONCAT:
         if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_concat_f32;
+            return ctx->device->pipeline_concat_f32;  // 返回
         }
         if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && dst->type == GGML_TYPE_F16) {
-            return ctx->device->pipeline_concat_f16;
+            return ctx->device->pipeline_concat_f16;  // 返回
         }
         if (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_I32 && dst->type == GGML_TYPE_I32) {
-            return ctx->device->pipeline_concat_i32;
+            return ctx->device->pipeline_concat_i32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_UPSCALE:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
             uint32_t mode = (ggml_get_op_params_i32(dst, 0) & (0xFF | GGML_SCALE_FLAG_ANTIALIAS));
             switch (mode) {
                 case GGML_SCALE_MODE_NEAREST:
-                    return ctx->device->pipeline_upscale_nearest_f32;
+                    return ctx->device->pipeline_upscale_nearest_f32;  // 返回
                 case GGML_SCALE_MODE_BILINEAR:
-                    return ctx->device->pipeline_upscale_bilinear_f32;
+                    return ctx->device->pipeline_upscale_bilinear_f32;  // 返回
                 case GGML_SCALE_MODE_BICUBIC:
-                    return ctx->device->pipeline_upscale_bicubic_f32;
+                    return ctx->device->pipeline_upscale_bicubic_f32;  // 返回
                 case GGML_SCALE_MODE_BILINEAR | GGML_SCALE_FLAG_ANTIALIAS:
-                    return ctx->device->pipeline_upscale_bilinear_antialias_f32;
+                    return ctx->device->pipeline_upscale_bilinear_antialias_f32;  // 返回
                 default:
-                    return nullptr;
+                    return nullptr;  // 返回
             }
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_SCALE:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_scale_f32;
+            return ctx->device->pipeline_scale_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_SQR:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_sqr_f32;
+            return ctx->device->pipeline_sqr_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_SQRT:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_sqrt_f32;
+            return ctx->device->pipeline_sqrt_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_SIN:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_sin_f32;
+            return ctx->device->pipeline_sin_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_COS:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_cos_f32;
+            return ctx->device->pipeline_cos_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_LOG:
         if (src0->type == dst->type &&
             (src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16)) {
-            return ctx->device->pipeline_log[dst->type == GGML_TYPE_F16];
+            return ctx->device->pipeline_log[dst->type == GGML_TYPE_F16];  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_TRI:
         if (src0->type == dst->type &&
             (src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16)) {
-            return ctx->device->pipeline_tri[dst->type == GGML_TYPE_F16];
+            return ctx->device->pipeline_tri[dst->type == GGML_TYPE_F16];  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_DIAG:
         if (src0->type == dst->type &&
             (src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16)) {
-            return ctx->device->pipeline_diag[dst->type == GGML_TYPE_F16];
+            return ctx->device->pipeline_diag[dst->type == GGML_TYPE_F16];  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_CLAMP:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_clamp_f32;
+            return ctx->device->pipeline_clamp_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_PAD:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_pad_f32;
+            return ctx->device->pipeline_pad_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_ROLL:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_roll_f32;
+            return ctx->device->pipeline_roll_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_REPEAT:
         if (ggml_type_size(src0->type) == sizeof(float) && ggml_type_size(dst->type) == sizeof(float)) {
-            return ctx->device->pipeline_repeat_f32;
+            return ctx->device->pipeline_repeat_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_REPEAT_BACK:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_repeat_back_f32;
+            return ctx->device->pipeline_repeat_back_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_CPY:
     case GGML_OP_CONT:
     case GGML_OP_DUP:
-        return ggml_vk_get_cpy_pipeline(ctx, src0, dst, dst->type);
+        return ggml_vk_get_cpy_pipeline(ctx, src0, dst, dst->type);  // ggml_vk_get_cpy_pipeline
     case GGML_OP_SET_ROWS:
         if (src1->type == GGML_TYPE_I64) {
-            return ctx->device->pipeline_set_rows_i64[dst->type];
+            return ctx->device->pipeline_set_rows_i64[dst->type];  // 返回
         } else {
-            return ctx->device->pipeline_set_rows_i32[dst->type];
+            return ctx->device->pipeline_set_rows_i32[dst->type];  // 返回
         }
     case GGML_OP_SILU_BACK:
         if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_silu_back_f32;
+            return ctx->device->pipeline_silu_back_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_NORM:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_norm_f32;
+            return ctx->device->pipeline_norm_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_GROUP_NORM:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_group_norm_f32;
+            return ctx->device->pipeline_group_norm_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_RMS_NORM:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
             if (ctx->do_add_rms_partials) {
-                return ctx->num_additional_fused_ops > 0 ? ctx->device->pipeline_rms_norm_mul_partials_f32 : ctx->device->pipeline_rms_norm_partials_f32;
+                return ctx->num_additional_fused_ops > 0 ? ctx->device->pipeline_rms_norm_mul_partials_f32 : ctx->device->pipeline_rms_norm_partials_f32;  // 返回
             } else {
-                return ctx->num_additional_fused_ops > 0 ? ctx->device->pipeline_rms_norm_mul_f32 : ctx->device->pipeline_rms_norm_f32;
+                return ctx->num_additional_fused_ops > 0 ? ctx->device->pipeline_rms_norm_mul_f32 : ctx->device->pipeline_rms_norm_f32;  // 返回
             }
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_RMS_NORM_BACK:
         if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_rms_norm_back_f32;
+            return ctx->device->pipeline_rms_norm_back_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_L2_NORM:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_l2_norm_f32;
+            return ctx->device->pipeline_l2_norm_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_UNARY:
         if ((src0->type != GGML_TYPE_F32 && src0->type != GGML_TYPE_F16) ||
             (dst->type != GGML_TYPE_F32 && dst->type != GGML_TYPE_F16) ||
             (src0->type != dst->type)) {
-            return nullptr;
+            return nullptr;  // 返回
         }
 
         switch (ggml_get_unary_op(dst)) {
             case GGML_UNARY_OP_EXP:
-                return ctx->device->pipeline_exp[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_exp[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_ELU:
-                return ctx->device->pipeline_elu[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_elu[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_SILU:
-                return ctx->device->pipeline_silu[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_silu[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_GELU:
-                return ctx->device->pipeline_gelu[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_gelu[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_GELU_ERF:
-                return ctx->device->pipeline_gelu_erf[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_gelu_erf[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_GELU_QUICK:
-                return ctx->device->pipeline_gelu_quick[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_gelu_quick[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_RELU:
-                return ctx->device->pipeline_relu[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_relu[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_XIELU:
-                return ctx->device->pipeline_xielu[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_xielu[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_NEG:
-                return ctx->device->pipeline_neg[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_neg[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_TANH:
-                return ctx->device->pipeline_tanh[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_tanh[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_SIGMOID:
-                return ctx->device->pipeline_sigmoid[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_sigmoid[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_HARDSIGMOID:
-                return ctx->device->pipeline_hardsigmoid[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_hardsigmoid[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_HARDSWISH:
-                return ctx->device->pipeline_hardswish[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_hardswish[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_ABS:
-                return ctx->device->pipeline_abs[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_abs[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_SOFTPLUS:
-                return ctx->device->pipeline_softplus[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_softplus[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_STEP:
-                return ctx->device->pipeline_step[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_step[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_ROUND:
-                return ctx->device->pipeline_round[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_round[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_CEIL:
-                return ctx->device->pipeline_ceil[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_ceil[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_FLOOR:
-                return ctx->device->pipeline_floor[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_floor[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_TRUNC:
-                return ctx->device->pipeline_trunc[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_trunc[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_UNARY_OP_SGN:
-                return ctx->device->pipeline_sgn[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_sgn[dst->type == GGML_TYPE_F16];  // 返回
             default:
                 break;
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_GLU:
         if ((src0->type != GGML_TYPE_F32 && src0->type != GGML_TYPE_F16) ||
             (dst->type != GGML_TYPE_F32 && dst->type != GGML_TYPE_F16) ||
             (src0->type != dst->type)) {
-            return nullptr;
+            return nullptr;  // 返回
         }
 
         switch (ggml_get_glu_op(dst)) {
             case GGML_GLU_OP_GEGLU:
-                return ctx->device->pipeline_geglu[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_geglu[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_GLU_OP_REGLU:
-                return ctx->device->pipeline_reglu[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_reglu[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_GLU_OP_SWIGLU:
-                return ctx->device->pipeline_swiglu[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_swiglu[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_GLU_OP_SWIGLU_OAI:
-                return ctx->device->pipeline_swiglu_oai[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_swiglu_oai[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_GLU_OP_GEGLU_ERF:
-                return ctx->device->pipeline_geglu_erf[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_geglu_erf[dst->type == GGML_TYPE_F16];  // 返回
             case GGML_GLU_OP_GEGLU_QUICK:
-                return ctx->device->pipeline_geglu_quick[dst->type == GGML_TYPE_F16];
+                return ctx->device->pipeline_geglu_quick[dst->type == GGML_TYPE_F16];  // 返回
             default:
                 break;
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_DIAG_MASK_INF:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_diag_mask_inf_f32;
+            return ctx->device->pipeline_diag_mask_inf_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_SOFT_MAX:
         GGML_ASSERT(!src1 || src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16);
         GGML_ASSERT(!src2 || src2->type == GGML_TYPE_F32);
@@ -9665,21 +9665,21 @@ static vk_pipeline ggml_vk_op_get_pipeline(ggml_backend_vk_context * ctx, const 
             GGML_ASSERT(idx < num_topk_moe_pipelines);
             // use n_experts from push constant if it's not equal to the power of two spec constant
             bool use_push = dst->ne[0] != (1u << idx);
-            return ctx->device->pipeline_topk_moe[idx][use_push];
+            return ctx->device->pipeline_topk_moe[idx][use_push];  // 返回
         }
 
         if (src0->type == GGML_TYPE_F32 && (src1 == nullptr || src1->type == GGML_TYPE_F32) && dst->type == GGML_TYPE_F32) {
-            return src0->ne[0] > 1024 ? ctx->device->pipeline_soft_max_f32_wg512 : ctx->device->pipeline_soft_max_f32;
+            return src0->ne[0] > 1024 ? ctx->device->pipeline_soft_max_f32_wg512 : ctx->device->pipeline_soft_max_f32;  // 返回
         }
         if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F16 && dst->type == GGML_TYPE_F32) {
-            return src0->ne[0] > 1024 ? ctx->device->pipeline_soft_max_f32_f16_wg512 : ctx->device->pipeline_soft_max_f32_f16;
+            return src0->ne[0] > 1024 ? ctx->device->pipeline_soft_max_f32_f16_wg512 : ctx->device->pipeline_soft_max_f32_f16;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_SOFT_MAX_BACK:
         if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_soft_max_back_f32;
+            return ctx->device->pipeline_soft_max_back_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_ROPE:
     case GGML_OP_ROPE_BACK:
         {
@@ -9691,64 +9691,64 @@ static vk_pipeline ggml_vk_op_get_pipeline(ggml_backend_vk_context * ctx, const 
 
             if (is_neox) {
                 if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-                    return ctx->device->pipeline_rope_neox_f32;
+                    return ctx->device->pipeline_rope_neox_f32;  // 返回
                 }
                 if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F16) {
-                    return ctx->device->pipeline_rope_neox_f32_f16;
+                    return ctx->device->pipeline_rope_neox_f32_f16;  // 返回
                 }
                 if (src0->type == GGML_TYPE_F16 && dst->type == GGML_TYPE_F16) {
-                    return ctx->device->pipeline_rope_neox_f16;
+                    return ctx->device->pipeline_rope_neox_f16;  // 返回
                 }
             } else if (is_mrope && !is_vision) {
                 if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-                    return ctx->device->pipeline_rope_multi_f32;
+                    return ctx->device->pipeline_rope_multi_f32;  // 返回
                 }
                 if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F16) {
-                    return ctx->device->pipeline_rope_multi_f32_f16;
+                    return ctx->device->pipeline_rope_multi_f32_f16;  // 返回
                 }
                 if (src0->type == GGML_TYPE_F16 && dst->type == GGML_TYPE_F16) {
-                    return ctx->device->pipeline_rope_multi_f16;
+                    return ctx->device->pipeline_rope_multi_f16;  // 返回
                 }
             } else if (is_vision) {
                 if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-                    return ctx->device->pipeline_rope_vision_f32;
+                    return ctx->device->pipeline_rope_vision_f32;  // 返回
                 }
                 if (src0->type == GGML_TYPE_F16 && dst->type == GGML_TYPE_F16) {
-                    return ctx->device->pipeline_rope_vision_f16;
+                    return ctx->device->pipeline_rope_vision_f16;  // 返回
                 }
             } else {
                 if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-                    return ctx->device->pipeline_rope_norm_f32;
+                    return ctx->device->pipeline_rope_norm_f32;  // 返回
                 }
                 if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F16) {
-                    return ctx->device->pipeline_rope_norm_f32_f16;
+                    return ctx->device->pipeline_rope_norm_f32_f16;  // 返回
                 }
                 if (src0->type == GGML_TYPE_F16 && dst->type == GGML_TYPE_F16) {
-                    return ctx->device->pipeline_rope_norm_f16;
+                    return ctx->device->pipeline_rope_norm_f16;  // 返回
                 }
             }
-            return nullptr;
+            return nullptr;  // 返回
         }
     case GGML_OP_SUM:
     case GGML_OP_SUM_ROWS:
     case GGML_OP_MEAN:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_sum_rows_f32;
+            return ctx->device->pipeline_sum_rows_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_CUMSUM:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
             if (src0->ne[0] <= 512) {
-                return ctx->device->pipeline_cumsum_small_f32;
+                return ctx->device->pipeline_cumsum_small_f32;  // 返回
             } else {
-                return ctx->device->pipeline_cumsum_f32;
+                return ctx->device->pipeline_cumsum_f32;  // 返回
             }
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_SOLVE_TRI:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
 
-            vk_solve_tri_pipeline_state solve_tri_pipeline_state(src0->ne[0], src1->ne[0]);
+            vk_solve_tri_pipeline_state solve_tri_pipeline_state(src0->ne[0], src1->ne[0]);  // solve_tri_pipeline_state
 
             vk_pipeline pipeline = nullptr;
 
@@ -9762,60 +9762,60 @@ static vk_pipeline ggml_vk_op_get_pipeline(ggml_backend_vk_context * ctx, const 
                 }
             }
 
-            return pipeline;
+            return pipeline;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_ARGMAX:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_I32) {
-            return ctx->device->pipeline_argmax_f32;
+            return ctx->device->pipeline_argmax_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_COUNT_EQUAL:
         if (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_I32 && dst->type == GGML_TYPE_I64) {
-            return ctx->device->pipeline_count_equal_i32;
+            return ctx->device->pipeline_count_equal_i32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_IM2COL:
         if (src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_im2col_f32;
+            return ctx->device->pipeline_im2col_f32;  // 返回
         }
         if (src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F16) {
-            return ctx->device->pipeline_im2col_f32_f16;
+            return ctx->device->pipeline_im2col_f32_f16;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_IM2COL_3D:
         if (src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_im2col_3d_f32;
+            return ctx->device->pipeline_im2col_3d_f32;  // 返回
         }
         if (src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F16) {
-            return ctx->device->pipeline_im2col_3d_f32_f16;
+            return ctx->device->pipeline_im2col_3d_f32_f16;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_TIMESTEP_EMBEDDING:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_timestep_embedding_f32;
+            return ctx->device->pipeline_timestep_embedding_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_CONV_TRANSPOSE_1D:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_conv_transpose_1d_f32;
+            return ctx->device->pipeline_conv_transpose_1d_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_POOL_2D:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_pool2d_f32;
+            return ctx->device->pipeline_pool2d_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_RWKV_WKV6:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_rwkv_wkv6_f32;
+            return ctx->device->pipeline_rwkv_wkv6_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_RWKV_WKV7:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_rwkv_wkv7_f32;
+            return ctx->device->pipeline_rwkv_wkv7_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_GATED_DELTA_NET:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
             const uint32_t S_v = dst->src[2]->ne[0];
@@ -9827,39 +9827,39 @@ static vk_pipeline ggml_vk_op_get_pipeline(ggml_backend_vk_context * ctx, const 
                 case 128: si = 2; break;
                 default: return nullptr;
             }
-            return ctx->device->pipeline_gated_delta_net[si][kda];
+            return ctx->device->pipeline_gated_delta_net[si][kda];  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_SSM_SCAN:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
             const uint32_t d_state = src0->ne[0];
             if (d_state == 128) {
-                return ctx->device->pipeline_ssm_scan_f32_d128;
+                return ctx->device->pipeline_ssm_scan_f32_d128;  // 返回
             } else if (d_state == 256) {
-                return ctx->device->pipeline_ssm_scan_f32_d256;
+                return ctx->device->pipeline_ssm_scan_f32_d256;  // 返回
             }
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_SSM_CONV:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_ssm_conv_f32;
+            return ctx->device->pipeline_ssm_conv_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_OPT_STEP_ADAMW:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_opt_step_adamw_f32;
+            return ctx->device->pipeline_opt_step_adamw_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_OPT_STEP_SGD:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_opt_step_sgd_f32;
+            return ctx->device->pipeline_opt_step_sgd_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_LEAKY_RELU:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_leaky_relu_f32;
+            return ctx->device->pipeline_leaky_relu_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_CONV_2D:
     case GGML_OP_CONV_TRANSPOSE_2D:
         if (src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
@@ -9876,7 +9876,7 @@ static vk_pipeline ggml_vk_op_get_pipeline(ggml_backend_vk_context * ctx, const 
             uint32_t p1 = !transpose ? (uint32_t)ggml_get_op_params_i32(dst, 3) : 0;
             uint32_t d0 = !transpose ? (uint32_t)ggml_get_op_params_i32(dst, 4) : 1;
             uint32_t d1 = !transpose ? (uint32_t)ggml_get_op_params_i32(dst, 5) : 1;
-            vk_conv2d_pipeline_state conv2d_pipeline_state(s0, s1, p0, p1, d0, d1, KW, KH);
+            vk_conv2d_pipeline_state conv2d_pipeline_state(s0, s1, p0, p1, d0, d1, KW, KH);  // conv2d_pipeline_state
 
             std::map<vk_conv2d_pipeline_state, vk_pipeline> *pipelines = nullptr;
             if (op == GGML_OP_CONV_2D) {
@@ -9905,56 +9905,56 @@ static vk_pipeline ggml_vk_op_get_pipeline(ggml_backend_vk_context * ctx, const 
                 }
             }
 
-            return pipeline;
+            return pipeline;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_CONV_2D_DW:
         if (src0->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
             if (ggml_is_contiguous(src1)) {
-                return ctx->device->pipeline_conv2d_dw_whcn_f32;
+                return ctx->device->pipeline_conv2d_dw_whcn_f32;  // 返回
             } else if (ggml_is_contiguous_channels(src1)) {
-                return ctx->device->pipeline_conv2d_dw_cwhn_f32;
+                return ctx->device->pipeline_conv2d_dw_cwhn_f32;  // 返回
             }
         } else if (src0->type == GGML_TYPE_F16 && dst->type == GGML_TYPE_F32) {
             if (ggml_is_contiguous(src1)) {
-                return ctx->device->pipeline_conv2d_dw_whcn_f16_f32;
+                return ctx->device->pipeline_conv2d_dw_whcn_f16_f32;  // 返回
             } else if (ggml_is_contiguous_channels(src1)) {
-                return ctx->device->pipeline_conv2d_dw_cwhn_f16_f32;
+                return ctx->device->pipeline_conv2d_dw_cwhn_f16_f32;  // 返回
             }
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_ADD1:
         if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && dst->type == GGML_TYPE_F16) {
-            return ctx->device->pipeline_add1_f16_f16;
+            return ctx->device->pipeline_add1_f16_f16;  // 返回
         }
         if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F16) {
-            return ctx->device->pipeline_add1_f16_f32;
+            return ctx->device->pipeline_add1_f16_f32;  // 返回
         }
         if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_add1_f32_f32;
+            return ctx->device->pipeline_add1_f32_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_ARANGE:
         if (dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_arange_f32;
+            return ctx->device->pipeline_arange_f32;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     case GGML_OP_FILL:
         if (dst->type == GGML_TYPE_F32) {
-            return ctx->device->pipeline_fill_f32;
+            return ctx->device->pipeline_fill_f32;  // 返回
         }
         if (dst->type == GGML_TYPE_F16) {
-            return ctx->device->pipeline_fill_f16;
+            return ctx->device->pipeline_fill_f16;  // 返回
         }
-        return nullptr;
+        return nullptr;  // 返回
     default:
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     GGML_UNUSED(src2);
 }
 
-template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_unary_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
+template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_unary_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {  // 模板
     const uint32_t a_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
     const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
 
@@ -9965,7 +9965,7 @@ template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk
     GGML_UNUSED(src3);
 }
 
-template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_sum_rows_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
+template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_sum_rows_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {  // 模板
     const uint32_t a_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
     const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
 
@@ -9976,7 +9976,7 @@ template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk
     GGML_UNUSED(src3);
 }
 
-template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_pad_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
+template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_pad_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {  // 模板
     const uint32_t a_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
     const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
 
@@ -9987,7 +9987,7 @@ template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk
     GGML_UNUSED(src3);
 }
 
-template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_im2col_3d_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
+template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_im2col_3d_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {  // 模板
     const uint32_t a_offset = get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type);
     const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
 
@@ -9998,7 +9998,7 @@ template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk
     GGML_UNUSED(src3);
 }
 
-template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_binary_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
+template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_binary_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {  // 模板
     const uint32_t a_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
     const uint32_t b_offset = get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type);
     const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
@@ -10011,7 +10011,7 @@ template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk
     GGML_UNUSED(src3);
 }
 
-template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_upscale_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
+template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_upscale_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {  // 模板
     const uint32_t a_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
     const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
 
@@ -10023,7 +10023,7 @@ template <> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk
     GGML_UNUSED(src3);
 }
 
-template<typename PC>
+template<typename PC>  // 模板
 static void ggml_vk_op_f32(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst, ggml_op op, PC&& pc) {
     VK_LOG_DEBUG("ggml_vk_op_f32((" << src0 << ", name=" << src0->name << ", type=" << src0->type << ", ne0=" << src0->ne[0] << ", ne1=" << src0->ne[1] << ", ne2=" << src0->ne[2] << ", ne3=" << src0->ne[3] << ", nb0=" << src0->nb[0] << ", nb1=" << src0->nb[1] << ", nb2=" << src0->nb[2] << ", nb3=" << src0->nb[3];
     if (src1 != nullptr) {
@@ -11057,7 +11057,7 @@ static void ggml_vk_set_rows(ggml_backend_vk_context * ctx, vk_context& subctx, 
     // of ggml_vk_build_graph is sufficient, but set_rows can have a nonempty dst
     // with empty srcs.
     if (ggml_is_empty(src0) || ggml_is_empty(src1)) {
-        return;
+        return;  // 返回
     }
 
     ggml_vk_op_f32<vk_op_binary_push_constants>(ctx, subctx, src0, src1, nullptr, nullptr, dst, GGML_OP_SET_ROWS, {
@@ -11095,13 +11095,13 @@ static uint32_t ggml_vk_rms_num_partials(ggml_backend_vk_context * ctx, const gg
     const uint32_t ne = (uint32_t)node->ne[0];
     const uint32_t denom = ctx->device->pipeline_add_rms[0][0][0]->wg_denoms[0];
     const uint32_t num_partials = CEIL_DIV(ne, denom);
-    return num_partials;
+    return num_partials;  // 返回
 }
 
 static uint32_t ggml_vk_rms_partials_size(ggml_backend_vk_context * ctx, const ggml_tensor *node) {
     const uint32_t num_partials = ggml_vk_rms_num_partials(ctx, node);
     const uint32_t num_bytes = ROUNDUP_POW2(num_partials * sizeof(uint32_t), ctx->device->partials_binding_alignment);
-    return num_bytes;
+    return num_bytes;  // 返回
 }
 
 static vk_op_rope_push_constants ggml_vk_make_rope_constants(const ggml_tensor *dst, const ggml_tensor *src0, const bool has_ff, bool backprop, const uint32_t set_rows_stride) {
@@ -11147,7 +11147,7 @@ static vk_op_rope_push_constants ggml_vk_make_rope_constants(const ggml_tensor *
         nb11, nb12, nb13,
     };
 
-    return rope;
+    return rope;  // 返回
 }
 
 static void ggml_vk_rms_norm(ggml_backend_vk_context * ctx, vk_context& subctx, const struct ggml_cgraph * cgraph, int node_idx, float * op_params) {
@@ -11472,9 +11472,9 @@ static void ggml_vk_topk_moe(ggml_backend_vk_context * ctx, vk_context& subctx, 
         pc.clamp_max = ggml_get_op_params_f32(clamp, 1);
     }
 
-#define GATING_FUNC_SOFTMAX 0
-#define GATING_FUNC_SIGMOID 1
-#define GATING_FUNC_SOFTMAX_WEIGHT 2
+#define GATING_FUNC_SOFTMAX 0  // 宏定义 GATING_FUNC_SOFTMAX
+#define GATING_FUNC_SIGMOID 1  // 宏定义 GATING_FUNC_SIGMOID
+#define GATING_FUNC_SOFTMAX_WEIGHT 2  // 宏定义 GATING_FUNC_SOFTMAX_WEIGHT
 
     pc.gating_func = mode == TOPK_MOE_SIGMOID_NORM_BIAS ? GATING_FUNC_SIGMOID :
                      mode == TOPK_MOE_LATE_SOFTMAX ?      GATING_FUNC_SOFTMAX_WEIGHT :
@@ -11748,7 +11748,7 @@ static void ggml_vk_cumsum(ggml_backend_vk_context * ctx, vk_context& subctx, co
     // For fewer, larger rows, use the multipass shader to spread each row across SMs.
     if (dst->ne[0] <= 4096 || ggml_nrows(dst) >= ctx->device->shader_core_count) {
         ggml_vk_op_f32(ctx, subctx, src0, nullptr, nullptr, nullptr, dst, GGML_OP_CUMSUM, pc);
-        return;
+        return;  // 返回
     }
 
     // First pass computes partial sums within a block, and stores the last partial
@@ -12056,10 +12056,10 @@ static void ggml_vk_leaky_relu(ggml_backend_vk_context * ctx, vk_context& subctx
     ggml_vk_op_f32<vk_op_push_constants>(ctx, subctx, src0, nullptr, nullptr, nullptr, dst, GGML_OP_LEAKY_RELU, { (uint32_t)ggml_nelements(src0), 0, op_params[0], 0.0f, 0.0f, 0.0f });
 }
 
-#ifdef GGML_VULKAN_RUN_TESTS
+#ifdef GGML_VULKAN_RUN_TESTS  // 如果定义了 GGML_VULKAN_RUN_TESTS 则编译
 static void ggml_vk_print_matrix_area(const void * data, ggml_type type, int ne0, int ne1, int i0, int i1, int i2) {
     if (type != GGML_TYPE_F32 && type != GGML_TYPE_F16) {
-        return;
+        return;  // 返回
     }
     i0 = std::max(i0, 5);
     i1 = std::max(i1, 5);
@@ -12090,7 +12090,7 @@ static void ggml_vk_print_matrix_area(const void * data, ggml_type type, int ne0
     }
 }
 
-template <typename X_TYPE, typename Y_TYPE>
+template <typename X_TYPE, typename Y_TYPE>  // 模板
 static void ggml_vk_test_matmul(ggml_backend_vk_context * ctx, size_t m, size_t n, size_t k, size_t batch, size_t num_it, int split_k, int shader_size) {
     VK_LOG_DEBUG("ggml_vk_test_matmul(" << m << ", " << n << ", " << k << ", " << batch << ", " << num_it << ", " << split_k << ", " << shader_size << ")");
     const size_t x_ne = m * k * batch;
@@ -12384,7 +12384,7 @@ static void ggml_vk_test_matmul(ggml_backend_vk_context * ctx, size_t m, size_t 
 
 static void ggml_vk_print_tensor_area(const ggml_tensor * tensor, int i0, int i1, int i2, int i3) {
     if (tensor->type != GGML_TYPE_F32 && tensor->type != GGML_TYPE_F16) {
-        return;
+        return;  // 返回
     }
     i0 = std::max(i0, 5);
     i1 = std::max(i1, 5);
@@ -12423,7 +12423,7 @@ static void ggml_vk_quantize_data(const float * from, void * to, size_t ne, ggml
 static void ggml_vk_dequantize_data(const void * from, float * to, size_t ne, ggml_type quant) {
     if (quant == GGML_TYPE_F32) {
         memcpy(to, from, sizeof(float) * ne);
-        return;
+        return;  // 返回
     }
 
     const auto * tt = ggml_get_type_traits(quant);
@@ -12675,7 +12675,7 @@ static void ggml_vk_test_dequant_matmul(ggml_backend_vk_context * ctx, size_t m,
 
     if (p == nullptr) {
         std::cerr << "error: no pipeline for ggml_vk_test_dequant_matmul " << ggml_type_name(quant) << std::endl;
-        return;
+        return;  // 返回
     }
 
     const size_t x_sz = sizeof(float) * x_ne;
@@ -12858,10 +12858,10 @@ static void ggml_vk_test_dequant_matmul(ggml_backend_vk_context * ctx, size_t m,
     free(d);
     free(d_chk);
 }
-#endif
+#endif  // 条件编译结束
 
 static void ggml_vk_preallocate_buffers(ggml_backend_vk_context * ctx, vk_context subctx) {
-#if defined(GGML_VULKAN_RUN_TESTS)
+#if defined(GGML_VULKAN_RUN_TESTS)  // 条件编译
     const std::vector<size_t> vals {
         512, 512, 128,
         128, 512, 512,
@@ -12948,7 +12948,7 @@ static void ggml_vk_preallocate_buffers(ggml_backend_vk_context * ctx, vk_contex
     }
 
     GGML_ABORT("fatal error");
-#endif
+#endif  // 条件编译结束
 
     if (subctx) {
         // Submit and wait for any pending work before reallocating the buffers
@@ -12996,17 +12996,17 @@ static void ggml_vk_preallocate_buffers(ggml_backend_vk_context * ctx, vk_contex
     }
 }
 
-static void ggml_vk_compute_forward(ggml_backend_vk_context* ctx, ggml_cgraph * cgraph, ggml_tensor* tensor, int tensor_idx, bool almost_ready);
+static void ggml_vk_compute_forward(ggml_backend_vk_context* ctx, ggml_cgraph * cgraph, ggml_tensor* tensor, int tensor_idx, bool almost_ready);  // ggml_vk_compute_forward
 
 // Returns true if node has enqueued work into the queue, false otherwise
 // If submit is true the current all operations queued so far are being submitted to Vulkan to overlap cmdlist creation and GPU execution.
 static bool ggml_vk_build_graph(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int node_idx, ggml_tensor *node_begin, int node_idx_begin, bool last_node, bool almost_ready, bool submit){
     ggml_tensor * node = cgraph->nodes[node_idx];
     if (ggml_is_empty(node) || ggml_op_is_empty(node->op) || !node->buffer) {
-        return false;
+        return false;  // 返回
     }
     if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-        return false;
+        return false;  // 返回
     }
 
     VK_LOG_DEBUG("ggml_vk_build_graph(" << node << ", " << ggml_op_name(node->op) << ")");
@@ -13049,7 +13049,7 @@ static bool ggml_vk_build_graph(ggml_backend_vk_context * ctx, ggml_cgraph * cgr
         // buffer and the tensor or view ranges overlap.
         auto const &overlaps_unsynced = [&](const ggml_tensor *node, const std::vector<const ggml_tensor *> &unsynced_nodes) -> bool {
             if (unsynced_nodes.size() == 0) {
-                return false;
+                return false;  // 返回
             }
             auto n_base = vk_tensor_offset(node) + node->view_offs;
             auto n_size = ggml_nbytes(node);
@@ -13064,11 +13064,11 @@ static bool ggml_vk_build_graph(ggml_backend_vk_context * ctx, ggml_cgraph * cgr
 
                     if ((o_base <= n_base && n_base < o_base + o_size) ||
                         (n_base <= o_base && o_base < n_base + n_size)) {
-                        return true;
+                        return true;  // 返回
                     }
                 }
             }
-            return false;
+            return false;  // 返回
         };
 
         // For all fused ops, check if the destination node or any of the source
@@ -13308,7 +13308,7 @@ static bool ggml_vk_build_graph(ggml_backend_vk_context * ctx, ggml_cgraph * cgr
             ggml_vk_xielu(ctx, compute_ctx, src0, node);
             break;
         default:
-            return false;
+            return false;  // 返回
         }
         break;
     case GGML_OP_GLU:
@@ -13322,7 +13322,7 @@ static bool ggml_vk_build_graph(ggml_backend_vk_context * ctx, ggml_cgraph * cgr
             ggml_vk_glu(ctx, compute_ctx, src0, src1, node);
             break;
         default:
-            return false;
+            return false;  // 返回
         }
         break;
     case GGML_OP_DIAG_MASK_INF:
@@ -13471,16 +13471,16 @@ static bool ggml_vk_build_graph(ggml_backend_vk_context * ctx, ggml_cgraph * cgr
 
         break;
     default:
-        return false;
+        return false;  // 返回
     }
 
     ctx->tensor_ctxs[node_idx] = compute_ctx;
 
-#if defined(GGML_VULKAN_CHECK_RESULTS)
+#if defined(GGML_VULKAN_CHECK_RESULTS)  // 条件编译
     // Force context reset on each node so that each tensor ends up in its own context
     // and can be run and compared to its CPU equivalent separately
     last_node = true;
-#endif
+#endif  // 条件编译结束
 
     if (submit || last_node) {
         ggml_vk_ctx_end(compute_ctx);
@@ -13497,7 +13497,7 @@ static bool ggml_vk_build_graph(ggml_backend_vk_context * ctx, ggml_cgraph * cgr
 
         ggml_vk_compute_forward(ctx, cgraph, node_begin, node_idx_begin, almost_ready);
     }
-    return true;
+    return true;  // 返回
 }
 
 static void ggml_vk_compute_forward(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, ggml_tensor * tensor, int tensor_idx, bool almost_ready = false) {
@@ -13510,9 +13510,9 @@ static void ggml_vk_compute_forward(ggml_backend_vk_context * ctx, ggml_cgraph *
 
     // Only run if ctx hasn't been submitted yet
     if (!subctx->seqs.empty()) {
-#ifdef GGML_VULKAN_CHECK_RESULTS
+#ifdef GGML_VULKAN_CHECK_RESULTS  // 如果定义了 GGML_VULKAN_CHECK_RESULTS 则编译
         ggml_vk_check_results_0(ctx, cgraph, tensor_idx);
-#endif
+#endif  // 条件编译结束
 
         // Do staging buffer copies
         for (auto& cpy : subctx->in_memcpys) {
@@ -13531,10 +13531,10 @@ static void ggml_vk_compute_forward(ggml_backend_vk_context * ctx, ggml_cgraph *
         }
         ctx->submit_pending = true;
 
-#ifdef GGML_VULKAN_CHECK_RESULTS
+#ifdef GGML_VULKAN_CHECK_RESULTS  // 如果定义了 GGML_VULKAN_CHECK_RESULTS 则编译
         ggml_vk_synchronize(ctx);
         ggml_vk_check_results_1(ctx, cgraph, tensor_idx);
-#endif
+#endif  // 条件编译结束
     }
 
     if (tensor_idx == subctx->exit_tensor_idx) {
@@ -13651,12 +13651,12 @@ static void ggml_vk_get_device_description(int device, char * description, size_
 
 // backend interface
 
-#define UNUSED GGML_UNUSED
+#define UNUSED GGML_UNUSED  // 宏定义 UNUSED
 
 // device backend
 
 static bool ggml_backend_buffer_is_vk(ggml_backend_buffer_t buffer) {
-    return buffer->buft->iface.get_name == ggml_backend_vk_buffer_type_name;
+    return buffer->buft->iface.get_name == ggml_backend_vk_buffer_type_name;  // 返回
 }
 
 static void ggml_backend_vk_buffer_free_buffer(ggml_backend_buffer_t buffer) {
@@ -13667,7 +13667,7 @@ static void ggml_backend_vk_buffer_free_buffer(ggml_backend_buffer_t buffer) {
 }
 
 static void * ggml_backend_vk_buffer_get_base(ggml_backend_buffer_t buffer) {
-    return vk_ptr_base;
+    return vk_ptr_base;  // 返回
 
     UNUSED(buffer);
 }
@@ -13677,7 +13677,7 @@ static enum ggml_status ggml_backend_vk_buffer_init_tensor(ggml_backend_buffer_t
     if (tensor->view_src != nullptr) {
         GGML_ASSERT(tensor->view_src->buffer->buft == buffer->buft);
     }
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 static void ggml_backend_vk_buffer_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value, size_t offset, size_t size) {
@@ -13686,7 +13686,7 @@ static void ggml_backend_vk_buffer_memset_tensor(ggml_backend_buffer_t buffer, g
     vk_buffer buf = buf_ctx->dev_buffer;
 
     if (size == 0) {
-        return;
+        return;  // 返回
     }
 
     uint32_t val32 = (uint32_t)value * 0x01010101;
@@ -13699,7 +13699,7 @@ static void ggml_backend_vk_buffer_set_tensor(ggml_backend_buffer_t buffer, ggml
     vk_buffer buf = buf_ctx->dev_buffer;
 
     if (size == 0) {
-        return;
+        return;  // 返回
     }
 
     ggml_vk_buffer_write(buf, vk_tensor_offset(tensor) + tensor->view_offs + offset, data, size);
@@ -13713,7 +13713,7 @@ static void ggml_backend_vk_buffer_set_tensor_2d(ggml_backend_buffer_t buffer, g
     vk_buffer buf = buf_ctx->dev_buffer;
 
     if (size == 0) {
-        return;
+        return;  // 返回
     }
 
     ggml_vk_buffer_write_2d(buf, vk_tensor_offset(tensor) + tensor->view_offs + offset, data, stride_data, stride_tensor, size, n_copies);
@@ -13724,7 +13724,7 @@ static void ggml_backend_vk_buffer_get_tensor(ggml_backend_buffer_t buffer, cons
     ggml_backend_vk_buffer_context * buf_ctx = (ggml_backend_vk_buffer_context *)buffer->context;
 
     if (size == 0) {
-        return;
+        return;  // 返回
     }
 
     vk_buffer buf = buf_ctx->dev_buffer;
@@ -13739,7 +13739,7 @@ static void ggml_backend_vk_buffer_get_tensor_2d(ggml_backend_buffer_t buffer, c
     ggml_backend_vk_buffer_context * buf_ctx = (ggml_backend_vk_buffer_context *)buffer->context;
 
     if (size == 0) {
-        return;
+        return;  // 返回
     }
 
     vk_buffer buf = buf_ctx->dev_buffer;
@@ -13749,7 +13749,7 @@ static void ggml_backend_vk_buffer_get_tensor_2d(ggml_backend_buffer_t buffer, c
 
 static bool ggml_backend_vk_buffer_cpy_tensor(ggml_backend_buffer_t buffer, const ggml_tensor * src, ggml_tensor * dst) {
     if (ggml_nbytes(src) == 0) {
-        return true;
+        return true;  // 返回
     }
 
     if (ggml_backend_buffer_is_vk(src->buffer)) {
@@ -13761,9 +13761,9 @@ static bool ggml_backend_vk_buffer_cpy_tensor(ggml_backend_buffer_t buffer, cons
 
         ggml_vk_buffer_copy(dst_buf, vk_tensor_offset(dst) + dst->view_offs, src_buf, vk_tensor_offset(src) + src->view_offs, ggml_nbytes(src));
 
-        return true;
+        return true;  // 返回
     }
-    return false;
+    return false;  // 返回
 
     UNUSED(buffer);
 }
@@ -13803,26 +13803,26 @@ static ggml_backend_buffer_t ggml_backend_vk_buffer_type_alloc_buffer(ggml_backe
     try {
         dev_buffer = ggml_vk_create_buffer_device(ctx->device, size);
     } catch (const vk::SystemError& e) {
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     ggml_backend_vk_buffer_context * bufctx = new ggml_backend_vk_buffer_context(ctx->device, std::move(dev_buffer), ctx->name);
 
-    return ggml_backend_buffer_init(buft, ggml_backend_vk_buffer_interface, bufctx, size);
+    return ggml_backend_buffer_init(buft, ggml_backend_vk_buffer_interface, bufctx, size);  // ggml_backend_buffer_init
 }
 
 static size_t ggml_backend_vk_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
     ggml_backend_vk_buffer_type_context * ctx = (ggml_backend_vk_buffer_type_context *) buft->context;
-    return ctx->device->properties.limits.minStorageBufferOffsetAlignment;
+    return ctx->device->properties.limits.minStorageBufferOffsetAlignment;  // 返回
 }
 
 static size_t ggml_backend_vk_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
     ggml_backend_vk_buffer_type_context * ctx = (ggml_backend_vk_buffer_type_context *) buft->context;
-    return ctx->device->suballocation_block_size;
+    return ctx->device->suballocation_block_size;  // 返回
 }
 
 static size_t ggml_backend_vk_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_nbytes(tensor);
+    return ggml_nbytes(tensor);  // ggml_nbytes
 
     UNUSED(buft);
 }
@@ -13834,19 +13834,19 @@ ggml_backend_buffer_type_t ggml_backend_vk_buffer_type(size_t dev_num) {
 
     vk_device dev = ggml_vk_get_device(dev_num);
 
-    return &dev->buffer_type;
+    return &dev->buffer_type;  // 返回
 }
 
 // host buffer type
 
 static const char * ggml_backend_vk_host_buffer_type_name(ggml_backend_buffer_type_t buft) {
-    return GGML_VK_NAME "_Host";
+    return GGML_VK_NAME "_Host";  // 返回
 
     UNUSED(buft);
 }
 
 static const char * ggml_backend_vk_host_buffer_name(ggml_backend_buffer_t buffer) {
-    return GGML_VK_NAME "_Host";
+    return GGML_VK_NAME "_Host";  // 返回
 
     UNUSED(buffer);
 }
@@ -13866,26 +13866,26 @@ static ggml_backend_buffer_t ggml_backend_vk_host_buffer_type_alloc_buffer(ggml_
     } catch (vk::SystemError& e) {
         GGML_LOG_WARN("ggml_vulkan: Failed to allocate pinned memory (%s)\n", e.what());
         // fallback to cpu buffer
-        return ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
+        return ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);  // ggml_backend_buft_alloc_buffer
     }
 
     ggml_backend_buffer_t buffer = ggml_backend_cpu_buffer_from_ptr(ptr, size);
     buffer->buft = buft;
     buffer->iface.free_buffer = ggml_backend_vk_host_buffer_free_buffer;
 
-    return buffer;
+    return buffer;  // 返回
 
     UNUSED(buft);
 }
 
 static size_t ggml_backend_vk_host_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return vk_instance.devices[0]->properties.limits.minMemoryMapAlignment;
+    return vk_instance.devices[0]->properties.limits.minMemoryMapAlignment;  // 返回
 
     UNUSED(buft);
 }
 
 static size_t ggml_backend_vk_host_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
-    return vk_instance.devices[0]->suballocation_block_size;
+    return vk_instance.devices[0]->suballocation_block_size;  // 返回
 
     UNUSED(buft);
 }
@@ -13910,7 +13910,7 @@ ggml_backend_buffer_type_t ggml_backend_vk_host_buffer_type() {
     ggml_vk_instance_init();
     ggml_vk_get_device(0);
 
-    return &ggml_backend_vk_buffer_type_host;
+    return &ggml_backend_vk_buffer_type_host;  // 返回
 }
 
 
@@ -13935,7 +13935,7 @@ static void ggml_backend_vk_free(ggml_backend_t backend) {
 static ggml_backend_buffer_type_t ggml_backend_vk_get_default_buffer_type(ggml_backend_t backend) {
     ggml_backend_vk_context * ctx = (ggml_backend_vk_context *)backend->context;
 
-    return &ctx->device->buffer_type;
+    return &ctx->device->buffer_type;  // 返回
 }
 
 static void ggml_backend_vk_set_tensor_2d_async(ggml_backend_t backend, ggml_tensor * tensor, const void * data, size_t offset,
@@ -13945,7 +13945,7 @@ static void ggml_backend_vk_set_tensor_2d_async(ggml_backend_t backend, ggml_ten
     GGML_ASSERT((tensor->buffer->buft == ggml_backend_vk_get_default_buffer_type(backend) || tensor->buffer->buft == ggml_backend_vk_host_buffer_type()) && "unsupported buffer type");
 
     if (size == 0) {
-        return;
+        return;  // 返回
     }
 
     ggml_backend_vk_buffer_context * buf_ctx = (ggml_backend_vk_buffer_context *)tensor->buffer->context;
@@ -14014,7 +14014,7 @@ static void ggml_backend_vk_get_tensor_2d_async(ggml_backend_t backend, const gg
     GGML_ASSERT((tensor->buffer->buft == ggml_backend_vk_get_default_buffer_type(backend) || tensor->buffer->buft == ggml_backend_vk_host_buffer_type()) && "unsupported buffer type");
 
     if (size == 0) {
-        return;
+        return;  // 返回
     }
 
     ggml_backend_vk_buffer_context * buf_ctx = (ggml_backend_vk_buffer_context *)tensor->buffer->context;
@@ -14069,11 +14069,11 @@ static bool ggml_backend_vk_cpy_tensor_async(ggml_backend_t backend_src, ggml_ba
 
     // Skip zero-size tensors
     if (ggml_nbytes(src) == 0) {
-        return true;
+        return true;  // 返回
     }
 
     if (dst->buffer->buft != ggml_backend_vk_get_default_buffer_type(backend_dst)) {
-        return false;
+        return false;  // 返回
     }
 
     ggml_backend_vk_buffer_context * dst_buf_ctx = (ggml_backend_vk_buffer_context *)dst->buffer->context;
@@ -14084,7 +14084,7 @@ static bool ggml_backend_vk_cpy_tensor_async(ggml_backend_t backend_src, ggml_ba
 
         // Async copy only works within the same device
         if (src_buf_ctx->dev_buffer->device != dst_buf->device) {
-            return false;
+            return false;  // 返回
         }
 
         vk_context compute_ctx = ggml_vk_get_compute_ctx(ctx);
@@ -14092,7 +14092,7 @@ static bool ggml_backend_vk_cpy_tensor_async(ggml_backend_t backend_src, ggml_ba
         ggml_vk_buffer_copy_async(compute_ctx, dst_buf, vk_tensor_offset(dst) + dst->view_offs,
                                    src_buf_ctx->dev_buffer, vk_tensor_offset(src) + src->view_offs,
                                    ggml_nbytes(src));
-        return true;
+        return true;  // 返回
     }
 
     if (ggml_backend_buffer_is_host(src->buffer)) {
@@ -14100,7 +14100,7 @@ static bool ggml_backend_vk_cpy_tensor_async(ggml_backend_t backend_src, ggml_ba
         size_t pinned_offset = 0;
         ggml_vk_host_get(ctx->device, src->data, pinned_buf, pinned_offset);
         if (pinned_buf == nullptr) {
-            return false;
+            return false;  // 返回
         }
 
         vk_context cpy_ctx;
@@ -14116,13 +14116,13 @@ static bool ggml_backend_vk_cpy_tensor_async(ggml_backend_t backend_src, ggml_ba
             cpy_ctx = ggml_vk_get_compute_ctx(ctx);
         }
 
-        return ggml_vk_buffer_write_async(cpy_ctx, dst_buf,
+        return ggml_vk_buffer_write_async(cpy_ctx, dst_buf,  // 返回
                                           vk_tensor_offset(dst) + dst->view_offs,
                                           src->data, ggml_nbytes(src));
     }
 
     GGML_UNUSED(backend_src);
-    return false;
+    return false;  // 返回
 }
 
 static void ggml_vk_synchronize(ggml_backend_vk_context * ctx) {
@@ -14198,12 +14198,12 @@ static void ggml_backend_vk_synchronize(ggml_backend_t backend) {
 }
 
 static bool ggml_vk_is_empty(ggml_tensor * node) {
-    return ggml_is_empty(node) || node->op == GGML_OP_NONE || node->op == GGML_OP_RESHAPE || node->op == GGML_OP_TRANSPOSE || node->op == GGML_OP_VIEW || node->op == GGML_OP_PERMUTE;
+    return ggml_is_empty(node) || node->op == GGML_OP_NONE || node->op == GGML_OP_RESHAPE || node->op == GGML_OP_TRANSPOSE || node->op == GGML_OP_VIEW || node->op == GGML_OP_PERMUTE;  // ggml_is_empty
 }
 
 static bool ggml_vk_can_fuse(const ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops) {
     if (!ggml_can_fuse(cgraph, node_idx, ops)) {
-        return false;
+        return false;  // 返回
     }
 
     if (ops.size() == 2 && ops.begin()[0] == GGML_OP_RMS_NORM && ops.begin()[1] == GGML_OP_MUL) {
@@ -14217,16 +14217,16 @@ static bool ggml_vk_can_fuse(const ggml_backend_vk_context * ctx, const struct g
         if (mul->src[0]->type != GGML_TYPE_F32 ||
             mul->src[1]->type != GGML_TYPE_F32 ||
             mul->type != GGML_TYPE_F32) {
-            return false;
+            return false;  // 返回
         }
         // if rms_norm is the B operand, then we don't handle broadcast
         if (rms_norm == mul->src[1] &&
             !ggml_are_same_shape(mul->src[0], rms_norm)) {
-            return false;
+            return false;  // 返回
         }
         // rms_norm shader assumes contiguous rows
         if (!ggml_is_contiguous_rows(mul->src[0]) || !ggml_is_contiguous_rows(mul->src[1])) {
-            return false;
+            return false;  // 返回
         }
     }
     auto const &mm_add_ok = [&](const ggml_tensor *mul, const ggml_tensor *add) {
@@ -14234,22 +14234,22 @@ static bool ggml_vk_can_fuse(const ggml_backend_vk_context * ctx, const struct g
 
         // mat-vec only
         if (ggml_nrows(mul) != 1) {
-            return false;
+            return false;  // 返回
         }
         // shaders assume the types match
         if (mul->type != bias->type) {
-            return false;
+            return false;  // 返回
         }
         // shaders reuse the D shape for bias
         if (!ggml_are_same_shape(mul, bias) ||
             !ggml_are_same_stride(mul, bias)) {
-            return false;
+            return false;  // 返回
         }
         // unaligned bias isn't handled
         if (get_misalign_bytes(ctx, bias) != 0) {
-            return false;
+            return false;  // 返回
         }
-        return true;
+        return true;  // 返回
     };
 
     if ((ops.size() == 2 || ops.size() == 3) && ops.begin()[0] == GGML_OP_MUL_MAT && ops.begin()[1] == GGML_OP_ADD) {
@@ -14258,14 +14258,14 @@ static bool ggml_vk_can_fuse(const ggml_backend_vk_context * ctx, const struct g
         const ggml_tensor *add = cgraph->nodes[node_idx + 1];
 
         if (!mm_add_ok(mul, add)) {
-            return false;
+            return false;  // 返回
         }
         if (ops.size() == 3) {
             if (ops.begin()[2] != GGML_OP_ADD) {
-                return false;
+                return false;  // 返回
             }
             if (!mm_add_ok(add, cgraph->nodes[node_idx + 2])) {
-                return false;
+                return false;  // 返回
             }
         }
     }
@@ -14274,32 +14274,32 @@ static bool ggml_vk_can_fuse(const ggml_backend_vk_context * ctx, const struct g
         const ggml_tensor *scale = mul->src[1];
 
         if (mmid != mul->src[0]) {
-            return false;
+            return false;  // 返回
         }
         // mat-vec only
         if (!ggml_vk_use_mul_mat_vec_id(cgraph, node_idx)) {
-            return false;
+            return false;  // 返回
         }
         // shaders assume the types match
         if (mmid->type != scale->type) {
-            return false;
+            return false;  // 返回
         }
         // shaders assume the bias is contiguous
         if (!ggml_is_contiguous(scale)) {
-            return false;
+            return false;  // 返回
         }
         // unaligned bias isn't handled
         if (get_misalign_bytes(ctx, scale) != 0) {
-            return false;
+            return false;  // 返回
         }
         // shader only indexes by expert index
         if (scale->ne[0] != 1 ||
             scale->ne[1] != mul->ne[1] ||
             scale->ne[2] != 1 ||
             scale->ne[3] != 1) {
-            return false;
+            return false;  // 返回
         }
-        return true;
+        return true;  // 返回
     };
 
     if ((ops.size() == 2 || ops.size() == 3) && ops.begin()[0] == GGML_OP_MUL_MAT_ID && ops.begin()[1] == GGML_OP_ADD_ID) {
@@ -14309,35 +14309,35 @@ static bool ggml_vk_can_fuse(const ggml_backend_vk_context * ctx, const struct g
         const ggml_tensor *bias = add->src[1];
 
         if (mul != add->src[0]) {
-            return false;
+            return false;  // 返回
         }
         // mat-vec only
         if (!ggml_vk_use_mul_mat_vec_id(cgraph, node_idx)) {
-            return false;
+            return false;  // 返回
         }
         // shaders assume the types match
         if (mul->type != bias->type) {
-            return false;
+            return false;  // 返回
         }
         // shaders assume the bias is contiguous
         if (!ggml_is_contiguous(bias)) {
-            return false;
+            return false;  // 返回
         }
         // the ID tensor must be the same for mul_mat_id and add_id
         if (mul->src[2] != add->src[2]) {
-            return false;
+            return false;  // 返回
         }
         // unaligned bias isn't handled
         if (get_misalign_bytes(ctx, bias) != 0) {
-            return false;
+            return false;  // 返回
         }
 
         if (ops.size() == 3) {
             if (ops.begin()[2] != GGML_OP_MUL) {
-                return false;
+                return false;  // 返回
             }
             const ggml_tensor *mul = cgraph->nodes[node_idx + 2];
-            return mmid_mul_ok(add, mul);
+            return mmid_mul_ok(add, mul);  // mmid_mul_ok
         }
     }
 
@@ -14347,11 +14347,11 @@ static bool ggml_vk_can_fuse(const ggml_backend_vk_context * ctx, const struct g
         const ggml_tensor *mul = cgraph->nodes[node_idx + 1];
 
         if (!mmid_mul_ok(mmid, mul)) {
-            return false;
+            return false;  // 返回
         }
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_vk_can_fuse_topk_moe(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph,
@@ -14375,16 +14375,16 @@ static bool ggml_vk_can_fuse_topk_moe(ggml_backend_vk_context * ctx, const struc
         get_rows = cgraph->nodes[node_idx + 5];
         argsort = cgraph->nodes[node_idx + 3];
         if (ggml_get_unary_op(softmax) != GGML_UNARY_OP_SIGMOID) {
-            return false;
+            return false;  // 返回
         }
         // bias is expected to be 1D
         if (ggml_nrows(cgraph->nodes[node_idx + 2]->src[1]) != 1 ||
             !ggml_is_contiguous(cgraph->nodes[node_idx + 2]->src[1])) {
-            return false;
+            return false;  // 返回
         }
         // sigmoid fusion seems to generate infinities on moltenvk
         if (ctx->device->driver_id == vk::DriverId::eMoltenvk) {
-            return false;
+            return false;  // 返回
         }
         break;
     case TOPK_MOE_EARLY_SOFTMAX:
@@ -14400,22 +14400,22 @@ static bool ggml_vk_can_fuse_topk_moe(ggml_backend_vk_context * ctx, const struc
         argsort = cgraph->nodes[node_idx + 0];
         break;
     default:
-        return false;
+        return false;  // 返回
     }
 
     ggml_tensor * probs = get_rows->src[0];
     if (probs->op != GGML_OP_RESHAPE) {
-        return false;
+        return false;  // 返回
     }
     probs = probs->src[0];
     ggml_tensor * selection_probs = argsort->src[0];
 
     if (probs != selection_probs && mode != TOPK_MOE_SIGMOID_NORM_BIAS) {
-        return false;
+        return false;  // 返回
     }
 
     if (!ggml_is_contiguous(softmax->src[0]) || !ggml_is_contiguous(weights)) {
-        return false;
+        return false;  // 返回
     }
 
     if (softmax->op == GGML_OP_SOFT_MAX) {
@@ -14425,28 +14425,28 @@ static bool ggml_vk_can_fuse_topk_moe(ggml_backend_vk_context * ctx, const struc
         float max_bias = op_params[1];
 
         if (scale != 1.0f || max_bias != 0.0f) {
-            return false;
+            return false;  // 返回
         }
 
         // don't fuse when masks or sinks are present
         if (softmax->src[1] || softmax->src[2]) {
-            return false;
+            return false;  // 返回
         }
     }
 
     const int n_expert = softmax->ne[0];
     if (n_expert > (1 << (num_topk_moe_pipelines-1))) {
-        return false;
+        return false;  // 返回
     }
 
     if (!ctx->device->subgroup_arithmetic ||
         !ctx->device->subgroup_shuffle ||
         !ctx->device->subgroup_require_full_support ||
         ctx->device->disable_fusion) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_vk_can_fuse_rope_set_rows(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph,
@@ -14458,30 +14458,30 @@ static bool ggml_vk_can_fuse_rope_set_rows(ggml_backend_vk_context * ctx, const 
 
     // ne3 not tested
     if (rope->src[0]->ne[3] != 1) {
-        return false;
+        return false;  // 返回
     }
 
     if (set_rows->type != GGML_TYPE_F32 && set_rows->type != GGML_TYPE_F16) {
-        return false;
+        return false;  // 返回
     }
 
     if (set_rows->src[1]->type != GGML_TYPE_I64) {
-        return false;
+        return false;  // 返回
     }
 
     // The view should flatten two dims of rope into one dim
     if (!ggml_is_contiguous(view) ||
         view->ne[0] != rope->ne[0] * rope->ne[1]) {
-        return false;
+        return false;  // 返回
     }
 
     // Only norm/neox/mrope shaders have the fusion code
     const int mode = ((const int32_t *) rope->op_params)[2];
     if (mode != GGML_ROPE_TYPE_NORMAL && mode != GGML_ROPE_TYPE_NEOX && mode != GGML_ROPE_TYPE_MROPE) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 // Check whether the tensors overlap in memory.
@@ -14500,15 +14500,15 @@ static bool ggml_vk_tensors_overlap(const ggml_tensor * a, const ggml_tensor * b
         auto b_size = ggml_nbytes(b);
 
         if (elementwise && a_base == b_base && a_size == b_size) {
-            return false;
+            return false;  // 返回
         }
 
         if ((b_base <= a_base && a_base < b_base + b_size) ||
             (a_base <= b_base && b_base < a_base + a_size)) {
-            return true;
+            return true;  // 返回
         }
     }
-    return false;
+    return false;  // 返回
 }
 
 static bool ggml_vk_can_fuse_rms_norm_mul_rope(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph,
@@ -14524,36 +14524,36 @@ static bool ggml_vk_can_fuse_rms_norm_mul_rope(ggml_backend_vk_context * ctx, co
     if (!ggml_is_contiguous(rms) ||
         !ggml_is_contiguous(mul) ||
         !ggml_is_contiguous(rope)) {
-        return false;
+        return false;  // 返回
     }
 
     // only norm/neox are handled in the shader
     if (mode != GGML_ROPE_TYPE_NEOX && mode != GGML_ROPE_TYPE_NORMAL) {
-        return false;
+        return false;  // 返回
     }
 
     // shared memory size for passing data from mul->rope
     if (mul->ne[0] > 1024) {
-        return false;
+        return false;  // 返回
     }
 
     // conditions for pipeline creation
     if (sizeof(vk_op_rms_norm_mul_rope_push_constants) > ctx->device->properties.limits.maxPushConstantsSize) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static uint32_t ggml_vk_fuse_multi_add(ggml_backend_vk_context * ctx, const struct ggml_cgraph * cgraph, int node_idx) {
 
     const ggml_tensor *first_node = cgraph->nodes[node_idx];
     if (first_node->op != GGML_OP_ADD) {
-        return 0;
+        return 0;  // 返回
     }
 
     if (!ctx->device->multi_add) {
-        return 0;
+        return 0;  // 返回
     }
 
     int32_t num_adds = 1;
@@ -14592,21 +14592,21 @@ static uint32_t ggml_vk_fuse_multi_add(ggml_backend_vk_context * ctx, const stru
 
     // a single add is not "fused", so just return zero
     if (num_adds == 1) {
-        return 0;
+        return 0;  // 返回
     }
-    return num_adds;
+    return num_adds;  // 返回
 }
 
 static int32_t find_first_set(uint32_t x) {
     int32_t ret = 0;
     if (!x) {
-        return -1;
+        return -1;  // 返回
     }
     while (!(x & 1)) {
         x >>= 1;
         ret++;
     }
-    return ret;
+    return ret;  // 返回
 }
 
 static ggml_status ggml_backend_vk_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
@@ -14915,11 +14915,11 @@ static ggml_status ggml_backend_vk_graph_compute(ggml_backend_t backend, ggml_cg
         if (enqueued) {
             ++submitted_nodes;
 
-#ifndef GGML_VULKAN_CHECK_RESULTS
+#ifndef GGML_VULKAN_CHECK_RESULTS  // 如果未定义 GGML_VULKAN_CHECK_RESULTS 则编译
             if (first_node_in_batch) {
                 first_node_in_batch = false;
             }
-#endif
+#endif  // 条件编译结束
         }
 
         if (submit && enqueued) {
@@ -14985,38 +14985,38 @@ static ggml_status ggml_backend_vk_graph_compute(ggml_backend_t backend, ggml_cg
         ggml_vk_synchronize(ctx);
     }
 
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 
     UNUSED(backend);
 }
 
 // Sort the graph for improved parallelism.
-static void ggml_vk_graph_optimize(ggml_backend_t backend, struct ggml_cgraph * graph)
+static void ggml_vk_graph_optimize(ggml_backend_t backend, struct ggml_cgraph * graph)  // ggml_vk_graph_optimize
 {
     VK_LOG_DEBUG("ggml_vk_graph_optimize(" << graph->n_nodes << " nodes)");
     ggml_backend_vk_context * ctx = (ggml_backend_vk_context *)backend->context;
 
     if (ctx->device->disable_graph_optimize) {
-        return;
+        return;  // 返回
     }
 
     auto const &is_empty = [](ggml_tensor * node) -> bool {
-        return node->op == GGML_OP_NONE || node->op == GGML_OP_RESHAPE || node->op == GGML_OP_TRANSPOSE || node->op == GGML_OP_VIEW || node->op == GGML_OP_PERMUTE;
+        return node->op == GGML_OP_NONE || node->op == GGML_OP_RESHAPE || node->op == GGML_OP_TRANSPOSE || node->op == GGML_OP_VIEW || node->op == GGML_OP_PERMUTE;  // 返回
     };
 
     auto const &is_src_of = [](const ggml_tensor *dst, const ggml_tensor *src) -> bool {
         for (uint32_t s = 0; s < GGML_MAX_SRC; ++s) {
             if (dst->src[s] == src) {
-                return true;
+                return true;  // 返回
             }
         }
         // implicit dependency if they view the same tensor
         const ggml_tensor *dst2 = dst->view_src ? dst->view_src : dst;
         const ggml_tensor *src2 = src->view_src ? src->view_src : src;
         if (dst2 == src2) {
-            return true;
+            return true;  // 返回
         }
-        return false;
+        return false;  // 返回
     };
 
     std::vector<ggml_tensor *> new_order;
@@ -15036,9 +15036,9 @@ static void ggml_vk_graph_optimize(ggml_backend_t backend, struct ggml_cgraph * 
                         is_pattern = false;
                     }
                 }
-                return is_pattern;
+                return is_pattern;  // 返回
             }
-            return false;
+            return false;  // 返回
         };
 
         auto const &keep_pattern = [&](const std::initializer_list<ggml_op> &pattern) -> bool {
@@ -15051,9 +15051,9 @@ static void ggml_vk_graph_optimize(ggml_backend_t backend, struct ggml_cgraph * 
                 while (first_unused < graph->n_nodes && used[first_unused]) {
                     first_unused++;
                 }
-                return true;
+                return true;  // 返回
             }
-            return false;
+            return false;  // 返回
         };
 
         if (keep_pattern(topk_moe_early_softmax_norm)) {
@@ -15302,7 +15302,7 @@ static ggml_backend_i ggml_backend_vk_interface = {
 
 static ggml_guid_t ggml_backend_vk_guid() {
     static ggml_guid guid = { 0xb8, 0xf7, 0x4f, 0x86, 0x40, 0x3c, 0xe1, 0x02, 0x91, 0xc8, 0xdd, 0xe9, 0x02, 0x3f, 0xc0, 0x2b };
-    return &guid;
+    return &guid;  // 返回
 }
 
 ggml_backend_t ggml_backend_vk_init(size_t dev_num) {
@@ -15322,7 +15322,7 @@ ggml_backend_t ggml_backend_vk_init(size_t dev_num) {
         vk_backend->iface.get_tensor_async = nullptr;
     }
 
-    return vk_backend;
+    return vk_backend;  // 返回
 }
 
 bool ggml_backend_is_vk(ggml_backend_t backend) {
@@ -15330,7 +15330,7 @@ bool ggml_backend_is_vk(ggml_backend_t backend) {
 }
 
 int ggml_backend_vk_get_device_count() {
-    return ggml_vk_get_device_count();
+    return ggml_vk_get_device_count();  // ggml_vk_get_device_count
 }
 
 void ggml_backend_vk_get_device_description(int device, char * description, size_t description_size) {
@@ -15380,7 +15380,7 @@ static vk::PhysicalDeviceType ggml_backend_vk_get_device_type(int device_idx) {
     vk::PhysicalDeviceProperties2 props = {};
     device.getProperties2(&props);
 
-    return props.properties.deviceType;
+    return props.properties.deviceType;  // 返回
 }
 
 static std::string ggml_backend_vk_get_device_pci_id(int device_idx) {
@@ -15400,7 +15400,7 @@ static std::string ggml_backend_vk_get_device_pci_id(int device_idx) {
     }
 
     if (!ext_support) {
-        return "";
+        return "";  // 返回
     }
 
     vk::PhysicalDeviceProperties2 props = {};
@@ -15423,7 +15423,7 @@ static std::string ggml_backend_vk_get_device_pci_id(int device_idx) {
 
 //////////////////////////
 
-struct ggml_backend_vk_device_context {
+struct ggml_backend_vk_device_context {  // 结构体定义
     size_t device;
     std::string name;
     std::string description;
@@ -15449,18 +15449,18 @@ static void ggml_backend_vk_device_get_memory(ggml_backend_dev_t device, size_t 
 
 static ggml_backend_buffer_type_t ggml_backend_vk_device_get_buffer_type(ggml_backend_dev_t dev) {
     ggml_backend_vk_device_context * ctx = (ggml_backend_vk_device_context *)dev->context;
-    return ggml_backend_vk_buffer_type(ctx->device);
+    return ggml_backend_vk_buffer_type(ctx->device);  // ggml_backend_vk_buffer_type
 }
 
 static ggml_backend_buffer_type_t ggml_backend_vk_device_get_host_buffer_type(ggml_backend_dev_t dev) {
     UNUSED(dev);
-    return ggml_backend_vk_host_buffer_type();
+    return ggml_backend_vk_host_buffer_type();  // ggml_backend_vk_host_buffer_type
 }
 
 static enum ggml_backend_dev_type ggml_backend_vk_device_get_type(ggml_backend_dev_t dev) {
     ggml_backend_vk_device_context * ctx = (ggml_backend_vk_device_context *)dev->context;
 
-    return ctx->is_integrated_gpu ? GGML_BACKEND_DEVICE_TYPE_IGPU : GGML_BACKEND_DEVICE_TYPE_GPU;
+    return ctx->is_integrated_gpu ? GGML_BACKEND_DEVICE_TYPE_IGPU : GGML_BACKEND_DEVICE_TYPE_GPU;  // 返回
 }
 
 static void ggml_backend_vk_device_get_props(ggml_backend_dev_t dev, struct ggml_backend_dev_props * props) {
@@ -15482,7 +15482,7 @@ static void ggml_backend_vk_device_get_props(ggml_backend_dev_t dev, struct ggml
 static ggml_backend_t ggml_backend_vk_device_init(ggml_backend_dev_t dev, const char * params) {
     UNUSED(params);
     ggml_backend_vk_device_context * ctx = (ggml_backend_vk_device_context *)dev->context;
-    return ggml_backend_vk_init(ctx->device);
+    return ggml_backend_vk_init(ctx->device);  // ggml_backend_vk_init
 }
 
 static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
@@ -15494,25 +15494,25 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
 
     auto const & tensor_size_supported = [&](size_t tensor_size) {
         if (tensor_size > device->max_buffer_size) {
-            return false;
+            return false;  // 返回
         }
         // For im2col shaders using BDA, maxStorageBufferRange limit doesn't apply.
         // If shader64BitIndexing is enabled, maxStorageBufferRange limit doesn't apply.
         if (!uses_bda && !device->shader_64b_indexing) {
             if (tensor_size > device->properties.limits.maxStorageBufferRange) {
-                return false;
+                return false;  // 返回
             }
         }
-        return true;
+        return true;  // 返回
     };
     // reject any tensors larger than the max buffer size
     for (int i = 0; i < GGML_MAX_SRC; i++) {
         if (op->src[i] && !tensor_size_supported(ggml_nbytes(op->src[i]))) {
-            return false;
+            return false;  // 返回
         }
     }
     if (!tensor_size_supported(ggml_nbytes(op))) {
-        return false;
+        return false;  // 返回
     }
 
     switch (op->op) {
@@ -15539,12 +15539,12 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                 case GGML_UNARY_OP_FLOOR:
                 case GGML_UNARY_OP_TRUNC:
                 case GGML_UNARY_OP_SGN:
-                    return ggml_is_contiguous(op->src[0]) &&
+                    return ggml_is_contiguous(op->src[0]) &&  // ggml_is_contiguous
                            (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16) &&
                            (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) &&
                            (op->src[0]->type == op->type);
                 default:
-                    return false;
+                    return false;  // 返回
             }
         case GGML_OP_GLU:
             switch (ggml_get_glu_op(op)) {
@@ -15558,7 +15558,7 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                            (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) &&
                            (op->src[0]->type == op->type);
                 default:
-                    return false;
+                    return false;  // 返回
             }
         case GGML_OP_MUL_MAT:
         case GGML_OP_MUL_MAT_ID:
@@ -15567,7 +15567,7 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                 if (op->op == GGML_OP_MUL_MAT_ID) {
                     if (!device->mul_mat_id_s[src0_type] && !device->mul_mat_id_m[src0_type] && !device->mul_mat_id_l[src0_type]) {
                         // If there's not enough shared memory for row_ids and the result tile, fallback to CPU
-                        return false;
+                        return false;  // 返回
                     }
                 }
                 switch (src0_type) {
@@ -15598,7 +15598,7 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                     case GGML_TYPE_NVFP4:
                         break;
                     default:
-                        return false;
+                        return false;  // 返回
                 }
                 struct ggml_tensor * a;
                 struct ggml_tensor * b;
@@ -15610,19 +15610,19 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                     b = op->src[1];
                 }
                 if (a->ne[3] != b->ne[3]) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (!(ggml_vk_dim01_contiguous(op->src[0]) || op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16 || op->src[0]->type == GGML_TYPE_BF16) ||
                     !(ggml_vk_dim01_contiguous(op->src[1]) || op->src[1]->type == GGML_TYPE_F32 || op->src[1]->type == GGML_TYPE_F16)) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (op->src[0]->type == GGML_TYPE_BF16 && op->src[1]->type == GGML_TYPE_F16) {
                     // We currently don't have a bf16 x f16 shader, or an fp16->bf16 copy shader.
                     // So don't support this combination for now.
-                    return false;
+                    return false;  // 返回
                 }
 
-                return true;
+                return true;  // 返回
             }
         case GGML_OP_FLASH_ATTN_EXT:
             {
@@ -15630,23 +15630,23 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                 uint32_t HSK = op->src[1]->ne[0];
                 uint32_t HSV = op->src[2]->ne[0];
                 if ((HSK % 8) != 0 || (HSV % 8) != 0) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (op->src[4] && op->src[4]->type != GGML_TYPE_F32) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (op->src[0]->type != GGML_TYPE_F32) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (op->type != GGML_TYPE_F32) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (op->src[3] && op->src[3]->type != GGML_TYPE_F16) {
-                    return false;
+                    return false;  // 返回
                 }
                 // mismatching K/V type is currently supported for coopmat2 only.
                 if (op->src[1]->type != op->src[2]->type && !coopmat2) {
-                    return false;
+                    return false;  // 返回
                 }
                 auto fa_kv_ok = [coopmat2](ggml_type t) {
                     switch (t) {
@@ -15657,21 +15657,21 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                     case GGML_TYPE_Q5_0:
                     case GGML_TYPE_Q4_1:
                     case GGML_TYPE_Q4_0:
-                        return true;
+                        return true;  // 返回
                     case GGML_TYPE_Q1_0:
-                        return coopmat2;
+                        return coopmat2;  // 返回
                     default:
-                        return false;
+                        return false;  // 返回
                     }
                 };
                 if (!fa_kv_ok(op->src[1]->type) || !fa_kv_ok(op->src[2]->type)) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (!coopmat2 && !(device->subgroup_shuffle && device->subgroup_vote)) {
                     // scalar/coopmat1 FA uses subgroupShuffle/subgroupAll
-                    return false;
+                    return false;  // 返回
                 }
-                return true;
+                return true;  // 返回
             }
         case GGML_OP_GET_ROWS:
             {
@@ -15702,9 +15702,9 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                     case GGML_TYPE_MXFP4:
                     case GGML_TYPE_NVFP4:
                     case GGML_TYPE_I32:
-                        return true;
+                        return true;  // 返回
                     default:
-                        return false;
+                        return false;  // 返回
                 }
             }
         case GGML_OP_SET_ROWS:
@@ -15720,9 +15720,9 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                     case GGML_TYPE_Q5_1:
                     case GGML_TYPE_Q8_0:
                     case GGML_TYPE_IQ4_NL:
-                        return true;
+                        return true;  // 返回
                     default:
-                        return false;
+                        return false;  // 返回
                 }
             }
         case GGML_OP_CONT:
@@ -15744,7 +15744,7 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                     case GGML_TYPE_Q5_1:
                     case GGML_TYPE_Q8_0:
                     case GGML_TYPE_IQ4_NL:
-                        return true;
+                        return true;  // 返回
                     default:
                         break;
                     }
@@ -15759,21 +15759,21 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                     case GGML_TYPE_Q5_1:
                     case GGML_TYPE_Q8_0:
                     case GGML_TYPE_IQ4_NL:
-                        return true;
+                        return true;  // 返回
                     default:
                         break;
                     }
                 }
 
                 if (src0_type == GGML_TYPE_F16 && src1_type == GGML_TYPE_F16) {
-                    return true;
+                    return true;  // 返回
                 }
 
                 if (
                     (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_I32) ||
                     (src0_type == GGML_TYPE_I32 && src1_type == GGML_TYPE_F32)
                 ) {
-                    return true;
+                    return true;  // 返回
                 }
 
                 // We can handle copying from a type to the same type if it's
@@ -15783,16 +15783,16 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                 if (src0_type == src1_type &&
                     (!ggml_is_quantized(src0_type) || (ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op))) &&
                     (ggml_type_size(src0_type) % 2) == 0) {
-                    return true;
+                    return true;  // 返回
                 }
-                return false;
+                return false;  // 返回
             }
         case GGML_OP_REPEAT:
-            return ggml_type_size(op->type) == sizeof(float) && ggml_type_size(op->src[0]->type) == sizeof(float);
+            return ggml_type_size(op->type) == sizeof(float) && ggml_type_size(op->src[0]->type) == sizeof(float);  // ggml_type_size
         case GGML_OP_REPEAT_BACK:
-            return op->type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32;
+            return op->type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_ROPE:
-            return ggml_is_contiguous_rows(op) && ggml_is_contiguous_rows(op->src[0]);
+            return ggml_is_contiguous_rows(op) && ggml_is_contiguous_rows(op->src[0]);  // ggml_is_contiguous_rows
         case GGML_OP_ROPE_BACK:
         case GGML_OP_NONE:
         case GGML_OP_RESHAPE:
@@ -15800,12 +15800,12 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
         case GGML_OP_PERMUTE:
         case GGML_OP_TRANSPOSE:
         case GGML_OP_RMS_NORM:
-            return true;
+            return true;  // 返回
         case GGML_OP_NORM:
         case GGML_OP_GROUP_NORM:
-            return ggml_is_contiguous(op->src[0]);
+            return ggml_is_contiguous(op->src[0]);  // ggml_is_contiguous
         case GGML_OP_L2_NORM:
-            return ggml_is_contiguous_rows(op->src[0]) &&
+            return ggml_is_contiguous_rows(op->src[0]) &&  // ggml_is_contiguous_rows
                    op->src[0]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;
         case GGML_OP_ADD:
         case GGML_OP_SUB:
@@ -15815,21 +15815,21 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                    (op->src[1]->type == GGML_TYPE_F32 || op->src[1]->type == GGML_TYPE_F16) &&
                    (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16);
         case GGML_OP_ADD_ID:
-            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 && op->src[2]->type == GGML_TYPE_I32 &&
+            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 && op->src[2]->type == GGML_TYPE_I32 &&  // 返回
                    op->type == GGML_TYPE_F32;
         case GGML_OP_SILU_BACK:
         case GGML_OP_RMS_NORM_BACK:
-            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;
+            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;  // ggml_is_contiguous
         case GGML_OP_SQR:
         case GGML_OP_SQRT:
         case GGML_OP_SIN:
         case GGML_OP_COS:
         case GGML_OP_CLAMP:
-            return op->src[0]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_LEAKY_RELU:
         case GGML_OP_OPT_STEP_ADAMW:
         case GGML_OP_OPT_STEP_SGD:
-            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;
+            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;  // ggml_is_contiguous
         case GGML_OP_LOG:
         case GGML_OP_TRI:
         case GGML_OP_DIAG:
@@ -15838,11 +15838,11 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
         case GGML_OP_ARGSORT:
             {
                 if (!ggml_is_contiguous(op) || !ggml_is_contiguous(op->src[0])) {
-                    return false;
+                    return false;  // 返回
                 }
                 // pipeline_argsort_large_f32 requires vulkan memory model.
                 if (device->vulkan_memory_model) {
-                    return true;
+                    return true;  // 返回
                 } else {
                     return op->ne[0] <= (1 << device->max_workgroup_size_log2);
                 }
@@ -15850,51 +15850,51 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
         case GGML_OP_TOP_K:
             {
                 if (!ggml_is_contiguous(op) || !ggml_is_contiguous(op->src[0])) {
-                    return false;
+                    return false;  // 返回
                 }
                 // We could potentially support larger, using argsort to sort the
                 // whole thing. Not clear if this is needed.
                 uint32_t min_pipeline = (uint32_t)log2f(float(op->ne[0])) + 1;
                 if (min_pipeline >= num_topk_pipelines ||
                     !device->pipeline_topk_f32[min_pipeline]) {
-                    return false;
+                    return false;  // 返回
                 }
             }
-            return true;
+            return true;  // 返回
         case GGML_OP_UPSCALE:
             if (op->op_params[0] & GGML_SCALE_FLAG_ANTIALIAS) {
                 if ((op->op_params[0] & 0xFF) != GGML_SCALE_MODE_BILINEAR) {
-                    return false;
+                    return false;  // 返回
                 }
             }
-            return op->src[0]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_ACC:
-            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_SET:
-            return op->src[0]->type == op->src[1]->type && op->src[0]->type == op->type &&
+            return op->src[0]->type == op->src[1]->type && op->src[0]->type == op->type &&  // 返回
                    (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_I32);
         case GGML_OP_CONCAT:
-            return ggml_type_size(op->src[0]->type) == ggml_type_size(GGML_TYPE_F32);
+            return ggml_type_size(op->src[0]->type) == ggml_type_size(GGML_TYPE_F32);  // ggml_type_size
         case GGML_OP_ADD1:
             return (op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32)
                 || (op->src[0]->type == GGML_TYPE_F16 && op->src[1]->type == GGML_TYPE_F32)
                 || (op->src[0]->type == GGML_TYPE_F16 && op->src[1]->type == GGML_TYPE_F16);
         case GGML_OP_ARANGE:
-            return op->type == GGML_TYPE_F32;
+            return op->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_FILL:
-            return op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16;
+            return op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16;  // 返回
         case GGML_OP_SCALE:
-            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;
+            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;  // ggml_is_contiguous
         case GGML_OP_PAD:
         case GGML_OP_ROLL:
-            return op->src[0]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_DIAG_MASK_INF:
-            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;
+            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;  // ggml_is_contiguous
         case GGML_OP_SOFT_MAX:
-            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32
+            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32  // ggml_is_contiguous
                 && (!op->src[1] || (op->src[1]->type == GGML_TYPE_F32 || op->src[1]->type == GGML_TYPE_F16));
         case GGML_OP_SOFT_MAX_BACK:
-            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32
+            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32  // ggml_is_contiguous
                 && ggml_is_contiguous(op->src[1]) && op->src[1]->type == GGML_TYPE_F32;
         case GGML_OP_SUM:
         case GGML_OP_SUM_ROWS:
@@ -15905,73 +15905,73 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                 if (device->subgroup_arithmetic && device->subgroup_require_full_support) {
                     return op->src[0]->type == GGML_TYPE_F32 && ggml_is_contiguous_rows(op->src[0]);
                 }
-                return false;
+                return false;  // 返回
             }
         case GGML_OP_SOLVE_TRI:
             {
                 if (op->type != GGML_TYPE_F32 || op->src[0]->type != GGML_TYPE_F32) {
-                    return false;
+                    return false;  // 返回
                 }
                 const uint32_t N = op->src[0]->ne[0];
                 const uint32_t K = op->src[1]->ne[0];
                 // K dimension limited to workgroup size
                 if (K > 1u << device->max_workgroup_size_log2) {
-                    return false;
+                    return false;  // 返回
                 }
                 const uint32_t batch_N = device->properties.limits.maxComputeSharedMemorySize / ((N + K) * sizeof(float));
 
                 if (batch_N == 0) {
-                    return false;
+                    return false;  // 返回
                 }
-                return true;
+                return true;  // 返回
             }
         case GGML_OP_ARGMAX:
-            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;
+            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;  // ggml_is_contiguous
         case GGML_OP_COUNT_EQUAL:
-            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_I32
+            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_I32  // ggml_is_contiguous
                 && ggml_is_contiguous(op->src[1]) && op->src[1]->type == GGML_TYPE_I32;
         case GGML_OP_IM2COL:
-            return ggml_is_contiguous(op->src[1])
+            return ggml_is_contiguous(op->src[1])  // ggml_is_contiguous
                 && op->src[1]->type == GGML_TYPE_F32
                 && (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16);
         case GGML_OP_IM2COL_3D:
-            return op->src[1]->type == GGML_TYPE_F32
+            return op->src[1]->type == GGML_TYPE_F32  // 返回
                 && (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16);
         case GGML_OP_TIMESTEP_EMBEDDING:
-            return op->src[0]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_CONV_2D_DW:
             return (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16)
                 && op->src[1]->type == GGML_TYPE_F32;
         case GGML_OP_POOL_2D:
-            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;
+            return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;  // ggml_is_contiguous
         case GGML_OP_RWKV_WKV6:
         case GGML_OP_RWKV_WKV7:
-            return true; // all inputs are contiguous, see ggml.c
+            return true; // all inputs are contiguous, see ggml.c  // 返回
         case GGML_OP_GATED_DELTA_NET:
             {
                 const uint32_t S_v = op->src[2]->ne[0];
                 if (S_v != 32 && S_v != 64 && S_v != 128) {
-                    return false;
+                    return false;  // 返回
                 }
                 for (int i = 0; i < 6; i++) {
                     if (op->src[i] == nullptr || op->src[i]->type != GGML_TYPE_F32) {
-                        return false;
+                        return false;  // 返回
                     }
                 }
-                return op->type == GGML_TYPE_F32;
+                return op->type == GGML_TYPE_F32;  // 返回
             }
         case GGML_OP_SSM_SCAN:
             {
                 for (int i = 0; i < 6; i++) {
                     if (op->src[i] && ggml_is_quantized(op->src[i]->type)) {
-                        return false;
+                        return false;  // 返回
                     }
                 }
                 if (op->src[6] && op->src[6]->type != GGML_TYPE_I32) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (op->src[0]->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
-                    return false;
+                    return false;  // 返回
                 }
 
                 const uint32_t d_state = op->src[0]->ne[0];
@@ -15979,29 +15979,29 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
 
                 bool is_mamba2 = (op->src[3] && op->src[3]->nb[1] == sizeof(float));
                 if (!is_mamba2) {
-                    return false;
+                    return false;  // 返回
                 }
 
                 if ((d_state != 128 && d_state != 256) || head_dim % 16 != 0) {
-                    return false;
+                    return false;  // 返回
                 }
 
                 size_t shmem_size = d_state * sizeof(float);
 
                 if (shmem_size > device->properties.limits.maxComputeSharedMemorySize) {
-                    return false;
+                    return false;  // 返回
                 }
 
                 if (!device->subgroup_basic) {
-                    return false;
+                    return false;  // 返回
                 }
 
-                return true;
+                return true;  // 返回
             }
         case GGML_OP_SSM_CONV:
-            return op->src[0]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_CONV_TRANSPOSE_1D:
-            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_CONV_2D:
         case GGML_OP_CONV_TRANSPOSE_2D:
             {
@@ -16014,7 +16014,7 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                     ggml_is_contiguous(op));
             }
         default:
-            return false;
+            return false;  // 返回
     }
 
     UNUSED(dev);
@@ -16022,34 +16022,34 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
 
 static bool ggml_backend_vk_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
     if (buft->iface.get_name != ggml_backend_vk_buffer_type_name) {
-        return false;
+        return false;  // 返回
     }
 
     ggml_backend_vk_device_context * ctx = (ggml_backend_vk_device_context *)dev->context;
     ggml_backend_vk_buffer_type_context * buft_ctx = (ggml_backend_vk_buffer_type_context *)buft->context;
 
-    return buft_ctx->device->idx == ctx->device;
+    return buft_ctx->device->idx == ctx->device;  // 返回
 }
 
 static int64_t ggml_vk_get_op_batch_size(const ggml_tensor * op) {
     switch (op->op) {
         case GGML_OP_GET_ROWS:
-            return 0;
+            return 0;  // 返回
         case GGML_OP_MUL_MAT:
-            return op->ne[1];
+            return op->ne[1];  // 返回
         case GGML_OP_MUL_MAT_ID:
         case GGML_OP_ROPE:
         case GGML_OP_ROPE_BACK:
-            return op->ne[2];
+            return op->ne[2];  // 返回
         default:
-            return ggml_nrows(op);
+            return ggml_nrows(op);  // ggml_nrows
     }
 }
 
 static bool ggml_backend_vk_device_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
     ggml_backend_vk_device_context * dev_ctx = (ggml_backend_vk_device_context *)dev->context;
 
-    return ggml_vk_get_op_batch_size(op) >= dev_ctx->op_offload_min_batch_size;
+    return ggml_vk_get_op_batch_size(op) >= dev_ctx->op_offload_min_batch_size;  // ggml_vk_get_op_batch_size
 }
 
 static ggml_backend_event_t ggml_backend_vk_device_event_new(ggml_backend_dev_t dev) {
@@ -16058,7 +16058,7 @@ static ggml_backend_event_t ggml_backend_vk_device_event_new(ggml_backend_dev_t 
 
     vk_event *vkev = new vk_event;
     if (!vkev) {
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     // No events initially, they get created on demand
@@ -16069,7 +16069,7 @@ static ggml_backend_event_t ggml_backend_vk_device_event_new(ggml_backend_dev_t 
     ci.setPNext(&tci);
     vkev->tl_semaphore = { device->device.createSemaphore(ci), 0 };
 
-    return new ggml_backend_event {
+    return new ggml_backend_event {  // 返回
         /* .device  = */ dev,
         /* .context = */ vkev,
     };
@@ -16129,15 +16129,15 @@ static void ggml_backend_vk_device_event_synchronize(ggml_backend_dev_t dev, ggm
 
 static vk_buffer ggml_vk_buffer_from_host_ptr(vk_device & device, void * ptr, size_t size) {
     if (!device->external_memory_host) {
-        return {};
+        return {};  // 返回
     }
 
     uintptr_t uptr = reinterpret_cast<uintptr_t>(ptr);
     if (uptr & (device->min_imported_host_pointer_alignment - 1)) {
-        return {};
+        return {};  // 返回
     }
     if (size & (device->min_imported_host_pointer_alignment - 1)) {
-        return {};
+        return {};  // 返回
     }
 
     const vk::MemoryPropertyFlags property_flags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostCached;
@@ -16149,7 +16149,7 @@ static vk_buffer ggml_vk_buffer_from_host_ptr(vk_device & device, void * ptr, si
         GGML_LOG_WARN("ggml_vulkan: Failed ggml_vk_create_buffer (%s)\n", e.what());
     }
 
-    return buf;
+    return buf;  // 返回
 }
 
 static ggml_backend_buffer_t ggml_backend_vk_device_buffer_from_host_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
@@ -16162,14 +16162,14 @@ static ggml_backend_buffer_t ggml_backend_vk_device_buffer_from_host_ptr(ggml_ba
     vk_buffer buf = ggml_vk_buffer_from_host_ptr(device, ptr, size);
 
     if (!buf) {
-        return {};
+        return {};  // 返回
     }
 
     ggml_backend_vk_buffer_context * bufctx = new ggml_backend_vk_buffer_context(device, std::move(buf), device->name);
 
     ggml_backend_buffer_t ret = ggml_backend_buffer_init(ggml_backend_vk_device_get_buffer_type(dev), ggml_backend_vk_buffer_interface, bufctx, size);
 
-    return ret;
+    return ret;  // 返回
 }
 
 static const struct ggml_backend_device_i ggml_backend_vk_device_i = {
@@ -16192,12 +16192,12 @@ static const struct ggml_backend_device_i ggml_backend_vk_device_i = {
 
 static const char * ggml_backend_vk_reg_get_name(ggml_backend_reg_t reg) {
     UNUSED(reg);
-    return GGML_VK_NAME;
+    return GGML_VK_NAME;  // 返回
 }
 
 static size_t ggml_backend_vk_reg_get_device_count(ggml_backend_reg_t reg) {
     UNUSED(reg);
-    return ggml_backend_vk_get_device_count();
+    return ggml_backend_vk_get_device_count();  // ggml_backend_vk_get_device_count
 }
 
 static ggml_backend_dev_t ggml_backend_vk_reg_get_device(ggml_backend_reg_t reg, size_t device) {
@@ -16231,7 +16231,7 @@ static ggml_backend_dev_t ggml_backend_vk_reg_get_device(ggml_backend_reg_t reg,
     }
 
     GGML_ASSERT(device < devices.size());
-    return devices[device];
+    return devices[device];  // 返回
 }
 
 static const struct ggml_backend_reg_i ggml_backend_vk_reg_i = {
@@ -16249,49 +16249,49 @@ ggml_backend_reg_t ggml_backend_vk_reg() {
     };
     try {
         ggml_vk_instance_init();
-        return &reg;
+        return &reg;  // 返回
     } catch (const vk::SystemError& e) {
         VK_LOG_DEBUG("ggml_backend_vk_reg() -> Error: System error: " << e.what());
-        return nullptr;
+        return nullptr;  // 返回
     } catch (const std::exception &e) {
         VK_LOG_DEBUG("ggml_backend_vk_reg() -> Error: " << e.what());
-        return nullptr;
+        return nullptr;  // 返回
     } catch (...) {
         VK_LOG_DEBUG("ggml_backend_vk_reg() -> Error: unknown exception during Vulkan init");
-        return nullptr;
+        return nullptr;  // 返回
     }
 }
 
 // Extension availability
 static bool ggml_vk_instance_layer_settings_available() {
-#ifdef GGML_VULKAN_VALIDATE
+#ifdef GGML_VULKAN_VALIDATE  // 如果定义了 GGML_VULKAN_VALIDATE 则编译
     // Check if validation layer provides the extension
     const std::string layer_name = "VK_LAYER_KHRONOS_validation";
     for (const auto& layer : vk::enumerateInstanceLayerProperties()) {
         if (layer_name == layer.layerName.data()) {
             for (const auto& ext : vk::enumerateInstanceExtensionProperties(layer_name)) {
                 if (strcmp("VK_EXT_layer_settings", ext.extensionName.data()) == 0) {
-                    return true;
+                    return true;  // 返回
                 }
             }
         }
     }
 
     std::cerr << "ggml_vulkan: WARNING: Validation layer or layer extension VK_EXT_layer_settings not found." << std::endl;
-#endif
-    return false;
+#endif  // 条件编译结束
+    return false;  // 返回
 }
 static bool ggml_vk_instance_portability_enumeration_ext_available(const std::vector<vk::ExtensionProperties>& instance_extensions) {
-#ifdef __APPLE__
+#ifdef __APPLE__  // 如果定义了 __APPLE__ 则编译
     // Check for portability enumeration extension for MoltenVK support
     for (const auto& properties : instance_extensions) {
         if (strcmp("VK_KHR_portability_enumeration", properties.extensionName) == 0) {
-            return true;
+            return true;  // 返回
         }
     }
     std::cerr << "ggml_vulkan: WARNING: Instance extension VK_KHR_portability_enumeration not found." << std::endl;
-#endif
-    return false;
+#endif  // 条件编译结束
+    return false;  // 返回
 
     UNUSED(instance_extensions);
 }
@@ -16302,12 +16302,12 @@ static bool ggml_vk_instance_debug_utils_ext_available(
     // Check for portability enumeration extension for MoltenVK support
     for (const auto & properties : instance_extensions) {
         if (strcmp("VK_EXT_debug_utils", properties.extensionName) == 0) {
-            return true;
+            return true;  // 返回
         }
     }
 
     std::cerr << "ggml_vulkan: WARNING: Instance extension VK_EXT_debug_utils not found." << std::endl;
-    return false;
+    return false;  // 返回
 
     UNUSED(instance_extensions);
 }
@@ -16323,7 +16323,7 @@ static bool ggml_vk_device_is_supported(const vk::PhysicalDevice & vkdev) {
 
     vkGetPhysicalDeviceFeatures2(vkdev, &device_features2);
 
-    return vk11_features.storageBuffer16BitAccess;
+    return vk11_features.storageBuffer16BitAccess;  // 返回
 }
 
 static bool ggml_vk_khr_cooperative_matrix_support(const vk::PhysicalDeviceProperties& props, const vk::PhysicalDeviceDriverProperties& driver_props, vk_device_architecture arch) {
@@ -16331,15 +16331,15 @@ static bool ggml_vk_khr_cooperative_matrix_support(const vk::PhysicalDevicePrope
     case VK_VENDOR_ID_INTEL:
         // Only allowing Xe2 GPU at the moment since Xe2 GPU can gain significant performance boost,
         // while some older hardware (ex. Arc A770) has performance regressions
-        return arch == vk_device_architecture::INTEL_XE2;
+        return arch == vk_device_architecture::INTEL_XE2;  // 返回
     case VK_VENDOR_ID_AMD:
         if (driver_props.driverID == vk::DriverId::eAmdProprietary || driver_props.driverID == vk::DriverId::eAmdOpenSource) {
             // Workaround for AMD proprietary driver reporting support on all GPUs
-            return arch == vk_device_architecture::AMD_RDNA3;
+            return arch == vk_device_architecture::AMD_RDNA3;  // 返回
         }
-        return true;
+        return true;  // 返回
     default:
-        return true;
+        return true;  // 返回
     }
 }
 
@@ -16347,49 +16347,49 @@ static uint32_t ggml_vk_intel_shader_core_count(const vk::PhysicalDevice& vkdev)
     VkPhysicalDeviceProperties2 props = vkdev.getProperties2();
 
     if (props.properties.vendorID != VK_VENDOR_ID_INTEL) {
-        return 0;
+        return 0;  // 返回
     }
 
     const uint32_t device_id = props.properties.deviceID;
 
     switch (device_id) {
     case 0x56A6:  // A310
-        return 6;
+        return 6;  // 返回
     case 0x5693:  // A370M
     case 0x56A5:  // A380
     case 0x56B1:  // Pro A40/A50
-        return 8;
+        return 8;  // 返回
     case 0x5697:  // A530M
-        return 12;
+        return 12;  // 返回
     case 0x5692:  // A550M
     case 0x56B3:  // Pro A60
-        return 16;
+        return 16;  // 返回
     case 0x56A2:  // A580
-        return 24;
+        return 24;  // 返回
     case 0x5691:  // A730M
     case 0x56A1:  // A750
-        return 28;
+        return 28;  // 返回
     case 0x56A0:  // A770
     case 0x5690:  // A770M
-        return 32;
+        return 32;  // 返回
     case 0xE212:  // Pro B50
-        return 16;
+        return 16;  // 返回
     case 0xE20C:  // B570
-        return 18;
+        return 18;  // 返回
     case 0xE20B:  // B580
     case 0xE211:  // Pro B60
-        return 20;
+        return 20;  // 返回
     default:
-        return 0;
+        return 0;  // 返回
     }
 }
 
 // checks
 
-#ifdef GGML_VULKAN_CHECK_RESULTS
+#ifdef GGML_VULKAN_CHECK_RESULTS  // 如果定义了 GGML_VULKAN_CHECK_RESULTS 则编译
 static void ggml_vk_print_graph_origin(const ggml_tensor * tensor, std::vector<const ggml_tensor *>& done, int level = 0) {
     if (std::find(done.begin(), done.end(), tensor) != done.end() || level > 10) {
-        return;
+        return;  // 返回
     }
     for (int j = 0; j < level; j++) {
         std::cerr << " ";
@@ -16407,7 +16407,7 @@ static void ggml_vk_print_graph_origin(const ggml_tensor * tensor, std::vector<c
 
 static void ggml_vk_print_tensor_area(const ggml_tensor * tensor, const void * data, int i0, int i1, int i2, int i3) {
     if (tensor->type != GGML_TYPE_F32 && tensor->type != GGML_TYPE_F16 && tensor->type != GGML_TYPE_I32) {
-        return;
+        return;  // 返回
     }
     i0 = std::max(i0, 5);
     i1 = std::max(i1, 5);
@@ -16482,17 +16482,17 @@ size_t check_counter = 0;
 static void ggml_vk_check_results_0(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int tensor_idx) {
     ggml_tensor * tensor = cgraph->nodes[tensor_idx + ctx->num_additional_fused_ops];
     if (tensor->op == GGML_OP_TRANSPOSE || tensor->op == GGML_OP_SET_ROWS) {
-        return;
+        return;  // 返回
     }
 
     check_counter++;
     if (!(vk_output_tensor > 0 && vk_output_tensor == check_counter) && check_counter <= vk_skip_checks) {
-        return;
+        return;  // 返回
     }
 
     VK_LOG_DEBUG("ggml_vk_check_results_0(" << tensor->name << ")");
 
-    struct ggml_init_params iparams = {
+    struct ggml_init_params iparams = {  // 结构体定义
         /*.mem_size   =*/ 2ul*1024ul*1024ul*1024ul,
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ false,
@@ -16927,11 +16927,11 @@ static void ggml_vk_check_results_0(ggml_backend_vk_context * ctx, ggml_cgraph *
 static void ggml_vk_check_results_1(ggml_backend_vk_context * ctx, ggml_cgraph * cgraph, int tensor_idx) {
     ggml_tensor * tensor = cgraph->nodes[tensor_idx + ctx->num_additional_fused_ops];
     if (tensor->op == GGML_OP_TRANSPOSE || tensor->op == GGML_OP_SET_ROWS) {
-        return;
+        return;  // 返回
     }
 
     if (!(vk_output_tensor > 0 && vk_output_tensor == check_counter) && check_counter <= vk_skip_checks) {
-        return;
+        return;  // 返回
     }
 
     VK_LOG_DEBUG("ggml_vk_check_results_1(" << tensor->name << ")");
@@ -17107,6 +17107,6 @@ static void ggml_vk_check_results_1(ggml_backend_vk_context * ctx, ggml_cgraph *
 
     VK_LOG_DEBUG("END ggml_vk_check_results_1(" << tensor->name << ")");
 }
-#endif
+#endif  // 条件编译结束
 
 GGML_BACKEND_DL_IMPL(ggml_backend_vk_reg)

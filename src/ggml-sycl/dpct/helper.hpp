@@ -10,68 +10,68 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_DPCT_HELPER_HPP
-#define GGML_SYCL_DPCT_HELPER_HPP
+#ifndef GGML_SYCL_DPCT_HELPER_HPP  // 如果未定义 GGML_SYCL_DPCT_HELPER_HPP 则编译
+#define GGML_SYCL_DPCT_HELPER_HPP  // 宏定义 GGML_SYCL_DPCT_HELPER_HPP
 
-#include <sycl/sycl.hpp>
-#include <sycl/half_type.hpp>
-#include <oneapi/mkl.hpp>
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
+#include <sycl/half_type.hpp>  // 引入 sycl/half_type.hpp 头文件
+#include <oneapi/mkl.hpp>  // 引入 oneapi/mkl.hpp 头文件
 
-#include <map>
+#include <map>  // 引入 map 头文件
 
-#include "ggml.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-#if defined(__linux__)
-#include <sys/mman.h>
-#elif defined(_WIN64)
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-#else
+#if defined(__linux__)  // 条件编译
+#include <sys/mman.h>  // 引入 sys/mman.h 头文件
+#elif defined(_WIN64)  // 否则如果
+#ifndef NOMINMAX  // 如果未定义 NOMINMAX 则编译
+#define NOMINMAX  // 宏定义 NOMINMAX
+#endif  // 条件编译结束
+#include <windows.h>  // 引入 windows.h 头文件
+#else  // 否则
 #error "Only support Windows and Linux."
-#endif
+#endif  // 条件编译结束
 
-#if defined(__linux__)
-#include <unistd.h>
-#include <sys/syscall.h>
-#endif
-#if defined(_WIN64)
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-#endif
+#if defined(__linux__)  // 条件编译
+#include <unistd.h>  // 引入 unistd.h 头文件
+#include <sys/syscall.h>  // 引入 sys/syscall.h 头文件
+#endif  // 条件编译结束
+#if defined(_WIN64)  // 条件编译
+#ifndef NOMINMAX  // 如果未定义 NOMINMAX 则编译
+#define NOMINMAX  // 宏定义 NOMINMAX
+#endif  // 条件编译结束
+#include <windows.h>  // 引入 windows.h 头文件
+#endif  // 条件编译结束
 
-#define DPCT_COMPATIBILITY_TEMP (900)
+#define DPCT_COMPATIBILITY_TEMP (900)  // 宏定义 DPCT_COMPATIBILITY_TEMP
 
-#if defined(_MSC_VER)
-#define __dpct_align__(n) __declspec(align(n))
-#define __dpct_inline__ __forceinline
-#else
-#define __dpct_align__(n) __attribute__((aligned(n)))
-#define __dpct_inline__ __inline__ __attribute__((always_inline))
-#endif
+#if defined(_MSC_VER)  // 条件编译
+#define __dpct_align__(n) __declspec(align(n))  // 宏定义 __dpct_align__
+#define __dpct_inline__ __forceinline  // 宏定义 __dpct_inline__
+#else  // 否则
+#define __dpct_align__(n) __attribute__((aligned(n)))  // 宏定义 __dpct_align__
+#define __dpct_inline__ __inline__ __attribute__((always_inline))  // 宏定义 __dpct_inline__
+#endif  // 条件编译结束
 
-#if defined(_MSC_VER)
-#define __dpct_noinline__ __declspec(noinline)
-#else
-#define __dpct_noinline__ __attribute__((noinline))
-#endif
+#if defined(_MSC_VER)  // 条件编译
+#define __dpct_noinline__ __declspec(noinline)  // 宏定义 __dpct_noinline__
+#else  // 否则
+#define __dpct_noinline__ __attribute__((noinline))  // 宏定义 __dpct_noinline__
+#endif  // 条件编译结束
 
 inline std::string get_device_type_name(const sycl::device &Device) {
     auto DeviceType = Device.get_info<sycl::info::device::device_type>();
     switch (DeviceType) {
     case sycl::info::device_type::cpu:
-        return "cpu";
+        return "cpu";  // 返回
     case sycl::info::device_type::gpu:
-        return "gpu";
+        return "gpu";  // 返回
     case sycl::info::device_type::host:
-        return "host";
+        return "host";  // 返回
     case sycl::info::device_type::accelerator:
-        return "acc";
+        return "acc";  // 返回
     default:
-        return "unknown";
+        return "unknown";  // 返回
     }
 }
 
@@ -82,7 +82,7 @@ inline std::string get_device_backend_and_type(const sycl::device &device) {
     return device_type.str();
 }
 
-template <typename Ts> struct matrix_info_t {
+template <typename Ts> struct matrix_info_t {  // 模板
     oneapi::mkl::transpose transpose_info[2];
     Ts                     value_info[2];
     std::int64_t           size_info[3];
@@ -90,13 +90,13 @@ template <typename Ts> struct matrix_info_t {
     std::int64_t           groupsize_info;
 };
 
-namespace dpct
+namespace dpct  // 命名空间
 {
-    typedef sycl::queue *queue_ptr;
-    typedef sycl::event *event_ptr;
-    typedef char *device_ptr;
-    typedef uint8_t byte_t;
-    typedef sycl::buffer<byte_t> buffer_t;
+    typedef sycl::queue *queue_ptr;  // 类型定义
+    typedef sycl::event *event_ptr;  // 类型定义
+    typedef char *device_ptr;  // 类型定义
+    typedef uint8_t byte_t;  // 类型定义
+    typedef sycl::buffer<byte_t> buffer_t;  // 类型定义
 
     /// SYCL default exception handler
     inline auto exception_handler = [](sycl::exception_list exceptions)
@@ -176,36 +176,36 @@ namespace dpct
         library_data_t_size
     };
 
-    template <typename T>
+    template <typename T>  // 模板
     struct DataType
     {
-        using T2 = T;
+        using T2 = T;  // using 声明
     };
-    template <typename T>
+    template <typename T>  // 模板
     struct DataType<sycl::vec<T, 2>>
     {
-        using T2 = std::complex<T>;
+        using T2 = std::complex<T>;  // using 声明
     };
 
-    static void destroy_event(event_ptr event)
+    static void destroy_event(event_ptr event)  // destroy_event
     {
         delete event;
     }
 
-    static inline unsigned int get_tid()
+    static inline unsigned int get_tid()  // get_tid
     {
-#if defined(__linux__)
-        return syscall(SYS_gettid);
-#elif defined(_WIN64)
-        return GetCurrentThreadId();
-#else
+#if defined(__linux__)  // 条件编译
+        return syscall(SYS_gettid);  // syscall
+#elif defined(_WIN64)  // 否则如果
+        return GetCurrentThreadId();  // GetCurrentThreadId
+#else  // 否则
 #error "Only support Windows and Linux."
-#endif
+#endif  // 条件编译结束
     }
 
-    namespace detail
+    namespace detail  // 命名空间
     {
-        static void get_version(const sycl::device &dev, int &major, int &minor)
+        static void get_version(const sycl::device &dev, int &major, int &minor)  // get_version
         {
             // Version string has the following format:
             // a. OpenCL<space><major.minor><space><vendor-specific-information>
@@ -235,8 +235,8 @@ namespace dpct
             }
         }
 
-        template <typename tag, typename T>
-        class generic_error_type
+        template <typename tag, typename T>  // 模板
+        class generic_error_type  // 类定义
         {
         public:
             generic_error_type() = default;
@@ -251,11 +251,11 @@ namespace dpct
 
     // COPY from DPCT head files
     /// dim3 is used to store 3 component dimensions.
-    class dim3 {
+    class dim3 {  // 类定义
         public:
         unsigned x, y, z;
 
-        constexpr dim3(unsigned x = 1, unsigned y = 1, unsigned z = 1)
+        constexpr dim3(unsigned x = 1, unsigned y = 1, unsigned z = 1)  // dim3
             : x(x), y(y), z(z) {}
 
         dim3(const sycl::id<3> &r) : dim3(r[2], r[1], r[0]) {}
@@ -264,13 +264,13 @@ namespace dpct
     }; // namespace dim3
 
     inline dim3 operator*(const dim3 &a, const dim3 &b) {
-    return dim3{a.x * b.x, a.y * b.y, a.z * b.z};
+    return dim3{a.x * b.x, a.y * b.y, a.z * b.z};  // 返回
     }
     // COPY from DPCT head files
 
 
     /// Pitched 2D/3D memory data.
-    class pitched_data
+    class pitched_data  // 类定义
     {
     public:
         pitched_data() : pitched_data(nullptr, 0, 0, 0) {}
@@ -294,40 +294,40 @@ namespace dpct
         size_t _pitch, _x, _y;
     };
 
-    class device_info
+    class device_info  // 类定义
     {
     public:
         // get interface
         const char *get_name() const { return _name; }
         char *get_name() { return _name; }
-        template <typename WorkItemSizesTy = sycl::range<3>,
+        template <typename WorkItemSizesTy = sycl::range<3>,  // 模板
                   std::enable_if_t<std::is_same_v<WorkItemSizesTy, sycl::range<3>> ||
                                        std::is_same_v<WorkItemSizesTy, int *>,
                                    int> = 0>
-        auto get_max_work_item_sizes() const
+        auto get_max_work_item_sizes() const  // get_max_work_item_sizes
         {
-            if constexpr (std::is_same_v<WorkItemSizesTy, sycl::range<3>>)
-                return sycl::range<3>(_max_work_item_sizes_i[0],
+            if constexpr (std::is_same_v<WorkItemSizesTy, sycl::range<3>>)  // constexpr
+                return sycl::range<3>(_max_work_item_sizes_i[0],  // 返回
                                       _max_work_item_sizes_i[1],
                                       _max_work_item_sizes_i[2]);
             else
             {
-                return _max_work_item_sizes_i;
+                return _max_work_item_sizes_i;  // 返回
             }
         }
-        template <typename WorkItemSizesTy = sycl::range<3>,
+        template <typename WorkItemSizesTy = sycl::range<3>,  // 模板
                   std::enable_if_t<std::is_same_v<WorkItemSizesTy, sycl::range<3>> ||
                                        std::is_same_v<WorkItemSizesTy, int *>,
                                    int> = 0>
-        auto get_max_work_item_sizes()
+        auto get_max_work_item_sizes()  // get_max_work_item_sizes
         {
-            if constexpr (std::is_same_v<WorkItemSizesTy, sycl::range<3>>)
-                return sycl::range<3>(_max_work_item_sizes_i[0],
+            if constexpr (std::is_same_v<WorkItemSizesTy, sycl::range<3>>)  // constexpr
+                return sycl::range<3>(_max_work_item_sizes_i[0],  // 返回
                                       _max_work_item_sizes_i[1],
                                       _max_work_item_sizes_i[2]);
             else
             {
-                return _max_work_item_sizes_i;
+                return _max_work_item_sizes_i;  // 返回
             }
         }
         bool get_host_unified_memory() const { return _host_unified_memory; }
@@ -338,35 +338,35 @@ namespace dpct
         int get_max_compute_units() const { return _max_compute_units; }
         int get_max_work_group_size() const { return _max_work_group_size; }
         int get_max_sub_group_size() const { return _max_sub_group_size; }
-        int get_max_work_items_per_compute_unit() const
+        int get_max_work_items_per_compute_unit() const  // get_max_work_items_per_compute_unit
         {
-            return _max_work_items_per_compute_unit;
+            return _max_work_items_per_compute_unit;  // 返回
         }
-        int get_max_register_size_per_work_group() const
+        int get_max_register_size_per_work_group() const  // get_max_register_size_per_work_group
         {
-            return _max_register_size_per_work_group;
+            return _max_register_size_per_work_group;  // 返回
         }
-        template <typename NDRangeSizeTy = size_t *,
+        template <typename NDRangeSizeTy = size_t *,  // 模板
                   std::enable_if_t<std::is_same_v<NDRangeSizeTy, size_t *> ||
                                        std::is_same_v<NDRangeSizeTy, int *>,
                                    int> = 0>
-        auto get_max_nd_range_size() const
+        auto get_max_nd_range_size() const  // get_max_nd_range_size
         {
-            if constexpr (std::is_same_v<NDRangeSizeTy, size_t *>)
-                return _max_nd_range_size;
+            if constexpr (std::is_same_v<NDRangeSizeTy, size_t *>)  // constexpr
+                return _max_nd_range_size;  // 返回
             else
-                return _max_nd_range_size_i;
+                return _max_nd_range_size_i;  // 返回
         }
-        template <typename NDRangeSizeTy = size_t *,
+        template <typename NDRangeSizeTy = size_t *,  // 模板
                   std::enable_if_t<std::is_same_v<NDRangeSizeTy, size_t *> ||
                                        std::is_same_v<NDRangeSizeTy, int *>,
                                    int> = 0>
-        auto get_max_nd_range_size()
+        auto get_max_nd_range_size()  // get_max_nd_range_size
         {
-            if constexpr (std::is_same_v<NDRangeSizeTy, size_t *>)
-                return _max_nd_range_size;
+            if constexpr (std::is_same_v<NDRangeSizeTy, size_t *>)  // constexpr
+                return _max_nd_range_size;  // 返回
             else
-                return _max_nd_range_size_i;
+                return _max_nd_range_size_i;  // 返回
         }
         size_t get_global_mem_size() const { return _global_mem_size; }
         size_t get_local_mem_size() const { return _local_mem_size; }
@@ -380,13 +380,13 @@ namespace dpct
         uint32_t get_device_id() const { return _device_id; }
         std::array<unsigned char, 16> get_uuid() const { return _uuid; }
         /// Returns global memory cache size in bytes.
-        unsigned int get_global_mem_cache_size() const
+        unsigned int get_global_mem_cache_size() const  // get_global_mem_cache_size
         {
-            return _global_mem_cache_size;
+            return _global_mem_cache_size;  // 返回
         }
 
         // set interface
-        void set_name(const char *name)
+        void set_name(const char *name)  // set_name
         {
             size_t length = strlen(name);
             if (length < 256)
@@ -399,7 +399,7 @@ namespace dpct
                 _name[255] = '\0';
             }
         }
-        void set_max_work_item_sizes(const sycl::range<3> max_work_item_sizes)
+        void set_max_work_item_sizes(const sycl::range<3> max_work_item_sizes)  // set_max_work_item_sizes
         {
             for (int i = 0; i < 3; ++i)
                 _max_work_item_sizes_i[i] = max_work_item_sizes[i];
@@ -412,7 +412,7 @@ namespace dpct
                 _max_work_item_sizes_i[i] = max_work_item_sizes[i];
             }
         }
-        void set_host_unified_memory(bool host_unified_memory)
+        void set_host_unified_memory(bool host_unified_memory)  // set_host_unified_memory
         {
             _host_unified_memory = host_unified_memory;
         }
@@ -420,27 +420,27 @@ namespace dpct
         void set_minor_version(int minor) { _minor = minor; }
         void set_integrated(int integrated) { _integrated = integrated; }
         void set_max_clock_frequency(int frequency) { _frequency = frequency; }
-        void set_max_compute_units(int max_compute_units)
+        void set_max_compute_units(int max_compute_units)  // set_max_compute_units
         {
             _max_compute_units = max_compute_units;
         }
-        void set_global_mem_size(size_t global_mem_size)
+        void set_global_mem_size(size_t global_mem_size)  // set_global_mem_size
         {
             _global_mem_size = global_mem_size;
         }
-        void set_local_mem_size(size_t local_mem_size)
+        void set_local_mem_size(size_t local_mem_size)  // set_local_mem_size
         {
             _local_mem_size = local_mem_size;
         }
-        void set_max_mem_alloc_size(size_t max_mem_alloc_size)
+        void set_max_mem_alloc_size(size_t max_mem_alloc_size)  // set_max_mem_alloc_size
         {
             _max_mem_alloc_size = max_mem_alloc_size;
         }
-        void set_max_work_group_size(int max_work_group_size)
+        void set_max_work_group_size(int max_work_group_size)  // set_max_work_group_size
         {
             _max_work_group_size = max_work_group_size;
         }
-        void set_max_sub_group_size(int max_sub_group_size)
+        void set_max_sub_group_size(int max_sub_group_size)  // set_max_sub_group_size
         {
             _max_sub_group_size = max_sub_group_size;
         }
@@ -449,7 +449,7 @@ namespace dpct
         {
             _max_work_items_per_compute_unit = max_work_items_per_compute_unit;
         }
-        void set_max_nd_range_size(int max_nd_range_size[])
+        void set_max_nd_range_size(int max_nd_range_size[])  // set_max_nd_range_size
         {
             for (int i = 0; i < 3; i++)
             {
@@ -457,11 +457,11 @@ namespace dpct
                 _max_nd_range_size_i[i] = max_nd_range_size[i];
             }
         }
-        void set_memory_clock_rate(unsigned int memory_clock_rate)
+        void set_memory_clock_rate(unsigned int memory_clock_rate)  // set_memory_clock_rate
         {
             _memory_clock_rate = memory_clock_rate;
         }
-        void set_memory_bus_width(unsigned int memory_bus_width)
+        void set_memory_bus_width(unsigned int memory_bus_width)  // set_memory_bus_width
         {
             _memory_bus_width = memory_bus_width;
         }
@@ -470,15 +470,15 @@ namespace dpct
         {
             _max_register_size_per_work_group = max_register_size_per_work_group;
         }
-        void set_device_id(uint32_t device_id)
+        void set_device_id(uint32_t device_id)  // set_device_id
         {
             _device_id = device_id;
         }
-        void set_uuid(std::array<unsigned char, 16> uuid)
+        void set_uuid(std::array<unsigned char, 16> uuid)  // set_uuid
         {
             _uuid = std::move(uuid);
         }
-        void set_global_mem_cache_size(unsigned int global_mem_cache_size)
+        void set_global_mem_cache_size(unsigned int global_mem_cache_size)  // set_global_mem_cache_size
         {
             _global_mem_cache_size = global_mem_cache_size;
         }
@@ -510,21 +510,21 @@ namespace dpct
         std::array<unsigned char, 16> _uuid;
     };
 
-    static int get_major_version(const sycl::device &dev)
+    static int get_major_version(const sycl::device &dev)  // get_major_version
     {
         int major, minor;
         detail::get_version(dev, major, minor);
-        return major;
+        return major;  // 返回
     }
 
-    static int get_minor_version(const sycl::device &dev)
+    static int get_minor_version(const sycl::device &dev)  // get_minor_version
     {
         int major, minor;
         detail::get_version(dev, major, minor);
-        return minor;
+        return minor;  // 返回
     }
 
-    static void get_device_info(device_info &out, const sycl::device &dev)
+    static void get_device_info(device_info &out, const sycl::device &dev)  // get_device_info
     {
         device_info prop;
         prop.set_name(dev.get_info<sycl::info::device::name>().c_str());
@@ -535,15 +535,15 @@ namespace dpct
         prop.set_minor_version(minor);
 
         prop.set_max_work_item_sizes(
-#if (__SYCL_COMPILER_VERSION && __SYCL_COMPILER_VERSION < 20220902)
+#if (__SYCL_COMPILER_VERSION && __SYCL_COMPILER_VERSION < 20220902)  // 条件编译
             // oneAPI DPC++ compiler older than 2022/09/02, where max_work_item_sizes
             // is an enum class element
             dev.get_info<sycl::info::device::max_work_item_sizes>());
-#else
+#else  // 否则
             // SYCL 2020-conformant code, max_work_item_sizes is a struct templated by
             // an int
             dev.get_info<sycl::info::device::max_work_item_sizes<3>>());
-#endif
+#endif  // 条件编译结束
         prop.set_host_unified_memory(dev.has(sycl::aspect::usm_host_allocations));
 
         prop.set_max_clock_frequency(
@@ -557,7 +557,7 @@ namespace dpct
         prop.set_local_mem_size(dev.get_info<sycl::info::device::local_mem_size>());
         prop.set_max_mem_alloc_size(dev.get_info<sycl::info::device::max_mem_alloc_size>());
 
-#if (defined(SYCL_EXT_INTEL_DEVICE_INFO) && SYCL_EXT_INTEL_DEVICE_INFO >= 6)
+#if (defined(SYCL_EXT_INTEL_DEVICE_INFO) && SYCL_EXT_INTEL_DEVICE_INFO >= 6)  // 条件编译
         if (dev.has(sycl::aspect::ext_intel_memory_clock_rate))
         {
             unsigned int tmp =
@@ -579,17 +579,17 @@ namespace dpct
         {
             prop.set_uuid(dev.get_info<sycl::ext::intel::info::device::uuid>());
         }
-#elif defined(_MSC_VER) && !defined(__clang__)
+#elif defined(_MSC_VER) && !defined(__clang__)  // 否则如果
 #pragma message("get_device_info: querying memory_clock_rate and \
         memory_bus_width are not supported by the compiler used. \
         Use 3200000 kHz as memory_clock_rate default value. \
         Use 64 bits as memory_bus_width default value.")
-#else
+#else  // 否则
 #warning "get_device_info: querying memory_clock_rate and \
         memory_bus_width are not supported by the compiler used. \
         Use 3200000 kHz as memory_clock_rate default value. \
         Use 64 bits as memory_bus_width default value."
-#endif
+#endif  // 条件编译结束
 
         size_t max_sub_group_size = 1;
         std::vector<size_t> sub_group_sizes =
@@ -618,8 +618,8 @@ namespace dpct
     }
 
     /// dpct device extension
-    class device_ext : public sycl::device {
-      typedef std::mutex mutex_type;
+    class device_ext : public sycl::device {  // 类定义
+      typedef std::mutex mutex_type;  // 类型定义
 
      public:
       device_ext() : sycl::device() {}
@@ -638,26 +638,26 @@ namespace dpct
       int get_minor_version() const { return dpct::get_minor_version(*this); }
 
       int get_max_compute_units() const {
-        return get_device_info().get_max_compute_units();
+        return get_device_info().get_max_compute_units();  // get_device_info
       }
 
       /// Return the maximum clock frequency of this device in KHz.
       int get_max_clock_frequency() const {
-        return get_device_info().get_max_clock_frequency();
+        return get_device_info().get_max_clock_frequency();  // get_device_info
       }
 
       int get_integrated() const { return get_device_info().get_integrated(); }
 
       int get_max_sub_group_size() const {
-        return get_device_info().get_max_sub_group_size();
+        return get_device_info().get_max_sub_group_size();  // get_device_info
       }
 
       int get_max_register_size_per_work_group() const {
-        return get_device_info().get_max_register_size_per_work_group();
+        return get_device_info().get_max_register_size_per_work_group();  // get_device_info
       }
 
       int get_max_work_group_size() const {
-        return get_device_info().get_max_work_group_size();
+        return get_device_info().get_max_work_group_size();  // get_device_info
       }
 
       int get_mem_base_addr_align() const {
@@ -665,11 +665,11 @@ namespace dpct
       }
 
       size_t get_global_mem_size() const {
-        return get_device_info().get_global_mem_size();
+        return get_device_info().get_global_mem_size();  // get_device_info
       }
 
       size_t get_max_mem_alloc_size() const {
-        return get_device_info().get_max_mem_alloc_size();
+        return get_device_info().get_max_mem_alloc_size();  // get_device_info
       }
 
       /// Get the number of bytes of free and total memory on the SYCL device.
@@ -682,22 +682,22 @@ namespace dpct
             "get_memory_info: [warning] ext_intel_free_memory is not "
             "supported (export/set ZES_ENABLE_SYSMAN=1 to support), "
             "use total memory as free memory";
-#if (defined(__SYCL_COMPILER_VERSION) && __SYCL_COMPILER_VERSION >= 20221105)
+#if (defined(__SYCL_COMPILER_VERSION) && __SYCL_COMPILER_VERSION >= 20221105)  // 条件编译
         if (!has(sycl::aspect::ext_intel_free_memory)) {
           std::cerr << warning_info << std::endl;
           free_memory = total_memory;
         } else {
           free_memory = get_info<sycl::ext::intel::info::device::free_memory>();
         }
-#else
+#else  // 否则
         std::cerr << warning_info << std::endl;
         free_memory = total_memory;
-#if defined(_MSC_VER) && !defined(__clang__)
+#if defined(_MSC_VER) && !defined(__clang__)  // 条件编译
 #pragma message("Querying the number of bytes of free memory is not supported")
-#else
+#else  // 否则
 #warning "Querying the number of bytes of free memory is not supported"
-#endif
-#endif
+#endif  // 条件编译结束
+#endif  // 条件编译结束
       }
 
       void get_device_info(device_info &out) const {
@@ -707,7 +707,7 @@ namespace dpct
       device_info get_device_info() const {
         device_info prop;
         dpct::get_device_info(prop, *this);
-        return prop;
+        return prop;  // 返回
       }
 
       void reset() {
@@ -734,31 +734,31 @@ namespace dpct
       }
 
       sycl::queue create_queue(bool enable_exception_handler = false) {
-        return create_in_order_queue(enable_exception_handler);
+        return create_in_order_queue(enable_exception_handler);  // create_in_order_queue
       }
 
       sycl::queue create_queue(sycl::device device,
                                bool enable_exception_handler = false) {
-        return create_in_order_queue(device, enable_exception_handler);
+        return create_in_order_queue(device, enable_exception_handler);  // create_in_order_queue
       }
 
       sycl::queue create_in_order_queue(bool enable_exception_handler = false) {
         std::lock_guard<mutex_type> lock(m_mutex);
-        return create_queue_impl(enable_exception_handler,
+        return create_queue_impl(enable_exception_handler,  // 返回
                                  sycl::property::queue::in_order());
       }
 
       sycl::queue create_in_order_queue(sycl::device device,
                                         bool enable_exception_handler = false) {
         std::lock_guard<mutex_type> lock(m_mutex);
-        return create_queue_impl(device, enable_exception_handler,
+        return create_queue_impl(device, enable_exception_handler,  // 返回
                                  sycl::property::queue::in_order());
       }
 
       sycl::queue create_out_of_order_queue(
           bool enable_exception_handler = false) {
         std::lock_guard<mutex_type> lock(m_mutex);
-        return create_queue_impl(enable_exception_handler);
+        return create_queue_impl(enable_exception_handler);  // create_queue_impl
       }
 
       void destroy_queue(sycl::queue queue) {
@@ -766,7 +766,7 @@ namespace dpct
         _queues.erase(std::remove_if(_queues.begin(), _queues.end(),
                                     [=](const sycl::queue &q) -> bool
                                     {
-                                        return q == queue;
+                                        return q == queue;  // 返回
                                     }),
                     _queues.end());
       }
@@ -776,7 +776,7 @@ namespace dpct
       }
       sycl::queue get_saved_queue() const {
         std::lock_guard<mutex_type> lock(m_mutex);
-        return _saved_queue;
+        return _saved_queue;  // 返回
       }
 
      private:
@@ -791,7 +791,7 @@ namespace dpct
 
       /// Caller should acquire resource \p m_mutex before calling this
       /// function.
-      template <class... Properties>
+      template <class... Properties>  // 模板
       sycl::queue create_queue_impl(bool enable_exception_handler,
                                     Properties... properties) {
         sycl::async_handler eh = {};
@@ -801,15 +801,15 @@ namespace dpct
         _queues.push_back(sycl::queue(
             *this, eh,
             sycl::property_list(
-#ifdef DPCT_PROFILING_ENABLED
+#ifdef DPCT_PROFILING_ENABLED  // 如果定义了 DPCT_PROFILING_ENABLED 则编译
                 sycl::property::queue::enable_profiling(),
-#endif
+#endif  // 条件编译结束
                 properties...)));
 
         return _queues.back();
       }
 
-      template <class... Properties>
+      template <class... Properties>  // 模板
       sycl::queue create_queue_impl(sycl::device device,
                                     bool enable_exception_handler,
                                     Properties... properties) {
@@ -820,9 +820,9 @@ namespace dpct
         _queues.push_back(sycl::queue(
             device, eh,
                         sycl::property_list(
-#ifdef DPCT_PROFILING_ENABLED
+#ifdef DPCT_PROFILING_ENABLED  // 如果定义了 DPCT_PROFILING_ENABLED 则编译
                             sycl::property::queue::enable_profiling(),
-#endif
+#endif  // 条件编译结束
                             properties...)));
 
         return _queues.back();
@@ -839,14 +839,14 @@ namespace dpct
 
 
     /// device manager
-    class dev_mgr
+    class dev_mgr  // 类定义
     {
     public:
         device_ext &current_device()
         {
             unsigned int dev_id = current_device_id();
             check_id(dev_id);
-            return *_devs[dev_id];
+            return *_devs[dev_id];  // 返回
         }
         device_ext &cpu_device() const
         {
@@ -857,28 +857,28 @@ namespace dpct
             }
             else
             {
-                return *_devs[_cpu_device];
+                return *_devs[_cpu_device];  // 返回
             }
         }
         device_ext &get_device(unsigned int id) const
         {
             std::lock_guard<std::recursive_mutex> lock(m_mutex);
             check_id(id);
-            return *_devs[id];
+            return *_devs[id];  // 返回
         }
-        unsigned int current_device_id() const
+        unsigned int current_device_id() const  // current_device_id
         {
             std::lock_guard<std::recursive_mutex> lock(m_mutex);
             auto it = _thread2dev_map.find(get_tid());
             if (it != _thread2dev_map.end())
-                return it->second;
-            return DEFAULT_DEVICE_ID;
+                return it->second;  // 返回
+            return DEFAULT_DEVICE_ID;  // 返回
         }
 
         /// Select device with a device ID.
         /// \param [in] id The id of the device which can
         /// be obtained through get_device_id(const sycl::device).
-        void select_device(unsigned int id)
+        void select_device(unsigned int id)  // select_device
         {
             std::lock_guard<std::recursive_mutex> lock(m_mutex);
             check_id(id);
@@ -886,18 +886,18 @@ namespace dpct
         }
         unsigned int device_count() { return _devs.size(); }
 
-        unsigned int get_device_id(const sycl::device &dev)
+        unsigned int get_device_id(const sycl::device &dev)  // get_device_id
         {
             unsigned int id = 0;
             for (auto &dev_item : _devs)
             {
                 if (*dev_item == dev)
                 {
-                    return id;
+                    return id;  // 返回
                 }
                 id++;
             }
-            return -1;
+            return -1;  // 返回
         }
 
         inline std::string get_preferred_gpu_platform_name() {
@@ -970,10 +970,10 @@ namespace dpct
             if (result.empty())
                 throw std::runtime_error("can not find preferred GPU platform");
 
-            return result;
+            return result;  // 返回
         }
 
-        template <class DeviceSelector>
+        template <class DeviceSelector>  // 模板
         std::enable_if_t<
             std::is_invocable_r_v<int, DeviceSelector, const sycl::device &>>
         select_device(const DeviceSelector &selector = sycl::gpu_selector_v)
@@ -987,7 +987,7 @@ namespace dpct
         static dev_mgr &instance()
         {
             static dev_mgr d_m;
-            return d_m;
+            return d_m;  // 返回
         }
         dev_mgr(const dev_mgr &) = delete;
         dev_mgr &operator=(const dev_mgr &) = delete;
@@ -996,7 +996,7 @@ namespace dpct
 
     private:
         mutable std::recursive_mutex m_mutex;
-        static bool compare_dev(sycl::device &device1, sycl::device &device2)
+        static bool compare_dev(sycl::device &device1, sycl::device &device2)  // compare_dev
         {
             sycl::backend backend1 = device1.get_backend();
             sycl::backend backend2 = device2.get_backend();
@@ -1020,7 +1020,7 @@ namespace dpct
             GGML_ABORT("fatal error");
         }
         static bool compare_backend(std::string &backend1, std::string &backend2) {
-            return convert_backend_index(backend1) < convert_backend_index(backend2);
+            return convert_backend_index(backend1) < convert_backend_index(backend2);  // convert_backend_index
         }
         dev_mgr()
         {
@@ -1080,7 +1080,7 @@ namespace dpct
                 }
             }
         }
-        void check_id(unsigned int id) const
+        void check_id(unsigned int id) const  // check_id
         {
             if (id >= _devs.size())
             {
@@ -1102,7 +1102,7 @@ namespace dpct
         return dev_mgr::instance().current_device().default_queue();
     }
 
-    namespace detail
+    namespace detail  // 命名空间
     {
         enum class pointer_access_attribute
         {
@@ -1118,16 +1118,16 @@ namespace dpct
             switch (sycl::get_pointer_type(ptr, q.get_context()))
             {
             case sycl::usm::alloc::unknown:
-                return pointer_access_attribute::host_only;
+                return pointer_access_attribute::host_only;  // 返回
             case sycl::usm::alloc::device:
-                return pointer_access_attribute::device_only;
+                return pointer_access_attribute::device_only;  // 返回
             case sycl::usm::alloc::shared:
             case sycl::usm::alloc::host:
-                return pointer_access_attribute::host_device;
+                return pointer_access_attribute::host_device;  // 返回
             }
         }
 
-        template <typename ArgT>
+        template <typename ArgT>  // 模板
         inline constexpr std::uint64_t get_type_combination_id(ArgT Val)
         {
             static_assert((unsigned char)library_data_t::library_data_t_size <=
@@ -1137,7 +1137,7 @@ namespace dpct
             return (std::uint64_t)Val;
         }
 
-        template <typename FirstT, typename... RestT>
+        template <typename FirstT, typename... RestT>  // 模板
         inline constexpr std::uint64_t get_type_combination_id(FirstT FirstVal,
                                                                RestT... RestVal)
         {
@@ -1146,32 +1146,32 @@ namespace dpct
                           "library_data_t size exceeds limit.");
             static_assert(sizeof...(RestT) <= 8 && "Too many parameters");
             static_assert(std::is_same_v<FirstT, library_data_t>, "Unsupported FirstT");
-            return get_type_combination_id(RestVal...) << 8 | ((std::uint64_t)FirstVal);
+            return get_type_combination_id(RestVal...) << 8 | ((std::uint64_t)FirstVal);  // get_type_combination_id
         }
 
-        class mem_mgr
+        class mem_mgr  // 类定义
         {
             mem_mgr()
             {
                 // Reserved address space, no real memory allocation happens here.
-#if defined(__linux__)
+#if defined(__linux__)  // 条件编译
                 mapped_address_space =
                     (byte_t *)mmap(nullptr, mapped_region_size, PROT_NONE,
                                    MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-#elif defined(_WIN64)
+#elif defined(_WIN64)  // 否则如果
                 mapped_address_space = (byte_t *)VirtualAlloc(
                     NULL,               // NULL specified as the base address parameter
                     mapped_region_size, // Size of allocation
                     MEM_RESERVE,        // Allocate reserved pages
                     PAGE_NOACCESS);     // Protection = no access
-#else
+#else  // 否则
 #error "Only support Windows and Linux."
-#endif
+#endif  // 条件编译结束
                 next_free = mapped_address_space;
             }
 
         public:
-            using buffer_id_t = int;
+            using buffer_id_t = int;  // using 声明
 
             struct allocation
             {
@@ -1182,13 +1182,13 @@ namespace dpct
 
             ~mem_mgr()
             {
-#if defined(__linux__)
+#if defined(__linux__)  // 条件编译
                 munmap(mapped_address_space, mapped_region_size);
-#elif defined(_WIN64)
+#elif defined(_WIN64)  // 否则如果
                 VirtualFree(mapped_address_space, 0, MEM_RELEASE);
-#else
+#else  // 否则
 #error "Only support Windows and Linux."
-#endif
+#endif  // 条件编译结束
             }
 
             mem_mgr(const mem_mgr &) = delete;
@@ -1197,10 +1197,10 @@ namespace dpct
             mem_mgr &operator=(mem_mgr &&) = delete;
 
             /// Allocate
-            void *mem_alloc(size_t size)
+            void *mem_alloc(size_t size)  // mem_alloc
             {
                 if (!size)
-                    return nullptr;
+                    return nullptr;  // 返回
                 std::lock_guard<std::mutex> lock(m_mutex);
                 if (next_free + size > mapped_address_space + mapped_region_size)
                 {
@@ -1208,7 +1208,7 @@ namespace dpct
                 }
                 // Allocation
                 sycl::range<1> r(size);
-                buffer_t buf(r);
+                buffer_t buf(r);  // buf
                 allocation A{buf, next_free, size};
                 // Map allocation to device pointer
                 void *result = next_free;
@@ -1216,29 +1216,29 @@ namespace dpct
                 // Update pointer to the next free space.
                 next_free += (size + extra_padding + alignment - 1) & ~(alignment - 1);
 
-                return result;
+                return result;  // 返回
             }
 
             /// Deallocate
-            void mem_free(const void *ptr)
+            void mem_free(const void *ptr)  // mem_free
             {
                 if (!ptr)
-                    return;
+                    return;  // 返回
                 std::lock_guard<std::mutex> lock(m_mutex);
                 auto it = get_map_iterator(ptr);
                 m_map.erase(it);
             }
 
             /// map: device pointer -> allocation(buffer, alloc_ptr, size)
-            allocation translate_ptr(const void *ptr)
+            allocation translate_ptr(const void *ptr)  // translate_ptr
             {
                 std::lock_guard<std::mutex> lock(m_mutex);
                 auto it = get_map_iterator(ptr);
-                return it->second;
+                return it->second;  // 返回
             }
 
             /// Check if the pointer represents device pointer or not.
-            bool is_device_ptr(const void *ptr) const
+            bool is_device_ptr(const void *ptr) const  // is_device_ptr
             {
                 std::lock_guard<std::mutex> lock(m_mutex);
                 return (mapped_address_space <= ptr) &&
@@ -1249,7 +1249,7 @@ namespace dpct
             static mem_mgr &instance()
             {
                 static mem_mgr m;
-                return m;
+                return m;  // 返回
             }
 
         private:
@@ -1279,14 +1279,14 @@ namespace dpct
                     // or extra padding and pointer points to this gap.
                     throw std::runtime_error("invalid virtual pointer");
                 }
-                return it;
+                return it;  // 返回
             }
         };
 
-        template <class T, memory_region Memory, size_t Dimension>
-        class accessor;
-        template <memory_region Memory, class T = byte_t>
-        class memory_traits
+        template <class T, memory_region Memory, size_t Dimension>  // 模板
+        class accessor;  // 类定义
+        template <memory_region Memory, class T = byte_t>  // 模板
+        class memory_traits  // 类定义
         {
         public:
             static constexpr sycl::access::target target =
@@ -1295,27 +1295,27 @@ namespace dpct
                 (Memory == constant) ? sycl::access_mode::read
                                      : sycl::access_mode::read_write;
             static constexpr size_t type_size = sizeof(T);
-            using element_t =
+            using element_t =  // using 声明
                 typename std::conditional<Memory == constant, const T, T>::type;
-            using value_t = typename std::remove_cv<T>::type;
-            template <size_t Dimension = 1>
-            using accessor_t = typename std::conditional<
+            using value_t = typename std::remove_cv<T>::type;  // using 声明
+            template <size_t Dimension = 1>  // 模板
+            using accessor_t = typename std::conditional<  // using 声明
                 Memory == local, sycl::local_accessor<value_t, Dimension>,
                 sycl::accessor<T, Dimension, mode, target>>::type;
-            using pointer_t = T *;
+            using pointer_t = T *;  // using 声明
         };
 
-        static inline void *dpct_malloc(size_t size, sycl::queue &q)
+        static inline void *dpct_malloc(size_t size, sycl::queue &q)  // dpct_malloc
         {
             return sycl::malloc_device(size, q.get_device(), q.get_context());
         }
 
-#define PITCH_DEFAULT_ALIGN(x) (((x) + 31) & ~(0x1F))
+#define PITCH_DEFAULT_ALIGN(x) (((x) + 31) & ~(0x1F))  // 宏定义 PITCH_DEFAULT_ALIGN
         static inline void *dpct_malloc(size_t &pitch, size_t x, size_t y, size_t z,
                                         sycl::queue &q)
         {
             pitch = PITCH_DEFAULT_ALIGN(x);
-            return dpct_malloc(pitch * y * z, q);
+            return dpct_malloc(pitch * y * z, q);  // dpct_malloc
         }
 
         /**
@@ -1327,7 +1327,7 @@ namespace dpct
          * @param [in] size Number of elements to be set to the value.
          * @return An event representing the memset operation.
          */
-        template <typename valueT>
+        template <typename valueT>  // 模板
         static inline sycl::event dpct_memset(sycl::queue &q, void *dev_ptr,
                                               valueT value, size_t size)
         {
@@ -1343,7 +1343,7 @@ namespace dpct
          * @param [in] size 3D memory region by number of elements.
          * @return An event list representing the memset operations.
          */
-        template <typename valueT>
+        template <typename valueT>  // 模板
         static inline std::vector<sycl::event>
         dpct_memset(sycl::queue &q, pitched_data data, valueT value,
                     sycl::range<3> size)
@@ -1361,7 +1361,7 @@ namespace dpct
                 }
                 data_surface += slice;
             }
-            return event_list;
+            return event_list;  // 返回
         }
 
         /**
@@ -1375,12 +1375,12 @@ namespace dpct
          * @param [in] y The height of memory region by number of elements.
          * @return An event list representing the memset operations.
          */
-        template <typename valueT>
+        template <typename valueT>  // 模板
         static inline std::vector<sycl::event>
         dpct_memset(sycl::queue &q, void *ptr, size_t pitch, valueT val, size_t x,
                     size_t y)
         {
-            return dpct_memset(q, pitched_data(ptr, pitch, x, 1), val,
+            return dpct_memset(q, pitched_data(ptr, pitch, x, 1), val,  // dpct_memset
                                sycl::range<3>(x, y, 1));
         }
 
@@ -1394,7 +1394,7 @@ namespace dpct
             case memcpy_direction::host_to_device:
             case memcpy_direction::device_to_host:
             case memcpy_direction::device_to_device:
-                return dir;
+                return dir;  // 返回
             case memcpy_direction::automatic:
             {
                 // table[to_attribute][from_attribute]
@@ -1410,7 +1410,7 @@ namespace dpct
                                         {memcpy_direction::host_to_host,
                                          memcpy_direction::device_to_device,
                                          memcpy_direction::device_to_device}};
-                return direction_table[static_cast<unsigned>(get_pointer_attribute(
+                return direction_table[static_cast<unsigned>(get_pointer_attribute(  // 返回
                     q, to_ptr))][static_cast<unsigned>(get_pointer_attribute(q, from_ptr))];
             }
             default:
@@ -1424,7 +1424,7 @@ namespace dpct
                     const std::vector<sycl::event> &dep_events = {})
         {
             if (!size)
-                return sycl::event{};
+                return sycl::event{};  // 返回
             return q.memcpy(to_ptr, from_ptr, size, dep_events);
             GGML_UNUSED(direction);
         }
@@ -1452,7 +1452,7 @@ namespace dpct
                     const std::vector<sycl::event> &dep_events = {})
         {
             // RAII for host pointer
-            class host_buffer
+            class host_buffer  // 类定义
             {
                 void *_buf;
                 size_t _size;
@@ -1488,7 +1488,7 @@ namespace dpct
 
             if (to_slice == from_slice && to_slice == size.get(1) * size.get(0))
             {
-                return {dpct_memcpy(q, to_surface, from_surface, to_slice * size.get(2),
+                return {dpct_memcpy(q, to_surface, from_surface, to_slice * size.get(2),  // 返回
                                     direction, dep_events)};
             }
             direction = deduce_memcpy_direction(q, to_ptr, from_ptr, direction);
@@ -1522,7 +1522,7 @@ namespace dpct
                 break;
             case host_to_device:
             {
-                host_buffer buf(get_copy_range(size, to_slice, to_range.get(0)), q,
+                host_buffer buf(get_copy_range(size, to_slice, to_range.get(0)), q,  // buf
                                 event_list);
                 std::vector<sycl::event> host_events;
                 if (to_slice == size_slice)
@@ -1553,7 +1553,7 @@ namespace dpct
             }
             case device_to_host:
             {
-                host_buffer buf(get_copy_range(size, from_slice, from_range.get(0)), q,
+                host_buffer buf(get_copy_range(size, from_slice, from_range.get(0)), q,  // buf
                                 event_list);
                 // Copy from host temp buffer to host target with reshaping.
                 event_list = dpct_memcpy(
@@ -1578,7 +1578,7 @@ namespace dpct
             default:
                 throw std::runtime_error("dpct_memcpy: invalid direction value");
             }
-            return event_list;
+            return event_list;  // 返回
         }
 
         /// memcpy 2D/3D matrix specified by pitched_data.
@@ -1587,7 +1587,7 @@ namespace dpct
                     pitched_data from, sycl::id<3> from_id, sycl::range<3> size,
                     memcpy_direction direction = automatic)
         {
-            return dpct_memcpy(q, to.get_data_ptr(), from.get_data_ptr(),
+            return dpct_memcpy(q, to.get_data_ptr(), from.get_data_ptr(),  // dpct_memcpy
                                sycl::range<3>(to.get_pitch(), to.get_y(), 1),
                                sycl::range<3>(from.get_pitch(), from.get_y(), 1), to_id, from_id,
                                size, direction);
@@ -1599,48 +1599,48 @@ namespace dpct
                     size_t to_pitch, size_t from_pitch, size_t x, size_t y,
                     memcpy_direction direction = automatic)
         {
-            return dpct_memcpy(q, to_ptr, from_ptr, sycl::range<3>(to_pitch, y, 1),
+            return dpct_memcpy(q, to_ptr, from_ptr, sycl::range<3>(to_pitch, y, 1),  // dpct_memcpy
                                sycl::range<3>(from_pitch, y, 1),
                                sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0),
                                sycl::range<3>(x, y, 1), direction);
         }
 
-        namespace deprecated
+        namespace deprecated  // 命名空间
         {
 
-            template <typename T, sycl::usm::alloc AllocKind>
-            class usm_allocator
+            template <typename T, sycl::usm::alloc AllocKind>  // 模板
+            class usm_allocator  // 类定义
             {
             private:
-                using Alloc = sycl::usm_allocator<T, AllocKind>;
+                using Alloc = sycl::usm_allocator<T, AllocKind>;  // using 声明
                 Alloc _impl;
 
             public:
-                using value_type = typename std::allocator_traits<Alloc>::value_type;
-                using pointer = typename std::allocator_traits<Alloc>::pointer;
-                using const_pointer = typename std::allocator_traits<Alloc>::const_pointer;
-                using void_pointer = typename std::allocator_traits<Alloc>::void_pointer;
-                using const_void_pointer =
+                using value_type = typename std::allocator_traits<Alloc>::value_type;  // using 声明
+                using pointer = typename std::allocator_traits<Alloc>::pointer;  // using 声明
+                using const_pointer = typename std::allocator_traits<Alloc>::const_pointer;  // using 声明
+                using void_pointer = typename std::allocator_traits<Alloc>::void_pointer;  // using 声明
+                using const_void_pointer =  // using 声明
                     typename std::allocator_traits<Alloc>::const_void_pointer;
-                using reference = typename std::allocator_traits<Alloc>::value_type &;
-                using const_reference =
+                using reference = typename std::allocator_traits<Alloc>::value_type &;  // using 声明
+                using const_reference =  // using 声明
                     const typename std::allocator_traits<Alloc>::value_type &;
-                using difference_type =
+                using difference_type =  // using 声明
                     typename std::allocator_traits<Alloc>::difference_type;
-                using size_type = typename std::allocator_traits<Alloc>::size_type;
-                using propagate_on_container_copy_assignment = typename std::allocator_traits<
+                using size_type = typename std::allocator_traits<Alloc>::size_type;  // using 声明
+                using propagate_on_container_copy_assignment = typename std::allocator_traits<  // using 声明
                     Alloc>::propagate_on_container_copy_assignment;
-                using propagate_on_container_move_assignment = typename std::allocator_traits<
+                using propagate_on_container_move_assignment = typename std::allocator_traits<  // using 声明
                     Alloc>::propagate_on_container_move_assignment;
-                using propagate_on_container_swap =
+                using propagate_on_container_swap =  // using 声明
                     typename std::allocator_traits<Alloc>::propagate_on_container_swap;
-                using is_always_equal =
+                using is_always_equal =  // using 声明
                     typename std::allocator_traits<Alloc>::is_always_equal;
 
-                template <typename U>
+                template <typename U>  // 模板
                 struct rebind
                 {
-                    typedef usm_allocator<U, AllocKind> other;
+                    typedef usm_allocator<U, AllocKind> other;  // 类型定义
                 };
 
                 usm_allocator() : _impl(dpct::get_default_queue()) {}
@@ -1649,15 +1649,15 @@ namespace dpct
                 usm_allocator(usm_allocator &&other) : _impl(std::move(other._impl)) {}
                 pointer address(reference r) { return &r; }
                 const_pointer address(const_reference r) { return &r; }
-                pointer allocate(size_type cnt, const_void_pointer hint = nullptr)
+                pointer allocate(size_type cnt, const_void_pointer hint = nullptr)  // allocate
                 {
                     return std::allocator_traits<Alloc>::allocate(_impl, cnt, hint);
                 }
-                void deallocate(pointer p, size_type cnt)
+                void deallocate(pointer p, size_type cnt)  // deallocate
                 {
                     std::allocator_traits<Alloc>::deallocate(_impl, p, cnt);
                 }
-                size_type max_size() const
+                size_type max_size() const  // max_size
                 {
                     return std::allocator_traits<Alloc>::max_size(_impl);
                 }
@@ -1676,37 +1676,37 @@ namespace dpct
             }
         }
 
-        template <typename T>
-        inline auto get_memory(const void *x)
+        template <typename T>  // 模板
+        inline auto get_memory(const void *x)  // get_memory
         {
             T *new_x = reinterpret_cast<T *>(const_cast<void *>(x));
-            return new_x;
+            return new_x;  // 返回
         }
 
-        template <typename T>
+        template <typename T>  // 模板
         inline typename DataType<T>::T2 get_value(const T *s, sycl::queue &q)
         {
-            using Ty = typename DataType<T>::T2;
+            using Ty = typename DataType<T>::T2;  // using 声明
             Ty s_h;
             if (get_pointer_attribute(q, s) == pointer_access_attribute::device_only)
                 detail::dpct_memcpy(q, (void *)&s_h, (const void *)s, sizeof(T), device_to_host)
                     .wait();
             else
                 s_h = *reinterpret_cast<const Ty *>(s);
-            return s_h;
+            return s_h;  // 返回
         }
 
     } // namespace detail
 
-    template <typename T>
-    inline auto get_value(const T *s, sycl::queue &q)
+    template <typename T>  // 模板
+    inline auto get_value(const T *s, sycl::queue &q)  // get_value
     {
         return detail::get_value(s, q);
     }
 
-    namespace detail
+    namespace detail  // 命名空间
     {
-    template <class Ta, class Tb, class Tc, class Ts>
+    template <class Ta, class Tb, class Tc, class Ts>  // 模板
     inline void gemm_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, int m,
                           int n, int k, const void * alpha, const void * a, int lda, const void * b, int ldb,
                           const void * beta, void * c, int ldc) {
@@ -1719,34 +1719,34 @@ namespace dpct
                                                lda, data_b, ldb, beta_value, data_c, ldc);
     }
 
-        template <typename VecT, class BinaryOperation, class = void>
-        class vectorized_binary
+        template <typename VecT, class BinaryOperation, class = void>  // 模板
+        class vectorized_binary  // 类定义
         {
         public:
-            inline VecT operator()(VecT a, VecT b, const BinaryOperation binary_op)
+            inline VecT operator()(VecT a, VecT b, const BinaryOperation binary_op)  // operator
             {
                 VecT v4;
                 for (size_t i = 0; i < v4.size(); ++i)
                 {
                     v4[i] = binary_op(a[i], b[i]);
                 }
-                return v4;
+                return v4;  // 返回
             }
         };
 
-        template <typename VecT, class BinaryOperation>
-        class vectorized_binary<
+        template <typename VecT, class BinaryOperation>  // 模板
+        class vectorized_binary<  // 类定义
             VecT, BinaryOperation,
             std::void_t<std::invoke_result_t<BinaryOperation, VecT, VecT>>>
         {
         public:
-            inline VecT operator()(VecT a, VecT b, const BinaryOperation binary_op)
+            inline VecT operator()(VecT a, VecT b, const BinaryOperation binary_op)  // operator
             {
-                return binary_op(a, b).template as<VecT>();
+                return binary_op(a, b).template as<VecT>();  // binary_op
             }
         };
 
-        template <class Ta, class Tb, class Tc, class Ts>
+        template <class Ta, class Tb, class Tc, class Ts>  // 模板
         inline void gemm_batch_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans,
                                     int m, int n, int k, const void * alpha, const void ** a, int lda, const void ** b,
                                     int ldb, const void * beta, void ** c, int ldc, int batch_size,
@@ -1775,7 +1775,7 @@ namespace dpct
                 matrix_info->ld_info + 2, 1, &(matrix_info->groupsize_info));
         }
 
-        template <class Ta, class Tb, class Tc, class Ts>
+        template <class Ta, class Tb, class Tc, class Ts>  // 模板
         inline void gemm_batch_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans,
                                     int m, int n, int k, const void * alpha, const void * a, int lda,
                                     long long int stride_a, const void * b, int ldb, long long int stride_b,
@@ -1792,7 +1792,7 @@ namespace dpct
 
     } // namespace detail
 
-    template <typename VecT, class BinaryOperation>
+    template <typename VecT, class BinaryOperation>  // 模板
     inline unsigned vectorized_binary(unsigned a, unsigned b,
                                       const BinaryOperation binary_op)
     {
@@ -1802,7 +1802,7 @@ namespace dpct
         auto v4 =
             detail::vectorized_binary<VecT, BinaryOperation>()(v2, v3, binary_op);
         v0 = v4.template as<sycl::vec<unsigned, 1>>();
-        return v0;
+        return v0;  // 返回
     }
 
     static void async_dpct_memcpy(void *to_ptr, const void *from_ptr, size_t size,
@@ -1812,13 +1812,13 @@ namespace dpct
         detail::dpct_memcpy(q, to_ptr, from_ptr, size, direction);
     }
 
-    static inline unsigned int select_device(unsigned int id)
+    static inline unsigned int select_device(unsigned int id)  // select_device
     {
         dev_mgr::instance().select_device(id);
-        return id;
+        return id;  // 返回
     }
 
-    template <typename T>
+    template <typename T>  // 模板
     T permute_sub_group_by_xor(sycl::sub_group g, T x, unsigned int mask,
                                unsigned int logical_sub_group_size = 32)
     {
@@ -1826,19 +1826,19 @@ namespace dpct
         unsigned int start_index =
             id / logical_sub_group_size * logical_sub_group_size;
         unsigned int target_offset = (id % logical_sub_group_size) ^ mask;
-        return sycl::select_from_group(g, x,
+        return sycl::select_from_group(g, x,  // 返回
                                        target_offset < logical_sub_group_size
                                            ? start_index + target_offset
                                            : id);
     }
 
-    template <typename T1, typename T2>
-    using dot_product_acc_t = std::conditional_t<
+    template <typename T1, typename T2>  // 模板
+    using dot_product_acc_t = std::conditional_t<  // using 声明
         std::is_unsigned_v<T1> && std::is_unsigned_v<T2>,
         uint32_t,
         int32_t>;
 
-    template <typename T>
+    template <typename T>  // 模板
     sycl::vec<T, 4> extract_and_sign_or_zero_extend4(T val) {
       return sycl::vec<T, 1>(val)
           .template as<sycl::vec<
@@ -1847,7 +1847,7 @@ namespace dpct
           .template convert<T>();
     }
 
-    template <typename T1, typename T2, typename T3>
+    template <typename T1, typename T2, typename T3>  // 模板
     inline auto dp4a(T1 a, T2 b, T3 c) {
       dot_product_acc_t<T1, T2> res = c;
       auto va = extract_and_sign_or_zero_extend4(a);
@@ -1856,51 +1856,51 @@ namespace dpct
       res += va[1] * vb[1];
       res += va[2] * vb[2];
       res += va[3] * vb[3];
-      return res;
+      return res;  // 返回
     }
 
     struct sub_sat
     {
-        template <typename T>
-        auto operator()(const T x, const T y) const
+        template <typename T>  // 模板
+        auto operator()(const T x, const T y) const  // operator
         {
             return sycl::sub_sat(x, y);
         }
     };
 
-    template <typename S, typename T>
-    inline T vectorized_min(T a, T b)
+    template <typename S, typename T>  // 模板
+    inline T vectorized_min(T a, T b)  // vectorized_min
     {
         sycl::vec<T, 1> v0{a}, v1{b};
         auto v2 = v0.template as<S>();
         auto v3 = v1.template as<S>();
         auto v4 = sycl::min(v2, v3);
         v0 = v4.template as<sycl::vec<T, 1>>();
-        return v0;
+        return v0;  // 返回
     }
 
     inline float pow(const float a, const int b) { return sycl::pown(a, b); }
     inline double pow(const double a, const int b) { return sycl::pown(a, b); }
     inline float pow(const float a, const float b) { return sycl::pow(a, b); }
     inline double pow(const double a, const double b) { return sycl::pow(a, b); }
-    template <typename T, typename U>
+    template <typename T, typename U>  // 模板
     inline typename std::enable_if_t<std::is_floating_point_v<T>, T>
     pow(const T a, const U b)
     {
         return sycl::pow(a, static_cast<T>(b));
     }
-    template <typename T, typename U>
+    template <typename T, typename U>  // 模板
     inline typename std::enable_if_t<!std::is_floating_point_v<T>, double>
     pow(const T a, const U b)
     {
         return sycl::pow(static_cast<double>(a), static_cast<double>(b));
     }
 
-    inline double min(const double a, const float b)
+    inline double min(const double a, const float b)  // min
     {
         return sycl::fmin(a, static_cast<double>(b));
     }
-    inline double min(const float a, const double b)
+    inline double min(const float a, const double b)  // min
     {
         return sycl::fmin(static_cast<double>(a), b);
     }
@@ -1958,11 +1958,11 @@ namespace dpct
     // For floating-point types, `float` or `double` arguments are acceptable.
     // For integer types, `std::uint32_t`, `std::int32_t`, `std::uint64_t` or
     // `std::int64_t` type arguments are acceptable.
-    inline double max(const double a, const float b)
+    inline double max(const double a, const float b)  // max
     {
         return sycl::fmax(a, static_cast<double>(b));
     }
-    inline double max(const float a, const double b)
+    inline double max(const float a, const double b)  // max
     {
         return sycl::fmax(static_cast<double>(a), b);
     }
@@ -2041,16 +2041,16 @@ namespace dpct
 #define __SYCL_ASPECT(ASPECT, ID) \
     case sycl::aspect::ASPECT:    \
         return #ASPECT;
-#define __SYCL_ASPECT_DEPRECATED(ASPECT, ID, MESSAGE) __SYCL_ASPECT(ASPECT, ID)
-#define __SYCL_ASPECT_DEPRECATED_ALIAS(ASPECT, ID, MESSAGE)
+#define __SYCL_ASPECT_DEPRECATED(ASPECT, ID, MESSAGE) __SYCL_ASPECT(ASPECT, ID)  // 宏定义 __SYCL_ASPECT_DEPRECATED
+#define __SYCL_ASPECT_DEPRECATED_ALIAS(ASPECT, ID, MESSAGE)  // 宏定义 __SYCL_ASPECT_DEPRECATED_ALIAS
                 auto getAspectNameStr = [](sycl::aspect AspectNum) -> std::string
                 {
                     switch (AspectNum)
                     {
-#include <sycl/info/aspects.def>
-#include <sycl/info/aspects_deprecated.def>
+#include <sycl/info/aspects.def>  // 引入 sycl/info/aspects.def 头文件
+#include <sycl/info/aspects_deprecated.def>  // 引入 sycl/info/aspects_deprecated.def 头文件
                     default:
-                        return "unknown aspect";
+                        return "unknown aspect";  // 返回
                     }
                 };
 #undef __SYCL_ASPECT_DEPRECATED_ALIAS
@@ -2064,7 +2064,7 @@ namespace dpct
         }
     }
 
-    static inline unsigned int get_current_device_id()
+    static inline unsigned int get_current_device_id()  // get_current_device_id
     {
         return dev_mgr::instance().current_device_id();
     }
@@ -2090,7 +2090,7 @@ namespace dpct
                 const std::vector<sycl::event> &dep_events = {})
     {
         if (!size)
-            return sycl::event{};
+            return sycl::event{};  // 返回
         return q.memcpy(to_ptr, from_ptr, size, dep_events);
         GGML_UNUSED(direction);
     }
@@ -2118,7 +2118,7 @@ namespace dpct
                 const std::vector<sycl::event> &dep_events = {})
     {
         // RAII for host pointer
-        class host_buffer
+        class host_buffer  // 类定义
         {
             void *_buf;
             size_t _size;
@@ -2154,7 +2154,7 @@ namespace dpct
 
         if (to_slice == from_slice && to_slice == size.get(1) * size.get(0))
         {
-            return {dpct_memcpy(q, to_surface, from_surface, to_slice * size.get(2),
+            return {dpct_memcpy(q, to_surface, from_surface, to_slice * size.get(2),  // 返回
                                 direction, dep_events)};
         }
         direction = detail::deduce_memcpy_direction(q, to_ptr, from_ptr, direction);
@@ -2188,7 +2188,7 @@ namespace dpct
             break;
         case host_to_device:
         {
-            host_buffer buf(get_copy_range(size, to_slice, to_range.get(0)), q,
+            host_buffer buf(get_copy_range(size, to_slice, to_range.get(0)), q,  // buf
                             event_list);
             std::vector<sycl::event> host_events;
             if (to_slice == size_slice)
@@ -2219,7 +2219,7 @@ namespace dpct
         }
         case device_to_host:
         {
-            host_buffer buf(get_copy_range(size, from_slice, from_range.get(0)), q,
+            host_buffer buf(get_copy_range(size, from_slice, from_range.get(0)), q,  // buf
                             event_list);
             // Copy from host temp buffer to host target with reshaping.
             event_list = dpct_memcpy(
@@ -2245,7 +2245,7 @@ namespace dpct
         default:
             throw std::runtime_error("dpct_memcpy: invalid direction value");
         }
-        return event_list;
+        return event_list;  // 返回
     }
 
     /// memcpy 2D/3D matrix specified by pitched_data.
@@ -2254,7 +2254,7 @@ namespace dpct
                 pitched_data from, sycl::id<3> from_id, sycl::range<3> size,
                 memcpy_direction direction = automatic)
     {
-        return dpct_memcpy(q, to.get_data_ptr(), from.get_data_ptr(),
+        return dpct_memcpy(q, to.get_data_ptr(), from.get_data_ptr(),  // dpct_memcpy
                            sycl::range<3>(to.get_pitch(), to.get_y(), 1),
                            sycl::range<3>(from.get_pitch(), from.get_y(), 1), to_id, from_id,
                            size, direction);
@@ -2266,7 +2266,7 @@ namespace dpct
                 size_t to_pitch, size_t from_pitch, size_t x, size_t y,
                 memcpy_direction direction = automatic)
     {
-        return dpct_memcpy(q, to_ptr, from_ptr, sycl::range<3>(to_pitch, y, 1),
+        return dpct_memcpy(q, to_ptr, from_ptr, sycl::range<3>(to_pitch, y, 1),  // dpct_memcpy
                            sycl::range<3>(from_pitch, y, 1),
                            sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0),
                            sycl::range<3>(x, y, 1), direction);
@@ -2334,7 +2334,7 @@ namespace dpct
                                           lda, b, ldb, beta, c, ldc);
             break;
         }
-#ifdef __INTEL_MKL__
+#ifdef __INTEL_MKL__  // 如果定义了 __INTEL_MKL__ 则编译
         case detail::get_type_combination_id(
             library_data_t::real_bfloat16, library_data_t::real_bfloat16,
             library_data_t::real_float, library_data_t::real_float):
@@ -2394,7 +2394,7 @@ namespace dpct
                 q, a_trans, b_trans, m, n, k, &alpha_float, a, lda, b, ldb, &beta_float, c, ldc);
             break;
         }
-#endif // __INTEL_MKL__
+#endif // __INTEL_MKL__  // 条件编译结束
         default:
             throw std::runtime_error("the combination of data type is unsupported");
         }
@@ -2453,7 +2453,7 @@ namespace dpct
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_size, matrix_info);
             break;
         }
-#ifdef __INTEL_MKL__
+#ifdef __INTEL_MKL__  // 如果定义了 __INTEL_MKL__ 则编译
         case detail::get_type_combination_id(
             library_data_t::real_bfloat16, library_data_t::real_bfloat16,
             library_data_t::real_bfloat16, library_data_t::real_float):
@@ -2470,7 +2470,7 @@ namespace dpct
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_size, matrix_info);
             break;
         }
-#endif
+#endif  // 条件编译结束
         case detail::get_type_combination_id(
             library_data_t::real_int8, library_data_t::real_int8,
             library_data_t::real_int32, library_data_t::real_int32):
@@ -2610,7 +2610,7 @@ namespace dpct
                                                 beta, c, ldc, stride_c, batch_size);
             break;
         }
-#ifdef __INTEL_MKL__
+#ifdef __INTEL_MKL__  // 如果定义了 __INTEL_MKL__ 则编译
         case detail::get_type_combination_id(
             library_data_t::real_bfloat16, library_data_t::real_bfloat16,
             library_data_t::real_bfloat16, library_data_t::real_float):
@@ -2629,7 +2629,7 @@ namespace dpct
                 batch_size);
             break;
         }
-#endif
+#endif  // 条件编译结束
         case detail::get_type_combination_id(
             library_data_t::real_int8, library_data_t::real_int8,
             library_data_t::real_int32, library_data_t::real_int32):
@@ -2688,24 +2688,24 @@ namespace dpct
                             direction);
     }
 
-    using err0 = detail::generic_error_type<struct err0_tag, int>;
-    using err1 = detail::generic_error_type<struct err1_tag, int>;
+    using err0 = detail::generic_error_type<struct err0_tag, int>;  // using 声明
+    using err1 = detail::generic_error_type<struct err1_tag, int>;  // using 声明
 
     static inline void dpct_free(void *ptr, sycl::queue &q = get_default_queue()) {
         detail::dpct_free(ptr, q);
     }
 
     /// dpct accessor used as device function parameter.
-    template <class T, memory_region Memory, size_t Dimension> class accessor;
-    template <class T, memory_region Memory> class accessor<T, Memory, 3> {
+    template <class T, memory_region Memory, size_t Dimension> class accessor;  // 模板
+    template <class T, memory_region Memory> class accessor<T, Memory, 3> {  // 模板
     public:
-        using memory_t = detail::memory_traits<Memory, T>;
-        using element_t = typename memory_t::element_t;
-        using pointer_t = typename memory_t::pointer_t;
-        using accessor_t = typename memory_t::template accessor_t<3>;
+        using memory_t = detail::memory_traits<Memory, T>;  // using 声明
+        using element_t = typename memory_t::element_t;  // using 声明
+        using pointer_t = typename memory_t::pointer_t;  // using 声明
+        using accessor_t = typename memory_t::template accessor_t<3>;  // using 声明
         accessor(pointer_t data, const sycl::range<3> &in_range)
             : _data(data), _range(in_range) {}
-        template <memory_region M = Memory>
+        template <memory_region M = Memory>  // 模板
         accessor(typename std::enable_if<M != local, const accessor_t>::type &acc)
             : accessor(acc, acc.get_range()) {}
         accessor(const accessor_t &acc, const sycl::range<3> &in_range)
@@ -2721,15 +2721,15 @@ namespace dpct
         pointer_t _data;
         sycl::range<3> _range;
     };
-    template <class T, memory_region Memory> class accessor<T, Memory, 2> {
+    template <class T, memory_region Memory> class accessor<T, Memory, 2> {  // 模板
     public:
-        using memory_t = detail::memory_traits<Memory, T>;
-        using element_t = typename memory_t::element_t;
-        using pointer_t = typename memory_t::pointer_t;
-        using accessor_t = typename memory_t::template accessor_t<2>;
+        using memory_t = detail::memory_traits<Memory, T>;  // using 声明
+        using element_t = typename memory_t::element_t;  // using 声明
+        using pointer_t = typename memory_t::pointer_t;  // using 声明
+        using accessor_t = typename memory_t::template accessor_t<2>;  // using 声明
         accessor(pointer_t data, const sycl::range<2> &in_range)
             : _data(data), _range(in_range) {}
-        template <memory_region M = Memory>
+        template <memory_region M = Memory>  // 模板
         accessor(typename std::enable_if<M != local, const accessor_t>::type &acc)
             : accessor(acc, acc.get_range()) {}
         accessor(const accessor_t &acc, const sycl::range<2> &in_range)
@@ -2746,15 +2746,15 @@ namespace dpct
         sycl::range<2> _range;
     };
 
-    namespace detail {
+    namespace detail {  // 命名空间
         /// Device variable with address space of shared, global or constant.
-        template <class T, memory_region Memory, size_t Dimension> class device_memory {
+        template <class T, memory_region Memory, size_t Dimension> class device_memory {  // 模板
         public:
-            using accessor_t =
+            using accessor_t =  // using 声明
                 typename detail::memory_traits<Memory,
                                             T>::template accessor_t<Dimension>;
-            using value_t = typename detail::memory_traits<Memory, T>::value_t;
-            using dpct_accessor_t = dpct::accessor<T, Memory, Dimension>;
+            using value_t = typename detail::memory_traits<Memory, T>::value_t;  // using 声明
+            using dpct_accessor_t = dpct::accessor<T, Memory, Dimension>;  // using 声明
 
             device_memory() : device_memory(sycl::range<Dimension>(1)) {}
 
@@ -2769,7 +2769,7 @@ namespace dpct
             }
 
             /// Constructor of 2-D array with initializer list
-            template <size_t D = Dimension>
+            template <size_t D = Dimension>  // 模板
             device_memory(
                 const typename std::enable_if<D == 2, sycl::range<2>>::type &in_range,
                 std::initializer_list<std::initializer_list<value_t>> &&init_list)
@@ -2800,7 +2800,7 @@ namespace dpct
             }
 
             /// Constructor with range
-            template <class... Args>
+            template <class... Args>  // 模板
             device_memory(Args... Arguments)
                 : device_memory(sycl::range<Dimension>(Arguments...)) {}
 
@@ -2818,9 +2818,9 @@ namespace dpct
             /// value.
             void init(sycl::queue &q) {
                 if (_device_ptr)
-                    return;
+                    return;  // 返回
                 if (!_size)
-                    return;
+                    return;  // 返回
                 allocate_device(q);
                 if (_host_ptr)
                     detail::dpct_memcpy(q, _device_ptr, _host_ptr, _size,
@@ -2840,24 +2840,24 @@ namespace dpct
             /// usm is not used, and device pointer when usm is used.
             value_t *get_ptr(sycl::queue &q) {
                 init(q);
-                return _device_ptr;
+                return _device_ptr;  // 返回
             }
 
             /// Get the device memory object size in bytes.
             size_t get_size() { return _size; }
 
-            template <size_t D = Dimension>
+            template <size_t D = Dimension>  // 模板
             typename std::enable_if<D == 1, T>::type &operator[](size_t index) {
                 init();
-                return _device_ptr[index];
+                return _device_ptr[index];  // 返回
             }
 
             /// Get dpct::accessor with dimension info for the device memory object
             /// when usm is used and dimension is greater than 1.
-            template <size_t D = Dimension>
+            template <size_t D = Dimension>  // 模板
             typename std::enable_if<D != 1, dpct_accessor_t>::type
             get_access([[maybe_unused]] sycl::handler &cgh) {
-                return dpct_accessor_t((T *)_device_ptr, _range);
+                return dpct_accessor_t((T *)_device_ptr, _range);  // dpct_accessor_t
             }
 
         private:
@@ -2866,21 +2866,21 @@ namespace dpct
                 _device_ptr(memory_ptr) {}
 
             void allocate_device(sycl::queue &q) {
-        #ifndef DPCT_USM_LEVEL_NONE
+        #ifndef DPCT_USM_LEVEL_NONE  // 如果未定义 DPCT_USM_LEVEL_NONE 则编译
                 if (Memory == shared) {
                     _device_ptr = (value_t *)sycl::malloc_shared(_size, q.get_device(),
                                                                 q.get_context());
-                    return;
+                    return;  // 返回
                 }
-        #ifdef SYCL_EXT_ONEAPI_USM_DEVICE_READ_ONLY
+        #ifdef SYCL_EXT_ONEAPI_USM_DEVICE_READ_ONLY  // 如果定义了 SYCL_EXT_ONEAPI_USM_DEVICE_READ_ONLY 则编译
                 if (Memory == constant) {
                     _device_ptr = (value_t *)sycl::malloc_device(
                         _size, q.get_device(), q.get_context(),
                         sycl::ext::oneapi::property::usm::device_read_only());
-                    return;
+                    return;  // 返回
                 }
-        #endif
-        #endif
+        #endif  // 条件编译结束
+        #endif  // 条件编译结束
                 _device_ptr = (value_t *)detail::dpct_malloc(_size, q);
             }
 
@@ -2890,12 +2890,12 @@ namespace dpct
             value_t *_host_ptr;
             value_t *_device_ptr;
         };
-        template <class T, memory_region Memory>
-        class device_memory<T, Memory, 0> : public device_memory<T, Memory, 1> {
+        template <class T, memory_region Memory>  // 模板
+        class device_memory<T, Memory, 0> : public device_memory<T, Memory, 1> {  // 类定义
         public:
-            using base = device_memory<T, Memory, 1>;
-            using value_t = typename base::value_t;
-            using accessor_t =
+            using base = device_memory<T, Memory, 1>;  // using 声明
+            using value_t = typename base::value_t;  // using 声明
+            using accessor_t =  // using 声明
                 typename detail::memory_traits<Memory, T>::template accessor_t<0>;
 
             /// Constructor with initial value.
@@ -2906,15 +2906,15 @@ namespace dpct
         };
         } // namespace detail
 
-    template <class T, size_t Dimension>
-    using global_memory = detail::device_memory<T, global, Dimension>;
-    template <class T, size_t Dimension>
-    using constant_memory = detail::device_memory<T, constant, Dimension>;
-    template <class T, size_t Dimension>
-    using shared_memory = detail::device_memory<T, shared, Dimension>;
+    template <class T, size_t Dimension>  // 模板
+    using global_memory = detail::device_memory<T, global, Dimension>;  // using 声明
+    template <class T, size_t Dimension>  // 模板
+    using constant_memory = detail::device_memory<T, constant, Dimension>;  // using 声明
+    template <class T, size_t Dimension>  // 模板
+    using shared_memory = detail::device_memory<T, shared, Dimension>;  // using 声明
 
 
-    template <typename T,
+    template <typename T,  // 模板
             sycl::access::address_space addressSpace =
                 sycl::access::address_space::global_space,
             sycl::memory_order memoryOrder = sycl::memory_order::relaxed,
@@ -2925,7 +2925,7 @@ namespace dpct
     return atm.fetch_add(operand);
     }
 
-    template <sycl::access::address_space addressSpace =
+    template <sycl::access::address_space addressSpace =  // 模板
                 sycl::access::address_space::global_space,
             sycl::memory_order memoryOrder = sycl::memory_order::relaxed,
             sycl::memory_scope memoryScope = sycl::memory_scope::device,
@@ -2936,19 +2936,19 @@ namespace dpct
     return atm.fetch_add(operand);
     }
 
-    template <typename T, sycl::access::address_space addressSpace =
+    template <typename T, sycl::access::address_space addressSpace =  // 模板
                             sycl::access::address_space::global_space>
     inline T atomic_fetch_add(T *addr, T operand,
                             sycl::memory_order memoryOrder) {
     switch (memoryOrder) {
         case sycl::memory_order::relaxed:
-            return atomic_fetch_add<T, addressSpace, sycl::memory_order::relaxed,
+            return atomic_fetch_add<T, addressSpace, sycl::memory_order::relaxed,  // 返回
                                     sycl::memory_scope::device>(addr, operand);
         case sycl::memory_order::acq_rel:
-            return atomic_fetch_add<T, addressSpace, sycl::memory_order::acq_rel,
+            return atomic_fetch_add<T, addressSpace, sycl::memory_order::acq_rel,  // 返回
                                     sycl::memory_scope::device>(addr, operand);
         case sycl::memory_order::seq_cst:
-            return atomic_fetch_add<T, addressSpace, sycl::memory_order::seq_cst,
+            return atomic_fetch_add<T, addressSpace, sycl::memory_order::seq_cst,  // 返回
                                     sycl::memory_scope::device>(addr, operand);
         default:
             assert(false && "Invalid memory_order for atomics. Valid memory_order for "
@@ -2957,7 +2957,7 @@ namespace dpct
         }
     }
 
-    template <sycl::access::address_space addressSpace =
+    template <sycl::access::address_space addressSpace =  // 模板
                 sycl::access::address_space::global_space,
             typename T1, typename T2>
     inline T1 atomic_fetch_add(T1 *addr, T2 operand,
@@ -2975,7 +2975,7 @@ namespace dpct
              << 16) |
             (((((std::uint64_t)b << 32 | a) >> ((s >> 12) & 0x7) * 8) & 0xff)
              << 24);
-      return ret;
+      return ret;  // 返回
     }
 
     inline uint32_t byte_level_permute_custom(
@@ -2990,15 +2990,15 @@ namespace dpct
       };
 
       if (mode >= 1 && mode <= 6) {
-        return byte_level_permute(low32, high32, lookup[mode - 1][sel & 0x3]);
+        return byte_level_permute(low32, high32, lookup[mode - 1][sel & 0x3]);  // byte_level_permute
       } else if (!mode) {
-        return byte_level_permute(low32, high32, sel);
+        return byte_level_permute(low32, high32, sel);  // byte_level_permute
       }
-      return 0;
+      return 0;  // 返回
     }
 
-    template <int n_nondefault_params, int n_default_params, typename T>
-    class args_selector;
+    template <int n_nondefault_params, int n_default_params, typename T>  // 模板
+    class args_selector;  // 类定义
 
     /// args_selector is a helper class for extracting arguments from an
     /// array of pointers to arguments or buffer of arguments to pass to a
@@ -3019,20 +3019,20 @@ namespace dpct
     ///   selector.get<0>() returns a reference to sycl::float*,
     ///   selector.get<1>() returns a reference to int,
     ///   selector.get<2>() returns a reference to float
-    template <int n_nondefault_params, int n_default_params, typename R,
+    template <int n_nondefault_params, int n_default_params, typename R,  // 模板
               typename... Ts>
-    class args_selector<n_nondefault_params, n_default_params, R(Ts...)> {
+    class args_selector<n_nondefault_params, n_default_params, R(Ts...)> {  // 类定义
       private:
         void **kernel_params;
         char *args_buffer;
 
-        template <int i> static constexpr int account_for_default_params() {
+        template <int i> static constexpr int account_for_default_params() {  // 模板
             constexpr int n_total_params = sizeof...(Ts);
             if constexpr (i >= n_nondefault_params) {
-                return n_total_params - n_default_params +
+                return n_total_params - n_default_params +  // 返回
                        (i - n_nondefault_params);
             } else {
-                return i;
+                return i;  // 返回
             }
         }
 
@@ -3040,30 +3040,30 @@ namespace dpct
         /// Get the type of the ith argument of R(Ts...)
         /// \param [in] i Index of parameter to get
         /// \returns Type of ith parameter
-        template <int i>
+        template <int i>  // 模板
         using arg_type = std::tuple_element_t<account_for_default_params<i>(),
                                               std::tuple<Ts...>>;
         static constexpr int params_num = sizeof...(Ts);
 
       private:
-        template <int i> static constexpr int get_offset() {
+        template <int i> static constexpr int get_offset() {  // 模板
             if constexpr (i == 0) {
                 // we can assume args_buffer is properly aligned to the
                 // first argument
-                return 0;
+                return 0;  // 返回
             } else {
                 constexpr int prev_off = get_offset<i - 1>();
                 constexpr int prev_past_end =
                     prev_off + sizeof(arg_type<i - 1>);
-                using T = arg_type<i>;
+                using T = arg_type<i>;  // using 声明
                 // is the past-the-end of the i-1st element properly aligned
                 // with the ith element's alignment?
                 if constexpr (prev_past_end % alignof(T) == 0) {
-                    return prev_past_end;
+                    return prev_past_end;  // 返回
                 }
                 // otherwise bump prev_past_end to match alignment
                 else {
-                    return prev_past_end +
+                    return prev_past_end +  // 返回
                            (alignof(T) - (prev_past_end % alignof(T)));
                 }
             }
@@ -3071,13 +3071,13 @@ namespace dpct
 
         static char *get_args_buffer(void **extra) {
             if (!extra)
-                return nullptr;
+                return nullptr;  // 返回
             for (; (std::size_t)*extra != 0; ++extra) {
                 if ((std::size_t)*extra == 1) {
                     return static_cast<char *>(*(extra + 1));
                 }
             }
-            return nullptr;
+            return nullptr;  // 返回
         }
 
       public:
@@ -3095,11 +3095,11 @@ namespace dpct
         /// or extra.
         /// \param [in] i Index of argument to get
         /// \returns Reference to the ith argument
-        template <int i> arg_type<i> &get() {
+        template <int i> arg_type<i> &get() {  // 模板
             if (kernel_params) {
                 return *static_cast<arg_type<i> *>(kernel_params[i]);
             } else {
-                return *reinterpret_cast<arg_type<i> *>(args_buffer +
+                return *reinterpret_cast<arg_type<i> *>(args_buffer +  // 返回
                                                         get_offset<i>());
             }
         }
@@ -3131,8 +3131,8 @@ namespace dpct
     ///   void *fp = (void *)wrapper_register(&kernel_func_wrapper).get();
     ///   dpct::kernel_launcher::launch(fp, dpct::dim3(1), dpct::dim3(1), args,
     ///   0, 0);
-    class kernel_launcher {
-        template <typename FuncT, typename ArgSelector, std::size_t... Index>
+    class kernel_launcher {  // 类定义
+        template <typename FuncT, typename ArgSelector, std::size_t... Index>  // 模板
         static void launch_helper(FuncT &&func, ArgSelector &selector,
                                   std::index_sequence<Index...>) {
             func(selector.template get<Index>()...);
@@ -3186,7 +3186,7 @@ namespace dpct
         /// \param [in] local_mem_size The size of local memory required by the
         /// kernel function. \param [in] que SYCL queue used to execute kernel.
         /// \param [in] args Kernel arguments.
-        template <typename FuncT, typename... ArgsT>
+        template <typename FuncT, typename... ArgsT>  // 模板
         static std::enable_if_t<std::is_invocable_v<FuncT *, ArgsT...>, void>
         launch(FuncT *func, dim3 group_range, dim3 local_range,
                unsigned int local_mem_size, queue_ptr que, ArgsT... args) {
@@ -3220,7 +3220,7 @@ namespace dpct
         /// \param [in] args Array of pointers to kernel arguments.
         /// \param [in] local_mem_size The size of local memory required by the
         /// kernel function. \param [in] que SYCL queue used to execute kernel.
-        template <typename FuncT>
+        template <typename FuncT>  // 模板
         static std::enable_if_t<std::is_function_v<FuncT>, void>
         launch(FuncT *func, dim3 group_range, dim3 local_range, void **args,
                unsigned int local_mem_size, queue_ptr que) {
@@ -3233,7 +3233,7 @@ namespace dpct
        // /opt/intel/oneapi/dpcpp-ct/latest/include/dpct/kernel.hpp
 
     // /opt/intel/oneapi/dpcpp-ct/latest/include/dpct/util.hpp
-    template <typename T>
+    template <typename T>  // 模板
     T select_from_sub_group(
         sycl::sub_group g,
         T x,
@@ -3242,12 +3242,12 @@ namespace dpct
       unsigned int start_index = g.get_local_linear_id() /
                                  logical_sub_group_size *
                                  logical_sub_group_size;
-      return sycl::select_from_group(
+      return sycl::select_from_group(  // 返回
           g, x, start_index + remote_local_id % logical_sub_group_size);
     }
 
     // /opt/intel/oneapi/dpcpp-ct/latest/include/dpct/math.hpp
-    template <typename T>
+    template <typename T>  // 模板
     void ldmatrix(uintptr_t addr, T* m, bool trans = false, unsigned mat = 0) {
       auto sg = sycl::ext::oneapi::this_work_item::get_sub_group();
       int lane = sg.get_local_linear_id();
@@ -3295,7 +3295,7 @@ namespace dpct
       }
     }
 
-    template <typename T>
+    template <typename T>  // 模板
     void ldmatrix(uintptr_t addr, T* m1, T* m2, bool trans = false) {
       // Load 1st matrix
       ldmatrix(addr, m1, trans, 0);
@@ -3303,7 +3303,7 @@ namespace dpct
       ldmatrix(addr, m2, trans, 1);
     }
 
-    template <typename T>
+    template <typename T>  // 模板
     void ldmatrix(
         uintptr_t addr, T* m1, T* m2, T* m3, T* m4, bool trans = false) {
       // Load 1st matrix
@@ -3324,9 +3324,9 @@ namespace dpct
     /// The MMAType struct is specialized for different types of input matrices.
     /// Currently, the specialization for f16, bf16 and s8 types is defined
     /// below. \tparam [in] T The type of the input matrix fragments
-    template <typename T>
-    struct MMAType {
-      using PackType = uint32_t;
+    template <typename T>  // 模板
+    struct MMAType {  // 结构体定义
+      using PackType = uint32_t;  // using 声明
     };
 
     /// Each work item of a sub-group (limited to size 32) calling this function
@@ -3352,7 +3352,7 @@ namespace dpct
     /// the input matrix B to be multiplied with A matrix fragment \param [in]
     /// c_mat_frag The fragment of the input matrix C to be added with the
     /// result of A * B fragments
-    template <int M, int N, int K, typename ABType, typename CDType>
+    template <int M, int N, int K, typename ABType, typename CDType>  // 模板
     void mma(
         volatile void** d_mat_frag,
         void* a_mat_frag,
@@ -3771,4 +3771,4 @@ namespace dpct
     }
 } // COPY from DPCT head files
 
-#endif // GGML_SYCL_DPCT_HELPER_HPP
+#endif // GGML_SYCL_DPCT_HELPER_HPP  // 条件编译结束

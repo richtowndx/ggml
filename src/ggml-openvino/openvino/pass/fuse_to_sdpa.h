@@ -1,11 +1,11 @@
-#include "openvino/pass/matcher_pass.hpp"
+#include "openvino/pass/matcher_pass.hpp"  // 引入 openvino/pass/matcher_pass.hpp 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace pass {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
+namespace pass {  // 命名空间
 
-class FuseToSDPA : public ov::pass::MatcherPass {
+class FuseToSDPA : public ov::pass::MatcherPass {  // 类定义
 public:
     OPENVINO_MATCHER_PASS_RTTI("ov::frontend::ggml::pass::FuseToSDPA")
     FuseToSDPA();

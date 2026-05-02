@@ -1,22 +1,22 @@
-#ifndef HTP_CTX_H
-#define HTP_CTX_H
+#ifndef HTP_CTX_H  // 如果未定义 HTP_CTX_H 则编译
+#define HTP_CTX_H  // 宏定义 HTP_CTX_H
 
-#include "hex-dma.h"
-#include "hmx-queue.h"
-#include "htp-ops.h"
-#include "worker-pool.h"
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
+#include "hmx-queue.h"  // 引入 hmx-queue.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "worker-pool.h"  // 引入 worker-pool.h 头文件
 
-#include <assert.h>
-#include <dspqueue.h>
-#include <stdatomic.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include <assert.h>  // 引入 assert.h 头文件
+#include <dspqueue.h>  // 引入 dspqueue.h 头文件
+#include <stdatomic.h>  // 引入 stdatomic.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
+#include <stdbool.h>  // 引入 stdbool.h 头文件
 
-#define HTP_MAX_NTHREADS 10
-#define HTP_MAX_MMAPS    16
+#define HTP_MAX_NTHREADS 10  // 宏定义 HTP_MAX_NTHREADS
+#define HTP_MAX_MMAPS    16  // 宏定义 HTP_MAX_MMAPS
 
 // Memory mapping
-struct htp_mmap {
+struct htp_mmap {  // 结构体定义
     uint64_t size;
     uint64_t base;
     uint32_t fd;
@@ -24,7 +24,7 @@ struct htp_mmap {
 };
 
 // Scratchpad state
-struct htp_spad {
+struct htp_spad {  // 结构体定义
     const struct htp_tensor * src;             // original src of the data (for reuse)
     uint8_t *                 data;            // pointer to an area in vtcm
     uint32_t                  stride;          // stride used inside this spad
@@ -36,7 +36,7 @@ struct htp_context;
 
 // Context while processing an Op
 // TODO: fold this into the main context
-struct htp_ops_context {
+struct htp_ops_context {  // 结构体定义
     struct htp_context * ctx;
 
     enum htp_op_code    op; // FIXME: rename to opcode
@@ -57,7 +57,7 @@ struct htp_ops_context {
 };
 
 // Main context for htp DSP backend
-struct htp_context {
+struct htp_context {  // 结构体定义
     dspqueue_t             queue;
     dma_queue *            dma[HTP_MAX_NTHREADS];
     struct htp_mmap        mmap[HTP_MAX_MMAPS];
@@ -81,30 +81,30 @@ struct htp_context {
 
     struct htp_ops_context octx;
 
-#ifdef HTP_HAS_HMX
+#ifdef HTP_HAS_HMX  // 如果定义了 HTP_HAS_HMX 则编译
     struct hmx_queue *     hmx_queue; // Async HMX queue for pipeline overlap
-#endif
+#endif  // 条件编译结束
 };
 
-int op_matmul(struct htp_ops_context * octx);
-int op_matmul_id(struct htp_ops_context * octx);
-int op_binary(struct htp_ops_context * octx);
-int op_unary(struct htp_ops_context * octx);
-int op_sum_rows(struct htp_ops_context * octx);
-int op_activations(struct htp_ops_context * octx);
-int op_softmax(struct htp_ops_context * octx);
-int op_add_id(struct htp_ops_context * octx);
-int op_rope(struct htp_ops_context * octx);
-int op_flash_attn_ext(struct htp_ops_context * octx);
-int op_set_rows(struct htp_ops_context * octx);
-int op_get_rows(struct htp_ops_context * octx);
-int op_cpy(struct htp_ops_context * octx);
-int op_repeat(struct htp_ops_context * octx);
-int op_argsort(struct htp_ops_context * octx);
-int op_ssm_conv(struct htp_ops_context * octx);
-int op_cumsum(struct htp_ops_context * octx);
-int op_fill(struct htp_ops_context * octx);
-int op_diag(struct htp_ops_context * octx);
-int op_solve_tri(struct htp_ops_context * octx);
+int op_matmul(struct htp_ops_context * octx);  // op_matmul
+int op_matmul_id(struct htp_ops_context * octx);  // op_matmul_id
+int op_binary(struct htp_ops_context * octx);  // op_binary
+int op_unary(struct htp_ops_context * octx);  // op_unary
+int op_sum_rows(struct htp_ops_context * octx);  // op_sum_rows
+int op_activations(struct htp_ops_context * octx);  // op_activations
+int op_softmax(struct htp_ops_context * octx);  // op_softmax
+int op_add_id(struct htp_ops_context * octx);  // op_add_id
+int op_rope(struct htp_ops_context * octx);  // op_rope
+int op_flash_attn_ext(struct htp_ops_context * octx);  // op_flash_attn_ext
+int op_set_rows(struct htp_ops_context * octx);  // op_set_rows
+int op_get_rows(struct htp_ops_context * octx);  // op_get_rows
+int op_cpy(struct htp_ops_context * octx);  // op_cpy
+int op_repeat(struct htp_ops_context * octx);  // op_repeat
+int op_argsort(struct htp_ops_context * octx);  // op_argsort
+int op_ssm_conv(struct htp_ops_context * octx);  // op_ssm_conv
+int op_cumsum(struct htp_ops_context * octx);  // op_cumsum
+int op_fill(struct htp_ops_context * octx);  // op_fill
+int op_diag(struct htp_ops_context * octx);  // op_diag
+int op_solve_tri(struct htp_ops_context * octx);  // op_solve_tri
 
-#endif /* HTP_CTX_H */
+#endif /* HTP_CTX_H */  // 条件编译结束

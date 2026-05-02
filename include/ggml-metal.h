@@ -19,20 +19,20 @@
 // is done with the ggml_metal_set_tensor() and ggml_metal_get_tensor() functions.
 //
 
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "ggml.h"
-#include "ggml-backend.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#include <stddef.h>
-#include <stdbool.h>
+#include <stddef.h>  // 引入 stddef.h 头文件
+#include <stdbool.h>  // 引入 stdbool.h 头文件
 
 struct ggml_tensor;
 struct ggml_cgraph;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
 //
 // backend API
@@ -56,6 +56,6 @@ GGML_BACKEND_API void ggml_backend_metal_capture_next_compute(ggml_backend_t bac
 
 GGML_BACKEND_API ggml_backend_reg_t ggml_backend_metal_reg(void);
 
-#ifdef __cplusplus
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束

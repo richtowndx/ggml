@@ -1,11 +1,11 @@
-#ifndef HTP_OPS_H
-#define HTP_OPS_H
+#ifndef HTP_OPS_H  // 如果未定义 HTP_OPS_H 则编译
+#define HTP_OPS_H  // 宏定义 HTP_OPS_H
 
-#include <assert.h>
+#include <assert.h>  // 引入 assert.h 头文件
 
 // ggml-common.h must be included prio to this header
 
-enum htp_status {
+enum htp_status {  // 枚举定义
     HTP_STATUS_OK             = 1,
     HTP_STATUS_INTERNAL_ERR   = 2,
     HTP_STATUS_NO_SUPPORT     = 3,
@@ -16,7 +16,7 @@ enum htp_status {
 // First set of values must match the ggml_type.
 // Duplicated here because we can't include full ggml.h in the htp build.
 // We have some static_asserts in the cpp code to ensure things are in sync.
-enum htp_data_type {
+enum htp_data_type {  // 枚举定义
     HTP_TYPE_F32    = 0,
     HTP_TYPE_F16    = 1,
     HTP_TYPE_Q4_0   = 2,
@@ -35,20 +35,20 @@ enum htp_data_type {
 };
 
 // Constats for internal types
-#define QK_Q4_0x4x2  256  // 4x Q4_0  blocks packed with next 4x Q4_0 blocks (size in bytes 128)
-#define QK_Q8_0x4x2  256  // 4x Q8_0  blocks concat with next 4x Q8_0 blocks
-#define QK_MXFP4x4x2 256  // 4x MXFP4 blocks concat with next 4x MXFP4 blocks
+#define QK_Q4_0x4x2  256  // 4x Q4_0  blocks packed with next 4x Q4_0 blocks (size in bytes 128)  // 宏定义 QK_Q4_0x4x2
+#define QK_Q8_0x4x2  256  // 4x Q8_0  blocks concat with next 4x Q8_0 blocks  // 宏定义 QK_Q8_0x4x2
+#define QK_MXFP4x4x2 256  // 4x MXFP4 blocks concat with next 4x MXFP4 blocks  // 宏定义 QK_MXFP4x4x2
 
 
 // Mask to enable various stages of the Ops.
 // Used for debugging and profiling.
-enum htp_op_stage {
+enum htp_op_stage {  // 枚举定义
     HTP_OPSTAGE_QUEUE    = (1 << 0),  // Enable Queueing (ie calls into NPU)
     HTP_OPSTAGE_COMPUTE  = (1 << 1),  // Enable Compute
 };
 
 // Do not reorder first 4 (used as an index)
-enum htp_op_code {
+enum htp_op_code {  // 枚举定义
     HTP_OP_MUL = 0,
     HTP_OP_ADD = 1,
     HTP_OP_SUB = 2,
@@ -86,25 +86,25 @@ enum htp_op_code {
     HTP_OP_INVALID
 };
 
-#define HTP_OP_MAX_DIMS    4    // aka GGML_MAX_DIMS
-#define HTP_OP_MAX_INPUTS  6    // aka GGML_MAX_SRCS
-#define HTP_OP_MAX_PARAMS  16   // aka GGML_MAX_OP_PARAMS
+#define HTP_OP_MAX_DIMS    4    // aka GGML_MAX_DIMS  // 宏定义 HTP_OP_MAX_DIMS
+#define HTP_OP_MAX_INPUTS  6    // aka GGML_MAX_SRCS  // 宏定义 HTP_OP_MAX_INPUTS
+#define HTP_OP_MAX_PARAMS  16   // aka GGML_MAX_OP_PARAMS  // 宏定义 HTP_OP_MAX_PARAMS
 
-#define HTP_OP_MAX_BUFS    16
-#define HTP_OP_MAX_REQS    256
-#define HTP_OP_MAX_TENSORS (HTP_OP_MAX_REQS * HTP_OP_MAX_INPUTS + HTP_OP_MAX_REQS)
+#define HTP_OP_MAX_BUFS    16  // 宏定义 HTP_OP_MAX_BUFS
+#define HTP_OP_MAX_REQS    256  // 宏定义 HTP_OP_MAX_REQS
+#define HTP_OP_MAX_TENSORS (HTP_OP_MAX_REQS * HTP_OP_MAX_INPUTS + HTP_OP_MAX_REQS)  // 宏定义 HTP_OP_MAX_TENSORS
 
-#define HTP_OP_MAX_VMEM_DEFAULT (3355443200u)
+#define HTP_OP_MAX_VMEM_DEFAULT (3355443200u)  // 宏定义 HTP_OP_MAX_VMEM_DEFAULT
 
-#define HTP_MMAP_MAX_VMEM  (2147483648u)
+#define HTP_MMAP_MAX_VMEM  (2147483648u)  // 宏定义 HTP_MMAP_MAX_VMEM
 
-enum htp_tensor_flags {
+enum htp_tensor_flags {  // 枚举定义
     HTP_TENSOR_COMPUTE = (1U << 0), // Tensor buffer temporal compute data (not weights)
     HTP_TENSOR_FLUSHED = (1U << 1)  // Tensor buffer has been flushed (set by the NPU)
 };
 
 // Tensor descriptor
-struct htp_tensor {
+struct htp_tensor {  // 结构体定义
     uint32_t data;                 // Buffer offset in the messages, and data pointer on the NPU
     uint32_t size;                 // Data size in bytes
     uint32_t flags;                // Buffer / tensor flags
@@ -115,19 +115,19 @@ struct htp_tensor {
 };
 
 // Buffer descriptor
-struct htp_buf_desc {
+struct htp_buf_desc {  // 结构体定义
     uint64_t base;     // base address
     uint64_t size;     // total size
     uint32_t flags;    // buffer flags (unused)
     uint32_t fd;       // file descriptor
 };
 
-enum htp_op_flags {
+enum htp_op_flags {  // 枚举定义
     HTP_OPFLAGS_SKIP_COMPUTE  = (1U << 0), // Skip actual computation (used for profiling)
 };
 
 // Op descriptor
-struct htp_op_desc {
+struct htp_op_desc {  // 结构体定义
     uint32_t opcode;                    // GGML/HTP Op
     uint32_t flags;                     // Op flags
     int32_t  params[HTP_OP_MAX_PARAMS]; // Params for the op, e.g. epsilon of RMS norm
@@ -135,16 +135,16 @@ struct htp_op_desc {
     uint16_t dst;                       // Output tensor index
 };
 
-enum htp_profiler_mode {
+enum htp_profiler_mode {  // 枚举定义
     HTP_PROF_DISABLED = 0,
     HTP_PROF_BASIC    = 1,
     HTP_PROF_PMU      = 2,
 };
 
-#define HTP_PROF_PMU_NCNT 8
+#define HTP_PROF_PMU_NCNT 8  // 宏定义 HTP_PROF_PMU_NCNT
 
 // Profile descriptor
-struct htp_prof_desc {
+struct htp_prof_desc {  // 结构体定义
     uint32_t opcode;                 // GGML/HTP Op
     uint32_t usecs;                  // Number of usec
     uint32_t cycles;                 // Number of cycles
@@ -152,7 +152,7 @@ struct htp_prof_desc {
     uint32_t pmu[HTP_PROF_PMU_NCNT]; // PMU counters
 };
 
-struct htp_opbatch_req {
+struct htp_opbatch_req {  // 结构体定义
     uint32_t id;          // Batch id
     uint32_t n_bufs;      // Number of buffers
     uint32_t n_tensors;   // Number of tensors
@@ -164,7 +164,7 @@ struct htp_opbatch_req {
     // struct htp_op_desc   ops[];     -- dspqueue buf 0
 };
 
-struct htp_opbatch_rsp {
+struct htp_opbatch_rsp {  // 结构体定义
     uint32_t id;         // Batch id
     uint32_t status;     // HTP_STATUS_...
     uint32_t n_bufs;     // Number of buffers
@@ -174,4 +174,4 @@ struct htp_opbatch_rsp {
     // struct htp_prof_desc profs[];  -- dspqueue buf 0
 };
 
-#endif /* HTP_OPS_H */
+#endif /* HTP_OPS_H */  // 条件编译结束

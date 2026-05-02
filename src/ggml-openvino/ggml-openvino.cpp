@@ -1,38 +1,38 @@
-#include "ggml-openvino.h"
+#include "ggml-openvino.h"  // 引入 ggml-openvino.h 头文件
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "ggml-openvino-extra.h"
-#include "ggml-openvino/utils.h"
-#include "ggml-quants.h"
-#include "ggml.h"
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-openvino-extra.h"  // 引入 ggml-openvino-extra.h 头文件
+#include "ggml-openvino/utils.h"  // 引入 ggml-openvino/utils.h 头文件
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-#include <atomic>
-#include <cstdlib>
-#include <cstdint>
-#include <cstring>
-#include <memory>
-#include <mutex>
-#include <openvino/core/type/element_type.hpp>
-#include <openvino/openvino.hpp>
-#include <openvino/runtime/allocator.hpp>
-#include <openvino/runtime/intel_gpu/ocl/ocl.hpp>
-#include <openvino/runtime/intel_npu/level_zero/level_zero.hpp>
-#include <openvino/runtime/tensor.hpp>
-#include <set>
-#include <string>
-#include <vector>
+#include <atomic>  // 引入 atomic 头文件
+#include <cstdlib>  // 引入 cstdlib 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <memory>  // 引入 memory 头文件
+#include <mutex>  // 引入 mutex 头文件
+#include <openvino/core/type/element_type.hpp>  // 引入 openvino/core/type/element_type.hpp 头文件
+#include <openvino/openvino.hpp>  // 引入 openvino/openvino.hpp 头文件
+#include <openvino/runtime/allocator.hpp>  // 引入 openvino/runtime/allocator.hpp 头文件
+#include <openvino/runtime/intel_gpu/ocl/ocl.hpp>  // 引入 openvino/runtime/intel_gpu/ocl/ocl.hpp 头文件
+#include <openvino/runtime/intel_npu/level_zero/level_zero.hpp>  // 引入 openvino/runtime/intel_npu/level_zero/level_zero.hpp 头文件
+#include <openvino/runtime/tensor.hpp>  // 引入 openvino/runtime/tensor.hpp 头文件
+#include <set>  // 引入 set 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
 
-#if defined(_WIN32)
-#    define WIN32_LEAN_AND_MEAN
-#    ifndef NOMINMAX
-#        define NOMINMAX
+#if defined(_WIN32)  // 条件编译
+#    define WIN32_LEAN_AND_MEAN  // 宏定义 WIN32_LEAN_AND_MEAN
+#    ifndef NOMINMAX  // 如果未定义 NOMINMAX 则编译
+#        define NOMINMAX  // 宏定义 NOMINMAX
 #    endif
-#    include <windows.h>
-#else
-#    include <unistd.h>
-#endif
+#    include <windows.h>  // 引入 windows.h 头文件
+#else  // 否则
+#    include <unistd.h>  // 引入 unistd.h 头文件
+#endif  // 条件编译结束
 
 // =====================================================
 // OpenVINO Buffer Implementation using ov::Tensor
@@ -52,7 +52,7 @@
 // =====================================================
 
 // Buffer context that manages per-tensor allocations (no contiguous buffer for weights)
-struct ggml_backend_openvino_buffer_context {
+struct ggml_backend_openvino_buffer_context {  // 结构体定义
     int device;
     std::string name;
     size_t id;
@@ -82,7 +82,7 @@ struct ggml_backend_openvino_buffer_context {
         size(size),
         is_remote(is_remote) {
         if (size == 0) {
-            return;
+            return;  // 返回
         }
 
         const auto & device_name = ggml_openvino_get_device_name();
@@ -104,7 +104,7 @@ struct ggml_backend_openvino_buffer_context {
 
         if (data == nullptr) {
             GGML_LOG_ERROR("%s: failed to allocate %zu bytes\n", __func__, size);
-            return;
+            return;  // 返回
         }
 
         if (reinterpret_cast<uintptr_t>(data) % TENSOR_ALIGNMENT != 0) {
@@ -129,7 +129,7 @@ struct ggml_backend_openvino_buffer_context {
 };
 
 // Buffer type context (per-device)
-struct ggml_backend_openvino_buffer_type_context {
+struct ggml_backend_openvino_buffer_type_context {  // 结构体定义
     int device;
     std::string name;
 };
@@ -142,7 +142,7 @@ static void ggml_backend_openvino_buffer_free_buffer(ggml_backend_buffer_t buffe
 
 static void * ggml_backend_openvino_buffer_get_base(ggml_backend_buffer_t buffer) {
     ggml_backend_openvino_buffer_context * ctx = (ggml_backend_openvino_buffer_context *) buffer->context;
-    return ctx->data;
+    return ctx->data;  // 返回
 }
 
 static bool is_stateful_enabled() {
@@ -173,7 +173,7 @@ static enum ggml_status ggml_backend_openvino_buffer_init_tensor(ggml_backend_bu
         if (tensor->view_src->extra != nullptr) {
             tensor->extra = tensor->view_src->extra;
         }
-        return GGML_STATUS_SUCCESS;
+        return GGML_STATUS_SUCCESS;  // 返回
     }
 
     ctx = (ggml_backend_openvino_buffer_context *) buffer->context;
@@ -190,7 +190,7 @@ static enum ggml_status ggml_backend_openvino_buffer_init_tensor(ggml_backend_bu
         }
     }
 
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 static void ggml_backend_openvino_buffer_memset_tensor(ggml_backend_buffer_t buffer,
@@ -299,7 +299,7 @@ static void ggml_backend_openvino_buffer_set_tensor(ggml_backend_buffer_t buffer
         ggml_openvino_tensor_extra * extra = ggml_openvino_create_tensor_extra(tensor, ctx->is_remote);
         if (extra == nullptr) {
             // GGML_LOG_ERROR("%s: failed to create tensor extra for %s\n", __func__, tensor->name);
-            return;
+            return;  // 返回
         }
 
         auto it = ctx->tensor_extras.find(tensor);
@@ -351,16 +351,16 @@ static bool ggml_backend_openvino_buffer_cpy_tensor(ggml_backend_buffer_t buffer
         auto mem_cpy_fn = ggml_openvino_get_clEnqueueMemcpyINTEL();
         if (queue == nullptr || mem_cpy_fn == nullptr) {
             GGML_LOG_ERROR("%s: no OpenCL queue or clEnqueueMemcpyINTEL not available for GPU buffer\n", __func__);
-            return false;
+            return false;  // 返回
         }
         // Can copy from host to device
         if (ggml_backend_buffer_is_host(src->buffer)) {
             cl_int err = mem_cpy_fn(queue, CL_TRUE, dst->data, src->data, ggml_nbytes(src), 0, nullptr, nullptr);
             if (err != CL_SUCCESS) {
                 GGML_LOG_ERROR("%s: clEnqueueMemcpyINTEL (host-to-device) failed with error %d\n", __func__, err);
-                return false;
+                return false;  // 返回
             }
-            return true;
+            return true;  // 返回
         }
         // Can also copy from device to device if both are OpenVINO remote buffers
         if (ggml_backend_buffer_is_openvino(src->buffer)) {
@@ -372,20 +372,20 @@ static bool ggml_backend_openvino_buffer_cpy_tensor(ggml_backend_buffer_t buffer
                 if (err != CL_SUCCESS) {
                     GGML_LOG_ERROR("%s: clEnqueueMemcpyINTEL (device-to-device) failed with error %d\n", __func__,
                                    err);
-                    return false;
+                    return false;  // 返回
                 }
-                return true;
+                return true;  // 返回
             }
         }
-        return false;
+        return false;  // 返回
     }
 
     // Host buffer - can copy from any host buffer
     if (ggml_backend_buffer_is_host(src->buffer)) {
         memcpy(dst->data, src->data, ggml_nbytes(src));
-        return true;
+        return true;  // 返回
     }
-    return false;
+    return false;  // 返回
 }
 
 static void ggml_backend_openvino_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
@@ -402,7 +402,7 @@ static void ggml_backend_openvino_buffer_clear(ggml_backend_buffer_t buffer, uin
             }
             clFinish(queue);
         } else {
-            GGML_LOG_WARN("%s: no OpenCL queue or clEnqueueMemFillINTEL not available for GPU buffer clear\n",
+            GGML_LOG_WARN("%s: no OpenCL queue or clEnqueueMemFillINTEL not available for GPU buffer clear\n",  // 打印警告日志
                           __func__);
         }
     } else {
@@ -440,20 +440,20 @@ static ggml_backend_buffer_t ggml_backend_openvino_buffer_type_alloc_buffer(ggml
     if (ctx->data == nullptr && size > 0) {
         GGML_LOG_ERROR("%s: failed to allocate buffer of size %zu\n", __func__, size);
         delete ctx;
-        return nullptr;
+        return nullptr;  // 返回
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_openvino_buffer_interface, ctx, size);
+    return ggml_backend_buffer_init(buft, ggml_backend_openvino_buffer_interface, ctx, size);  // ggml_backend_buffer_init
 }
 
 static size_t ggml_backend_openvino_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
     GGML_UNUSED(buft);
-    return TENSOR_ALIGNMENT;
+    return TENSOR_ALIGNMENT;  // 返回
 }
 
 static size_t ggml_backend_openvino_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
     GGML_UNUSED(buft);
-    return SIZE_MAX;
+    return SIZE_MAX;  // 返回
 }
 
 static size_t ggml_backend_openvino_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft,
@@ -467,11 +467,11 @@ static size_t ggml_backend_openvino_buffer_type_get_alloc_size(ggml_backend_buff
             // GGML_LOG_DEBUG("%s: tensor %s needs %zu bytes (original %zu, extracted: weights=%zu scales=%zu zp=%zu)\n",
             //                __func__, tensor->name, layout.total_size, ggml_nbytes(tensor), layout.weights_size,
             //                layout.scales_size, layout.zp_size);
-            return layout.total_size;
+            return layout.total_size;  // 返回
         }
     }
 
-    return ggml_nbytes(tensor);
+    return ggml_nbytes(tensor);  // ggml_nbytes
 }
 
 static const ggml_backend_buffer_type_i ggml_backend_openvino_buffer_type_interface = {
@@ -510,7 +510,7 @@ GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_openvino_buffer_type(in
         }
     }
 
-    return &buffer_types[device];
+    return &buffer_types[device];  // 返回
 }
 
 // =====================================================
@@ -526,7 +526,7 @@ static const char * ggml_backend_openvino_host_buffer_type_get_name(ggml_backend
 
 static bool ggml_backend_openvino_host_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
     GGML_UNUSED(buft);
-    return true;
+    return true;  // 返回
 }
 
 static const ggml_backend_buffer_type_i ggml_backend_openvino_host_buffer_type_interface = {
@@ -564,19 +564,19 @@ GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_openvino_host_buffer_ty
         }
     }
 
-    return &buffer_types[device];
+    return &buffer_types[device];  // 返回
 }
 
 bool ggml_backend_buffer_is_openvino(ggml_backend_buffer_t buffer) {
-    return buffer->iface.free_buffer == ggml_backend_openvino_buffer_free_buffer;
+    return buffer->iface.free_buffer == ggml_backend_openvino_buffer_free_buffer;  // 返回
 }
 
 size_t ggml_backend_openvino_buffer_get_ctx_id(ggml_backend_buffer_t buffer) {
     if (!ggml_backend_buffer_is_openvino(buffer)) {
-        return 0;
+        return 0;  // 返回
     }
     ggml_backend_openvino_buffer_context * ctx = (ggml_backend_openvino_buffer_context *) buffer->context;
-    return ctx->id;
+    return ctx->id;  // 返回
 }
 
 void ggml_openvino_buffer_register_extra(ggml_tensor * tensor, ggml_openvino_extra_base * extra) {
@@ -596,11 +596,11 @@ void ggml_openvino_buffer_register_extra(ggml_tensor * tensor, ggml_openvino_ext
 }
 
 bool ggml_backend_buft_is_openvino(ggml_backend_buffer_type_t buft) {
-    return buft->iface.get_name == ggml_backend_openvino_buffer_type_get_name;
+    return buft->iface.get_name == ggml_backend_openvino_buffer_type_get_name;  // 返回
 }
 
 bool ggml_backend_buft_is_openvino_host(ggml_backend_buffer_type_t buft) {
-    return buft->iface.get_name == ggml_backend_openvino_host_buffer_type_get_name;
+    return buft->iface.get_name == ggml_backend_openvino_host_buffer_type_get_name;  // 返回
 }
 
 static void ggml_backend_openvino_free(ggml_backend_t backend) {
@@ -618,12 +618,12 @@ static void ggml_backend_openvino_free(ggml_backend_t backend) {
 }
 
 static const char * ggml_backend_openvino_get_name(ggml_backend_t backend) {
-    return GGML_OPENVINO_NAME;
+    return GGML_OPENVINO_NAME;  // 返回
     GGML_UNUSED(backend);
 }
 
 static enum ggml_status ggml_backend_openvino_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
-    return ov_graph_compute(cgraph, backend);
+    return ov_graph_compute(cgraph, backend);  // ov_graph_compute
     GGML_UNUSED(backend);
 }
 
@@ -647,13 +647,13 @@ static const ggml_backend_i ggml_backend_openvino_interface = {
 };
 
 int ggml_backend_openvino_get_device_count() {
-    return 1;
+    return 1;  // 返回
 }
 
 static ggml_guid_t ggml_backend_openvino_guid(void) {
     static ggml_guid guid = {0x12, 0xa8, 0xae, 0xf4, 0xc0, 0x1e, 0x61, 0x97,
                              0x8f, 0xeb, 0x33, 0x04, 0xa1, 0x33, 0x51, 0x2d};
-    return &guid;
+    return &guid;  // 返回
 }
 
 static std::shared_ptr<ov_runtime_context> get_ov_runtime_context_ptr() {
@@ -661,29 +661,29 @@ static std::shared_ptr<ov_runtime_context> get_ov_runtime_context_ptr() {
         auto ctx = std::make_shared<ov_runtime_context>();
         ctx->device = ggml_openvino_get_device_name();
         ctx->stateful = is_stateful_enabled() && !ggml_openvino_is_npu();
-        return ctx;
+        return ctx;  // 返回
     }();
-    return r_ctx;
+    return r_ctx;  // 返回
 }
 
 // backend API
 GGML_BACKEND_API ggml_backend_t ggml_backend_openvino_init(int device) {
     if (device < 0 || device >= ggml_backend_openvino_get_device_count()) {
         GGML_LOG_ERROR("%s: invalid device %d\n", __func__, device);
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     ggml_backend_openvino_context * ctx = new ggml_backend_openvino_context;
     if (ctx == nullptr) {
         GGML_LOG_ERROR("%s: failed to allocate context\n", __func__);
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     ctx->runtime_context = get_ov_runtime_context_ptr();
     if (ctx->runtime_context == nullptr) {
         GGML_LOG_ERROR("%s: failed to allocate runtime context\n", __func__);
         delete ctx;
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     std::shared_ptr<ov_runtime_context> r_ctx = std::static_pointer_cast<ov_runtime_context>(ctx->runtime_context);
@@ -696,14 +696,14 @@ GGML_BACKEND_API ggml_backend_t ggml_backend_openvino_init(int device) {
         /* .context   = */ ctx,
     };
 
-    return openvino_backend;
+    return openvino_backend;  // 返回
 }
 
 GGML_BACKEND_API bool ggml_backend_is_openvino(ggml_backend_t backend) {
     return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_openvino_guid());
 }
 
-struct ggml_backend_openvino_device_context {
+struct ggml_backend_openvino_device_context {  // 结构体定义
     int device;
     std::string name;
     std::string description;
@@ -720,27 +720,27 @@ static const char * ggml_backend_openvino_device_get_description(ggml_backend_de
 }
 
 static void ggml_backend_openvino_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
     MEMORYSTATUSEX status;
     status.dwLength = sizeof(status);
     GlobalMemoryStatusEx(&status);
     *total = status.ullTotalPhys;
     *free = status.ullAvailPhys;
-#else
+#else  // 否则
     long pages = sysconf(_SC_PHYS_PAGES);
     long page_size = sysconf(_SC_PAGE_SIZE);
     *total = pages * page_size;
 
     // "free" system memory is ill-defined, for practical purposes assume that all of it is free:
     *free = *total;
-#endif  // _WIN32
+#endif  // _WIN32  // 条件编译结束
 
     GGML_UNUSED(dev);
 }
 
 static enum ggml_backend_dev_type ggml_backend_openvino_device_get_type(ggml_backend_dev_t dev) {
     GGML_UNUSED(dev);
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+    return GGML_BACKEND_DEVICE_TYPE_GPU;  // 返回
 }
 
 static void ggml_backend_openvino_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
@@ -760,17 +760,17 @@ static void ggml_backend_openvino_device_get_props(ggml_backend_dev_t dev, ggml_
 static ggml_backend_t ggml_backend_openvino_device_init(ggml_backend_dev_t dev, const char * params) {
     GGML_UNUSED(params);
     ggml_backend_openvino_device_context * ctx = (ggml_backend_openvino_device_context *) dev->context;
-    return ggml_backend_openvino_init(ctx->device);
+    return ggml_backend_openvino_init(ctx->device);  // ggml_backend_openvino_init
 }
 
 static ggml_backend_buffer_type_t ggml_backend_openvino_device_get_buffer_type(ggml_backend_dev_t dev) {
     ggml_backend_openvino_device_context * ctx = (ggml_backend_openvino_device_context *) dev->context;
-    return ggml_backend_openvino_buffer_type(ctx->device);
+    return ggml_backend_openvino_buffer_type(ctx->device);  // ggml_backend_openvino_buffer_type
 }
 
 static ggml_backend_buffer_type_t ggml_backend_openvino_device_get_host_buffer_type(ggml_backend_dev_t dev) {
     ggml_backend_openvino_device_context * ctx = (ggml_backend_openvino_device_context *) dev->context;
-    return ggml_backend_openvino_host_buffer_type(ctx->device);
+    return ggml_backend_openvino_host_buffer_type(ctx->device);  // ggml_backend_openvino_host_buffer_type
 }
 
 static bool has_view_op_input(const ggml_tensor * op) {
@@ -779,10 +779,10 @@ static bool has_view_op_input(const ggml_tensor * op) {
             break;
         }
         if (op->src[i]->op == GGML_OP_VIEW) {
-            return true;
+            return true;  // 返回
         }
     }
-    return false;
+    return false;  // 返回
 }
 
 static bool is_supported_flash_attn_pattern(const ggml_tensor * op) {
@@ -791,10 +791,10 @@ static bool is_supported_flash_attn_pattern(const ggml_tensor * op) {
         const ggml_tensor * src = op->src[i];
         if (src->op != GGML_OP_PERMUTE || src->src[0] == nullptr || src->src[0]->op != GGML_OP_VIEW ||
             src->src[0]->src[0] == nullptr || src->src[0]->src[0]->view_src != nullptr) {
-            return false;
+            return false;  // 返回
         }
     }
-    return true;
+    return true;  // 返回
 }
 
 static bool is_op_unsupported_case(const ggml_tensor * op) {
@@ -802,18 +802,18 @@ static bool is_op_unsupported_case(const ggml_tensor * op) {
     case GGML_OP_GET_ROWS:
     case GGML_OP_SET_ROWS: {
         if (op->ne[3] != 1) {
-            return true;
+            return true;  // 返回
         }
         break;
     }
     case GGML_OP_ADD:
     case GGML_OP_MUL: {
         if (op->src[1]->op == GGML_OP_PERMUTE) {
-            return true;
+            return true;  // 返回
         }
         for (int i = 0; i < 4; i++) {
             if (op->src[0]->ne[i] != op->src[1]->ne[i] && (op->src[0]->ne[i] != 1 && op->src[1]->ne[i] != 1)) {
-                return true;
+                return true;  // 返回
             }
         }
         break;
@@ -821,7 +821,7 @@ static bool is_op_unsupported_case(const ggml_tensor * op) {
     case GGML_OP_SOFT_MAX: {
         if (op->src[2] != nullptr) {
             // GGML_LOG_WARN("OpenVINO backend does not support SOFT_MAX with sinks\n");
-            return true;
+            return true;  // 返回
         }
         float scale = 1.0f;
         float max_bias = 0.0f;
@@ -830,17 +830,17 @@ static bool is_op_unsupported_case(const ggml_tensor * op) {
         memcpy(&max_bias, (const float *) op_params + 1, sizeof(float));
         if (max_bias > 0) {
             // GGML_LOG_WARN("OpenVINO backend does not support SOFT_MAX with max_bias > 0\n");
-            return true;
+            return true;  // 返回
         }
         break;
     }
     case GGML_OP_FLASH_ATTN_EXT: {
         if (op->src[4] != nullptr) {
             // GGML_LOG_WARN("OpenVINO backend does not support FLASH_ATTN_EXT with sinks\n");
-            return true;
+            return true;  // 返回
         }
         if (!is_supported_flash_attn_pattern(op)) {
-            return true;
+            return true;  // 返回
         }
         float scale = 1.0f;
         float max_bias = 0.0f;
@@ -851,11 +851,11 @@ static bool is_op_unsupported_case(const ggml_tensor * op) {
         memcpy(&logit_softcap, (const float *) op_params + 2, sizeof(float));
         if (max_bias > 0) {
             // GGML_LOG_WARN("OpenVINO backend does not support FLASH_ATTN_EXT with max_bias > 0\n");
-            return true;
+            return true;  // 返回
         }
         if (logit_softcap != 0) {
             // GGML_LOG_WARN("OpenVINO backend does not support FLASH_ATTN_EXT with logit_softcap != 0\n");
-            return true;
+            return true;  // 返回
         }
         break;
     }
@@ -863,14 +863,14 @@ static bool is_op_unsupported_case(const ggml_tensor * op) {
         if (op->type == GGML_TYPE_BF16) {
             // err msg: [GPU] Could not find a suitable kernel for transpose
             // GGML_LOG_WARN("OpenVINO backend does not support PERMUTE with BF16 type\n");
-            return true;
+            return true;  // 返回
         }
         break;
     }
     case GGML_OP_CPY: {
         if (op->src[1] != op) {
             // GGML_LOG_WARN("OpenVINO backend only supports CPY that is a cast\n");
-            return true;
+            return true;  // 返回
         }
         break;
     }
@@ -878,21 +878,21 @@ static bool is_op_unsupported_case(const ggml_tensor * op) {
         if (op->src[0]->type == GGML_TYPE_F16 && op->src[1]->type == GGML_TYPE_F16) {
             // Has accuracy issue, try enabling this and see `test-backend-ops -o "MUL_MAT"`
             // GGML_LOG_WARN("OpenVINO backend does not support MUL_MAT with two F16 tensors\n");
-            return true;
+            return true;  // 返回
         }
         if (op->src[0]->ne[3] != op->src[1]->ne[3] && op->src[0]->ne[3] != 1 && op->src[1]->ne[3] != 1) {
-            return true;
+            return true;  // 返回
         }
         if (op->src[0]->op == GGML_OP_PERMUTE || op->src[1]->op == GGML_OP_PERMUTE) {
-            return true;
+            return true;  // 返回
         }
         if (ggml_is_quantized(op->src[0]->type) && op->src[0]->ne[1] == 1) {
             // MUL_MAT(type_a=q4_0,type_b=f32,m=1,n=2048,k=8192,bs=[1,1],nr=[1,1],per=[0,1,2,3],k_v=0,o=1)
             // triggers a bug in ov matmul_shape_inference.hpp
-            return true;
+            return true;  // 返回
         }
         if (op->src[0]->op == GGML_OP_VIEW && op->src[1]->op == GGML_OP_VIEW) {
-            return true;
+            return true;  // 返回
         }
         break;
     }
@@ -902,16 +902,16 @@ static bool is_op_unsupported_case(const ggml_tensor * op) {
         const int mode = op_params[2];
         if (mode != GGML_ROPE_TYPE_NORMAL && mode != GGML_ROPE_TYPE_NEOX && mode != GGML_ROPE_TYPE_IMROPE) {
             // GGML_LOG_WARN("OpenVINO backend does not support ROPE with mode %d\n", mode);
-            return true;
+            return true;  // 返回
         }
         if (n_dims != 0.0f && n_dims != op->src[0]->ne[0]) {
             // GGML_LOG_WARN("OpenVINO backend does not support ROPE with n_dims %d != src[0]->ne[0] %ld\n", n_dims,
             //               op->src[0]->ne[0]);
-            return true;
+            return true;  // 返回
         }
         if (op->type != GGML_TYPE_F32) {
             // GGML_LOG_WARN("OpenVINO backend does not support ROPE with type %s\n", ggml_type_name(op->type));
-            return true;
+            return true;  // 返回
         }
         if (op->src[0]->op == GGML_OP_VIEW) {
             if (op->src[0]->view_src->ne[1] != op->src[0]->ne[2]) {
@@ -919,14 +919,14 @@ static bool is_op_unsupported_case(const ggml_tensor * op) {
                 //     "OpenVINO backend does not support ROPE with src[0]->view_src->ne[1] %ld != src[0]->ne[2] "
                 //     "%ld\n",
                 //     op->src[0]->view_src->ne[1], op->src[0]->ne[2]);
-                return true;
+                return true;  // 返回
             }
         }
         if (mode == GGML_ROPE_TYPE_IMROPE &&
             (op->src[2] != 0 || ((const float *) op_params)[6] != 1 || ((const float *) op_params)[7] != 0 ||
              ((const float *) op_params)[8] != 1)) {
             // GGML_LOG_WARN("OpenVINO backend does not support IMROPE with freq_factors, freq_scale, ext_factor, and attn_factor\n");
-            return true;
+            return true;  // 返回
         }
         break;
     }
@@ -937,10 +937,10 @@ static bool is_op_unsupported_case(const ggml_tensor * op) {
         if (op->ne[0] == 256 && (op->src[0]->type == GGML_TYPE_Q4_K || op->src[0]->type == GGML_TYPE_Q5_K)) {
             // ERR = 0.000000306 > 0.000000100   GET_ROWS(type=q4_K,n=256,m=5,r=4,be1=1,be2=1,v=0)
             // ERR = 0.000000197 > 0.000000100   GET_ROWS(type=q5_K,n=256,m=5,r=4,be1=1,be2=1,v=0)
-            return true;
+            return true;  // 返回
         }
     }
-    return false;
+    return false;  // 返回
 }
 
 static bool ggml_backend_openvino_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
@@ -970,12 +970,12 @@ static bool ggml_backend_openvino_device_supports_op(ggml_backend_dev_t dev, con
         auto supported = supported_unary_ops.find(ggml_get_unary_op(op)) != supported_unary_ops.end();
         if (!supported) {
             // GGML_LOG_WARN("OpenVINO backend does not support unary op %s\n", ggml_unary_op_name(ggml_get_unary_op(op)));
-            return false;
+            return false;  // 返回
         }
         if (has_view_op_input(op)) {
             // GGML_LOG_WARN("OpenVINO backend does not support unary op %s with view input\n",
             //               ggml_unary_op_name(ggml_get_unary_op(op)));
-            return false;
+            return false;  // 返回
         }
         break;
     }
@@ -983,16 +983,16 @@ static bool ggml_backend_openvino_device_supports_op(ggml_backend_dev_t dev, con
         auto supported = supported_glu_ops.find(ggml_get_glu_op(op)) != supported_glu_ops.end();
         if (!supported) {
             // GGML_LOG_WARN("OpenVINO backend does not support GLU op %s\n", ggml_glu_op_name(ggml_get_glu_op(op)));
-            return false;
+            return false;  // 返回
         }
         if (has_view_op_input(op)) {
             // GGML_LOG_WARN("OpenVINO backend does not support unary op %s with view input\n",
             //               ggml_glu_op_name(ggml_get_glu_op(op)));
-            return false;
+            return false;  // 返回
         }
         if (op->src[1] == nullptr && op->src[0]->ne[0] % 2 != 0) {
             // triggers bug in ov gpu
-            return false;
+            return false;  // 返回
         }
         break;
     }
@@ -1000,7 +1000,7 @@ static bool ggml_backend_openvino_device_supports_op(ggml_backend_dev_t dev, con
         auto supported = supported_ops.find(op->op) != supported_ops.end();
         if (!supported) {
             // GGML_LOG_WARN("OpenVINO backend does not support op %s\n", ggml_op_name(op->op));
-            return false;
+            return false;  // 返回
         }
         static std::set<ggml_op> ops_not_support_view_input{
             GGML_OP_GET_ROWS,
@@ -1008,14 +1008,14 @@ static bool ggml_backend_openvino_device_supports_op(ggml_backend_dev_t dev, con
         };
         if (ops_not_support_view_input.find(op->op) != ops_not_support_view_input.end() && has_view_op_input(op)) {
             // GGML_LOG_WARN("OpenVINO backend does not support op %s with view input\n", ggml_op_name(op->op));
-            return false;
+            return false;  // 返回
         }
     }
     }
 
     if (supported_types.find(op->type) == supported_types.end()) {
         // GGML_LOG_WARN("OpenVINO backend does not support tensor type %s\n", ggml_type_name(op->type));
-        return false;
+        return false;  // 返回
     }
     for (int i = 0; i < GGML_MAX_SRC; i++) {
         auto * src = op->src[i];
@@ -1024,22 +1024,22 @@ static bool ggml_backend_openvino_device_supports_op(ggml_backend_dev_t dev, con
         }
         if (supported_types.find(src->type) == supported_types.end()) {
             // GGML_LOG_WARN("OpenVINO backend does not support tensor type %s\n", ggml_type_name(src->type));
-            return false;
+            return false;  // 返回
         }
         if (ggml_is_quantized(src->type) && src->ne[2] != 1) {
             // GGML_LOG_WARN("OpenVINO backend does not support 3D quantized tensors\n");
-            return false;
+            return false;  // 返回
         }
     }
 
     if (is_op_unsupported_case(op)) {
-        return false;
+        return false;  // 返回
     }
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_backend_openvino_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return ggml_backend_buft_is_openvino(buft) || ggml_backend_buft_is_host(buft);
+    return ggml_backend_buft_is_openvino(buft) || ggml_backend_buft_is_host(buft);  // ggml_backend_buft_is_openvino
     GGML_UNUSED(dev);
 }
 
@@ -1061,12 +1061,12 @@ static const struct ggml_backend_device_i ggml_backend_openvino_device_interface
     /* .event_synchronize    = */ NULL,
 };
 
-struct ggml_backend_openvino_reg_context {
+struct ggml_backend_openvino_reg_context {  // 结构体定义
     std::vector<ggml_backend_dev_t> devices;
 };
 
 static const char * ggml_backend_openvino_reg_get_name(ggml_backend_reg_t reg) {
-    return GGML_OPENVINO_NAME;
+    return GGML_OPENVINO_NAME;  // 返回
     GGML_UNUSED(reg);
 }
 
@@ -1078,7 +1078,7 @@ static size_t ggml_backend_openvino_reg_get_device_count(ggml_backend_reg_t reg)
 static ggml_backend_dev_t ggml_backend_openvino_reg_get_device(ggml_backend_reg_t reg, size_t index) {
     ggml_backend_openvino_reg_context * ctx = (ggml_backend_openvino_reg_context *) reg->context;
     GGML_ASSERT(index < ctx->devices.size());
-    return ctx->devices[index];
+    return ctx->devices[index];  // 返回
 }
 
 static const struct ggml_backend_reg_i ggml_backend_openvino_reg_interface = {
@@ -1128,5 +1128,5 @@ GGML_BACKEND_API ggml_backend_reg_t ggml_backend_openvino_reg(void) {
         initialized = true;
     }
 
-    return &reg;
+    return &reg;  // 返回
 }

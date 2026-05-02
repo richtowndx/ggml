@@ -1,4 +1,4 @@
-#include "virtgpu-forward-impl.h"
+#include "virtgpu-forward-impl.h"  // 引入 virtgpu-forward-impl.h 头文件
 
 char * apir_buffer_type_get_name(virtgpu * gpu, apir_buffer_type_host_handle_t host_handle) {
     apir_encoder *        encoder;
@@ -21,7 +21,7 @@ char * apir_buffer_type_get_name(virtgpu * gpu, apir_buffer_type_host_handle_t h
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return string;
+    return string;  // 返回
 }
 
 size_t apir_buffer_type_get_alignment(virtgpu * gpu, apir_buffer_type_host_handle_t host_handle) {
@@ -40,7 +40,7 @@ size_t apir_buffer_type_get_alignment(virtgpu * gpu, apir_buffer_type_host_handl
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return alignment;
+    return alignment;  // 返回
 }
 
 size_t apir_buffer_type_get_max_size(virtgpu * gpu, apir_buffer_type_host_handle_t host_handle) {
@@ -59,7 +59,7 @@ size_t apir_buffer_type_get_max_size(virtgpu * gpu, apir_buffer_type_host_handle
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return max_size;
+    return max_size;  // 返回
 }
 
 apir_buffer_context_t apir_buffer_type_alloc_buffer(virtgpu *                      gpu,
@@ -83,7 +83,7 @@ apir_buffer_context_t apir_buffer_type_alloc_buffer(virtgpu *                   
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return buffer_context;
+    return buffer_context;  // 返回
 }
 
 size_t apir_buffer_type_get_alloc_size(virtgpu *                      gpu,
@@ -106,5 +106,5 @@ size_t apir_buffer_type_get_alloc_size(virtgpu *                      gpu,
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return alloc_size;
+    return alloc_size;  // 返回
 }

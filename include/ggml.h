@@ -1,4 +1,4 @@
-#pragma once
+#pragma once  // 防止重复包含
 
 //
 // GGML Tensor Library
@@ -173,119 +173,119 @@
 //
 //
 
-#ifdef GGML_SHARED
+#ifdef GGML_SHARED  // 如果定义了 GGML_SHARED 则编译
 #    if defined(_WIN32) && !defined(__MINGW32__)
-#        ifdef GGML_BUILD
-#            define GGML_API __declspec(dllexport) extern
+#        ifdef GGML_BUILD  // 如果定义了 GGML_BUILD 则编译
+#            define GGML_API __declspec(dllexport) extern  // 宏定义 GGML_API
 #        else
-#            define GGML_API __declspec(dllimport) extern
+#            define GGML_API __declspec(dllimport) extern  // 宏定义 GGML_API
 #        endif
 #    else
-#        define GGML_API __attribute__ ((visibility ("default"))) extern
+#        define GGML_API __attribute__ ((visibility ("default"))) extern  // 宏定义 GGML_API
 #    endif
-#else
-#    define GGML_API extern
-#endif
+#else  // 否则
+#    define GGML_API extern  // 宏定义 GGML_API
+#endif  // 条件编译结束
 
 // TODO: support for clang
-#ifdef __GNUC__
-#    define GGML_DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
-#elif defined(_MSC_VER)
-#    define GGML_DEPRECATED(func, hint) __declspec(deprecated(hint)) func
-#else
-#    define GGML_DEPRECATED(func, hint) func
-#endif
+#ifdef __GNUC__  // 如果定义了 __GNUC__ 则编译
+#    define GGML_DEPRECATED(func, hint) func __attribute__((deprecated(hint)))  // 宏定义 GGML_DEPRECATED
+#elif defined(_MSC_VER)  // 否则如果
+#    define GGML_DEPRECATED(func, hint) __declspec(deprecated(hint)) func  // 宏定义 GGML_DEPRECATED
+#else  // 否则
+#    define GGML_DEPRECATED(func, hint) func  // 宏定义 GGML_DEPRECATED
+#endif  // 条件编译结束
 
-#ifndef __GNUC__
-#    define GGML_ATTRIBUTE_FORMAT(...)
-#elif defined(__MINGW32__) && !defined(__clang__)
-#    define GGML_ATTRIBUTE_FORMAT(...) __attribute__((format(gnu_printf, __VA_ARGS__)))
-#else
-#    define GGML_ATTRIBUTE_FORMAT(...) __attribute__((format(printf, __VA_ARGS__)))
-#endif
+#ifndef __GNUC__  // 如果未定义 __GNUC__ 则编译
+#    define GGML_ATTRIBUTE_FORMAT(...)  // 宏定义 GGML_ATTRIBUTE_FORMAT
+#elif defined(__MINGW32__) && !defined(__clang__)  // 否则如果
+#    define GGML_ATTRIBUTE_FORMAT(...) __attribute__((format(gnu_printf, __VA_ARGS__)))  // 宏定义 GGML_ATTRIBUTE_FORMAT
+#else  // 否则
+#    define GGML_ATTRIBUTE_FORMAT(...) __attribute__((format(printf, __VA_ARGS__)))  // 宏定义 GGML_ATTRIBUTE_FORMAT
+#endif  // 条件编译结束
 
-#if defined(_WIN32) && !defined(_WIN32_WINNT)
-#    define _WIN32_WINNT 0x0A00
-#endif
+#if defined(_WIN32) && !defined(_WIN32_WINNT)  // 条件编译
+#    define _WIN32_WINNT 0x0A00  // 宏定义 _WIN32_WINNT
+#endif  // 条件编译结束
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
+#include <stdbool.h>  // 引入 stdbool.h 头文件
+#include <stddef.h>  // 引入 stddef.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
 
-#define GGML_FILE_MAGIC   0x67676d6c // "ggml"
-#define GGML_FILE_VERSION 2
+#define GGML_FILE_MAGIC   0x67676d6c // "ggml"  // 宏定义 GGML_FILE_MAGIC
+#define GGML_FILE_VERSION 2  // 宏定义 GGML_FILE_VERSION
 
-#define GGML_QNT_VERSION        2    // bump this on quantization format changes
-#define GGML_QNT_VERSION_FACTOR 1000 // do not change this
+#define GGML_QNT_VERSION        2    // bump this on quantization format changes  // 宏定义 GGML_QNT_VERSION
+#define GGML_QNT_VERSION_FACTOR 1000 // do not change this  // 宏定义 GGML_QNT_VERSION_FACTOR
 
-#define GGML_MAX_DIMS           4
-#define GGML_MAX_PARAMS         2048
-#define GGML_MAX_SRC            10
-#define GGML_MAX_N_THREADS      512
-#define GGML_MAX_OP_PARAMS      64
+#define GGML_MAX_DIMS           4  // 宏定义 GGML_MAX_DIMS
+#define GGML_MAX_PARAMS         2048  // 宏定义 GGML_MAX_PARAMS
+#define GGML_MAX_SRC            10  // 宏定义 GGML_MAX_SRC
+#define GGML_MAX_N_THREADS      512  // 宏定义 GGML_MAX_N_THREADS
+#define GGML_MAX_OP_PARAMS      64  // 宏定义 GGML_MAX_OP_PARAMS
 
-#ifndef GGML_MAX_NAME
-#   define GGML_MAX_NAME        64
-#endif
+#ifndef GGML_MAX_NAME  // 如果未定义 GGML_MAX_NAME 则编译
+#   define GGML_MAX_NAME        64  // 宏定义 GGML_MAX_NAME
+#endif  // 条件编译结束
 
-#define GGML_DEFAULT_N_THREADS  4
-#define GGML_DEFAULT_GRAPH_SIZE 2048
+#define GGML_DEFAULT_N_THREADS  4  // 宏定义 GGML_DEFAULT_N_THREADS
+#define GGML_DEFAULT_GRAPH_SIZE 2048  // 宏定义 GGML_DEFAULT_GRAPH_SIZE
 
-#if UINTPTR_MAX == 0xFFFFFFFF
-    #define GGML_MEM_ALIGN 4
-#elif defined(__EMSCRIPTEN__)
+#if UINTPTR_MAX == 0xFFFFFFFF  // 条件编译
+    #define GGML_MEM_ALIGN 4  // 宏定义 GGML_MEM_ALIGN
+#elif defined(__EMSCRIPTEN__)  // 否则如果
 // emscripten uses max_align_t == 8, so we need GGML_MEM_ALIGN == 8 for 64-bit wasm.
 // (for 32-bit wasm, the first conditional is true and GGML_MEM_ALIGN stays 4.)
 // ref: https://github.com/ggml-org/llama.cpp/pull/18628
-    #define GGML_MEM_ALIGN 8
-#else
-    #define GGML_MEM_ALIGN 16
-#endif
+    #define GGML_MEM_ALIGN 8  // 宏定义 GGML_MEM_ALIGN
+#else  // 否则
+    #define GGML_MEM_ALIGN 16  // 宏定义 GGML_MEM_ALIGN
+#endif  // 条件编译结束
 
-#define GGML_EXIT_SUCCESS 0
-#define GGML_EXIT_ABORTED 1
+#define GGML_EXIT_SUCCESS 0  // 宏定义 GGML_EXIT_SUCCESS
+#define GGML_EXIT_ABORTED 1  // 宏定义 GGML_EXIT_ABORTED
 
 // TODO: convert to enum https://github.com/ggml-org/llama.cpp/pull/16187#discussion_r2388538726
-#define GGML_ROPE_TYPE_NORMAL 0
-#define GGML_ROPE_TYPE_NEOX   2
-#define GGML_ROPE_TYPE_MROPE  8
-#define GGML_ROPE_TYPE_VISION 24
-#define GGML_ROPE_TYPE_IMROPE 40 // binary: 101000
+#define GGML_ROPE_TYPE_NORMAL 0  // 宏定义 GGML_ROPE_TYPE_NORMAL
+#define GGML_ROPE_TYPE_NEOX   2  // 宏定义 GGML_ROPE_TYPE_NEOX
+#define GGML_ROPE_TYPE_MROPE  8  // 宏定义 GGML_ROPE_TYPE_MROPE
+#define GGML_ROPE_TYPE_VISION 24  // 宏定义 GGML_ROPE_TYPE_VISION
+#define GGML_ROPE_TYPE_IMROPE 40 // binary: 101000  // 宏定义 GGML_ROPE_TYPE_IMROPE
 
-#define GGML_MROPE_SECTIONS   4
+#define GGML_MROPE_SECTIONS   4  // 宏定义 GGML_MROPE_SECTIONS
 
-#define GGML_UNUSED(x) (void)(x)
-#ifdef __CUDACC__
-template<typename... Args>
+#define GGML_UNUSED(x) (void)(x)  // 宏定义 GGML_UNUSED
+#ifdef __CUDACC__  // 如果定义了 __CUDACC__ 则编译
+template<typename... Args>  // 模板
 __host__ __device__ constexpr inline void ggml_unused_vars_impl(Args&&...) noexcept {}
-#define GGML_UNUSED_VARS(...) ggml_unused_vars_impl(__VA_ARGS__)
-#else
-#define GGML_UNUSED_VARS(...) do { (void)sizeof((__VA_ARGS__, 0)); } while(0)
-#endif // __CUDACC__
+#define GGML_UNUSED_VARS(...) ggml_unused_vars_impl(__VA_ARGS__)  // 宏定义 GGML_UNUSED_VARS
+#else  // 否则
+#define GGML_UNUSED_VARS(...) do { (void)sizeof((__VA_ARGS__, 0)); } while(0)  // 宏定义 GGML_UNUSED_VARS
+#endif // __CUDACC__  // 条件编译结束
 
-#define GGML_PAD(x, n) (((x) + (n) - 1) & ~((n) - 1))
+#define GGML_PAD(x, n) (((x) + (n) - 1) & ~((n) - 1))  // 宏定义 GGML_PAD
 
-#ifndef NDEBUG
-#   define GGML_UNREACHABLE() do { fprintf(stderr, "statement should be unreachable\n"); abort(); } while(0)
-#elif defined(__GNUC__)
-#   define GGML_UNREACHABLE() __builtin_unreachable()
-#elif defined(_MSC_VER)
-#   define GGML_UNREACHABLE() __assume(0)
-#else
-#   define GGML_UNREACHABLE() ((void) 0)
-#endif
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
+#   define GGML_UNREACHABLE() do { fprintf(stderr, "statement should be unreachable\n"); abort(); } while(0)  // 宏定义 GGML_UNREACHABLE
+#elif defined(__GNUC__)  // 否则如果
+#   define GGML_UNREACHABLE() __builtin_unreachable()  // 宏定义 GGML_UNREACHABLE
+#elif defined(_MSC_VER)  // 否则如果
+#   define GGML_UNREACHABLE() __assume(0)  // 宏定义 GGML_UNREACHABLE
+#else  // 否则
+#   define GGML_UNREACHABLE() ((void) 0)  // 宏定义 GGML_UNREACHABLE
+#endif  // 条件编译结束
 
-#ifdef __cplusplus
-#   define GGML_NORETURN [[noreturn]]
-#elif defined(_MSC_VER)
-#   define GGML_NORETURN __declspec(noreturn)
-#else
-#   define GGML_NORETURN _Noreturn
-#endif
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+#   define GGML_NORETURN [[noreturn]]  // 宏定义 GGML_NORETURN
+#elif defined(_MSC_VER)  // 否则如果
+#   define GGML_NORETURN __declspec(noreturn)  // 宏定义 GGML_NORETURN
+#else  // 否则
+#   define GGML_NORETURN _Noreturn  // 宏定义 GGML_NORETURN
+#endif  // 条件编译结束
 
-#define GGML_ABORT(...) ggml_abort(__FILE__, __LINE__, __VA_ARGS__)
-#define GGML_ASSERT(x) if (!(x)) GGML_ABORT("GGML_ASSERT(%s) failed", #x)
+#define GGML_ABORT(...) ggml_abort(__FILE__, __LINE__, __VA_ARGS__)  // 宏定义 GGML_ABORT
+#define GGML_ASSERT(x) if (!(x)) GGML_ABORT("GGML_ASSERT(%s) failed", #x)  // 宏定义 GGML_ASSERT
 
 // used to copy the number of elements and stride in bytes of tensors into local variables.
 // main purpose is to reduce code duplication and improve readability.
@@ -341,21 +341,21 @@ __host__ __device__ constexpr inline void ggml_unused_vars_impl(Args&&...) noexc
     GGML_TENSOR_LOCALS(int64_t, ne1, src1, ne) \
     GGML_TENSOR_LOCALS(size_t,  nb1, src1, nb)
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
     // Function type used in fatal error callbacks
-    typedef void (*ggml_abort_callback_t)(const char * error_message);
+    typedef void (*ggml_abort_callback_t)(const char * error_message);  // 类型定义
 
     // Set the abort callback (passing null will restore original abort functionality: printing a message to stdout)
     // Returns the old callback for chaining
     GGML_API ggml_abort_callback_t ggml_set_abort_callback(ggml_abort_callback_t callback);
 
-    GGML_NORETURN GGML_ATTRIBUTE_FORMAT(3, 4)
+    GGML_NORETURN GGML_ATTRIBUTE_FORMAT(3, 4)  // GGML_ATTRIBUTE_FORMAT
     GGML_API void ggml_abort(const char * file, int line, const char * fmt, ...);
 
-    enum ggml_status {
+    enum ggml_status {  // 枚举定义
         GGML_STATUS_ALLOC_FAILED = -2,
         GGML_STATUS_FAILED = -1,
         GGML_STATUS_SUCCESS = 0,
@@ -367,14 +367,14 @@ extern "C" {
 
     // ieee 754-2008 half-precision float16
     // todo: make this not an integral type
-    typedef uint16_t ggml_fp16_t;
+    typedef uint16_t ggml_fp16_t;  // 类型定义
     GGML_API float       ggml_fp16_to_fp32(ggml_fp16_t);
     GGML_API ggml_fp16_t ggml_fp32_to_fp16(float);
     GGML_API void        ggml_fp16_to_fp32_row(const ggml_fp16_t *, float *, int64_t);
     GGML_API void        ggml_fp32_to_fp16_row(const float *, ggml_fp16_t *, int64_t);
 
     // google brain half-precision bfloat16
-    typedef struct { uint16_t bits; } ggml_bf16_t;
+    typedef struct { uint16_t bits; } ggml_bf16_t;  // 类型定义
     GGML_API ggml_bf16_t ggml_fp32_to_bf16(float);
     GGML_API float       ggml_bf16_to_fp32(ggml_bf16_t);  // consider just doing << 16
     GGML_API void        ggml_bf16_to_fp32_row(const ggml_bf16_t *, float *, int64_t);
@@ -386,7 +386,7 @@ extern "C" {
     struct ggml_cgraph;
 
     // NOTE: always add types at the end of the enum to keep backward compatibility
-    enum ggml_type {
+    enum ggml_type {  // 枚举定义
         GGML_TYPE_F32     = 0,
         GGML_TYPE_F16     = 1,
         GGML_TYPE_Q4_0    = 2,
@@ -433,13 +433,13 @@ extern "C" {
     };
 
     // precision
-    enum ggml_prec {
+    enum ggml_prec {  // 枚举定义
         GGML_PREC_DEFAULT =  0, // stored as ggml_tensor.op_params, 0 by default
         GGML_PREC_F32     = 10,
     };
 
     // model file types
-    enum ggml_ftype {
+    enum ggml_ftype {  // 枚举定义
         GGML_FTYPE_UNKNOWN        = -1,
         GGML_FTYPE_ALL_F32        = 0,
         GGML_FTYPE_MOSTLY_F16     = 1,  // except 1d tensors
@@ -470,7 +470,7 @@ extern "C" {
     };
 
     // available tensor operations:
-    enum ggml_op {
+    enum ggml_op {  // 枚举定义
         GGML_OP_NONE = 0,
 
         GGML_OP_DUP,
@@ -580,7 +580,7 @@ extern "C" {
         GGML_OP_COUNT,
     };
 
-    enum ggml_unary_op {
+    enum ggml_unary_op {  // 枚举定义
         GGML_UNARY_OP_ABS,
         GGML_UNARY_OP_SGN,
         GGML_UNARY_OP_NEG,
@@ -607,7 +607,7 @@ extern "C" {
         GGML_UNARY_OP_COUNT,
     };
 
-    enum ggml_glu_op {
+    enum ggml_glu_op {  // 枚举定义
         GGML_GLU_OP_REGLU,
         GGML_GLU_OP_GEGLU,
         GGML_GLU_OP_SWIGLU,
@@ -618,13 +618,13 @@ extern "C" {
         GGML_GLU_OP_COUNT,
     };
 
-    enum ggml_object_type {
+    enum ggml_object_type {  // 枚举定义
         GGML_OBJECT_TYPE_TENSOR,
         GGML_OBJECT_TYPE_GRAPH,
         GGML_OBJECT_TYPE_WORK_BUFFER
     };
 
-    enum ggml_log_level {
+    enum ggml_log_level {  // 枚举定义
         GGML_LOG_LEVEL_NONE  = 0,
         GGML_LOG_LEVEL_DEBUG = 1,
         GGML_LOG_LEVEL_INFO  = 2,
@@ -634,7 +634,7 @@ extern "C" {
     };
 
     // this tensor...
-    enum ggml_tensor_flag {
+    enum ggml_tensor_flag {  // 枚举定义
         GGML_TENSOR_FLAG_INPUT   =  1, // ...is an input for the GGML compute graph
         GGML_TENSOR_FLAG_OUTPUT  =  2, // ...is an output for the GGML compute graph
         GGML_TENSOR_FLAG_PARAM   =  4, // ...contains trainable parameters
@@ -642,14 +642,14 @@ extern "C" {
         GGML_TENSOR_FLAG_COMPUTE = 16, // ...must be computed
     };
 
-    enum ggml_tri_type {
+    enum ggml_tri_type {  // 枚举定义
         GGML_TRI_TYPE_UPPER_DIAG = 0,
         GGML_TRI_TYPE_UPPER      = 1,
         GGML_TRI_TYPE_LOWER_DIAG = 2,
         GGML_TRI_TYPE_LOWER      = 3
     };
 
-    struct ggml_init_params {
+    struct ggml_init_params {  // 结构体定义
         // memory pool
         size_t mem_size;   // bytes
         void * mem_buffer; // if NULL, memory will be allocated internally
@@ -657,7 +657,7 @@ extern "C" {
     };
 
     // n-dimensional tensor
-    struct ggml_tensor {
+    struct ggml_tensor {  // 结构体定义
         enum ggml_type type;
 
         struct ggml_backend_buffer * buffer;
@@ -696,7 +696,7 @@ extern "C" {
     // Abort callback
     // If not NULL, called before ggml computation
     // If it returns true, the computation is aborted
-    typedef bool (*ggml_abort_callback)(void * data);
+    typedef bool (*ggml_abort_callback)(void * data);  // 类型定义
 
 
     //
@@ -704,8 +704,8 @@ extern "C" {
     //
 
     // GUID types
-    typedef uint8_t ggml_guid[16];
-    typedef ggml_guid * ggml_guid_t;
+    typedef uint8_t ggml_guid[16];  // 类型定义
+    typedef ggml_guid * ggml_guid_t;  // 类型定义
 
     GGML_API bool ggml_guid_matches(ggml_guid_t guid_a, ggml_guid_t guid_b);
 
@@ -2172,7 +2172,7 @@ extern "C" {
             int                   n_batch,
             int                   n_channels_out);
 
-    enum ggml_op_pool {
+    enum ggml_op_pool {  // 枚举定义
         GGML_OP_POOL_MAX,
         GGML_OP_POOL_AVG,
         GGML_OP_POOL_COUNT,
@@ -2211,7 +2211,7 @@ extern "C" {
             float                 p0,
             float                 p1);
 
-    enum ggml_scale_mode {
+    enum ggml_scale_mode {  // 枚举定义
         GGML_SCALE_MODE_NEAREST  = 0,
         GGML_SCALE_MODE_BILINEAR = 1,
         GGML_SCALE_MODE_BICUBIC  = 2,
@@ -2219,7 +2219,7 @@ extern "C" {
         GGML_SCALE_MODE_COUNT
     };
 
-    enum ggml_scale_flag {
+    enum ggml_scale_flag {  // 枚举定义
         GGML_SCALE_FLAG_ALIGN_CORNERS = (1 << 8),
         GGML_SCALE_FLAG_ANTIALIAS     = (1 << 9),
     };
@@ -2344,7 +2344,7 @@ extern "C" {
             int                   max_period);
 
     // sort rows
-    enum ggml_sort_order {
+    enum ggml_sort_order {  // 枚举定义
         GGML_SORT_ORDER_ASC,
         GGML_SORT_ORDER_DESC,
     };
@@ -2541,11 +2541,11 @@ extern "C" {
 
     // custom operators
 
-    typedef void (*ggml_custom1_op_t)(struct ggml_tensor * dst , const struct ggml_tensor * a, int ith, int nth, void * userdata);
-    typedef void (*ggml_custom2_op_t)(struct ggml_tensor * dst , const struct ggml_tensor * a, const struct ggml_tensor * b, int ith, int nth, void * userdata);
-    typedef void (*ggml_custom3_op_t)(struct ggml_tensor * dst , const struct ggml_tensor * a, const struct ggml_tensor * b, const struct ggml_tensor * c, int ith, int nth, void * userdata);
+    typedef void (*ggml_custom1_op_t)(struct ggml_tensor * dst , const struct ggml_tensor * a, int ith, int nth, void * userdata);  // 类型定义
+    typedef void (*ggml_custom2_op_t)(struct ggml_tensor * dst , const struct ggml_tensor * a, const struct ggml_tensor * b, int ith, int nth, void * userdata);  // 类型定义
+    typedef void (*ggml_custom3_op_t)(struct ggml_tensor * dst , const struct ggml_tensor * a, const struct ggml_tensor * b, const struct ggml_tensor * c, int ith, int nth, void * userdata);  // 类型定义
 
-#define GGML_N_TASKS_MAX (-1)
+#define GGML_N_TASKS_MAX (-1)  // 宏定义 GGML_N_TASKS_MAX
     // n_tasks == GGML_N_TASKS_MAX means to use max number of tasks
 
     GGML_API struct ggml_tensor * ggml_map_custom1(
@@ -2596,7 +2596,7 @@ extern "C" {
             int                     n_tasks,
             void                  * userdata);
 
-    typedef void (*ggml_custom_op_t)(struct ggml_tensor * dst , int ith, int nth, void * userdata);
+    typedef void (*ggml_custom_op_t)(struct ggml_tensor * dst , int ith, int nth, void * userdata);  // 类型定义
 
     GGML_API struct ggml_tensor * ggml_custom_4d(
             struct ggml_context * ctx,
@@ -2721,7 +2721,7 @@ extern "C" {
     GGML_API void ggml_graph_dump_dot(const struct ggml_cgraph * gb, const struct ggml_cgraph * cgraph, const char * filename);
 
     // TODO these functions were sandwiched in the old optimization interface, is there a better place for them?
-    typedef void (*ggml_log_callback)(enum ggml_log_level level, const char * text, void * user_data);
+    typedef void (*ggml_log_callback)(enum ggml_log_level level, const char * text, void * user_data);  // 类型定义
 
     // Set callback for all future logging events.
     // If this is not called, or NULL is supplied, everything is output on stderr.
@@ -2759,28 +2759,28 @@ extern "C" {
                    int64_t   n_per_row,
                const float * imatrix);
 
-#ifdef __cplusplus
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
     // restrict not standard in C++
 #    if defined(__GNUC__)
-#        define GGML_RESTRICT __restrict__
+#        define GGML_RESTRICT __restrict__  // 宏定义 GGML_RESTRICT
 #    elif defined(__clang__)
-#        define GGML_RESTRICT __restrict
+#        define GGML_RESTRICT __restrict  // 宏定义 GGML_RESTRICT
 #    elif defined(_MSC_VER)
-#        define GGML_RESTRICT __restrict
+#        define GGML_RESTRICT __restrict  // 宏定义 GGML_RESTRICT
 #    else
-#        define GGML_RESTRICT
+#        define GGML_RESTRICT  // 宏定义 GGML_RESTRICT
 #    endif
-#else
+#else  // 否则
 #    if defined (_MSC_VER) && (__STDC_VERSION__ < 201112L)
-#        define GGML_RESTRICT __restrict
+#        define GGML_RESTRICT __restrict  // 宏定义 GGML_RESTRICT
 #    else
-#        define GGML_RESTRICT restrict
+#        define GGML_RESTRICT restrict  // 宏定义 GGML_RESTRICT
 #    endif
-#endif
-    typedef void (*ggml_to_float_t)  (const void  * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k);
-    typedef void (*ggml_from_float_t)(const float * GGML_RESTRICT x, void  * GGML_RESTRICT y, int64_t k);
+#endif  // 条件编译结束
+    typedef void (*ggml_to_float_t)  (const void  * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k);  // 类型定义
+    typedef void (*ggml_from_float_t)(const float * GGML_RESTRICT x, void  * GGML_RESTRICT y, int64_t k);  // 类型定义
 
-    struct ggml_type_traits {
+    struct ggml_type_traits {  // 结构体定义
         const char             * type_name;
         int64_t                  blck_size;
         int64_t                  blck_size_interleave; // interleave elements in blocks
@@ -2797,7 +2797,7 @@ extern "C" {
     // the goal should be to create an API that other backends can use move everything to the ggml base
 
     // scheduling priorities
-    enum ggml_sched_priority {
+    enum ggml_sched_priority {  // 枚举定义
         GGML_SCHED_PRIO_LOW = -1,
         GGML_SCHED_PRIO_NORMAL,
         GGML_SCHED_PRIO_MEDIUM,
@@ -2807,7 +2807,7 @@ extern "C" {
 
     // threadpool params
     // Use ggml_threadpool_params_default() or ggml_threadpool_params_init() to populate the defaults
-    struct ggml_threadpool_params {
+    struct ggml_threadpool_params {  // 结构体定义
         bool                cpumask[GGML_MAX_N_THREADS]; // mask of cpu cores (all-zeros means use default affinity settings)
         int                 n_threads;                   // number of threads
         enum ggml_sched_priority prio;                   // thread priority
@@ -2818,12 +2818,12 @@ extern "C" {
 
     struct ggml_threadpool;     // forward declaration, see ggml.c
 
-    typedef struct ggml_threadpool * ggml_threadpool_t;
+    typedef struct ggml_threadpool * ggml_threadpool_t;  // 类型定义
 
     GGML_API struct ggml_threadpool_params ggml_threadpool_params_default(int n_threads);
     GGML_API void                          ggml_threadpool_params_init   (struct ggml_threadpool_params * p, int n_threads);
     GGML_API bool                          ggml_threadpool_params_match  (const struct ggml_threadpool_params * p0, const struct ggml_threadpool_params * p1);
 
-#ifdef  __cplusplus
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束

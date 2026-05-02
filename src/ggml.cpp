@@ -1,7 +1,7 @@
-#include "ggml-impl.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
 
-#include <cstdlib>
-#include <exception>
+#include <cstdlib>  // 引入 cstdlib 头文件
+#include <exception>  // 引入 exception 头文件
 
 static std::terminate_handler previous_terminate_handler;
 
@@ -16,11 +16,11 @@ GGML_NORETURN static void ggml_uncaught_exception() {
 static bool ggml_uncaught_exception_init = []{
     const char * GGML_NO_BACKTRACE = getenv("GGML_NO_BACKTRACE");
     if (GGML_NO_BACKTRACE) {
-        return false;
+        return false;  // 返回
     }
     const auto prev{std::get_terminate()};
     GGML_ASSERT(prev != ggml_uncaught_exception);
     previous_terminate_handler = prev;
     std::set_terminate(ggml_uncaught_exception);
-    return true;
+    return true;  // 返回
 }();

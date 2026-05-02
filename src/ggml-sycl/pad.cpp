@@ -11,7 +11,7 @@
 //
 
 //#include "common.hpp"
-#include "pad.hpp"
+#include "pad.hpp"  // 引入 pad.hpp 头文件
 
 static void pad_f32(const float * src, float * dst,
                     const int lp0, const int rp0, const int lp1, const int rp1,
@@ -24,7 +24,7 @@ static void pad_f32(const float * src, float * dst,
     int i2 = item_ct1.get_group(0) % ne2;
     int i3 = item_ct1.get_group(0) / ne2;
     if (i0 >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
-        return;
+        return;  // 返回
     }
 
     // operation
@@ -92,6 +92,6 @@ void ggml_sycl_op_pad(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 }
 
 void ggml_sycl_pad(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_pad(ctx, dst);
 }

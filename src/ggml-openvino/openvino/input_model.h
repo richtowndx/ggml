@@ -1,22 +1,22 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include <openvino/frontend/input_model.hpp>
+#include <openvino/frontend/input_model.hpp>  // 引入 openvino/frontend/input_model.hpp 头文件
 
-#include "decoder.h"
+#include "decoder.h"  // 引入 decoder.h 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
 
-class FrontEnd;
-class GgmlDecoder;
-using ov::frontend::ggml::GgmlDecoder;
+class FrontEnd;  // 类定义
+class GgmlDecoder;  // 类定义
+using ov::frontend::ggml::GgmlDecoder;  // using 声明
 
-class InputModel : public ov::frontend::InputModel {
+class InputModel : public ov::frontend::InputModel {  // 类定义
     friend class ::ov::frontend::ggml::FrontEnd;
 
 public:
-    explicit InputModel(const std::shared_ptr<GgmlDecoder>& gdecoder);
+    explicit InputModel(const std::shared_ptr<GgmlDecoder>& gdecoder);  // InputModel
 
     const std::shared_ptr<GgmlDecoder>& get_model_decoder() const;
 

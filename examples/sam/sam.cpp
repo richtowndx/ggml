@@ -1,33 +1,33 @@
-#define _USE_MATH_DEFINES // for M_PI
-#define _CRT_SECURE_NO_DEPRECATE // Disables ridiculous "unsafe" warnigns on Windows
+#define _USE_MATH_DEFINES // for M_PI  // 宏定义 _USE_MATH_DEFINES
+#define _CRT_SECURE_NO_DEPRECATE // Disables ridiculous "unsafe" warnigns on Windows  // 宏定义 _CRT_SECURE_NO_DEPRECATE
 
-#include "ggml.h"
-#include "ggml-cpu.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#define STB_IMAGE_IMPLEMENTATION  // 宏定义 STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"  // 引入 stb_image.h 头文件
+#define STB_IMAGE_WRITE_IMPLEMENTATION  // 宏定义 STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"  // 引入 stb_image_write.h 头文件
 
-#include <cassert>
-#include <cmath>
-#include <cstddef>
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <map>
-#include <string>
-#include <vector>
-#include <thread>
-#include <cinttypes>
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstddef>  // 引入 cstddef 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <map>  // 引入 map 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
+#include <thread>  // 引入 thread 头文件
+#include <cinttypes>  // 引入 cinttypes 头文件
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER)  // 条件编译
 #pragma warning(disable: 4244 4267) // possible loss of data
-#endif
+#endif  // 条件编译结束
 
 // default hparams (ViT-B SAM)
-struct sam_hparams {
+struct sam_hparams {  // 结构体定义
     int32_t n_enc_state               = 768;
     int32_t n_enc_layer               = 12;
     int32_t n_enc_head                = 12;
@@ -59,7 +59,7 @@ struct sam_hparams {
                 } break;
         };
 
-        return {};
+        return {};  // 返回
     }
 
     bool is_global_attn(int32_t layer) const {
@@ -67,15 +67,15 @@ struct sam_hparams {
 
         for (const auto & idx : indices) {
             if (layer == idx) {
-                return true;
+                return true;  // 返回
             }
         }
 
-        return false;
+        return false;  // 返回
     }
 };
 
-struct sam_layer_enc {
+struct sam_layer_enc {  // 结构体定义
     struct ggml_tensor * norm1_w;
     struct ggml_tensor * norm1_b;
 
@@ -98,7 +98,7 @@ struct sam_layer_enc {
     struct ggml_tensor * mlp_lin2_b;
 };
 
-struct sam_encoder_image {
+struct sam_encoder_image {  // 结构体定义
     struct ggml_tensor * pe;
 
     struct ggml_tensor * proj_w;
@@ -114,7 +114,7 @@ struct sam_encoder_image {
     std::vector<sam_layer_enc> layers;
 };
 
-struct sam_encoder_prompt {
+struct sam_encoder_prompt {  // 结构体定义
     struct ggml_tensor * pe;
 
     struct ggml_tensor * not_a_pt_embd_w;
@@ -125,7 +125,7 @@ struct sam_encoder_prompt {
     //std::vector<struct ggml_tensor *> mask_down_b;
 };
 
-struct  sam_layer_dec_transformer_attn {
+struct  sam_layer_dec_transformer_attn {  // 结构体定义
     // q_proj
     struct ggml_tensor * q_w;
     struct ggml_tensor * q_b;
@@ -143,7 +143,7 @@ struct  sam_layer_dec_transformer_attn {
     struct ggml_tensor * out_b;
 };
 
-struct sam_layer_dec_transformer {
+struct sam_layer_dec_transformer {  // 结构体定义
     sam_layer_dec_transformer_attn self_attn;
 
     // norm1
@@ -175,7 +175,7 @@ struct sam_layer_dec_transformer {
     sam_layer_dec_transformer_attn cross_attn_img_to_token;
 };
 
-struct sam_layer_dec_output_hypernet_mlps {
+struct sam_layer_dec_output_hypernet_mlps {  // 结构体定义
     // mlps_*.layers.0
     struct ggml_tensor * w_0;
     struct ggml_tensor * b_0;
@@ -189,7 +189,7 @@ struct sam_layer_dec_output_hypernet_mlps {
     struct ggml_tensor * b_2;
 };
 
-struct sam_decoder_mask {
+struct sam_decoder_mask {  // 结构体定义
     std::vector<sam_layer_dec_transformer> transformer_layers;
 
     // trasnformer.final_attn_token_to_image
@@ -234,7 +234,7 @@ struct sam_decoder_mask {
 };
 
 
-struct sam_state {
+struct sam_state {  // 结构体定义
     struct ggml_tensor * embd_img;
 
     struct ggml_tensor * low_res_masks;
@@ -262,7 +262,7 @@ struct sam_state {
 //     ggml_build_forward_expand(gf, tmp0);
 // }
 
-struct sam_model {
+struct sam_model {  // 结构体定义
     sam_hparams hparams;
 
     sam_encoder_image  enc_img;
@@ -274,12 +274,12 @@ struct sam_model {
     std::map<std::string, struct ggml_tensor *> tensors;
 };
 
-struct sam_point {
+struct sam_point {  // 结构体定义
     float x;
     float y;
 };
 
-struct sam_box {
+struct sam_box {  // 结构体定义
     float x1;
     float y1;
     float x2;
@@ -287,7 +287,7 @@ struct sam_box {
 };
 
 // RGB uint8 image
-struct sam_image_u8 {
+struct sam_image_u8 {  // 结构体定义
     int nx;
     int ny;
 
@@ -296,25 +296,25 @@ struct sam_image_u8 {
 
 // RGB float32 image
 // Memory layout: RGBRGBRGB...
-struct sam_image_f32 {
+struct sam_image_f32 {  // 结构体定义
     int nx;
     int ny;
 
     std::vector<float> data;
 };
 
-enum sam_prompt_type {
+enum sam_prompt_type {  // 枚举定义
     SAM_PROMPT_TYPE_POINT = 0,
     SAM_PROMPT_TYPE_BOX = 1,
 };
 
-struct sam_prompt {
+struct sam_prompt {  // 结构体定义
     sam_prompt_type prompt_type = SAM_PROMPT_TYPE_POINT;
     sam_point pt = { 414.375f, 162.796875f, };
     sam_box   box = { 368.0f, 144.0f, 441.0f, 173.0f };
 };
 
-struct sam_params {
+struct sam_params {  // 结构体定义
     int32_t seed      = -1; // RNG seed
     int32_t n_threads = std::min(4, (int32_t) std::thread::hardware_concurrency());
 
@@ -419,7 +419,7 @@ bool sam_image_load_from_file(const std::string & fname, sam_image_u8 & img) {
     auto data = stbi_load(fname.c_str(), &nx, &ny, &nc, 3);
     if (!data) {
         fprintf(stderr, "%s: failed to load '%s'\n", __func__, fname.c_str());
-        return false;
+        return false;  // 返回
     }
 
     img.nx = nx;
@@ -429,7 +429,7 @@ bool sam_image_load_from_file(const std::string & fname, sam_image_u8 & img) {
 
     stbi_image_free(data);
 
-    return true;
+    return true;  // 返回
 }
 
 // ref: https://github.com/facebookresearch/segment-anything/blob/efeab7296ab579d4a261e554eca80faf6b33924a/segment_anything/modeling/sam.py#L164
@@ -501,7 +501,7 @@ bool sam_image_preprocess(const sam_image_u8 & img, sam_image_f32 & res) {
         }
     }
 
-    return true;
+    return true;  // 返回
 }
 
 // load the model's weights from a file
@@ -511,7 +511,7 @@ bool sam_model_load(const sam_params & params, sam_model & model) {
     auto fin = std::ifstream(params.model, std::ios::binary);
     if (!fin) {
         fprintf(stderr, "%s: failed to open '%s'\n", __func__, params.model.c_str());
-        return false;
+        return false;  // 返回
     }
 
     // verify magic
@@ -520,7 +520,7 @@ bool sam_model_load(const sam_params & params, sam_model & model) {
         fin.read((char *) &magic, sizeof(magic));
         if (magic != 0x67676d6c) {
             fprintf(stderr, "%s: invalid model file '%s' (bad magic)\n", __func__, params.model.c_str());
-            return false;
+            return false;  // 返回
         }
     }
 
@@ -563,7 +563,7 @@ bool sam_model_load(const sam_params & params, sam_model & model) {
     if (wtype == GGML_TYPE_COUNT) {
         fprintf(stderr, "%s: invalid model file '%s' (bad ftype value %d)\n",
                 __func__, params.model.c_str(), model.hparams.ftype);
-        return false;
+        return false;  // 返回
     }
 
     auto & ctx = model.ctx;
@@ -712,12 +712,12 @@ bool sam_model_load(const sam_params & params, sam_model & model) {
         }
         fprintf(stderr, "%s: ggml ctx size = %6.2f MB\n", __func__, ctx_size/(1024.0*1024.0));
 
-        return ctx_size;
+        return ctx_size;  // 返回
     }();
 
     // create the ggml context
     {
-        struct ggml_init_params params = {
+        struct ggml_init_params params = {  // 结构体定义
             /*.mem_size   =*/ ctx_size,
             /*.mem_buffer =*/ NULL,
             /*.no_alloc   =*/ false,
@@ -726,7 +726,7 @@ bool sam_model_load(const sam_params & params, sam_model & model) {
         ctx = ggml_init(params);
         if (!ctx) {
             fprintf(stderr, "%s: ggml_init() failed\n", __func__);
-            return false;
+            return false;  // 返回
         }
     }
 
@@ -1064,7 +1064,7 @@ bool sam_model_load(const sam_params & params, sam_model & model) {
 
             if (model.tensors.find(name.data()) == model.tensors.end()) {
                 fprintf(stderr, "%s: unknown tensor '%s' in model file\n", __func__, name.data());
-                return false;
+                return false;  // 返回
             }
 
             auto tensor = model.tensors[name.data()];
@@ -1073,7 +1073,7 @@ bool sam_model_load(const sam_params & params, sam_model & model) {
             if (ggml_nelements(tensor) != nelements) {
                 fprintf(stderr, "%s: tensor '%s' has wrong size in model file: got %d, expected %d\n",
                         __func__, name.data(), (int) nelements, (int) ggml_nelements(tensor));
-                return false;
+                return false;  // 返回
             }
 
             if (tensor->ne[0] != ne[0] || tensor->ne[1] != ne[1] || tensor->ne[2] != ne[2] || tensor->ne[3] != ne[3]) {
@@ -1081,7 +1081,7 @@ bool sam_model_load(const sam_params & params, sam_model & model) {
                         __func__, name.data(),
                         (int) ne[0], (int) ne[1], (int) ne[2], (int) ne[3],
                         (int) tensor->ne[0], (int) tensor->ne[1], (int) tensor->ne[2], (int) tensor->ne[3]);
-                return false;
+                return false;  // 返回
             }
 
             size_t bpe = 0;
@@ -1094,14 +1094,14 @@ bool sam_model_load(const sam_params & params, sam_model & model) {
                 default:
                         {
                             fprintf(stderr, "%s: unknown ftype %d in model file\n", __func__, ftype);
-                            return false;
+                            return false;  // 返回
                         }
             };
 
             if ((nelements*bpe)/ggml_blck_size(tensor->type) != ggml_nbytes(tensor)) {
                 fprintf(stderr, "%s: tensor '%s' has wrong size in model file: got %zu, expected %zu\n",
                         __func__, name.data(), ggml_nbytes(tensor), (size_t) nelements*bpe);
-                return false;
+                return false;  // 返回
             }
 
             fin.read(reinterpret_cast<char *>(tensor->data), ggml_nbytes(tensor));
@@ -1115,7 +1115,7 @@ bool sam_model_load(const sam_params & params, sam_model & model) {
 
         if (n_tensors != int(model.tensors.size())) {
             fprintf(stderr, "%s: model file has %d tensors, but %d tensors were expected\n", __func__, n_tensors, (int) model.tensors.size());
-            return false;
+            return false;  // 返回
         }
 
         fprintf(stderr, " done\n");
@@ -1125,7 +1125,7 @@ bool sam_model_load(const sam_params & params, sam_model & model) {
 
     fin.close();
 
-    return true;
+    return true;  // 返回
 }
 
 struct ggml_tensor * sam_fill_dense_pe(
@@ -1161,7 +1161,7 @@ struct ggml_tensor * sam_fill_dense_pe(
     struct ggml_tensor * pe_img_dense = ggml_cont(ctx0, ggml_permute(ctx0, cur, 2, 0, 1, 3));
     ggml_build_forward_expand(gf, pe_img_dense);
 
-    return pe_img_dense;
+    return pe_img_dense;  // 返回
 }
 
 struct ggml_tensor* sam_layer_norm_2d(
@@ -1184,7 +1184,7 @@ struct ggml_tensor* sam_layer_norm_2d(
                   layer),
               ggml_repeat(ctx0, ggml_reshape_3d(ctx0, b, 1, 1, n_channels), layer));
 
-    return layer;
+    return layer;  // 返回
 }
 
 struct ggml_cgraph  * sam_encode_image(
@@ -1203,7 +1203,7 @@ struct ggml_cgraph  * sam_encode_image(
     const int32_t n_img_size    = hparams.n_img_size();
     const int32_t n_window_size = hparams.n_window_size();
 
-    struct ggml_init_params ggml_params = {
+    struct ggml_init_params ggml_params = {  // 结构体定义
         /*.mem_size   =*/ state.buf_compute_img_enc.size(),
         /*.mem_buffer =*/ state.buf_compute_img_enc.data(),
         /*.no_alloc   =*/ true, // skip allocating as we use ggml_alloc to allocate exact memory requirements
@@ -1405,20 +1405,20 @@ struct ggml_cgraph  * sam_encode_image(
         }
     }
 
-    return gf;
+    return gf;  // 返回
 }
 
 
-struct prompt_encoder_result {
-    struct ggml_tensor * embd_prompt_sparse = {};
-    struct ggml_tensor * embd_prompt_dense = {};
+struct prompt_encoder_result {  // 结构体定义
+    struct ggml_tensor * embd_prompt_sparse = {};  // 结构体定义
+    struct ggml_tensor * embd_prompt_dense = {};  // 结构体定义
 };
 
 struct ggml_tensor * sam_prompt_encode_pe_encoding(
         const sam_encoder_prompt & enc,
         struct ggml_context      * ctx0,
         struct ggml_cgraph       * gf,
-        struct ggml_tensor       * coords) {
+        struct ggml_tensor       * coords) {  // 结构体定义
 
     auto * cur = ggml_mul_mat(ctx0, ggml_cont(ctx0, ggml_transpose(ctx0, enc.pe)), coords);
     cur = ggml_scale(ctx0, cur, float(2.0*M_PI));
@@ -1435,7 +1435,7 @@ struct ggml_tensor * sam_prompt_encode_pe_encoding(
         ggml_build_forward_expand(gf, ggml_cpy(ctx0, t_cos, ggml_view_2d(ctx0, cur, t_sin->ne[0], t_sin->ne[1], cur->nb[1], t_sin->nb[1])));
 
     }
-    return cur;
+    return cur;  // 返回
 
 }
 // encode a prompt
@@ -1477,7 +1477,7 @@ prompt_encoder_result sam_encode_prompt(
             auto * pt_embd1 = ggml_view_2d(ctx0, pt_embd, pt_embd->ne[0], 1, pt_embd->nb[1], 0);
             ggml_build_forward_expand(gf,  ggml_add_inplace(ctx0, pt_embd1, enc.pt_embd[1]));
 
-            return pt_embd;
+            return pt_embd;  // 返回
         } break;
         case SAM_PROMPT_TYPE_BOX: {
             // PromptEncoder._embed_boxes
@@ -1493,11 +1493,11 @@ prompt_encoder_result sam_encode_prompt(
             ggml_build_forward_expand(gf, ggml_add_inplace(ctx0, corner0, enc.pt_embd[2]));
             ggml_build_forward_expand(gf, ggml_add_inplace(ctx0, corner1, enc.pt_embd[3]));
 
-            return corner_embd;
+            return corner_embd;  // 返回
         } break;
         default: {
             fprintf(stderr, "%s: unsupported prompt type %d\n", __func__, prompt.prompt_type);
-            return nullptr;
+            return nullptr;  // 返回
         } break;
         }
     }();
@@ -1517,7 +1517,7 @@ prompt_encoder_result sam_encode_prompt(
     prompt_encoder_result res;
     res.embd_prompt_sparse = embd_prompt_sparse;
     res.embd_prompt_dense  = embd_prompt_dense;
-    return res;
+    return res;  // 返回
 }
 
 struct ggml_tensor* sam_decode_mask_transformer_attn(
@@ -1530,9 +1530,9 @@ struct ggml_tensor* sam_decode_mask_transformer_attn(
     const auto & hparams = model.hparams;
     const int n_head = hparams.n_dec_heads;
 
-    struct ggml_tensor * Qcur = {};
-    struct ggml_tensor * Kcur = {};
-    struct ggml_tensor * Vcur = {};
+    struct ggml_tensor * Qcur = {};  // 结构体定义
+    struct ggml_tensor * Kcur = {};  // 结构体定义
+    struct ggml_tensor * Vcur = {};  // 结构体定义
 
     Qcur = ggml_mul_mat(ctx0, attn.q_w, queries);
     Qcur = ggml_add_inplace(ctx0, Qcur, attn.q_b);
@@ -1543,9 +1543,9 @@ struct ggml_tensor* sam_decode_mask_transformer_attn(
     Vcur = ggml_mul_mat(ctx0, attn.v_w, values);
     Vcur = ggml_add_inplace(ctx0, Vcur, attn.v_b);
 
-    struct ggml_tensor * Q = {};
-    struct ggml_tensor * K = {};
-    struct ggml_tensor * V = {};
+    struct ggml_tensor * Q = {};  // 结构体定义
+    struct ggml_tensor * K = {};  // 结构体定义
+    struct ggml_tensor * V = {};  // 结构体定义
 
     Q = ggml_reshape_4d(ctx0, Qcur, Qcur->ne[0]/n_head, n_head, Qcur->ne[1], Qcur->ne[2]);
     Q = ggml_cont(ctx0, ggml_permute(ctx0, Q, 0, 2, 1, 3));
@@ -1571,7 +1571,7 @@ struct ggml_tensor* sam_decode_mask_transformer_attn(
     KQV_merged = ggml_mul_mat(ctx0, attn.out_w, KQV_merged);
     KQV_merged = ggml_add_inplace(ctx0, KQV_merged, attn.out_b);
 
-    return KQV_merged;
+    return KQV_merged;  // 返回
 }
 
 struct ggml_tensor * sam_decode_mask_mlp_relu_3(
@@ -1582,9 +1582,9 @@ struct ggml_tensor * sam_decode_mask_mlp_relu_3(
      struct ggml_tensor * b_1,
      struct ggml_tensor * w_2,
      struct ggml_tensor * b_2,
-    struct ggml_context * ctx0) {
+    struct ggml_context * ctx0) {  // 结构体定义
 
-    struct ggml_tensor * cur = {};
+    struct ggml_tensor * cur = {};  // 结构体定义
     cur = ggml_mul_mat(ctx0, w_0, in);
     cur = ggml_add_inplace(ctx0, cur, b_0);
 
@@ -1598,7 +1598,7 @@ struct ggml_tensor * sam_decode_mask_mlp_relu_3(
     cur = ggml_mul_mat(ctx0, w_2, cur);
     cur = ggml_add_inplace(ctx0, cur, b_2);
 
-    return cur;
+    return cur;  // 返回
 }
 
 bool sam_decode_mask(
@@ -1614,7 +1614,7 @@ bool sam_decode_mask(
     const auto & dec = model.dec;
     const int n_img_embd = hparams.n_img_embd();
 
-    struct ggml_tensor * tokens = {};
+    struct ggml_tensor * tokens = {};  // 结构体定义
     {
         // Concatenate output tokens
         // ref: https://github.com/facebookresearch/segment-anything/blob/6fdee8f2727f4506cfbbe553e23b895e27956588/segment_anything/modeling/mask_decoder.py#L120
@@ -1630,8 +1630,8 @@ bool sam_decode_mask(
     }
 
 
-    struct ggml_tensor * src = {};
-    struct ggml_tensor * pos_src = {};
+    struct ggml_tensor * src = {};  // 结构体定义
+    struct ggml_tensor * pos_src = {};  // 结构体定义
     int srcNE[4] = { 0, 0, 0, 0 };
     {
         // Expand per-image data in the batch direction to be per-mask
@@ -1777,7 +1777,7 @@ bool sam_decode_mask(
     keys = ggml_cont(ctx0, ggml_transpose(ctx0, keys));
     keys = ggml_view_4d(ctx0, keys, srcNE[0], srcNE[1], srcNE[2], srcNE[3], srcNE[0]*keys->nb[0], keys->nb[1], keys->nb[2], 0);
     // ggml_build_forward_expand(gf, keys);
-    struct ggml_tensor * upscaled_embedding = {};
+    struct ggml_tensor * upscaled_embedding = {};  // 结构体定义
     {
         // ConvTranspose2d
         keys = ggml_conv_transpose_2d_p0(ctx0, dec.output_upscaling_0_w, keys, 2);
@@ -1840,14 +1840,14 @@ bool sam_decode_mask(
     ggml_disconnect_node_from_graph(state.low_res_masks);
     ggml_disconnect_node_from_graph(state.iou_predictions);
 
-    return true;
+    return true;  // 返回
 }
 
 bool sam_write_masks(const sam_hparams& hparams, int nx, int ny, const sam_state & state, const std::string & fname, const bool multimask_output) {
     if (state.low_res_masks->ne[2] == 0) return true;
     if (state.low_res_masks->ne[2] != state.iou_predictions->ne[0]) {
         printf("Error: number of masks (%d) does not match number of iou predictions (%d)\n", (int)state.low_res_masks->ne[2], (int)state.iou_predictions->ne[0]);
-        return false;
+        return false;  // 返回
     }
 
     const int n_img_size = hparams.n_img_size();
@@ -1993,12 +1993,12 @@ bool sam_write_masks(const sam_hparams& hparams, int nx, int ny, const sam_state
         const std::string filename = multimask_output ? fname + std::to_string(i) + ".png" : fname + ".png";
         if (!stbi_write_png(filename.c_str(), res.nx, res.ny, 1, res.data.data(), res.nx)) {
             printf("%s: failed to write mask %s\n", __func__, filename.c_str());
-            return false;
+            return false;  // 返回
         }
     }
 
 
-    return true;
+    return true;  // 返回
 }
 
 
@@ -2010,7 +2010,7 @@ struct ggml_cgraph  * sam_build_fast_graph(
         const sam_prompt & prompt,
               const bool   multimask_output) {
 
-    struct ggml_init_params ggml_params = {
+    struct ggml_init_params ggml_params = {  // 结构体定义
         /*.mem_size   =*/ state.buf_compute_fast.size(),
         /*.mem_buffer =*/ state.buf_compute_fast.data(),
         /*.no_alloc   =*/ true, // skip allocating as we use ggml_alloc to allocate exact memory requirements
@@ -2022,18 +2022,18 @@ struct ggml_cgraph  * sam_build_fast_graph(
     prompt_encoder_result enc_res = sam_encode_prompt(model, ctx0, gf, state, prompt);
     if (!enc_res.embd_prompt_sparse || !enc_res.embd_prompt_dense) {
         fprintf(stderr, "%s: failed to encode prompt\n", __func__);
-        return {};
+        return {};  // 返回
     }
 
     struct ggml_tensor * pe_img_dense = sam_fill_dense_pe(model, ctx0, gf, state);
     if (!pe_img_dense) {
         fprintf(stderr, "%s: failed to get dense positional encoding\n", __func__);
-        return {};
+        return {};  // 返回
     }
 
     if (!sam_decode_mask(model, enc_res, pe_img_dense, ctx0, gf, state, multimask_output)) {
          fprintf(stderr, "%s: failed to decode mask\n", __func__);
-         return {};
+         return {};  // 返回
     }
 
     ggml_free(ctx0);
@@ -2090,7 +2090,7 @@ struct ggml_cgraph  * sam_build_fast_graph(
         }
     }
 
-    return gf;
+    return gf;  // 返回
 }
 
 void sam_print_usage(int argc, char ** argv, const sam_params & params) {
@@ -2225,7 +2225,7 @@ bool sam_params_parse(int argc, char ** argv, sam_params & params) {
         params.prompt.prompt_type = SAM_PROMPT_TYPE_BOX;
     }
 
-    return true;
+    return true;  // 返回
 }
 
 
@@ -2241,7 +2241,7 @@ int main(int argc, char ** argv) {
     int64_t t_load_us = 0;
 
     if (sam_params_parse(argc, argv, params) == false) {
-        return 1;
+        return 1;  // 返回
     }
 
     if (params.seed < 0) {
@@ -2253,7 +2253,7 @@ int main(int argc, char ** argv) {
     sam_image_u8 img0;
     if (!sam_image_load_from_file(params.fname_inp, img0)) {
         fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, params.fname_inp.c_str());
-        return 1;
+        return 1;  // 返回
     }
     fprintf(stderr, "%s: loaded image '%s' (%d x %d)\n", __func__, params.fname_inp.c_str(), img0.nx, img0.ny);
 
@@ -2261,7 +2261,7 @@ int main(int argc, char ** argv) {
     sam_image_f32 img1;
     if (!sam_image_preprocess(img0, img1)) {
         fprintf(stderr, "%s: failed to preprocess image\n", __func__);
-        return 1;
+        return 1;  // 返回
     }
     fprintf(stderr, "%s: preprocessed image (%d x %d)\n", __func__, img1.nx, img1.ny);
 
@@ -2272,7 +2272,7 @@ int main(int argc, char ** argv) {
 
         if (!sam_model_load(params, model)) {
             fprintf(stderr, "%s: failed to load model from '%s'\n", __func__, params.model.c_str());
-            return 1;
+            return 1;  // 返回
         }
 
         t_load_us = ggml_time_us() - t_start_us;
@@ -2281,7 +2281,7 @@ int main(int argc, char ** argv) {
     {
         static size_t buf_size = 256u*1024*1024;
 
-        struct ggml_init_params ggml_params = {
+        struct ggml_init_params ggml_params = {  // 结构体定义
             /*.mem_size   =*/ buf_size,
             /*.mem_buffer =*/ NULL,
             /*.no_alloc   =*/ false,
@@ -2306,7 +2306,7 @@ int main(int argc, char ** argv) {
         struct ggml_cgraph  * gf = sam_encode_image(model, state, img1);
         if (!gf) {
             fprintf(stderr, "%s: failed to encode image\n", __func__);
-            return 1;
+            return 1;  // 返回
         }
 
         ggml_graph_compute_helper(state.work_buffer, gf, params.n_threads);
@@ -2339,7 +2339,7 @@ int main(int argc, char ** argv) {
         struct ggml_cgraph * gf = sam_build_fast_graph(model, state, img0.nx, img0.ny, params.prompt, params.multimask_output);
         if (!gf) {
             fprintf(stderr, "%s: failed to build fast graph\n", __func__);
-            return 1;
+            return 1;  // 返回
         }
 
         ggml_graph_compute_helper(state.work_buffer, gf, params.n_threads);
@@ -2352,7 +2352,7 @@ int main(int argc, char ** argv) {
 
     if (!sam_write_masks(model.hparams, img0.nx, img0.ny, state, params.fname_out, params.multimask_output)) {
         fprintf(stderr, "%s: failed to write masks\n", __func__);
-        return 1;
+        return 1;  // 返回
     }
 
     // report timing
@@ -2366,5 +2366,5 @@ int main(int argc, char ** argv) {
 
     ggml_free(model.ctx);
 
-    return 0;
+    return 0;  // 返回
 }

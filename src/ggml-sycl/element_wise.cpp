@@ -1,7 +1,7 @@
-#include "common.hpp"
-#include "ggml-sycl/presets.hpp"
-#include "ggml.h"
-#include "element_wise.hpp"
+#include "common.hpp"  // 引入 common.hpp 头文件
+#include "ggml-sycl/presets.hpp"  // 引入 ggml-sycl/presets.hpp 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "element_wise.hpp"  // 引入 element_wise.hpp 头文件
 
 #define SYCL_GLOBAL_ID_LOOP(K, ITEM) \
     for (auto i = ITEM.get_global_id(0); i < (size_t)K; i += ITEM.get_global_range(0))
@@ -16,7 +16,7 @@ static void acc_f32(const float * x, const float * y, float * dst, const int64_t
     const int64_t i = SYCL_LOCAL_ID_CALC(item_ct1, 2);
 
     if (i >= ne) {
-        return;
+        return;  // 返回
     }
 
     int64_t src1_idx = i - offset;
@@ -38,22 +38,22 @@ static void acc_f32(const float * x, const float * y, float * dst, const int64_t
 }
 
 /* Unary OP funcs */
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_sgn(T x) {
     return x > static_cast<T>(0.f) ? static_cast<T>(1.f) : ((x < static_cast<T>(0.f) ? static_cast<T>(-1.f) : static_cast<T>(0.f)));
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_abs(T x) {
     return sycl::fabs(x);
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_elu(T x) {
     return (x > static_cast<T>(0.f)) ? x : sycl::expm1(x);
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_gelu(T x) {
     const T GELU_COEF_A    = static_cast<T>(0.044715f);
     const T SQRT_2_OVER_PI = static_cast<T>(0.79788456080286535587989211986876f);
@@ -62,69 +62,69 @@ static __dpct_inline__ T op_gelu(T x) {
             sycl::tanh(SQRT_2_OVER_PI * x * (static_cast<T>(1.0f) + GELU_COEF_A * x * x)));
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_silu(T x) {
     return x / (static_cast<T>(1.0f) + sycl::native::exp(-x));
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_gelu_quick(T x) {
     const T GELU_QUICK_COEF_LOCAL = static_cast<T>(-1.702f);
     return x * (static_cast<T>(1.0f) / (static_cast<T>(1.0f) + sycl::native::exp(GELU_QUICK_COEF_LOCAL * x)));
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_gelu_erf(T x) {
     const T SQRT_2_INV = static_cast<T>(0.70710678118654752440084436210484f);
     return static_cast<T>(0.5f) * x * (static_cast<T>(1.0f) + sycl::erf(x * SQRT_2_INV));
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_tanh(T x) {
     return sycl::tanh(x);
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_relu(T x) {
     return sycl::fmax(x, static_cast<T>(0));
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_sigmoid(T x) {
     return static_cast<T>(1.0f) / (static_cast<T>(1.0f) + sycl::native::exp(-x));
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_sqrt(T x) {
     return sycl::sqrt(x);
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_sin(T x) {
     return sycl::sin(x);
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_cos(T x) {
     return sycl::cos(x);
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_hardsigmoid(T x) {
     return sycl::fmin(static_cast<T>(1.0f), sycl::fmax(static_cast<T>(0.0f), (x + static_cast<T>(3.0f)) / static_cast<T>(6.0f)));
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_hardswish(T x) {
     return x * sycl::fmin(static_cast<T>(1.0f), sycl::fmax(static_cast<T>(0.0f), (x + static_cast<T>(3.0f)) / static_cast<T>(6.0f)));
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_exp(T x) {
     return sycl::exp(x);
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_log(T x) {
     if (x <= static_cast<T>(0)) {
         return neg_infinity<T>();
@@ -132,7 +132,7 @@ static __dpct_inline__ T op_log(T x) {
     return sycl::log(x);
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_softplus(T x) {
     const float xf = (float) x;
     const float ax = sycl::fabs(xf);
@@ -141,54 +141,54 @@ static __dpct_inline__ T op_softplus(T x) {
     return (T) y;
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_neg(T x) {
-    return -x;
+    return -x;  // 返回
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_step(T x) {
     return (x > static_cast<T>(0.0f)) ? static_cast<T>(1.0f) : static_cast<T>(0.0f);
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_leaky_relu(T x, float negative_slope) {
     T neg_slope_T = static_cast<T>(negative_slope);
     return sycl::fmax(x, static_cast<T>(0)) +
            sycl::fmin(x, static_cast<T>(0.0f)) * neg_slope_T;
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_sqr(T x) {
-    return x * x;
+    return x * x;  // 返回
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_clamp(T x, float min_val, float max_val) {
     return x < static_cast<T>(min_val) ? static_cast<T>(min_val) : (x > static_cast<T>(max_val) ? static_cast<T>(max_val) : x);
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_floor(T x) {
     return sycl::floor(x);
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_ceil(T x) {
     return sycl::ceil(x);
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_round(T x) {
     return sycl::round(x);
 }
 
-template<typename T>
+template<typename T>  // 模板
 static __dpct_inline__ T op_trunc(T x) {
     return sycl::trunc(x);
 }
 
-template<typename T, typename F>
+template<typename T, typename F>  // 模板
 static void unary_op_generic_kernel(
         const T * x,
         T * dst,
@@ -216,28 +216,28 @@ static void unary_op_generic_kernel(
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void unary_op_sqrt_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         dst[i] = op_sqrt(x[i]);
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void unary_op_sin_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         dst[i] = op_sin(x[i]);
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void unary_op_cos_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         dst[i] = op_cos(x[i]);
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void unary_op_log_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         dst[i] = op_log(x[i]);
@@ -245,56 +245,56 @@ static void unary_op_log_kernel(const T * x, T * dst, const int k, const sycl::n
 }
 
 
-template<typename T>
+template<typename T>  // 模板
 static void unary_op_leaky_relu_kernel(const T * x, T * dst, const int k, float negative_slope, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         dst[i] = op_leaky_relu(x[i], negative_slope);
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void unary_op_sqr_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         dst[i] = op_sqr(x[i]);
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void unary_op_clamp_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1, float min_val, float max_val) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         dst[i] = op_clamp(x[i], min_val, max_val);
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void unary_op_floor_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         dst[i] = op_floor(x[i]);
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void unary_op_ceil_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         dst[i] = op_ceil(x[i]);
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void unary_op_round_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         dst[i] = op_round(x[i]);
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void unary_op_trunc_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         dst[i] = op_trunc(x[i]);
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void clamp(const T * x, T * dst, const float min, const float max, const int k,
                       const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
@@ -302,7 +302,7 @@ static void clamp(const T * x, T * dst, const float min, const float max, const 
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void gated_op_fused_geglu(const T * x, const T * g, T * dst, const uint64_t k, const uint64_t n, const uint64_t o0, const uint64_t o1, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         const int64_t j0 = (i / n) * o0 + (i % n);
@@ -311,7 +311,7 @@ static void gated_op_fused_geglu(const T * x, const T * g, T * dst, const uint64
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void gated_op_fused_reglu(const T * x, const T * g, T * dst, const uint64_t k, const uint64_t n, const uint64_t o0, const uint64_t o1, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         const int64_t j0 = (i / n) * o0 + (i % n);
@@ -320,7 +320,7 @@ static void gated_op_fused_reglu(const T * x, const T * g, T * dst, const uint64
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void gated_op_fused_swiglu(const T * x, const T * g, T * dst, const uint64_t k, const uint64_t n, const uint64_t o0, const uint64_t o1, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1)  {
         const int64_t j0 = (i / n) * o0 + (i % n);
@@ -329,7 +329,7 @@ static void gated_op_fused_swiglu(const T * x, const T * g, T * dst, const uint6
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void gated_op_fused_geglu_erf(const T * x, const T * g, T * dst, const uint64_t k, const uint64_t n, const uint64_t o0, const uint64_t o1, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         const int64_t j0 = (i / n) * o0 + (i % n);
@@ -338,7 +338,7 @@ static void gated_op_fused_geglu_erf(const T * x, const T * g, T * dst, const ui
     }
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void gated_op_fused_geglu_quick(const T * x, const T * g, T * dst, const uint64_t k, const uint64_t n, const uint64_t o0, const uint64_t o1, const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
         const int64_t j0 = (i / n) * o0 + (i % n);
@@ -347,7 +347,7 @@ static void gated_op_fused_geglu_quick(const T * x, const T * g, T * dst, const 
     }
 }
 
-namespace ggml_sycl_detail {
+namespace ggml_sycl_detail {  // 命名空间
 static void acc_f32_sycl(const float *x, const float *y, float *dst,
                          const int64_t n_elements, const int64_t ne10, const int64_t ne11,
                          const int64_t ne12, const int64_t ne13, const int64_t s1, const int64_t s2, const int64_t s3,
@@ -360,7 +360,7 @@ static void acc_f32_sycl(const float *x, const float *y, float *dst,
                          });
 }
 
-template<typename T>
+template<typename T>  // 模板
 static void arange_kernel(T * dst, const int k, T start, T step,
                          const sycl::nd_item<1> &item_ct1) {
     SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
@@ -368,7 +368,7 @@ static void arange_kernel(T * dst, const int k, T start, T step,
     }
 }
 
-template<typename KernelInvoker, typename... Args>
+template<typename KernelInvoker, typename... Args>  // 模板
 static inline void dispatch_ggml_sycl_op_unary(ggml_backend_sycl_context & ctx, ggml_tensor * dst, KernelInvoker kernel_invoker, Args&&... args) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32 || dst->src[0]->type == GGML_TYPE_F16);
     GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16);
@@ -394,7 +394,7 @@ static inline void dispatch_ggml_sycl_op_unary(ggml_backend_sycl_context & ctx, 
     }
 }
 
-template<typename KernelInvoker, typename... Args>
+template<typename KernelInvoker, typename... Args>  // 模板
 static inline void dispatch_ggml_sycl_op_fused_glu(ggml_backend_sycl_context & ctx, ggml_tensor * dst, KernelInvoker kernel_invoker, Args&&... args) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32 || dst->src[0]->type == GGML_TYPE_F16);
     GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16);
@@ -467,7 +467,7 @@ static inline void dispatch_ggml_sycl_op_fused_glu(ggml_backend_sycl_context & c
     }
 }
 
-template<typename F>
+template<typename F>  // 模板
 static inline void ggml_sycl_op_unary(
         ggml_backend_sycl_context & ctx, ggml_tensor * dst, F func) {
 
@@ -535,73 +535,73 @@ static inline void ggml_sycl_op_arange(ggml_backend_sycl_context & ctx, ggml_ten
 
 static inline void ggml_sycl_op_sgn(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_sgn(x);
+        return op_sgn(x);  // op_sgn
     });
 }
 
 
 static inline void ggml_sycl_op_abs(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_abs(x);
+        return op_abs(x);  // op_abs
     });
 }
 
 static inline void ggml_sycl_op_elu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_elu(x);
+        return op_elu(x);  // op_elu
     });
 }
 static inline void ggml_sycl_op_silu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_silu(x);
+        return op_silu(x);  // op_silu
     });
 }
 
 static inline void ggml_sycl_op_gelu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_gelu(x);
+        return op_gelu(x);  // op_gelu
     });
 }
 
 static inline void ggml_sycl_op_gelu_quick(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_gelu_quick(x);
+        return op_gelu_quick(x);  // op_gelu_quick
     });
 }
 
 static inline void ggml_sycl_op_gelu_erf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_gelu_erf(x);
+        return op_gelu_erf(x);  // op_gelu_erf
     });
 }
 
 static inline void ggml_sycl_op_tanh(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_tanh(x);
+        return op_tanh(x);  // op_tanh
     });
 }
 
 static inline void ggml_sycl_op_relu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_relu(x);
+        return op_relu(x);  // op_relu
     });
 }
 
 static inline void ggml_sycl_op_hardsigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_hardsigmoid(x);
+        return op_hardsigmoid(x);  // op_hardsigmoid
     });
 }
 
 static inline void ggml_sycl_op_hardswish(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_hardswish(x);
+        return op_hardswish(x);  // op_hardswish
     });
 }
 
 static inline void ggml_sycl_op_exp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_exp(x);
+        return op_exp(x);  // op_exp
     });
 }
 
@@ -620,26 +620,26 @@ static inline void ggml_sycl_op_log(ggml_backend_sycl_context & ctx, ggml_tensor
 
 static inline void ggml_sycl_op_softplus(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_softplus(x);
+        return op_softplus(x);  // op_softplus
     });
 }
 
 static inline void ggml_sycl_op_neg(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_neg(x);
+        return op_neg(x);  // op_neg
     });
 }
 
 
 static inline void ggml_sycl_op_step(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_step(x);
+        return op_step(x);  // op_step
     });
 }
 
 static inline void ggml_sycl_op_sigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_sigmoid(x);
+        return op_sigmoid(x);  // op_sigmoid
     });
 }
 
@@ -742,7 +742,7 @@ static inline void ggml_sycl_op_floor(ggml_backend_sycl_context & ctx, ggml_tens
 
 static inline void ggml_sycl_op_ceil(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_ceil(x);
+        return op_ceil(x);  // op_ceil
     });
 }
 
@@ -839,18 +839,18 @@ __dpct_inline__ float ggml_sycl_op_swiglu_oai_single(float x, float g, float alp
 
     float out_glu = x / (1.0f + sycl::native::exp(-x * alpha));
     out_glu = out_glu * (1.0f + g);
-    return out_glu;
+    return out_glu;  // 返回
 }
 
 
-template <typename T>
+template <typename T>  // 模板
 static void swiglu_oai_kernel(const T * x, const T * g, T * dst, const int64_t k,
                               const int64_t n, const int64_t o0, const int64_t o1,
                               float alpha, float limit, sycl::nd_item<3> item_ct1) {
     const int64_t i = int64_t(item_ct1.get_local_range(2)) * item_ct1.get_group(2) + item_ct1.get_local_id(2);
 
     if (i >= k) {
-        return;
+        return;  // 返回
     }
 
     const int64_t j0 = (i / n) * o0 + (i % n);
@@ -862,7 +862,7 @@ static void swiglu_oai_kernel(const T * x, const T * g, T * dst, const int64_t k
     dst[i] = ggml_sycl_op_swiglu_oai_single(xi, gi, alpha, limit);
 }
 
-template <typename T>
+template <typename T>  // 模板
 static void swiglu_oai_sycl(const T *       x,
                             const T *       g,
                             T *             dst,
@@ -949,176 +949,176 @@ static inline void ggml_sycl_op_geglu_quick(ggml_backend_sycl_context & ctx, ggm
 
 
 void ggml_sycl_sqrt(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_sqrt(ctx, dst);
 }
 
 void ggml_sycl_sin(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_sin(ctx, dst);
 }
 
 void ggml_sycl_cos(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_cos(ctx, dst);
 }
 
 void ggml_sycl_acc(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     ggml_sycl_op_acc(ctx, dst);
 }
 
 void ggml_sycl_gelu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_gelu(ctx, dst);
 }
 
 void ggml_sycl_silu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_silu(ctx, dst);
 }
 
 void ggml_sycl_gelu_quick(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_gelu_quick(ctx, dst);
 }
 
 void ggml_sycl_gelu_erf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_gelu_erf(ctx, dst);
 }
 
 void ggml_sycl_tanh(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_tanh(ctx, dst);
 }
 
 void ggml_sycl_relu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_relu(ctx, dst);
 }
 
 void ggml_sycl_sigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_sigmoid(ctx, dst);
 }
 
 void ggml_sycl_hardsigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_hardsigmoid(ctx, dst);
 }
 
 void ggml_sycl_hardswish(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_hardswish(ctx, dst);
 }
 
 void ggml_sycl_exp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_exp(ctx, dst);
 }
 
 void ggml_sycl_log(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_log(ctx, dst);
 }
 
 void ggml_sycl_softplus(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_softplus(ctx, dst);
 }
 
 void ggml_sycl_neg(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_neg(ctx, dst);
 }
 
 void ggml_sycl_step(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_step(ctx, dst);
 }
 
 void ggml_sycl_leaky_relu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_leaky_relu(ctx, dst);
 }
 
 void ggml_sycl_sqr(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_sqr(ctx, dst);
 }
 
 void ggml_sycl_clamp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_clamp(ctx, dst);
 }
 
 void ggml_sycl_sgn(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_sgn(ctx, dst);
 }
 
 void ggml_sycl_abs(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_abs(ctx, dst);
 }
 
 void ggml_sycl_elu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_elu(ctx, dst);
 }
 
 void ggml_sycl_geglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_geglu(ctx, dst);
 }
 
 void ggml_sycl_reglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_reglu(ctx, dst);
 }
 
 void ggml_sycl_swiglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_swiglu(ctx, dst);
 }
 
 void ggml_sycl_swiglu_oai(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_swiglu_oai(ctx, dst);
 }
 
 void ggml_sycl_geglu_erf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_geglu_erf(ctx, dst);
 }
 
 void ggml_sycl_geglu_quick(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_geglu_quick(ctx, dst);
 }
 
 void ggml_sycl_arange(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/0);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/0);  // scope_dbg_print
     ggml_sycl_detail::ggml_sycl_op_arange(ctx, dst);
 }
 
 void ggml_sycl_floor(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_floor(ctx, dst);
 }
 
 void ggml_sycl_ceil(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_ceil(ctx, dst);
 }
 
 void ggml_sycl_round(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_round(ctx, dst);
 }
 
 void ggml_sycl_trunc(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_trunc(ctx, dst);
 }

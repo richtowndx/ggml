@@ -1,30 +1,30 @@
-#include <string.h>
-#include <stdlib.h>
-#include <math.h>
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#include <string.h>  // 引入 string.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
+#include <math.h>  // 引入 math.h 头文件
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "ggml.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-#include "hvx-utils.h"
-#include "hex-dma.h"
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
 
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-ops.h"
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
 
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
+#ifndef MIN  // 如果未定义 MIN 则编译
+#define MIN(a, b) ((a) < (b) ? (a) : (b))  // 宏定义 MIN
+#endif  // 条件编译结束
 
-struct htp_argsort_context {
+struct htp_argsort_context {  // 结构体定义
     struct htp_ops_context * octx;
     uint32_t                 nrows_per_thread;
 };
 
-static inline bool all_greater_f32(HVX_Vector x, HVX_Vector y)
+static inline bool all_greater_f32(HVX_Vector x, HVX_Vector y)  // all_greater_f32
 {
     const HVX_Vector one  = Q6_V_vsplat_R(1);
     const HVX_Vector zero = Q6_V_vzero();
@@ -32,7 +32,7 @@ static inline bool all_greater_f32(HVX_Vector x, HVX_Vector y)
     HVX_VectorPred pred = Q6_Q_vcmp_gt_VsfVsf(x, y);
     HVX_Vector matches = Q6_V_vmux_QVV(pred, one, zero);
     HVX_Vector sum = hvx_vec_reduce_sum_i32(matches);
-    return hvx_vec_get_i32(sum) == 32;
+    return hvx_vec_get_i32(sum) == 32;  // hvx_vec_get_i32
 }
 
 // Sorts values and mirrors swaps to indices.
@@ -250,7 +250,7 @@ static void htp_argsort_f32(unsigned int n, unsigned int i, void * data) {
 int op_argsort(struct htp_ops_context * octx) {
     // Check supported types
     if (octx->src[0]->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     const uint32_t total_rows = octx->src[0]->ne[1] * octx->src[0]->ne[2] * octx->src[0]->ne[3];
@@ -270,7 +270,7 @@ int op_argsort(struct htp_ops_context * octx) {
 
     if (octx->ctx->vtcm_size < total_spad_size) {
         FARF(ERROR, "argsort: VTCM size too small. Needed %zu, have %zu", total_spad_size, octx->ctx->vtcm_size);
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        return HTP_STATUS_VTCM_TOO_SMALL;  // 返回
     }
 
     octx->src0_spad.data = octx->ctx->vtcm_base;
@@ -289,5 +289,5 @@ int op_argsort(struct htp_ops_context * octx) {
     // Run jobs
     worker_pool_run_func(octx->ctx->worker_pool, htp_argsort_f32, &actx, n_threads);
 
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }

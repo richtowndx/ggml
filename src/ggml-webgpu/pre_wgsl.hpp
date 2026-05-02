@@ -1,22 +1,22 @@
-#ifndef PRE_WGSL_HPP
-#define PRE_WGSL_HPP
+#ifndef PRE_WGSL_HPP  // 如果未定义 PRE_WGSL_HPP 则编译
+#define PRE_WGSL_HPP  // 宏定义 PRE_WGSL_HPP
 
-#include <cctype>
-#include <fstream>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#include <cctype>  // 引入 cctype 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <sstream>  // 引入 sstream 头文件
+#include <stdexcept>  // 引入 stdexcept 头文件
+#include <string>  // 引入 string 头文件
+#include <string_view>  // 引入 string_view 头文件
+#include <unordered_map>  // 引入 unordered_map 头文件
+#include <unordered_set>  // 引入 unordered_set 头文件
+#include <vector>  // 引入 vector 头文件
 
-namespace pre_wgsl {
+namespace pre_wgsl {  // 命名空间
 
 //==============================================================
 // Options
 //==============================================================
-struct Options {
+struct Options {  // 结构体定义
     std::string              include_path = ".";
     std::vector<std::string> macros;
 };
@@ -39,7 +39,7 @@ static std::string trim(const std::string & s) {
 static std::string trim_value(std::istream & is) {
     std::string str;
     std::getline(is, str);
-    return trim(str);
+    return trim(str);  // trim
 }
 
 static bool isIdentChar(char c) {
@@ -61,18 +61,18 @@ static std::string expandMacroValue(const std::string &                         
     auto it = macros.find(name);
     if (it == macros.end()) {
         visiting.erase(name);
-        return name;
+        return name;  // 返回
     }
 
     const std::string & value = it->second;
     if (value.empty()) {
         visiting.erase(name);
-        return "";
+        return "";  // 返回
     }
 
     std::string expanded = expandMacrosRecursiveInternal(value, macros, visiting);
     visiting.erase(name);
-    return expanded;
+    return expanded;  // 返回
 }
 
 static std::string expandMacrosRecursiveInternal(const std::string &                                  line,
@@ -102,23 +102,23 @@ static std::string expandMacrosRecursiveInternal(const std::string &            
         }
     }
 
-    return result;
+    return result;  // 返回
 }
 
 static std::string expandMacrosRecursive(const std::string &                                  line,
                                          const std::unordered_map<std::string, std::string> & macros) {
     std::unordered_set<std::string> visiting;
-    return expandMacrosRecursiveInternal(line, macros, visiting);
+    return expandMacrosRecursiveInternal(line, macros, visiting);  // expandMacrosRecursiveInternal
 }
 
 //==============================================================
 // Tokenizer for expressions in #if/#elif
 //==============================================================
-class ExprLexer {
+class ExprLexer {  // 类定义
   public:
-    enum Kind { END, IDENT, NUMBER, OP, LPAREN, RPAREN };
+    enum Kind { END, IDENT, NUMBER, OP, LPAREN, RPAREN };  // 枚举定义
 
-    struct Tok {
+    struct Tok {  // 结构体定义
         Kind        kind;
         std::string text;
     };
@@ -128,7 +128,7 @@ class ExprLexer {
     Tok next() {
         skipWS();
         if (pos >= src.size()) {
-            return { END, "" };
+            return { END, "" };  // 返回
         }
 
         char c = src[pos];
@@ -139,7 +139,7 @@ class ExprLexer {
             while (pos < src.size() && std::isdigit((unsigned char) src[pos])) {
                 pos++;
             }
-            return { NUMBER, std::string(src.substr(start, pos - start)) };
+            return { NUMBER, std::string(src.substr(start, pos - start)) };  // 返回
         }
 
         // identifier
@@ -148,16 +148,16 @@ class ExprLexer {
             while (pos < src.size() && (std::isalnum((unsigned char) src[pos]) || src[pos] == '_')) {
                 pos++;
             }
-            return { IDENT, std::string(src.substr(start, pos - start)) };
+            return { IDENT, std::string(src.substr(start, pos - start)) };  // 返回
         }
 
         if (c == '(') {
             pos++;
-            return { LPAREN, "(" };
+            return { LPAREN, "(" };  // 返回
         }
         if (c == ')') {
             pos++;
-            return { RPAREN, ")" };
+            return { RPAREN, ")" };  // 返回
         }
 
         // multi-char operators
@@ -165,19 +165,19 @@ class ExprLexer {
         for (auto op : two_ops) {
             if (src.substr(pos, 2) == op) {
                 pos += 2;
-                return { OP, std::string(op) };
+                return { OP, std::string(op) };  // 返回
             }
         }
 
         // single-char operators
         if (std::string("+-*/%<>!").find(c) != std::string::npos) {
             pos++;
-            return { OP, std::string(1, c) };
+            return { OP, std::string(1, c) };  // 返回
         }
 
         // unexpected
         pos++;
-        return { END, "" };
+        return { END, "" };  // 返回
     }
 
   private:
@@ -194,7 +194,7 @@ class ExprLexer {
 //==============================================================
 // Expression Parser (recursive descent)
 //==============================================================
-class ExprParser {
+class ExprParser {  // 类定义
   public:
     ExprParser(std::string_view                                     expr,
                const std::unordered_map<std::string, std::string> & macros,
@@ -218,17 +218,17 @@ class ExprParser {
     bool acceptOp(const std::string & s) {
         if (tok.kind == ExprLexer::OP && tok.text == s) {
             advance();
-            return true;
+            return true;  // 返回
         }
-        return false;
+        return false;  // 返回
     }
 
     bool acceptKind(ExprLexer::Kind k) {
         if (tok.kind == k) {
             advance();
-            return true;
+            return true;  // 返回
         }
-        return false;
+        return false;  // 返回
     }
 
     int parseLogicalOr() {
@@ -237,7 +237,7 @@ class ExprParser {
             int rhs = parseLogicalAnd();
             v       = (v || rhs);
         }
-        return v;
+        return v;  // 返回
     }
 
     int parseLogicalAnd() {
@@ -246,7 +246,7 @@ class ExprParser {
             int rhs = parseEquality();
             v       = (v && rhs);
         }
-        return v;
+        return v;  // 返回
     }
 
     int parseEquality() {
@@ -262,7 +262,7 @@ class ExprParser {
                 break;
             }
         }
-        return v;
+        return v;  // 返回
     }
 
     int parseRelational() {
@@ -284,7 +284,7 @@ class ExprParser {
                 break;
             }
         }
-        return v;
+        return v;  // 返回
     }
 
     int parseShift() {
@@ -300,7 +300,7 @@ class ExprParser {
                 break;
             }
         }
-        return v;
+        return v;  // 返回
     }
 
     int parseAdd() {
@@ -316,7 +316,7 @@ class ExprParser {
                 break;
             }
         }
-        return v;
+        return v;  // 返回
     }
 
     int parseMult() {
@@ -335,7 +335,7 @@ class ExprParser {
                 break;
             }
         }
-        return v;
+        return v;  // 返回
     }
 
     int parseUnary() {
@@ -348,7 +348,7 @@ class ExprParser {
         if (acceptOp("+")) {
             return +parseUnary();
         }
-        return parsePrimary();
+        return parsePrimary();  // parsePrimary
     }
 
     int parsePrimary() {
@@ -358,14 +358,14 @@ class ExprParser {
             if (!acceptKind(ExprLexer::RPAREN)) {
                 throw std::runtime_error("missing ')'");
             }
-            return v;
+            return v;  // 返回
         }
 
         // number
         if (tok.kind == ExprLexer::NUMBER) {
             int v = std::stoi(tok.text);
             advance();
-            return v;
+            return v;  // 返回
         }
 
         // defined(identifier)
@@ -398,16 +398,16 @@ class ExprParser {
             advance();
             auto it = macros.find(name);
             if (it == macros.end()) {
-                return 0;
+                return 0;  // 返回
             }
             if (it->second.empty()) {
-                return 1;
+                return 1;  // 返回
             }
-            return evalMacroExpression(name, it->second);
+            return evalMacroExpression(name, it->second);  // evalMacroExpression
         }
 
         // unexpected
-        return 0;
+        return 0;  // 返回
     }
 
     int evalMacroExpression(const std::string & name, const std::string & value) {
@@ -416,17 +416,17 @@ class ExprParser {
         }
 
         visiting.insert(name);
-        ExprParser ep(value, macros, visiting);
+        ExprParser ep(value, macros, visiting);  // ep
         int        v = ep.parse();
         visiting.erase(name);
-        return v;
+        return v;  // 返回
     }
 };
 
 //==============================================================
 // Preprocessor
 //==============================================================
-class Preprocessor {
+class Preprocessor {  // 类定义
   public:
     explicit Preprocessor(Options opts = {}) : opts_(std::move(opts)) {
         // Treat empty include path as current directory
@@ -443,7 +443,7 @@ class Preprocessor {
         buildMacros(additional_macros, macros, predefined);
 
         std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        return result;  // 返回
     }
 
     std::string preprocess(const std::string & contents, const std::vector<std::string> & additional_macros = {}) {
@@ -453,7 +453,7 @@ class Preprocessor {
         buildMacros(additional_macros, macros, predefined);
 
         std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        return result;  // 返回
     }
 
     std::string preprocess_includes_file(const std::string & filename) {
@@ -461,7 +461,7 @@ class Preprocessor {
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        return result;  // 返回
     }
 
     std::string preprocess_includes(const std::string & contents) {
@@ -469,16 +469,16 @@ class Preprocessor {
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        return result;  // 返回
     }
 
   private:
     Options                                      opts_;
     std::unordered_map<std::string, std::string> global_macros;
 
-    enum class DirectiveMode { All, IncludesOnly };
+    enum class DirectiveMode { All, IncludesOnly };  // 枚举定义
 
-    struct Cond {
+    struct Cond {  // 结构体定义
         bool parent_active;
         bool active;
         bool taken;
@@ -548,7 +548,7 @@ class Preprocessor {
 
     bool condActive(const std::vector<Cond> & cond) const {
         if (cond.empty()) {
-            return true;
+            return true;  // 返回
         }
         return cond.back().active;
     }
@@ -569,7 +569,7 @@ class Preprocessor {
         std::string shader_code = loadFile(name);
         std::string out         = processString(shader_code, macros, predefined_macros, include_stack, mode);
         include_stack.erase(name);
-        return out;
+        return out;  // 返回
     }
 
     std::string processIncludeFile(const std::string &                            fname,
@@ -578,7 +578,7 @@ class Preprocessor {
                                    std::unordered_set<std::string> &              include_stack,
                                    DirectiveMode                                  mode) {
         std::string full_path = opts_.include_path + "/" + fname;
-        return processFile(full_path, macros, predefined_macros, include_stack, mode);
+        return processFile(full_path, macros, predefined_macros, include_stack, mode);  // processFile
     }
 
     //----------------------------------------------------------
@@ -638,7 +638,7 @@ class Preprocessor {
 
         if (cmd == "include") {
             if (mode == DirectiveMode::All && !condActive(cond)) {
-                return true;
+                return true;  // 返回
             }
             std::string file;
             iss >> file;
@@ -646,40 +646,40 @@ class Preprocessor {
                 file = file.substr(1, file.size() - 2);
             }
             out << processIncludeFile(file, macros, predefined_macros, include_stack, mode);
-            return true;
+            return true;  // 返回
         }
 
         if (mode == DirectiveMode::IncludesOnly) {
-            return false;
+            return false;  // 返回
         }
 
         if (cmd == "define") {
             if (!condActive(cond)) {
-                return true;
+                return true;  // 返回
             }
             std::string name;
             iss >> name;
             // Don't override predefined macros from options
             if (predefined_macros.count(name)) {
-                return true;
+                return true;  // 返回
             }
             std::string value = trim_value(iss);
             macros[name]      = value;
-            return true;
+            return true;  // 返回
         }
 
         if (cmd == "undef") {
             if (!condActive(cond)) {
-                return true;
+                return true;  // 返回
             }
             std::string name;
             iss >> name;
             // Don't undef predefined macros from options
             if (predefined_macros.count(name)) {
-                return true;
+                return true;  // 返回
             }
             macros.erase(name);
-            return true;
+            return true;  // 返回
         }
 
         if (cmd == "ifdef") {
@@ -688,7 +688,7 @@ class Preprocessor {
             bool p = condActive(cond);
             bool v = macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            return true;  // 返回
         }
 
         if (cmd == "ifndef") {
@@ -697,7 +697,7 @@ class Preprocessor {
             bool p = condActive(cond);
             bool v = !macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            return true;  // 返回
         }
 
         if (cmd == "if") {
@@ -706,11 +706,11 @@ class Preprocessor {
             bool        v    = false;
             if (p) {
                 std::unordered_set<std::string> visiting;
-                ExprParser                      ep(expr, macros, visiting);
+                ExprParser                      ep(expr, macros, visiting);  // ep
                 v = ep.parse() != 0;
             }
             cond.push_back({ p, p && v, p && v });
-            return true;
+            return true;  // 返回
         }
 
         if (cmd == "elif") {
@@ -723,22 +723,22 @@ class Preprocessor {
             Cond & c = cond.back();
             if (!c.parent_active) {
                 c.active = false;
-                return true;
+                return true;  // 返回
             }
 
             if (c.taken) {
                 c.active = false;
-                return true;
+                return true;  // 返回
             }
 
             std::unordered_set<std::string> visiting;
-            ExprParser                      ep(expr, macros, visiting);
+            ExprParser                      ep(expr, macros, visiting);  // ep
             bool                            v = ep.parse() != 0;
             c.active                          = v;
             if (v) {
                 c.taken = true;
             }
-            return true;
+            return true;  // 返回
         }
 
         if (cmd == "else") {
@@ -749,7 +749,7 @@ class Preprocessor {
             Cond & c = cond.back();
             if (!c.parent_active) {
                 c.active = false;
-                return true;
+                return true;  // 返回
             }
             if (c.taken) {
                 c.active = false;
@@ -757,7 +757,7 @@ class Preprocessor {
                 c.active = true;
                 c.taken  = true;
             }
-            return true;
+            return true;  // 返回
         }
 
         if (cmd == "endif") {
@@ -765,7 +765,7 @@ class Preprocessor {
                 throw std::runtime_error("#endif without #if");
             }
             cond.pop_back();
-            return true;
+            return true;  // 返回
         }
 
         // Unknown directive
@@ -775,4 +775,4 @@ class Preprocessor {
 
 }  // namespace pre_wgsl
 
-#endif  // PRE_WGSL_HPP
+#endif  // PRE_WGSL_HPP  // 条件编译结束

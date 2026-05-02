@@ -1,4 +1,4 @@
-#include "pad_reflect_1d.hpp"
+#include "pad_reflect_1d.hpp"  // 引入 pad_reflect_1d.hpp 头文件
 
 static void pad_reflect_1d_kernel_f32(
     const void *__restrict__ src0, void *__restrict__ dst, const int64_t ne0,
@@ -20,7 +20,7 @@ static void pad_reflect_1d_kernel_f32(
         item_ct1.get_local_id(2) + tile0 * item_ct1.get_local_range(2);
 
     if (i0 >= ne0 || i1 >= ne01.z() || i2 >= ne02 || i3 >= ne03) {
-        return;
+        return;  // 返回
     }
 
     const char *src0_ptr =

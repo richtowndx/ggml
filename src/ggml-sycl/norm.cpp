@@ -1,6 +1,6 @@
-#include "norm.hpp"
-#include "ggml-sycl/common.hpp"
-#include "ggml-sycl/presets.hpp"
+#include "norm.hpp"  // 引入 norm.hpp 头文件
+#include "ggml-sycl/common.hpp"  // 引入 ggml-sycl/common.hpp 头文件
+#include "ggml-sycl/presets.hpp"  // 引入 ggml-sycl/presets.hpp 头文件
 
 static void norm_f32(const float* x, float* dst, const int ncols, const int64_t stride_row, const int64_t stride_channel,
         const int64_t stride_sample, const float eps, const sycl::nd_item<3>& item_ct1, sycl::float2* s_sum, int block_size) {
@@ -202,7 +202,7 @@ static void rms_norm_f32(const float* x, float* dst, const int ncols, const int6
     }
 }
 
-template<int warp_size>
+template<int warp_size>  // 模板
 static void l2_norm_f32(const float * x, float * dst, const int ncols,
     const int64_t stride_row, const int64_t stride_channel,
     const int64_t stride_sample, const float eps,
@@ -356,7 +356,7 @@ static void rms_norm_f32_sycl(const float* x, float* dst, const int ncols, const
     }
 }
 
-template<int warp_size>
+template<int warp_size>  // 模板
 static void l2_norm_f32_sycl(const float *   x,
                              float *         dst,
                              const int       ncols,
@@ -473,7 +473,7 @@ void ggml_sycl_op_rms_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 }
 
 void ggml_sycl_op_rms_norm_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
 
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32); // dz
     GGML_ASSERT(dst->src[1]->type == GGML_TYPE_F32); // x
@@ -536,16 +536,16 @@ void ggml_sycl_op_rms_norm_back(ggml_backend_sycl_context & ctx, ggml_tensor * d
 
                 // per-thread accumulation (compensated by default)
                 float sum_xx = 0.f, sum_xg = 0.f;
-#ifndef GGML_SYCL_RMS_BACK_FAST
+#ifndef GGML_SYCL_RMS_BACK_FAST  // 如果未定义 GGML_SYCL_RMS_BACK_FAST 则编译
                 float c_xx = 0.f, c_xg = 0.f;
-#endif
+#endif  // 条件编译结束
                 for (int64_t col = tid; col < D; col += WG) {
                     const float xv = x_row[col];
                     const float gv = g_row[col];
-#ifdef GGML_SYCL_RMS_BACK_FAST
+#ifdef GGML_SYCL_RMS_BACK_FAST  // 如果定义了 GGML_SYCL_RMS_BACK_FAST 则编译
                     sum_xx += xv * xv;
                     sum_xg += xv * gv;
-#else
+#else  // 否则
                     float y1 = xv * xv - c_xx;
                     float t1 = sum_xx + y1;
                     c_xx = (t1 - sum_xx) - y1;
@@ -555,23 +555,23 @@ void ggml_sycl_op_rms_norm_back(ggml_backend_sycl_context & ctx, ggml_tensor * d
                     float t2 = sum_xg + y2;
                     c_xg = (t2 - sum_xg) - y2;
                     sum_xg = t2;
-#endif
+#endif  // 条件编译结束
                 }
 
                 // warp-level reduction
                 sycl::float2 xx = sycl::float2(sum_xx,
-#ifndef GGML_SYCL_RMS_BACK_FAST
+#ifndef GGML_SYCL_RMS_BACK_FAST  // 如果未定义 GGML_SYCL_RMS_BACK_FAST 则编译
                     c_xx
-#else
+#else  // 否则
                     0.f
-#endif
+#endif  // 条件编译结束
                 );
                 sycl::float2 xg = sycl::float2(sum_xg,
-#ifndef GGML_SYCL_RMS_BACK_FAST
+#ifndef GGML_SYCL_RMS_BACK_FAST  // 如果未定义 GGML_SYCL_RMS_BACK_FAST 则编译
                     c_xg
-#else
+#else  // 否则
                     0.f
-#endif
+#endif  // 条件编译结束
                 );
                 xx = warp_reduce_sum(xx, item_ct1);
                 xg = warp_reduce_sum(xg, item_ct1);

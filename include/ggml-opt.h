@@ -4,30 +4,30 @@
 //
 // Module maintainer: Johannes Gäßler (@JohannesGaessler, johannesg@5d6.de)
 
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "ggml.h"
-#include "ggml-backend.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#include <stdint.h>
+#include <stdint.h>  // 引入 stdint.h 头文件
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
     struct ggml_opt_dataset;
     struct ggml_opt_context;
     struct ggml_opt_result;
 
-    typedef struct ggml_opt_dataset * ggml_opt_dataset_t;
-    typedef struct ggml_opt_context * ggml_opt_context_t;
-    typedef struct ggml_opt_result  * ggml_opt_result_t;
+    typedef struct ggml_opt_dataset * ggml_opt_dataset_t;  // 类型定义
+    typedef struct ggml_opt_context * ggml_opt_context_t;  // 类型定义
+    typedef struct ggml_opt_result  * ggml_opt_result_t;  // 类型定义
 
     // ====== Loss ======
 
     // built-in loss types, i.e. the built-in quantities minimized by the optimizer
     // custom loss types can be defined via mean or sum which simply reduce the outputs for all datapoints to a single value
-    enum ggml_opt_loss_type {
+    enum ggml_opt_loss_type {  // 枚举定义
         GGML_OPT_LOSS_TYPE_MEAN,
         GGML_OPT_LOSS_TYPE_SUM,
         GGML_OPT_LOSS_TYPE_CROSS_ENTROPY,
@@ -68,13 +68,13 @@ extern "C" {
 
     // ====== Model / Context ======
 
-    enum ggml_opt_build_type {
+    enum ggml_opt_build_type {  // 枚举定义
         GGML_OPT_BUILD_TYPE_FORWARD = 10,
         GGML_OPT_BUILD_TYPE_GRAD    = 20,
         GGML_OPT_BUILD_TYPE_OPT     = 30,
     };
 
-    enum ggml_opt_optimizer_type {
+    enum ggml_opt_optimizer_type {  // 枚举定义
         GGML_OPT_OPTIMIZER_TYPE_ADAMW,
         GGML_OPT_OPTIMIZER_TYPE_SGD,
 
@@ -82,7 +82,7 @@ extern "C" {
     };
 
     // parameters that control which optimizer is used and how said optimizer tries to find the minimal loss
-    struct ggml_opt_optimizer_params {
+    struct ggml_opt_optimizer_params {  // 结构体定义
         struct {
             float alpha; // learning rate
             float beta1; // first AdamW momentum
@@ -98,7 +98,7 @@ extern "C" {
 
     // callback to calculate optimizer parameters prior to a backward pass
     // userdata can be used to pass arbitrary data
-    typedef struct ggml_opt_optimizer_params (*ggml_opt_get_optimizer_params)(void * userdata);
+    typedef struct ggml_opt_optimizer_params (*ggml_opt_get_optimizer_params)(void * userdata);  // 类型定义
 
     // returns the default optimizer params (constant, hard-coded values)
     // userdata is not used
@@ -108,7 +108,7 @@ extern "C" {
     GGML_API struct ggml_opt_optimizer_params ggml_opt_get_constant_optimizer_params(void * userdata);
 
     // parameters for initializing a new optimization context
-    struct ggml_opt_params {
+    struct ggml_opt_params {  // 结构体定义
         ggml_backend_sched_t backend_sched; // defines which backends are used to construct the compute graphs
 
         // by default the forward graph needs to be reconstructed for each eval
@@ -206,7 +206,7 @@ extern "C" {
     // 4. Call ggml_opt_fit. If you need more control you can use ggml_opt_epoch instead.
 
     // signature for a callback while evaluating opt_ctx on dataset, called after an evaluation
-    typedef void (*ggml_opt_epoch_callback)(
+    typedef void (*ggml_opt_epoch_callback)(  // 类型定义
             bool               train,       // true after training evaluation, false after validation evaluation
             ggml_opt_context_t opt_ctx,
             ggml_opt_dataset_t dataset,
@@ -251,6 +251,6 @@ extern "C" {
             bool                            silent);        // whether or not info prints to stderr should be suppressed
 
 
-#ifdef  __cplusplus
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束

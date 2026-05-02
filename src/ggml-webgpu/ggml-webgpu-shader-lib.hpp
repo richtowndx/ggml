@@ -1,62 +1,62 @@
-#ifndef GGML_WEBGPU_SHADER_LIB_HPP
-#define GGML_WEBGPU_SHADER_LIB_HPP
+#ifndef GGML_WEBGPU_SHADER_LIB_HPP  // 如果未定义 GGML_WEBGPU_SHADER_LIB_HPP 则编译
+#define GGML_WEBGPU_SHADER_LIB_HPP  // 宏定义 GGML_WEBGPU_SHADER_LIB_HPP
 
-#include "ggml-impl.h"
-#include "ggml-wgsl-shaders.hpp"
-#include "ggml.h"
-#include "pre_wgsl.hpp"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-wgsl-shaders.hpp"  // 引入 ggml-wgsl-shaders.hpp 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "pre_wgsl.hpp"  // 引入 pre_wgsl.hpp 头文件
 
-#include <webgpu/webgpu_cpp.h>
+#include <webgpu/webgpu_cpp.h>  // 引入 webgpu/webgpu_cpp.h 头文件
 
-#include <algorithm>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <memory>  // 引入 memory 头文件
+#include <string>  // 引入 string 头文件
+#include <unordered_map>  // 引入 unordered_map 头文件
+#include <vector>  // 引入 vector 头文件
 
-#define GGML_WEBGPU_F16_SIZE_BYTES                   2
-#define GGML_WEBGPU_F32_SIZE_BYTES                   4
-#define GGML_WEBGPU_I32_SIZE_BYTES                   4
-#define GGML_WEBGPU_FLASH_ATTN_PREFERRED_KV_SG_TILES 8u
-#define GGML_WEBGPU_FLASH_ATTN_PREFERRED_WG_SIZE     128u
+#define GGML_WEBGPU_F16_SIZE_BYTES                   2  // 宏定义 GGML_WEBGPU_F16_SIZE_BYTES
+#define GGML_WEBGPU_F32_SIZE_BYTES                   4  // 宏定义 GGML_WEBGPU_F32_SIZE_BYTES
+#define GGML_WEBGPU_I32_SIZE_BYTES                   4  // 宏定义 GGML_WEBGPU_I32_SIZE_BYTES
+#define GGML_WEBGPU_FLASH_ATTN_PREFERRED_KV_SG_TILES 8u  // 宏定义 GGML_WEBGPU_FLASH_ATTN_PREFERRED_KV_SG_TILES
+#define GGML_WEBGPU_FLASH_ATTN_PREFERRED_WG_SIZE     128u  // 宏定义 GGML_WEBGPU_FLASH_ATTN_PREFERRED_WG_SIZE
 // Matches GGML_PAD(..., 256) in src/llama-context.cpp for KV cache sizing.
-#define GGML_WEBGPU_KV_SEQ_PAD                       256u
+#define GGML_WEBGPU_KV_SEQ_PAD                       256u  // 宏定义 GGML_WEBGPU_KV_SEQ_PAD
 
-#define GGML_WEBGPU_ARGSORT_MERGE_MAX_WG_SIZE 512u
+#define GGML_WEBGPU_ARGSORT_MERGE_MAX_WG_SIZE 512u  // 宏定义 GGML_WEBGPU_ARGSORT_MERGE_MAX_WG_SIZE
 
 // Matrix multiplication parameters
 
 // Register tiling parameters
-#define WEBGPU_MUL_MAT_TILE_M           4
-#define WEBGPU_MUL_MAT_TILE_N           4
-#define WEBGPU_MUL_MAT_WG_SIZE_M        8
-#define WEBGPU_MUL_MAT_WG_SIZE_N        8
-#define WEBGPU_MUL_MAT_REG_TILE_K_FLOAT 8
-#define WEBGPU_MUL_MAT_REG_TILE_K_QUANT 32
+#define WEBGPU_MUL_MAT_TILE_M           4  // 宏定义 WEBGPU_MUL_MAT_TILE_M
+#define WEBGPU_MUL_MAT_TILE_N           4  // 宏定义 WEBGPU_MUL_MAT_TILE_N
+#define WEBGPU_MUL_MAT_WG_SIZE_M        8  // 宏定义 WEBGPU_MUL_MAT_WG_SIZE_M
+#define WEBGPU_MUL_MAT_WG_SIZE_N        8  // 宏定义 WEBGPU_MUL_MAT_WG_SIZE_N
+#define WEBGPU_MUL_MAT_REG_TILE_K_FLOAT 8  // 宏定义 WEBGPU_MUL_MAT_REG_TILE_K_FLOAT
+#define WEBGPU_MUL_MAT_REG_TILE_K_QUANT 32  // 宏定义 WEBGPU_MUL_MAT_REG_TILE_K_QUANT
 
 // Subgroup matrix parameters
 // The number of subgroups in the M dimension
-#define WEBGPU_MUL_MAT_SUBGROUP_M            2
+#define WEBGPU_MUL_MAT_SUBGROUP_M            2  // 宏定义 WEBGPU_MUL_MAT_SUBGROUP_M
 // The number of subgroups in the N dimension
-#define WEBGPU_MUL_MAT_SUBGROUP_N            4
+#define WEBGPU_MUL_MAT_SUBGROUP_N            4  // 宏定义 WEBGPU_MUL_MAT_SUBGROUP_N
 // The number of subgroup matrices each subgroup accumulates over
-#define WEBGPU_MUL_MAT_SUBGROUP_MATRIX_M     4
-#define WEBGPU_MUL_MAT_SUBGROUP_MATRIX_N     2
-#define WEBGPU_MUL_MAT_SUBGROUP_TILE_K_FLOAT 32
-#define WEBGPU_MUL_MAT_SUBGROUP_TILE_K_QUANT 32
+#define WEBGPU_MUL_MAT_SUBGROUP_MATRIX_M     4  // 宏定义 WEBGPU_MUL_MAT_SUBGROUP_MATRIX_M
+#define WEBGPU_MUL_MAT_SUBGROUP_MATRIX_N     2  // 宏定义 WEBGPU_MUL_MAT_SUBGROUP_MATRIX_N
+#define WEBGPU_MUL_MAT_SUBGROUP_TILE_K_FLOAT 32  // 宏定义 WEBGPU_MUL_MAT_SUBGROUP_TILE_K_FLOAT
+#define WEBGPU_MUL_MAT_SUBGROUP_TILE_K_QUANT 32  // 宏定义 WEBGPU_MUL_MAT_SUBGROUP_TILE_K_QUANT
 
 // Matrix-vector multiplication parameters
-#define WEBGPU_MUL_MAT_VEC_WG_SIZE 256
+#define WEBGPU_MUL_MAT_VEC_WG_SIZE 256  // 宏定义 WEBGPU_MUL_MAT_VEC_WG_SIZE
 
-#define WEBGPU_MUL_MAT_VEC_FLOAT_OUTPUTS_PER_WG    4
-#define WEBGPU_MUL_MAT_VEC_LEGACY_Q_OUTPUTS_PER_WG 4
-#define WEBGPU_MUL_MAT_VEC_K_Q_OUTPUTS_PER_WG      4
+#define WEBGPU_MUL_MAT_VEC_FLOAT_OUTPUTS_PER_WG    4  // 宏定义 WEBGPU_MUL_MAT_VEC_FLOAT_OUTPUTS_PER_WG
+#define WEBGPU_MUL_MAT_VEC_LEGACY_Q_OUTPUTS_PER_WG 4  // 宏定义 WEBGPU_MUL_MAT_VEC_LEGACY_Q_OUTPUTS_PER_WG
+#define WEBGPU_MUL_MAT_VEC_K_Q_OUTPUTS_PER_WG      4  // 宏定义 WEBGPU_MUL_MAT_VEC_K_Q_OUTPUTS_PER_WG
 
 // default size for legacy matrix multiplication
-#define WEBGPU_MUL_MAT_WG_SIZE 256
+#define WEBGPU_MUL_MAT_WG_SIZE 256  // 宏定义 WEBGPU_MUL_MAT_WG_SIZE
 
 // Same hash combine function as in boost
-template <typename T> inline void ggml_webgpu_hash_combine(size_t & seed, const T & value) {
+template <typename T> inline void ggml_webgpu_hash_combine(size_t & seed, const T & value) {  // 模板
     seed ^= std::hash<T>{}(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
@@ -75,7 +75,7 @@ inline bool ggml_webgpu_tensor_overlap(const ggml_tensor * a, const ggml_tensor 
            ggml_webgpu_tensor_addr(b) < ggml_webgpu_tensor_addr(a) + ggml_nbytes(a);
 }
 
-struct ggml_webgpu_shader_lib_context {
+struct ggml_webgpu_shader_lib_context {  // 结构体定义
     ggml_tensor * src0;
     ggml_tensor * src1;
     ggml_tensor * src2;
@@ -94,56 +94,56 @@ struct ggml_webgpu_shader_lib_context {
     uint32_t max_subgroup_size        = 0;
 };
 
-struct webgpu_pipeline {
+struct webgpu_pipeline {  // 结构体定义
     wgpu::ComputePipeline pipeline;
     std::string           name;
     std::shared_ptr<void> context = nullptr;
 };
 
-struct ggml_webgpu_generic_shader_decisions {
+struct ggml_webgpu_generic_shader_decisions {  // 结构体定义
     uint32_t wg_size = 0;
     bool     inplace = false;
 };
 
-struct ggml_webgpu_binary_shader_decisions {
+struct ggml_webgpu_binary_shader_decisions {  // 结构体定义
     uint32_t wg_size     = 0;
     bool     inplace     = false;
     bool     overlap     = false;
     bool     src_overlap = false;
 };
 
-struct ggml_webgpu_processed_shader {
+struct ggml_webgpu_processed_shader {  // 结构体定义
     std::string           wgsl;
     std::string           variant;
     std::shared_ptr<void> decisions;
 };
 
-struct ggml_webgpu_ssm_conv_shader_decisions {
+struct ggml_webgpu_ssm_conv_shader_decisions {  // 结构体定义
     uint32_t block_size;
     uint32_t tokens_per_wg;
 };
 
-struct ggml_webgpu_ssm_scan_pipeline_key {
+struct ggml_webgpu_ssm_scan_pipeline_key {  // 结构体定义
     int  type;
     int  d_state;
     bool xbc_overlap;
 
     bool operator==(const ggml_webgpu_ssm_scan_pipeline_key & other) const {
-        return type == other.type && d_state == other.d_state && xbc_overlap == other.xbc_overlap;
+        return type == other.type && d_state == other.d_state && xbc_overlap == other.xbc_overlap;  // 返回
     }
 };
 
-struct ggml_webgpu_ssm_scan_pipeline_key_hash {
+struct ggml_webgpu_ssm_scan_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_ssm_scan_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.type);
         ggml_webgpu_hash_combine(seed, key.d_state);
         ggml_webgpu_hash_combine(seed, key.xbc_overlap);
-        return seed;
+        return seed;  // 返回
     }
 };
 
-struct ggml_webgpu_ssm_scan_shader_decisions {
+struct ggml_webgpu_ssm_scan_shader_decisions {  // 结构体定义
     uint32_t wg_size;
     uint32_t tokens_per_tile;
     bool     xbc_overlap = false;
@@ -151,7 +151,7 @@ struct ggml_webgpu_ssm_scan_shader_decisions {
 
 /** Argsort **/
 
-struct ggml_webgpu_argsort_shader_lib_context {
+struct ggml_webgpu_argsort_shader_lib_context {  // 结构体定义
     uint32_t max_wg_size;
     size_t   wg_mem_limit_bytes;
     int32_t  order;
@@ -159,27 +159,27 @@ struct ggml_webgpu_argsort_shader_lib_context {
 
 /** Set Rows **/
 
-struct ggml_webgpu_set_rows_pipeline_key {
+struct ggml_webgpu_set_rows_pipeline_key {  // 结构体定义
     int dst_type;
     int vec4;
     int i64_idx;
 
     bool operator==(const ggml_webgpu_set_rows_pipeline_key & other) const {
-        return dst_type == other.dst_type && vec4 == other.vec4 && i64_idx == other.i64_idx;
+        return dst_type == other.dst_type && vec4 == other.vec4 && i64_idx == other.i64_idx;  // 返回
     }
 };
 
-struct ggml_webgpu_set_rows_pipeline_key_hash {
+struct ggml_webgpu_set_rows_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_set_rows_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.dst_type);
         ggml_webgpu_hash_combine(seed, key.vec4);
         ggml_webgpu_hash_combine(seed, key.i64_idx);
-        return seed;
+        return seed;  // 返回
     }
 };
 
-struct ggml_webgpu_set_rows_shader_decisions {
+struct ggml_webgpu_set_rows_shader_decisions {  // 结构体定义
     bool     vec4;
     bool     i64_idx;
     uint32_t wg_size;
@@ -187,87 +187,87 @@ struct ggml_webgpu_set_rows_shader_decisions {
 
 /** Set **/
 
-struct ggml_webgpu_set_pipeline_key {
+struct ggml_webgpu_set_pipeline_key {  // 结构体定义
     ggml_type type;
     bool      inplace;
 
     bool operator==(const ggml_webgpu_set_pipeline_key & other) const {
-        return type == other.type && inplace == other.inplace;
+        return type == other.type && inplace == other.inplace;  // 返回
     }
 };
 
-struct ggml_webgpu_set_pipeline_key_hash {
+struct ggml_webgpu_set_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_set_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.type);
         ggml_webgpu_hash_combine(seed, key.inplace);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Get Rows **/
 
-struct ggml_webgpu_get_rows_pipeline_key {
+struct ggml_webgpu_get_rows_pipeline_key {  // 结构体定义
     ggml_type src_type;
     int       vectorized;
 
     bool operator==(const ggml_webgpu_get_rows_pipeline_key & other) const {
-        return src_type == other.src_type && vectorized == other.vectorized;
+        return src_type == other.src_type && vectorized == other.vectorized;  // 返回
     }
 };
 
-struct ggml_webgpu_get_rows_pipeline_key_hash {
+struct ggml_webgpu_get_rows_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_get_rows_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.src_type);
         ggml_webgpu_hash_combine(seed, key.vectorized);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Row Norm **/
 
-struct ggml_webgpu_row_norm_pipeline_key {
+struct ggml_webgpu_row_norm_pipeline_key {  // 结构体定义
     ggml_op op;
     bool    inplace;
 
     bool operator==(const ggml_webgpu_row_norm_pipeline_key & other) const {
-        return op == other.op && inplace == other.inplace;
+        return op == other.op && inplace == other.inplace;  // 返回
     }
 };
 
-struct ggml_webgpu_row_norm_pipeline_key_hash {
+struct ggml_webgpu_row_norm_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_row_norm_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.op);
         ggml_webgpu_hash_combine(seed, key.inplace);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** RMS_NORM + MUL **/
 
-struct ggml_webgpu_rms_norm_mul_pipeline_key {
+struct ggml_webgpu_rms_norm_mul_pipeline_key {  // 结构体定义
     bool inplace;      // rn_src == dst
     bool overlap;      // mul_src == dst
     bool src_overlap;  // rn_src == mul_src
 
     bool operator==(const ggml_webgpu_rms_norm_mul_pipeline_key & other) const {
-        return inplace == other.inplace && overlap == other.overlap && src_overlap == other.src_overlap;
+        return inplace == other.inplace && overlap == other.overlap && src_overlap == other.src_overlap;  // 返回
     }
 };
 
-struct ggml_webgpu_rms_norm_mul_pipeline_key_hash {
+struct ggml_webgpu_rms_norm_mul_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_rms_norm_mul_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.inplace);
         ggml_webgpu_hash_combine(seed, key.overlap);
         ggml_webgpu_hash_combine(seed, key.src_overlap);
-        return seed;
+        return seed;  // 返回
     }
 };
 
-struct ggml_webgpu_rms_norm_mul_shader_decisions {
+struct ggml_webgpu_rms_norm_mul_shader_decisions {  // 结构体定义
     uint32_t wg_size     = 0;
     bool     inplace     = false;
     bool     overlap     = false;
@@ -275,197 +275,197 @@ struct ggml_webgpu_rms_norm_mul_shader_decisions {
 };
 
 /** Pad **/
-struct ggml_webgpu_pad_pipeline_key {
+struct ggml_webgpu_pad_pipeline_key {  // 结构体定义
     bool circular;
 
     bool operator==(const ggml_webgpu_pad_pipeline_key & other) const { return circular == other.circular; }
 };
 
-struct ggml_webgpu_pad_pipeline_key_hash {
+struct ggml_webgpu_pad_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_pad_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.circular);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Solve Tri **/
-struct ggml_webgpu_solve_tri_pipeline_key {
+struct ggml_webgpu_solve_tri_pipeline_key {  // 结构体定义
     int type;
     int n;
     int k;
 
     bool operator==(const ggml_webgpu_solve_tri_pipeline_key & other) const {
-        return type == other.type && n == other.n && k == other.k;
+        return type == other.type && n == other.n && k == other.k;  // 返回
     }
 };
 
-struct ggml_webgpu_solve_tri_pipeline_key_hash {
+struct ggml_webgpu_solve_tri_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_solve_tri_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.type);
         ggml_webgpu_hash_combine(seed, key.n);
         ggml_webgpu_hash_combine(seed, key.k);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** SSM Conv **/
-struct ggml_webgpu_ssm_conv_pipeline_key {
+struct ggml_webgpu_ssm_conv_pipeline_key {  // 结构体定义
     int type;
     int vectorized;
 
     bool operator==(const ggml_webgpu_ssm_conv_pipeline_key & other) const {
-        return type == other.type && vectorized == other.vectorized;
+        return type == other.type && vectorized == other.vectorized;  // 返回
     }
 };
 
 /** CONV 2D */
-struct ggml_webgpu_conv2d_pipeline_key {
+struct ggml_webgpu_conv2d_pipeline_key {  // 结构体定义
     ggml_type weight_type;
     ggml_type input_type;
     ggml_type output_type;
 
     bool operator==(const ggml_webgpu_conv2d_pipeline_key & other) const {
-        return weight_type == other.weight_type && input_type == other.input_type && output_type == other.output_type;
+        return weight_type == other.weight_type && input_type == other.input_type && output_type == other.output_type;  // 返回
     }
 };
 
-struct ggml_webgpu_conv2d_pipeline_key_hash {
+struct ggml_webgpu_conv2d_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_conv2d_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.weight_type);
         ggml_webgpu_hash_combine(seed, key.input_type);
         ggml_webgpu_hash_combine(seed, key.output_type);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Im2Col **/
-struct ggml_webgpu_im2col_pipeline_key {
+struct ggml_webgpu_im2col_pipeline_key {  // 结构体定义
     ggml_type input_type;
     ggml_type output_type;
 
     bool operator==(const ggml_webgpu_im2col_pipeline_key & other) const {
-        return input_type == other.input_type && output_type == other.output_type;
+        return input_type == other.input_type && output_type == other.output_type;  // 返回
     }
 };
 
-struct ggml_webgpu_im2col_pipeline_key_hash {
+struct ggml_webgpu_im2col_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_im2col_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.input_type);
         ggml_webgpu_hash_combine(seed, key.output_type);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Gated Delta Net **/
-struct ggml_webgpu_gated_delta_net_pipeline_key {
+struct ggml_webgpu_gated_delta_net_pipeline_key {  // 结构体定义
     int type;
     int s_v;
     int kda;
 
     bool operator==(const ggml_webgpu_gated_delta_net_pipeline_key & other) const {
-        return type == other.type && s_v == other.s_v && kda == other.kda;
+        return type == other.type && s_v == other.s_v && kda == other.kda;  // 返回
     }
 };
 
-struct ggml_webgpu_gated_delta_net_pipeline_key_hash {
+struct ggml_webgpu_gated_delta_net_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_gated_delta_net_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.type);
         ggml_webgpu_hash_combine(seed, key.s_v);
         ggml_webgpu_hash_combine(seed, key.kda);
-        return seed;
+        return seed;  // 返回
     }
 };
 
-struct ggml_webgpu_ssm_conv_pipeline_key_hash {
+struct ggml_webgpu_ssm_conv_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_ssm_conv_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.type);
         ggml_webgpu_hash_combine(seed, key.vectorized);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Scale **/
 
-struct ggml_webgpu_scale_pipeline_key {
+struct ggml_webgpu_scale_pipeline_key {  // 结构体定义
     int inplace;
 
     bool operator==(const ggml_webgpu_scale_pipeline_key & other) const { return inplace == other.inplace; }
 };
 
-struct ggml_webgpu_scale_pipeline_key_hash {
+struct ggml_webgpu_scale_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_scale_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.inplace);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Upscale **/
 
-struct ggml_webgpu_upscale_pipeline_key {
+struct ggml_webgpu_upscale_pipeline_key {  // 结构体定义
     ggml_type input_type;
     ggml_type output_type;
     uint32_t  base_mode;
     bool      antialias;
 
     bool operator==(const ggml_webgpu_upscale_pipeline_key & other) const {
-        return input_type == other.input_type && output_type == other.output_type && base_mode == other.base_mode &&
+        return input_type == other.input_type && output_type == other.output_type && base_mode == other.base_mode &&  // 返回
                antialias == other.antialias;
     }
 };
 
-struct ggml_webgpu_upscale_pipeline_key_hash {
+struct ggml_webgpu_upscale_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_upscale_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.input_type);
         ggml_webgpu_hash_combine(seed, key.output_type);
         ggml_webgpu_hash_combine(seed, key.base_mode);
         ggml_webgpu_hash_combine(seed, key.antialias);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Concat **/
 
-struct ggml_webgpu_concat_pipeline_key {
+struct ggml_webgpu_concat_pipeline_key {  // 结构体定义
     int type;
 
     bool operator==(const ggml_webgpu_concat_pipeline_key & other) const { return type == other.type; }
 };
 
-struct ggml_webgpu_concat_pipeline_key_hash {
+struct ggml_webgpu_concat_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_concat_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.type);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Repeat **/
 
-struct ggml_webgpu_repeat_pipeline_key {
+struct ggml_webgpu_repeat_pipeline_key {  // 结构体定义
     int type;
 
     bool operator==(const ggml_webgpu_repeat_pipeline_key & other) const { return type == other.type; }
 };
 
-struct ggml_webgpu_repeat_pipeline_key_hash {
+struct ggml_webgpu_repeat_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_repeat_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.type);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Binary **/
 
-struct ggml_webgpu_binary_pipeline_key {
+struct ggml_webgpu_binary_pipeline_key {  // 结构体定义
     int  type;
     int  op;
     bool inplace;
@@ -473,12 +473,12 @@ struct ggml_webgpu_binary_pipeline_key {
     bool src_overlap;
 
     bool operator==(const ggml_webgpu_binary_pipeline_key & other) const {
-        return type == other.type && op == other.op && inplace == other.inplace && overlap == other.overlap &&
+        return type == other.type && op == other.op && inplace == other.inplace && overlap == other.overlap &&  // 返回
                src_overlap == other.src_overlap;
     }
 };
 
-struct ggml_webgpu_binary_pipeline_key_hash {
+struct ggml_webgpu_binary_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_binary_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.type);
@@ -486,13 +486,13 @@ struct ggml_webgpu_binary_pipeline_key_hash {
         ggml_webgpu_hash_combine(seed, key.inplace);
         ggml_webgpu_hash_combine(seed, key.overlap);
         ggml_webgpu_hash_combine(seed, key.src_overlap);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Unary **/
 
-struct ggml_webgpu_unary_pipeline_key {
+struct ggml_webgpu_unary_pipeline_key {  // 结构体定义
     int           type;
     int           op;
     bool          is_unary;  // many unary operators fall under the GGML_OP_UNARY umbrella
@@ -500,12 +500,12 @@ struct ggml_webgpu_unary_pipeline_key {
     ggml_tri_type ttype;     // only used for GGML_OP_TRI
 
     bool operator==(const ggml_webgpu_unary_pipeline_key & other) const {
-        return type == other.type && op == other.op && is_unary == other.is_unary && inplace == other.inplace &&
+        return type == other.type && op == other.op && is_unary == other.is_unary && inplace == other.inplace &&  // 返回
                ttype == other.ttype;
     }
 };
 
-struct ggml_webgpu_unary_pipeline_key_hash {
+struct ggml_webgpu_unary_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_unary_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.type);
@@ -513,20 +513,20 @@ struct ggml_webgpu_unary_pipeline_key_hash {
         ggml_webgpu_hash_combine(seed, key.is_unary);
         ggml_webgpu_hash_combine(seed, key.inplace);
         ggml_webgpu_hash_combine(seed, key.ttype);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** FlashAttention */
 
-enum ggml_webgpu_flash_attn_path : uint32_t {
+enum ggml_webgpu_flash_attn_path : uint32_t {  // 枚举定义
     GGML_WEBGPU_FLASH_ATTN_PATH_NONE            = 0u,
     GGML_WEBGPU_FLASH_ATTN_PATH_SUBGROUP_MATRIX = 1u,
     GGML_WEBGPU_FLASH_ATTN_PATH_TILE            = 2u,
     GGML_WEBGPU_FLASH_ATTN_PATH_VEC             = 3u,
 };
 
-struct ggml_webgpu_flash_attn_pipeline_key {
+struct ggml_webgpu_flash_attn_pipeline_key {  // 结构体定义
     ggml_type kv_type;
     uint32_t  head_dim_qk;
     uint32_t  head_dim_v;
@@ -538,13 +538,13 @@ struct ggml_webgpu_flash_attn_pipeline_key {
     uint32_t  path;
 
     bool operator==(const ggml_webgpu_flash_attn_pipeline_key & other) const {
-        return kv_type == other.kv_type && head_dim_qk == other.head_dim_qk && head_dim_v == other.head_dim_v &&
+        return kv_type == other.kv_type && head_dim_qk == other.head_dim_qk && head_dim_v == other.head_dim_v &&  // 返回
                kv_direct == other.kv_direct && kv_overlap == other.kv_overlap && has_mask == other.has_mask &&
                has_sinks == other.has_sinks && uses_logit_softcap == other.uses_logit_softcap && path == other.path;
     }
 };
 
-struct ggml_webgpu_flash_attn_pipeline_key_hash {
+struct ggml_webgpu_flash_attn_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_flash_attn_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.kv_type);
@@ -556,11 +556,11 @@ struct ggml_webgpu_flash_attn_pipeline_key_hash {
         ggml_webgpu_hash_combine(seed, key.has_sinks);
         ggml_webgpu_hash_combine(seed, key.uses_logit_softcap);
         ggml_webgpu_hash_combine(seed, key.path);
-        return seed;
+        return seed;  // 返回
     }
 };
 
-struct ggml_webgpu_flash_attn_decisions {
+struct ggml_webgpu_flash_attn_decisions {  // 结构体定义
     uint32_t path       = GGML_WEBGPU_FLASH_ATTN_PATH_NONE;
     uint32_t q_tile     = 0;
     uint32_t kv_tile    = 0;
@@ -575,18 +575,18 @@ inline constexpr uint32_t GGML_WEBGPU_FLASH_ATTN_TILE_Q_TILE       = 4u;
 inline uint32_t ggml_webgpu_flash_attn_pick_vec_ne(const ggml_webgpu_flash_attn_pipeline_key & key) {
     if (key.path != GGML_WEBGPU_FLASH_ATTN_PATH_VEC || key.kv_type != GGML_TYPE_F16 ||
         key.head_dim_qk != key.head_dim_v) {
-        return 1u;
+        return 1u;  // 返回
     }
 
     switch (key.head_dim_qk) {
         case 64:
         case 192:
         case 576:
-            return 2u;
+            return 2u;  // 返回
         case 96:
-            return 4u;
+            return 4u;  // 返回
         default:
-            return 1u;
+            return 1u;  // 返回
     }
 }
 
@@ -616,39 +616,39 @@ inline ggml_webgpu_flash_attn_pipeline_key ggml_webgpu_flash_attn_make_pipeline_
     key.has_sinks                           = has_sinks;
     key.uses_logit_softcap                  = ggml_get_op_params_f32(context.dst, 2) != 0.0f;
     key.path                                = path;
-    return key;
+    return key;  // 返回
 }
 
-struct ggml_webgpu_flash_attn_vec_reduce_pipeline_key {
+struct ggml_webgpu_flash_attn_vec_reduce_pipeline_key {  // 结构体定义
     uint32_t head_dim_v;
     uint32_t wg_size;
 };
 
-struct ggml_webgpu_flash_attn_vec_reduce_pipeline_key_hash {
+struct ggml_webgpu_flash_attn_vec_reduce_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_flash_attn_vec_reduce_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.head_dim_v);
         ggml_webgpu_hash_combine(seed, key.wg_size);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 inline bool operator==(const ggml_webgpu_flash_attn_vec_reduce_pipeline_key & lhs,
                        const ggml_webgpu_flash_attn_vec_reduce_pipeline_key & rhs) {
-    return lhs.head_dim_v == rhs.head_dim_v && lhs.wg_size == rhs.wg_size;
+    return lhs.head_dim_v == rhs.head_dim_v && lhs.wg_size == rhs.wg_size;  // 返回
 }
 
-struct ggml_webgpu_flash_attn_blk_pipeline_key {
+struct ggml_webgpu_flash_attn_blk_pipeline_key {  // 结构体定义
     uint32_t kv_tile;
 
     bool operator==(const ggml_webgpu_flash_attn_blk_pipeline_key & other) const { return kv_tile == other.kv_tile; }
 };
 
-struct ggml_webgpu_flash_attn_blk_pipeline_key_hash {
+struct ggml_webgpu_flash_attn_blk_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_flash_attn_blk_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.kv_tile);
-        return seed;
+        return seed;  // 返回
     }
 };
 
@@ -673,7 +673,7 @@ inline size_t ggml_webgpu_flash_attn_wg_mem_bytes(uint32_t q_tile,
     f16_elems += q_tile * kv_tile;            // inter_shmem
     f32_elems += q_tile;                      // row_max_shmem
     f32_elems += q_tile;                      // exp_sum_shmem
-    return f16_elems * GGML_WEBGPU_F16_SIZE_BYTES + f32_elems * GGML_WEBGPU_F32_SIZE_BYTES;
+    return f16_elems * GGML_WEBGPU_F16_SIZE_BYTES + f32_elems * GGML_WEBGPU_F32_SIZE_BYTES;  // 返回
 }
 
 inline uint32_t ggml_webgpu_flash_attn_max_kv_tile(const ggml_webgpu_shader_lib_context &      context,
@@ -742,7 +742,7 @@ inline ggml_webgpu_flash_attn_decisions ggml_webgpu_flash_attn_get_decisions(
                                                         GGML_WEBGPU_FLASH_ATTN_PATH_NONE;
 
     if (decisions.path == GGML_WEBGPU_FLASH_ATTN_PATH_NONE) {
-        return decisions;
+        return decisions;  // 返回
     }
 
     const ggml_webgpu_flash_attn_pipeline_key key = ggml_webgpu_flash_attn_make_pipeline_key(context, decisions.path);
@@ -751,7 +751,7 @@ inline ggml_webgpu_flash_attn_decisions ggml_webgpu_flash_attn_get_decisions(
     // invalidate if even the smallest kv_tile doesn't fit in shared memory
     if (max_kv_tile == 0) {
         decisions.path = GGML_WEBGPU_FLASH_ATTN_PATH_NONE;
-        return decisions;
+        return decisions;  // 返回
     }
 
     if (decisions.path == GGML_WEBGPU_FLASH_ATTN_PATH_VEC) {
@@ -765,7 +765,7 @@ inline ggml_webgpu_flash_attn_decisions ggml_webgpu_flash_attn_get_decisions(
                 decisions.kv_tile -= 8u;
             }
         }
-        return decisions;
+        return decisions;  // 返回
     }
 
     decisions.q_tile =
@@ -791,79 +791,79 @@ inline ggml_webgpu_flash_attn_decisions ggml_webgpu_flash_attn_get_decisions(
                                      context.sg_mat_n;
         }
     }
-    return decisions;
+    return decisions;  // 返回
 }
 
 /** Matrix Multiplication **/
 
-struct ggml_webgpu_legacy_mul_mat_pipeline_key {
+struct ggml_webgpu_legacy_mul_mat_pipeline_key {  // 结构体定义
     ggml_type src0_type;
     ggml_type src1_type;
 
     bool operator==(const ggml_webgpu_legacy_mul_mat_pipeline_key & other) const {
-        return src0_type == other.src0_type && src1_type == other.src1_type;
+        return src0_type == other.src0_type && src1_type == other.src1_type;  // 返回
     }
 };
 
-struct ggml_webgpu_legacy_mul_mat_pipeline_key_hash {
+struct ggml_webgpu_legacy_mul_mat_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_legacy_mul_mat_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.src0_type);
         ggml_webgpu_hash_combine(seed, key.src1_type);
-        return seed;
+        return seed;  // 返回
     }
 };
 
-struct ggml_webgpu_mul_mat_vec_pipeline_key {
+struct ggml_webgpu_mul_mat_vec_pipeline_key {  // 结构体定义
     ggml_type src0_type;
     ggml_type src1_type;
     int       vectorized;
 
     bool operator==(const ggml_webgpu_mul_mat_vec_pipeline_key & other) const {
-        return src0_type == other.src0_type && src1_type == other.src1_type && vectorized == other.vectorized;
+        return src0_type == other.src0_type && src1_type == other.src1_type && vectorized == other.vectorized;  // 返回
     }
 };
 
-struct ggml_webgpu_mul_mat_vec_pipeline_key_hash {
+struct ggml_webgpu_mul_mat_vec_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_mul_mat_vec_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.src0_type);
         ggml_webgpu_hash_combine(seed, key.src1_type);
         ggml_webgpu_hash_combine(seed, key.vectorized);
-        return seed;
+        return seed;  // 返回
     }
 };
 
-struct ggml_webgpu_mul_mat_vec_shader_decisions {
+struct ggml_webgpu_mul_mat_vec_shader_decisions {  // 结构体定义
     uint32_t wg_size;
     uint32_t outputs_per_wg;
     uint32_t vec_size;
 };
 
-struct ggml_webgpu_mul_mat_pipeline_key {
+struct ggml_webgpu_mul_mat_pipeline_key {  // 结构体定义
     ggml_type src0_type;
     ggml_type src1_type;
     int       vectorized;
     int       use_subgroup_matrix;
 
     bool operator==(const ggml_webgpu_mul_mat_pipeline_key & other) const {
-        return src0_type == other.src0_type && src1_type == other.src1_type && vectorized == other.vectorized &&
+        return src0_type == other.src0_type && src1_type == other.src1_type && vectorized == other.vectorized &&  // 返回
                use_subgroup_matrix == other.use_subgroup_matrix;
     }
 };
 
-struct ggml_webgpu_mul_mat_pipeline_key_hash {
+struct ggml_webgpu_mul_mat_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_mul_mat_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.src0_type);
         ggml_webgpu_hash_combine(seed, key.src1_type);
         ggml_webgpu_hash_combine(seed, key.vectorized);
         ggml_webgpu_hash_combine(seed, key.use_subgroup_matrix);
-        return seed;
+        return seed;  // 返回
     }
 };
 
-struct ggml_webgpu_mul_mat_shader_decisions {
+struct ggml_webgpu_mul_mat_shader_decisions {  // 结构体定义
     uint32_t tile_k;
     uint32_t wg_size_m;
     uint32_t wg_size_n;
@@ -885,119 +885,119 @@ struct ggml_webgpu_mul_mat_shader_decisions {
 
 /** MUL_MAT_ID **/
 
-struct ggml_webgpu_mul_mat_id_pipeline_key {
+struct ggml_webgpu_mul_mat_id_pipeline_key {  // 结构体定义
     ggml_type src0_type;
     ggml_type src1_type;
     uint32_t  n_experts;
     int       vectorized;
 
     bool operator==(const ggml_webgpu_mul_mat_id_pipeline_key & other) const {
-        return src0_type == other.src0_type && src1_type == other.src1_type && n_experts == other.n_experts &&
+        return src0_type == other.src0_type && src1_type == other.src1_type && n_experts == other.n_experts &&  // 返回
                vectorized == other.vectorized;
     }
 };
 
-struct ggml_webgpu_mul_mat_id_pipeline_key_hash {
+struct ggml_webgpu_mul_mat_id_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_mul_mat_id_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.src0_type);
         ggml_webgpu_hash_combine(seed, key.src1_type);
         ggml_webgpu_hash_combine(seed, key.n_experts);
         ggml_webgpu_hash_combine(seed, key.vectorized);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Cpy **/
 
-struct ggml_webgpu_cpy_pipeline_key {
+struct ggml_webgpu_cpy_pipeline_key {  // 结构体定义
     ggml_type src_type;
     ggml_type dst_type;
 
     bool operator==(const ggml_webgpu_cpy_pipeline_key & other) const {
-        return src_type == other.src_type && dst_type == other.dst_type;
+        return src_type == other.src_type && dst_type == other.dst_type;  // 返回
     }
 };
 
-struct ggml_webgpu_cpy_pipeline_key_hash {
+struct ggml_webgpu_cpy_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_cpy_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.src_type);
         ggml_webgpu_hash_combine(seed, key.dst_type);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Glu **/
 
-struct ggml_webgpu_glu_pipeline_key {
+struct ggml_webgpu_glu_pipeline_key {  // 结构体定义
     ggml_glu_op glu_op;
     ggml_type   type;
     bool        split;
 
     bool operator==(const ggml_webgpu_glu_pipeline_key & other) const {
-        return glu_op == other.glu_op && type == other.type && split == other.split;
+        return glu_op == other.glu_op && type == other.type && split == other.split;  // 返回
     }
 };
 
-struct ggml_webgpu_glu_pipeline_key_hash {
+struct ggml_webgpu_glu_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_glu_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.glu_op);
         ggml_webgpu_hash_combine(seed, key.type);
         ggml_webgpu_hash_combine(seed, key.split);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** Rope **/
 
-struct ggml_webgpu_rope_pipeline_key {
+struct ggml_webgpu_rope_pipeline_key {  // 结构体定义
     ggml_type type;
     bool      inplace;
     bool      has_ff;
 
     bool operator==(const ggml_webgpu_rope_pipeline_key & other) const {
-        return type == other.type && inplace == other.inplace && has_ff == other.has_ff;
+        return type == other.type && inplace == other.inplace && has_ff == other.has_ff;  // 返回
     }
 };
 
-struct ggml_webgpu_rope_pipeline_key_hash {
+struct ggml_webgpu_rope_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_rope_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.type);
         ggml_webgpu_hash_combine(seed, key.inplace);
         ggml_webgpu_hash_combine(seed, key.has_ff);
-        return seed;
+        return seed;  // 返回
     }
 };
 
 /** SoftMax **/
 
-struct ggml_webgpu_soft_max_pipeline_key {
+struct ggml_webgpu_soft_max_pipeline_key {  // 结构体定义
     ggml_type mask_type;
     bool      has_mask;
     bool      has_sink;
     bool      inplace;
 
     bool operator==(const ggml_webgpu_soft_max_pipeline_key & other) const {
-        return mask_type == other.mask_type && has_mask == other.has_mask && has_sink == other.has_sink &&
+        return mask_type == other.mask_type && has_mask == other.has_mask && has_sink == other.has_sink &&  // 返回
                inplace == other.inplace;
     }
 };
 
-struct ggml_webgpu_soft_max_pipeline_key_hash {
+struct ggml_webgpu_soft_max_pipeline_key_hash {  // 结构体定义
     size_t operator()(const ggml_webgpu_soft_max_pipeline_key & key) const {
         size_t seed = 0;
         ggml_webgpu_hash_combine(seed, key.mask_type);
         ggml_webgpu_hash_combine(seed, key.has_mask);
         ggml_webgpu_hash_combine(seed, key.has_sink);
         ggml_webgpu_hash_combine(seed, key.inplace);
-        return seed;
+        return seed;  // 返回
     }
 };
 
-class ggml_webgpu_shader_lib {
+class ggml_webgpu_shader_lib {  // 类定义
     wgpu::Device           device;
     pre_wgsl::Preprocessor preprocessor;
 
@@ -1084,14 +1084,14 @@ class ggml_webgpu_shader_lib {
     webgpu_pipeline get_sum_rows_pipeline(const ggml_webgpu_shader_lib_context & context) {
         auto it = sum_rows_pipelines.find(1);
         if (it != sum_rows_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
         std::vector<std::string> defines;
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
         auto processed        = preprocessor.preprocess(wgsl_sum_rows, defines);
         sum_rows_pipelines[1] = ggml_webgpu_create_pipeline(device, processed, "sum_rows");
-        return sum_rows_pipelines[1];
+        return sum_rows_pipelines[1];  // 返回
     }
 
     webgpu_pipeline get_row_norm_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1101,7 +1101,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = row_norm_pipelines.find(key);
         if (it != row_norm_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
         std::vector<std::string> defines;
         std::string              variant;
@@ -1133,7 +1133,7 @@ class ggml_webgpu_shader_lib {
         decisions->inplace              = key.inplace;
         row_norm_pipelines[key]         = ggml_webgpu_create_pipeline(device, processed, variant);
         row_norm_pipelines[key].context = decisions;
-        return row_norm_pipelines[key];
+        return row_norm_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_argmax_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1141,7 +1141,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = argmax_pipelines.find(vec4);
         if (it != argmax_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
         std::string              variant = "argmax";
         std::vector<std::string> defines;
@@ -1164,7 +1164,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = set_rows_pipelines.find(key);
         if (it != set_rows_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -1201,7 +1201,7 @@ class ggml_webgpu_shader_lib {
         decisions->wg_size              = context.max_wg_size;
         set_rows_pipelines[key]         = ggml_webgpu_create_pipeline(device, processed, variant);
         set_rows_pipelines[key].context = decisions;
-        return set_rows_pipelines[key];
+        return set_rows_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_set_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1211,7 +1211,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = set_pipelines.find(key);
         if (it != set_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -1244,13 +1244,13 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         set_pipelines[key]       = pipeline;
-        return set_pipelines[key];
+        return set_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_cumsum_pipeline(const ggml_webgpu_shader_lib_context & context) {
         auto it = cumsum_pipelines.find(1);
         if (it != cumsum_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -1258,7 +1258,7 @@ class ggml_webgpu_shader_lib {
 
         auto processed      = preprocessor.preprocess(wgsl_cumsum, defines);
         cumsum_pipelines[1] = ggml_webgpu_create_pipeline(device, processed, "cumsum");
-        return cumsum_pipelines[1];
+        return cumsum_pipelines[1];  // 返回
     }
 
     webgpu_pipeline get_argsort_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1269,7 +1269,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = argsort_pipelines.find(order);
         if (it != argsort_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -1287,7 +1287,7 @@ class ggml_webgpu_shader_lib {
         decisions->wg_size               = wg_size;
         argsort_pipelines[order]         = ggml_webgpu_create_pipeline(device, processed, variant);
         argsort_pipelines[order].context = decisions;
-        return argsort_pipelines[order];
+        return argsort_pipelines[order];  // 返回
     }
 
     webgpu_pipeline get_argsort_merge_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1298,7 +1298,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = argsort_merge_pipelines.find(order);
         if (it != argsort_merge_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -1310,7 +1310,7 @@ class ggml_webgpu_shader_lib {
 
         auto processed                 = preprocessor.preprocess(wgsl_argsort_merge, defines);
         argsort_merge_pipelines[order] = ggml_webgpu_create_pipeline(device, processed, variant);
-        return argsort_merge_pipelines[order];
+        return argsort_merge_pipelines[order];  // 返回
     }
 
     webgpu_pipeline get_get_rows_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1321,7 +1321,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = get_rows_pipelines.find(key);
         if (it != get_rows_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -1431,7 +1431,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         get_rows_pipelines[key]  = pipeline;
-        return get_rows_pipelines[key];
+        return get_rows_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_scale_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1440,7 +1440,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = scale_pipelines.find(key);
         if (it != scale_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -1460,7 +1460,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         scale_pipelines[key]     = pipeline;
-        return scale_pipelines[key];
+        return scale_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_solve_tri_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1471,7 +1471,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = solve_tri_pipelines.find(key);
         if (it != solve_tri_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -1501,7 +1501,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         solve_tri_pipelines[key] = pipeline;
-        return solve_tri_pipelines[key];
+        return solve_tri_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_ssm_conv_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1511,7 +1511,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = ssm_conv_pipelines.find(key);
         if (it != ssm_conv_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -1543,7 +1543,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         ssm_conv_pipelines[key]  = pipeline;
-        return ssm_conv_pipelines[key];
+        return ssm_conv_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_ssm_scan_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1555,7 +1555,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = ssm_scan_pipelines.find(key);
         if (it != ssm_scan_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -1597,7 +1597,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline   = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context           = decisions;
         ssm_scan_pipelines[key]    = pipeline;
-        return ssm_scan_pipelines[key];
+        return ssm_scan_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_gated_delta_net_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1608,7 +1608,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = gated_delta_net_pipelines.find(key);
         if (it != gated_delta_net_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -1633,7 +1633,7 @@ class ggml_webgpu_shader_lib {
         auto            processed      = preprocessor.preprocess(wgsl_gated_delta_net, defines);
         webgpu_pipeline pipeline       = ggml_webgpu_create_pipeline(device, processed, variant);
         gated_delta_net_pipelines[key] = pipeline;
-        return gated_delta_net_pipelines[key];
+        return gated_delta_net_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_pad_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1642,7 +1642,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = pad_pipelines.find(key);
         if (it != pad_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -1661,7 +1661,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         pad_pipelines[key]       = pipeline;
-        return pad_pipelines[key];
+        return pad_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_mul_mat_vec_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1675,7 +1675,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = mul_mat_vec_pipelines.find(key);
         if (it != mul_mat_vec_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -1774,7 +1774,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline   = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context           = decisions;
         mul_mat_vec_pipelines[key] = pipeline;
-        return mul_mat_vec_pipelines[key];
+        return mul_mat_vec_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_mul_mat_fast_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1789,7 +1789,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = mul_mat_fast_pipelines.find(key);
         if (it != mul_mat_fast_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         const char * shader_src = key.use_subgroup_matrix ? wgsl_mul_mat_subgroup_matrix : wgsl_mul_mat_reg_tile;
@@ -1929,7 +1929,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline    = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context            = decisions;
         mul_mat_fast_pipelines[key] = pipeline;
-        return mul_mat_fast_pipelines[key];
+        return mul_mat_fast_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_mul_mat_legacy_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -1939,7 +1939,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = mul_mat_legacy_pipelines.find(key);
         if (it != mul_mat_legacy_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2022,13 +2022,13 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline      = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context              = decisions;
         mul_mat_legacy_pipelines[key] = pipeline;
-        return mul_mat_legacy_pipelines[key];
+        return mul_mat_legacy_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_mul_mat_id_gather_pipeline(const ggml_webgpu_shader_lib_context & context) {
         auto it = mul_mat_id_gather_pipelines.find(1);
         if (it != mul_mat_id_gather_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
         std::vector<std::string> defines;
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
@@ -2040,7 +2040,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline       = ggml_webgpu_create_pipeline(device, processed, "mul_mat_id_gather");
         pipeline.context               = decisions;
         mul_mat_id_gather_pipelines[1] = pipeline;
-        return pipeline;
+        return pipeline;  // 返回
     }
 
     webgpu_pipeline get_mul_mat_id_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2055,7 +2055,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = mul_mat_id_pipelines.find(key);
         if (it != mul_mat_id_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2160,7 +2160,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline  = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context          = decisions;
         mul_mat_id_pipelines[key] = pipeline;
-        return mul_mat_id_pipelines[key];
+        return mul_mat_id_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_mul_mat_id_vec_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2175,7 +2175,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = mul_mat_id_vec_pipelines.find(key);
         if (it != mul_mat_id_vec_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2277,7 +2277,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline      = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context              = decisions;
         mul_mat_id_vec_pipelines[key] = pipeline;
-        return mul_mat_id_vec_pipelines[key];
+        return mul_mat_id_vec_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_unary_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2292,7 +2292,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = unary_pipelines.find(key);
         if (it != unary_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2350,7 +2350,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         unary_pipelines[key]     = pipeline;
-        return unary_pipelines[key];
+        return unary_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_rms_norm_mul_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2361,7 +2361,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = rms_norm_mul_pipelines.find(key);
         if (it != rms_norm_mul_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2390,7 +2390,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline        = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context                = pipeline_decisions;
         rms_norm_mul_pipelines[key]     = pipeline;
-        return rms_norm_mul_pipelines[key];
+        return rms_norm_mul_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_binary_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2403,7 +2403,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = binary_pipelines.find(key);
         if (it != binary_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2448,7 +2448,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = pipeline_decisions;
         binary_pipelines[key]    = pipeline;
-        return binary_pipelines[key];
+        return binary_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_concat_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2457,7 +2457,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = concat_pipelines.find(key);
         if (it != concat_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2484,7 +2484,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         concat_pipelines[key]    = pipeline;
-        return concat_pipelines[key];
+        return concat_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_repeat_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2493,7 +2493,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = repeat_pipelines.find(key);
         if (it != repeat_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2524,7 +2524,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         repeat_pipelines[key]    = pipeline;
-        return repeat_pipelines[key];
+        return repeat_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_flash_attn_pipeline(const ggml_webgpu_shader_lib_context & context,
@@ -2535,7 +2535,7 @@ class ggml_webgpu_shader_lib {
         ggml_webgpu_flash_attn_pipeline_key key = ggml_webgpu_flash_attn_make_pipeline_key(context, decisions.path);
         auto                                it  = flash_attn_pipelines.find(key);
         if (it != flash_attn_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
         std::vector<std::string> defines;
         std::string              variant = decisions.path == GGML_WEBGPU_FLASH_ATTN_PATH_VEC  ? "flash_attn_vec" :
@@ -2618,7 +2618,7 @@ class ggml_webgpu_shader_lib {
             ggml_webgpu_create_pipeline(device, preprocessor.preprocess(shader_src, defines), variant);
         pipeline.context          = pipeline_decisions;
         flash_attn_pipelines[key] = pipeline;
-        return flash_attn_pipelines[key];
+        return flash_attn_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_flash_attn_blk_pipeline(const ggml_webgpu_shader_lib_context & context, uint32_t kv_tile) {
@@ -2626,7 +2626,7 @@ class ggml_webgpu_shader_lib {
         key.kv_tile                                 = kv_tile;
         auto it                                     = flash_attn_blk_pipelines.find(key);
         if (it != flash_attn_blk_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2645,7 +2645,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline =
             ggml_webgpu_create_pipeline(device, preprocessor.preprocess(wgsl_flash_attn_vec_blk, defines), variant);
         flash_attn_blk_pipelines[key] = pipeline;
-        return flash_attn_blk_pipelines[key];
+        return flash_attn_blk_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_flash_attn_vec_reduce_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2654,7 +2654,7 @@ class ggml_webgpu_shader_lib {
         key.wg_size                                        = context.max_wg_size;
         auto it                                            = flash_attn_vec_reduce_pipelines.find(key);
         if (it != flash_attn_vec_reduce_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2669,7 +2669,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline =
             ggml_webgpu_create_pipeline(device, preprocessor.preprocess(wgsl_flash_attn_vec_reduce, defines), variant);
         flash_attn_vec_reduce_pipelines[key] = pipeline;
-        return flash_attn_vec_reduce_pipelines[key];
+        return flash_attn_vec_reduce_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_cpy_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2679,7 +2679,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = cpy_pipelines.find(key);
         if (it != cpy_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2723,7 +2723,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         cpy_pipelines[key]       = pipeline;
-        return cpy_pipelines[key];
+        return cpy_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_glu_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2734,7 +2734,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = glu_pipelines.find(key);
         if (it != glu_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2795,7 +2795,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         glu_pipelines[key]       = pipeline;
-        return glu_pipelines[key];
+        return glu_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_rope_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2806,7 +2806,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = rope_pipelines.find(key);
         if (it != rope_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2844,7 +2844,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         rope_pipelines[key]      = pipeline;
-        return rope_pipelines[key];
+        return rope_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_soft_max_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2856,7 +2856,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = soft_max_pipelines.find(key);
         if (it != soft_max_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2897,7 +2897,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         soft_max_pipelines[key]  = pipeline;
-        return soft_max_pipelines[key];
+        return soft_max_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_conv2d_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2908,7 +2908,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = conv2d_pipelines.find(key);
         if (it != conv2d_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2937,7 +2937,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         conv2d_pipelines[key]    = pipeline;
-        return conv2d_pipelines[key];
+        return conv2d_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_im2col_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2947,7 +2947,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = im2col_pipelines.find(key);
         if (it != im2col_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -2975,7 +2975,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         im2col_pipelines[key]    = pipeline;
-        return im2col_pipelines[key];
+        return im2col_pipelines[key];  // 返回
     }
 
     webgpu_pipeline get_upscale_pipeline(const ggml_webgpu_shader_lib_context & context) {
@@ -2991,7 +2991,7 @@ class ggml_webgpu_shader_lib {
 
         auto it = upscale_pipelines.find(key);
         if (it != upscale_pipelines.end()) {
-            return it->second;
+            return it->second;  // 返回
         }
 
         std::vector<std::string> defines;
@@ -3041,7 +3041,7 @@ class ggml_webgpu_shader_lib {
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
         upscale_pipelines[key]   = pipeline;
-        return upscale_pipelines[key];
+        return upscale_pipelines[key];  // 返回
     }
 
   private:
@@ -3061,8 +3061,8 @@ class ggml_webgpu_shader_lib {
         pipeline_desc.compute.module     = shader_module;
         pipeline_desc.compute.entryPoint = "main";   // Entry point in the WGSL code
         pipeline_desc.layout             = nullptr;  // nullptr means auto layout
-        return { device.CreateComputePipeline(&pipeline_desc), label };
+        return { device.CreateComputePipeline(&pipeline_desc), label };  // 返回
     }
 };
 
-#endif  // GGML_WEBGPU_SHADER_LIB_HPP
+#endif  // GGML_WEBGPU_SHADER_LIB_HPP  // 条件编译结束

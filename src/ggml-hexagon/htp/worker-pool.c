@@ -1,27 +1,27 @@
-#include "worker-pool.h"
+#include "worker-pool.h"  // 引入 worker-pool.h 头文件
 
-#include <qurt.h>
-#include <stdatomic.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <qurt.h>  // 引入 qurt.h 头文件
+#include <stdatomic.h>  // 引入 stdatomic.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#include "HAP_farf.h"
+#include "HAP_farf.h"  // 引入 HAP_farf.h 头文件
 
-#define WORKER_THREAD_STACK_SZ  (2 * 16384)
-#define LOWEST_USABLE_QURT_PRIO (254)
+#define WORKER_THREAD_STACK_SZ  (2 * 16384)  // 宏定义 WORKER_THREAD_STACK_SZ
+#define LOWEST_USABLE_QURT_PRIO (254)  // 宏定义 LOWEST_USABLE_QURT_PRIO
 
 struct worker_pool_s;
 
 // internal structure kept in thread-local storage per instance of worker pool
-typedef struct {
+typedef struct {  // 类型定义
     struct worker_pool_s * pool;
     unsigned int           id;
 } worker_context_t;
 
 // internal structure kept in thread-local storage per instance of worker pool
-typedef struct worker_pool_s {
+typedef struct worker_pool_s {  // 类型定义
     worker_pool_job_t job[MAX_NUM_WORKERS];      // list of job descriptors
     qurt_thread_t     thread[MAX_NUM_WORKERS];   // thread ID's of the workers
     worker_context_t  context[MAX_NUM_WORKERS];  // worker contexts
@@ -73,7 +73,7 @@ AEEResult worker_pool_init_with_stack_size(worker_pool_context_t * context, uint
 
     if (NULL == context) {
         FARF(ERROR, "NULL context passed to worker_pool_init().");
-        return AEE_EBADPARM;
+        return AEE_EBADPARM;  // 返回
     }
 
     // Allocations
@@ -82,7 +82,7 @@ AEEResult worker_pool_init_with_stack_size(worker_pool_context_t * context, uint
     unsigned char * mem_blob = (unsigned char *) malloc(size);
     if (!mem_blob) {
         FARF(ERROR, "Could not allocate memory for worker pool!!");
-        return AEE_ENOMEMORY;
+        return AEE_ENOMEMORY;  // 返回
     }
 
     worker_pool_t * me = (worker_pool_t *) (mem_blob + stack_size * n_threads);
@@ -145,15 +145,15 @@ AEEResult worker_pool_init_with_stack_size(worker_pool_context_t * context, uint
         if (err) {
             FARF(ERROR, "Could not launch worker threads!");
             worker_pool_release((worker_pool_context_t *) &me);
-            return AEE_EQURTTHREADCREATE;
+            return AEE_EQURTTHREADCREATE;  // 返回
         }
     }
     *context = (worker_pool_context_t *) me;
-    return AEE_SUCCESS;
+    return AEE_SUCCESS;  // 返回
 }
 
 AEEResult worker_pool_init(worker_pool_context_t * context, uint32_t n_threads) {
-    return worker_pool_init_with_stack_size(context, n_threads, WORKER_THREAD_STACK_SZ);
+    return worker_pool_init_with_stack_size(context, n_threads, WORKER_THREAD_STACK_SZ);  // worker_pool_init_with_stack_size
 }
 
 // clean up worker pool
@@ -162,7 +162,7 @@ void worker_pool_release(worker_pool_context_t * context) {
 
     // if no worker pool exists, return error.
     if (NULL == me) {
-        return;
+        return;  // 返回
     }
 
     atomic_store(&me->killed, 1);
@@ -190,12 +190,12 @@ AEEResult worker_pool_run_jobs(worker_pool_context_t context, worker_pool_job_t 
     worker_pool_t * me = (worker_pool_t *) context;
     if (NULL == me) {
         FARF(ERROR, "worker-pool: invalid context");
-        return AEE_EBADPARM;
+        return AEE_EBADPARM;  // 返回
     }
 
     if (n > me->n_threads) {
         FARF(ERROR, "worker-pool: invalid number of jobs %u for n-threads %u", n, me->n_threads);
-        return AEE_EBADPARM;
+        return AEE_EBADPARM;  // 返回
     }
 
     memcpy(me->job, job, sizeof(worker_pool_job_t) * n);
@@ -218,7 +218,7 @@ AEEResult worker_pool_run_jobs(worker_pool_context_t context, worker_pool_job_t 
             ;
     }
 
-    return 0;
+    return 0;  // 返回
 }
 
 // run func
@@ -230,7 +230,7 @@ AEEResult worker_pool_run_func(worker_pool_context_t context, worker_callback_t 
         job[i].data = data;
     }
 
-    return worker_pool_run_jobs(context, job, n);
+    return worker_pool_run_jobs(context, job, n);  // worker_pool_run_jobs
 }
 
 AEEResult worker_pool_set_thread_priority(worker_pool_context_t context, unsigned int prio) {
@@ -238,7 +238,7 @@ AEEResult worker_pool_set_thread_priority(worker_pool_context_t context, unsigne
 
     // if no worker pool exists, return error.
     if (!me) {
-        return AEE_ENOMORE;
+        return AEE_ENOMORE;  // 返回
     }
 
     int result = AEE_SUCCESS;
@@ -257,14 +257,14 @@ AEEResult worker_pool_set_thread_priority(worker_pool_context_t context, unsigne
         }
     }
 
-    return result;
+    return result;  // 返回
 }
 
 AEEResult worker_pool_retrieve_thread_id(worker_pool_context_t context, unsigned int * tids) {
     worker_pool_t * me = (worker_pool_t *) context;
     if (!me) {
         FARF(ERROR, "worker-pool: invalid context");
-        return AEE_EBADPARM;
+        return AEE_EBADPARM;  // 返回
         ;
     }
 
@@ -272,22 +272,22 @@ AEEResult worker_pool_retrieve_thread_id(worker_pool_context_t context, unsigned
         tids[i] = me->thread[i];
     }
 
-    return AEE_SUCCESS;
+    return AEE_SUCCESS;  // 返回
 }
 
 AEEResult worker_pool_get_thread_priority(worker_pool_context_t context, unsigned int * prio) {
     worker_pool_t * me = (worker_pool_t *) context;
     if (!me) {
         FARF(ERROR, "worker-pool: invalid context");
-        return AEE_EBADPARM;
+        return AEE_EBADPARM;  // 返回
     }
 
     int priority = qurt_thread_get_priority(me->thread[0]);
     if (priority > 0) {
         *prio = priority;
-        return 0;
+        return 0;  // 返回
     } else {
         *prio = 0;
-        return AEE_EBADSTATE;
+        return AEE_EBADSTATE;  // 返回
     }
 }

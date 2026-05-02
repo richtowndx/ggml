@@ -31,26 +31,26 @@
 //
 // Module maintainer: Johannes Gäßler (@JohannesGaessler, johannesg@5d6.de)
 
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "ggml.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <stdbool.h>  // 引入 stdbool.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
 
-#define GGUF_MAGIC   "GGUF"
-#define GGUF_VERSION 3
+#define GGUF_MAGIC   "GGUF"  // 宏定义 GGUF_MAGIC
+#define GGUF_VERSION 3  // 宏定义 GGUF_VERSION
 
-#define GGUF_KEY_GENERAL_ALIGNMENT "general.alignment"
+#define GGUF_KEY_GENERAL_ALIGNMENT "general.alignment"  // 宏定义 GGUF_KEY_GENERAL_ALIGNMENT
 
-#define GGUF_DEFAULT_ALIGNMENT 32
+#define GGUF_DEFAULT_ALIGNMENT 32  // 宏定义 GGUF_DEFAULT_ALIGNMENT
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
     // types that can be stored as GGUF KV data
-    enum gguf_type {
+    enum gguf_type {  // 枚举定义
         GGUF_TYPE_UINT8   = 0,
         GGUF_TYPE_INT8    = 1,
         GGUF_TYPE_UINT16  = 2,
@@ -69,7 +69,7 @@ extern "C" {
 
     struct gguf_context;
 
-    struct gguf_init_params {
+    struct gguf_init_params {  // 结构体定义
         bool no_alloc;
 
         // if not NULL, create a ggml_context and allocate the tensor data in it
@@ -199,6 +199,6 @@ extern "C" {
     // writes the meta data to pointer "data"
     GGML_API void   gguf_get_meta_data(const struct gguf_context * ctx, void * data);
 
-#ifdef  __cplusplus
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束

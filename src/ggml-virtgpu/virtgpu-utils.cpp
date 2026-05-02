@@ -1,23 +1,23 @@
-#include "virtgpu-utils.h"
+#include "virtgpu-utils.h"  // 引入 virtgpu-utils.h 头文件
 
-#include <malloc.h>
-#include <stdlib.h>
+#include <malloc.h>  // 引入 malloc.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
 
-#include <cstring>
+#include <cstring>  // 引入 cstring 头文件
 
-#define NODE_ALLOC_ALIGN 64
-#define NODE_PTR_MASK    (~((uintptr_t) NODE_ALLOC_ALIGN - 1))
-#define NODE_LEVEL_MASK  ((uintptr_t) NODE_ALLOC_ALIGN - 1)
-#define NULL_NODE        0
+#define NODE_ALLOC_ALIGN 64  // 宏定义 NODE_ALLOC_ALIGN
+#define NODE_PTR_MASK    (~((uintptr_t) NODE_ALLOC_ALIGN - 1))  // 宏定义 NODE_PTR_MASK
+#define NODE_LEVEL_MASK  ((uintptr_t) NODE_ALLOC_ALIGN - 1)  // 宏定义 NODE_LEVEL_MASK
+#define NULL_NODE        0  // 宏定义 NULL_NODE
 
-#define os_malloc_aligned(_size, _align) _aligned_malloc(_size, _align)
-#define os_free_aligned(_ptr)            free(_ptr)
-#define p_atomic_cmpxchg(v, old, _new)   __sync_val_compare_and_swap((v), (old), (_new))
+#define os_malloc_aligned(_size, _align) _aligned_malloc(_size, _align)  // 宏定义 os_malloc_aligned
+#define os_free_aligned(_ptr)            free(_ptr)  // 宏定义 os_free_aligned
+#define p_atomic_cmpxchg(v, old, _new)   __sync_val_compare_and_swap((v), (old), (_new))  // 宏定义 p_atomic_cmpxchg
 
 static inline uint64_t util_logbase2_64(uint64_t n) {
-#if defined(HAVE___BUILTIN_CLZLL)
+#if defined(HAVE___BUILTIN_CLZLL)  // 条件编译
     return ((sizeof(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
-#else
+#else  // 否则
     uint64_t pos = 0ull;
     if (n >= 1ull << 32) {
         n >>= 32;
@@ -42,8 +42,8 @@ static inline uint64_t util_logbase2_64(uint64_t n) {
     if (n >= 1ull << 1) {
         pos += 1;
     }
-    return pos;
-#endif
+    return pos;  // 返回
+#endif  // 条件编译结束
 }
 
 void util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t node_size) {
@@ -57,9 +57,9 @@ static inline void * os_malloc_aligned(size_t size, size_t alignment) {
     void * ptr;
     alignment = (alignment + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
     if (posix_memalign(&ptr, alignment, size) != 0) {
-        return NULL;
+        return NULL;  // 返回
     }
-    return ptr;
+    return ptr;  // 返回
 }
 
 static inline void * _util_sparse_array_node_data(uintptr_t handle) {
@@ -67,7 +67,7 @@ static inline void * _util_sparse_array_node_data(uintptr_t handle) {
 }
 
 static inline unsigned _util_sparse_array_node_level(uintptr_t handle) {
-    return handle & NODE_LEVEL_MASK;
+    return handle & NODE_LEVEL_MASK;  // 返回
 }
 
 static inline void _util_sparse_array_node_finish(util_sparse_array * arr, uintptr_t node) {
@@ -102,7 +102,7 @@ inline uintptr_t _util_sparse_array_node_alloc(util_sparse_array * arr, unsigned
     void * data = os_malloc_aligned(size, NODE_ALLOC_ALIGN);
     memset(data, 0, size);
 
-    return _util_sparse_array_node(data, level);
+    return _util_sparse_array_node(data, level);  // _util_sparse_array_node
 }
 
 static inline uintptr_t _util_sparse_array_set_or_free_node(uintptr_t * node_ptr, uintptr_t cmp_node, uintptr_t node) {
@@ -113,9 +113,9 @@ static inline uintptr_t _util_sparse_array_set_or_free_node(uintptr_t * node_ptr
        * allocated.
        */
         os_free_aligned(_util_sparse_array_node_data(node));
-        return prev_node;
+        return prev_node;  // 返回
     } else {
-        return node;
+        return node;  // 返回
     }
 }
 

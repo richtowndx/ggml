@@ -1,37 +1,37 @@
-#include "ggml.h"
-#include "ggml-cpu.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#ifdef GGML_USE_CUDA
-#include "ggml-cuda.h"
-#endif
+#ifdef GGML_USE_CUDA  // 如果定义了 GGML_USE_CUDA 则编译
+#include "ggml-cuda.h"  // 引入 ggml-cuda.h 头文件
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_METAL
-#include "ggml-metal.h"
-#endif
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
+#include "ggml-metal.h"  // 引入 ggml-metal.h 头文件
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_BLAS
-#include "ggml-blas.h"
-#endif
+#ifdef GGML_USE_BLAS  // 如果定义了 GGML_USE_BLAS 则编译
+#include "ggml-blas.h"  // 引入 ggml-blas.h 头文件
+#endif  // 条件编译结束
 
-#include "common.h"
-#include "common-ggml.h"
+#include "common.h"  // 引入 common.h 头文件
+#include "common-ggml.h"  // 引入 common-ggml.h 头文件
 
-#include <cassert>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <map>
-#include <string>
-#include <vector>
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <map>  // 引入 map 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER)  // 条件编译
 #pragma warning(disable: 4244 4267) // possible loss of data
-#endif
+#endif  // 条件编译结束
 
-#define GPT2_MAX_NODES 4096
+#define GPT2_MAX_NODES 4096  // 宏定义 GPT2_MAX_NODES
 
 static void ggml_log_callback_default(ggml_log_level level, const char * text, void * user_data) {
     (void) level;
@@ -41,7 +41,7 @@ static void ggml_log_callback_default(ggml_log_level level, const char * text, v
 }
 
 // default hparams (GPT-2 117M)
-struct gpt2_hparams {
+struct gpt2_hparams {  // 结构体定义
     int32_t n_vocab = 50257;
     int32_t n_ctx   = 1024;
     int32_t n_embd  = 768;
@@ -51,7 +51,7 @@ struct gpt2_hparams {
     float   eps     = 1e-5f;
 };
 
-struct gpt2_layer {
+struct gpt2_layer {  // 结构体定义
     // normalization
     struct ggml_tensor * ln_1_g;
     struct ggml_tensor * ln_1_b;
@@ -74,7 +74,7 @@ struct gpt2_layer {
     struct ggml_tensor * c_mlp_proj_b;
 };
 
-struct gpt2_model {
+struct gpt2_model {  // 结构体定义
     gpt2_hparams hparams;
 
     // normalization
@@ -112,7 +112,7 @@ void init_backends(gpt2_model & model, const gpt_params & params) {
     ggml_log_set(ggml_log_callback_default, nullptr);
 
     // initialize the backends
-#ifdef GGML_USE_CUDA
+#ifdef GGML_USE_CUDA  // 如果定义了 GGML_USE_CUDA 则编译
     if (params.n_gpu_layers > 0) {
         fprintf(stderr, "%s: using CUDA backend\n", __func__);
         gpu_backend = ggml_backend_cuda_init(0);
@@ -120,9 +120,9 @@ void init_backends(gpt2_model & model, const gpt_params & params) {
             fprintf(stderr, "%s: ggml_backend_cuda_init() failed\n", __func__);
         }
     }
-#endif
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_METAL
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
     if (params.n_gpu_layers > 0) {
         fprintf(stderr, "%s: using Metal backend\n", __func__);
         gpu_backend = ggml_backend_metal_init();
@@ -130,12 +130,12 @@ void init_backends(gpt2_model & model, const gpt_params & params) {
             fprintf(stderr, "%s: ggml_backend_metal_init() failed\n", __func__);
         }
     }
-#endif
+#endif  // 条件编译结束
     if (gpu_backend) {
         model.backends.push_back(gpu_backend);
     }
 
-#ifdef GGML_USE_BLAS
+#ifdef GGML_USE_BLAS  // 如果定义了 GGML_USE_BLAS 则编译
     ggml_backend_t blas_backend = ggml_backend_blas_init();
     if (!blas_backend) {
         fprintf(stderr, "%s: failed to initialize BLAS backend\n", __func__);
@@ -143,7 +143,7 @@ void init_backends(gpt2_model & model, const gpt_params & params) {
         ggml_backend_blas_set_n_threads(blas_backend, params.n_threads);
         model.backends.push_back(blas_backend);
     }
-#endif
+#endif  // 条件编译结束
 
     // always add the CPU backend as a fallback
     ggml_backend_t cpu_backend = ggml_backend_cpu_init();
@@ -158,7 +158,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
     auto fin = std::ifstream(fname, std::ios::binary);
     if (!fin) {
         fprintf(stderr, "%s: failed to open '%s'\n", __func__, fname.c_str());
-        return false;
+        return false;  // 返回
     }
 
     // verify magic
@@ -167,7 +167,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
         fin.read((char *) &magic, sizeof(magic));
         if (magic != GGML_FILE_MAGIC) {
             fprintf(stderr, "%s: invalid model file '%s' (bad magic)\n", __func__, fname.c_str());
-            return false;
+            return false;  // 返回
         }
     }
 
@@ -203,7 +203,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
         if (n_vocab != model.hparams.n_vocab) {
             fprintf(stderr, "%s: invalid model file '%s' (bad vocab size %d != %d)\n",
                     __func__, fname.c_str(), n_vocab, model.hparams.n_vocab);
-            return false;
+            return false;  // 返回
         }
 
         std::string word;
@@ -228,7 +228,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
     if (wtype == GGML_TYPE_COUNT) {
         fprintf(stderr, "%s: invalid model file '%s' (bad ftype value %d)\n",
                 __func__, fname.c_str(), model.hparams.ftype);
-        return false;
+        return false;  // 返回
     }
 
     auto & ctx = model.ctx_w;
@@ -236,7 +236,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
     // create the ggml context
     {
         size_t n_tensors = 3 /* input */ + 2 /* kv */ + 6 + 12*model.hparams.n_layer;
-        struct ggml_init_params params = {
+        struct ggml_init_params params = {  // 结构体定义
             /*.mem_size   =*/ ggml_tensor_overhead() * n_tensors,
             /*.mem_buffer =*/ NULL,
             /*.no_alloc   =*/ true,
@@ -245,7 +245,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
         model.ctx_w = ggml_init(params);
         if (!model.ctx_w) {
             fprintf(stderr, "%s: ggml_init() failed\n", __func__);
-            return false;
+            return false;  // 返回
         }
     }
 
@@ -451,20 +451,20 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
 
             if (model.tensors.find(name) == model.tensors.end()) {
                 fprintf(stderr, "%s: unknown tensor '%s' in model file\n", __func__, name.c_str());
-                return false;
+                return false;  // 返回
             }
 
             auto tensor = model.tensors[name];
             ggml_set_name(tensor, name.c_str());
             if (ggml_nelements(tensor) != nelements) {
                 fprintf(stderr, "%s: tensor '%s' has wrong size in model file\n", __func__, name.c_str());
-                return false;
+                return false;  // 返回
             }
 
             if (tensor->ne[0] != ne[0] || tensor->ne[1] != ne[1]) {
                 fprintf(stderr, "%s: tensor '%s' has wrong shape in model file: got [%d, %d], expected [%d, %d]\n",
                         __func__, name.c_str(), (int) tensor->ne[0], (int) tensor->ne[1], ne[0], ne[1]);
-                return false;
+                return false;  // 返回
             }
 
             // for debugging
@@ -477,7 +477,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
             if ((nelements*bpe)/ggml_blck_size(tensor->type) != ggml_nbytes(tensor)) {
                 fprintf(stderr, "%s: tensor '%s' has wrong size in model file: got %zu, expected %zu\n",
                         __func__, name.c_str(), ggml_nbytes(tensor), nelements*bpe);
-                return false;
+                return false;  // 返回
             }
 
             // allocate the tensor
@@ -487,9 +487,9 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
             //printf("%s: [%5.5s] %s\n", __func__, ggml_backend_name(backend), name.c_str());
 
             if (ggml_backend_is_cpu(backend)
-#ifdef GGML_USE_METAL
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
                 || ggml_backend_is_metal(backend)
-#endif
+#endif  // 条件编译结束
                 ) {
                 // for the CPU and Metal backend, we can read directly into the tensor
                 fin.read(reinterpret_cast<char *>(tensor->data), ggml_nbytes(tensor));
@@ -542,7 +542,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
         ggml_tallocr_alloc(&alloc, model.position);
     }
 
-    return true;
+    return true;  // 返回
 }
 
 // build the computation graph
@@ -563,7 +563,7 @@ struct ggml_cgraph * gpt2_graph(
     static size_t buf_size = ggml_tensor_overhead()*GPT2_MAX_NODES + ggml_graph_overhead_custom(GPT2_MAX_NODES, false);
     static std::vector<uint8_t> buf(buf_size);
 
-    struct ggml_init_params params = {
+    struct ggml_init_params params = {  // 结构体定义
         /*.mem_size   =*/ buf_size,
         /*.mem_buffer =*/ buf.data(),
         /*.no_alloc   =*/ true, // the tensors will be allocated later by ggml_gallocr_alloc_graph()
@@ -853,7 +853,7 @@ struct ggml_cgraph * gpt2_graph(
 
     ggml_free(ctx);
 
-    return gf;
+    return gf;  // 返回
 }
 
 // evaluate the transformer
@@ -897,7 +897,7 @@ bool gpt2_eval(
     embd_w.resize(n_vocab);
     ggml_backend_tensor_get(inpL, embd_w.data(), (n_vocab*(N-1))*sizeof(float), sizeof(float)*n_vocab);
 
-    return true;
+    return true;  // 返回
 }
 
 int main(int argc, char ** argv) {
@@ -909,7 +909,7 @@ int main(int argc, char ** argv) {
     params.model = "models/gpt-2-117M/ggml-model.bin";
 
     if (gpt_params_parse(argc, argv, params) == false) {
-        return 1;
+        return 1;  // 返回
     }
 
     if (params.seed < 0) {
@@ -934,7 +934,7 @@ int main(int argc, char ** argv) {
 
         if (!gpt2_model_load(params.model, model, vocab, params)) {
             fprintf(stderr, "%s: failed to load model from '%s'\n", __func__, params.model.c_str());
-            return 1;
+            return 1;  // 返回
         }
 
         t_load_us = ggml_time_us() - t_start_us;
@@ -1001,7 +1001,7 @@ int main(int argc, char ** argv) {
 
             if (!gpt2_eval(model, sched, n_past, embd, logits)) {
                 printf("Failed to predict\n");
-                return 1;
+                return 1;  // 返回
             }
 
             t_predict_us += ggml_time_us() - t_start_us;
@@ -1075,5 +1075,5 @@ int main(int argc, char ** argv) {
         ggml_backend_free(backend);
     }
 
-    return 0;
+    return 0;  // 返回
 }

@@ -1,63 +1,63 @@
-#define GGML_COMMON_IMPL_C
-#include "ggml-common.h"
-#include "ggml-quants.h"
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "simd-mappings.h"
+#define GGML_COMMON_IMPL_C  // 宏定义 GGML_COMMON_IMPL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "simd-mappings.h"  // 引入 simd-mappings.h 头文件
 
-#include "../../quants.h"
-#include "../../ggml-cpu-impl.h"
+#include "../../quants.h"  // 引入 ../../quants.h 头文件
+#include "../../ggml-cpu-impl.h"  // 引入 ../../ggml-cpu-impl.h 头文件
 
-#include <math.h>
-#include <string.h>
-#include <assert.h>
-#include <float.h>
-#include <stdlib.h> // for qsort
-#include <stdio.h>  // for GGML_ASSERT
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
+#include <assert.h>  // 引入 assert.h 头文件
+#include <float.h>  // 引入 float.h 头文件
+#include <stdlib.h> // for qsort  // 引入 stdlib.h 头文件
+#include <stdio.h>  // for GGML_ASSERT  // 引入 stdio.h 头文件
 
-#define GROUP_MAX_EPS 1e-15f
-#define GROUP_MAX_EPS_IQ3_XXS 1e-8f
-#define GROUP_MAX_EPS_IQ2_S 1e-8f
-#define GROUP_MAX_EPS_IQ1_M 1e-7f
-#define GROUP_MAX_EPS_IQ1_S 1e-12f
+#define GROUP_MAX_EPS 1e-15f  // 宏定义 GROUP_MAX_EPS
+#define GROUP_MAX_EPS_IQ3_XXS 1e-8f  // 宏定义 GROUP_MAX_EPS_IQ3_XXS
+#define GROUP_MAX_EPS_IQ2_S 1e-8f  // 宏定义 GROUP_MAX_EPS_IQ2_S
+#define GROUP_MAX_EPS_IQ1_M 1e-7f  // 宏定义 GROUP_MAX_EPS_IQ1_M
+#define GROUP_MAX_EPS_IQ1_S 1e-12f  // 宏定义 GROUP_MAX_EPS_IQ1_S
 
-#define UNUSED GGML_UNUSED
+#define UNUSED GGML_UNUSED  // 宏定义 UNUSED
 
-#if defined(__loongarch_sx)
+#if defined(__loongarch_sx)  // 条件编译
 
 static __m128i lsx_packs_w(__m128i a, __m128i b) {
     __m128i tmp, tmp1;
     tmp = __lsx_vsat_w(a, 15);
     tmp1 = __lsx_vsat_w(b, 15);
-    return __lsx_vpickev_h(tmp1, tmp);
+    return __lsx_vpickev_h(tmp1, tmp);  // __lsx_vpickev_h
 }
 
 static __m128i lsx_packs_h(__m128i a, __m128i b) {
     __m128i tmp, tmp1;
     tmp = __lsx_vsat_h(a, 7);
     tmp1 = __lsx_vsat_h(b, 7);
-    return __lsx_vpickev_b(tmp1, tmp);
+    return __lsx_vpickev_b(tmp1, tmp);  // __lsx_vpickev_b
 }
 
 static __m128i lsx_packus_h(__m128i a, __m128i b) {
     __m128i tmp, tmp1;
     tmp = __lsx_vsat_hu(a, 7);
     tmp1 = __lsx_vsat_hu(b, 7);
-    return __lsx_vpickev_b(tmp1, tmp);
+    return __lsx_vpickev_b(tmp1, tmp);  // __lsx_vpickev_b
 }
 
 static __m128i lsx_maddubs_h(__m128i a, __m128i b) {
     __m128i tmp1, tmp2;
     tmp1 = __lsx_vmulwev_h_b(a, b);
     tmp2 = __lsx_vmulwod_h_b(a, b);
-    return __lsx_vsadd_h(tmp1, tmp2);
+    return __lsx_vsadd_h(tmp1, tmp2);  // __lsx_vsadd_h
 }
 
 static __m128i lsx_madd_h(__m128i a, __m128i b) {
     __m128i tmp1, tmp2;
     tmp1 = __lsx_vmulwev_w_h(a, b);
     tmp2 = __lsx_vmulwod_w_h(a, b);
-    return __lsx_vadd_w(tmp1, tmp2);
+    return __lsx_vadd_w(tmp1, tmp2);  // __lsx_vadd_w
 }
 
 static __m128i lsx_set_w(int32_t a, int32_t b, int32_t c, int32_t d) {
@@ -74,26 +74,26 @@ static __m128i lsx_shuffle_b(__m128i a, __m128i b) {
     tmp0 = __lsx_vori_b(tmp0, 0x10); // make each mask or  with 0x10 prepare for positive
     mask = __lsx_vsle_b(zero, tmp0); // if mask >= 0, set mask
     tmp2 = __lsx_vand_v(tmp0, mask); // maskout the in2 < ones
-    return __lsx_vshuf_b(a, zero, tmp2);
+    return __lsx_vshuf_b(a, zero, tmp2);  // __lsx_vshuf_b
 }
 
 static __m128i lsx_hadd_h(__m128i a, __m128i b) {
     __m128i tmp1 = __lsx_vpickev_h(b, a);
     __m128i tmp2 = __lsx_vpickod_h(b, a);
-    return __lsx_vadd_h(tmp1, tmp2);
+    return __lsx_vadd_h(tmp1, tmp2);  // __lsx_vadd_h
 }
 
 static __m128i lsx_hadd_w(__m128i a, __m128i b) {
     __m128i tmp1 = __lsx_vpickev_w(b, a);
     __m128i tmp2 = __lsx_vpickod_w(b, a);
-    return __lsx_vadd_w(tmp1, tmp2);
+    return __lsx_vadd_w(tmp1, tmp2);  // __lsx_vadd_w
 }
 
 static __m128 lsx_hadd_s(__m128 a, __m128 b) {
     __m128 tmp1 = (__m128)__lsx_vpickev_w((__m128i)b, (__m128i)a);
     __m128 tmp2 = (__m128)__lsx_vpickod_w((__m128i)b, (__m128i)a);
 
-    return __lsx_vfadd_s(tmp1, tmp2);
+    return __lsx_vfadd_s(tmp1, tmp2);  // __lsx_vfadd_s
 }
 
 static inline float hsum_float_4x4(const __m128 a, const __m128 b, const __m128 c, const __m128 d) {
@@ -115,20 +115,20 @@ static inline __m128i mul_sum_i8_pairs(const __m128i x, const __m128i y) {
     // Perform multiplication and create 16-bit values
     const __m128i dot = lsx_maddubs_h(ax, sy);
     const __m128i ones = __lsx_vreplgr2vr_h(1);
-    return lsx_madd_h(ones, dot);
+    return lsx_madd_h(ones, dot);  // lsx_madd_h
 }
-#endif
+#endif  // 条件编译结束
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
 
-#ifdef __clang__
-#define VREGS_PREFIX "$vr"
-#define XREGS_PREFIX "$xr"
-#else // GCC
-#define VREGS_PREFIX "$f"
-#define XREGS_PREFIX "$f"
-#endif
-#define __ALL_REGS "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31"
+#ifdef __clang__  // 如果定义了 __clang__ 则编译
+#define VREGS_PREFIX "$vr"  // 宏定义 VREGS_PREFIX
+#define XREGS_PREFIX "$xr"  // 宏定义 XREGS_PREFIX
+#else // GCC  // 否则
+#define VREGS_PREFIX "$f"  // 宏定义 VREGS_PREFIX
+#define XREGS_PREFIX "$f"  // 宏定义 XREGS_PREFIX
+#endif  // 条件编译结束
+#define __ALL_REGS "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31"  // 宏定义 __ALL_REGS
 // Convert __m128i to __m256i
 static inline __m256i ____m256i(__m128i in) {
     __m256i out = __lasx_xvldi(0);
@@ -144,7 +144,7 @@ static inline __m256i ____m256i(__m128i in) {
         ".endr                               \n\t"
         : [out] "+f" (out) : [in] "f" (in)
     );
-    return out;
+    return out;  // 返回
 }
 // Convert two __m128i to __m256i
 static inline __m256i lasx_set_q(__m128i inhi, __m128i inlo) {
@@ -173,7 +173,7 @@ static inline __m256i lasx_set_q(__m128i inhi, __m128i inlo) {
         : [out] "=f" (out), [hi] "+f" (inhi)
         : [lo] "f" (inlo)
     );
-    return out;
+    return out;  // 返回
 }
 // Convert __m256i low part to __m128i
 static inline __m128i lasx_extracti128_lo(__m256i in) {
@@ -192,7 +192,7 @@ static inline __m128i lasx_extracti128_lo(__m256i in) {
         ".endif                              \n\t"
         : [out] "=f" (out) : [in] "f" (in)
     );
-    return out;
+    return out;  // 返回
 }
 // Convert __m256i high part to __m128i
 static inline __m128i lasx_extracti128_hi(__m256i in) {
@@ -209,7 +209,7 @@ static inline __m128i lasx_extracti128_hi(__m256i in) {
         ".endr                               \n\t"
         : [out] "=f" (out) : [in] "f" (in)
     );
-    return out;
+    return out;  // 返回
 }
 
 static __m256i lasx_set_w(int e7, int e6, int e5, int e4, int e3, int e2, int e1, int e0) {
@@ -223,7 +223,7 @@ static __m256i lasx_set_d(int64_t a, int64_t b, int64_t c, int64_t d) {
 }
 
 static __m256i lasx_insertf128( __m128i x, __m128i y) {
-    return lasx_set_q(x, y);
+    return lasx_set_q(x, y);  // lasx_set_q
 }
 
 static __m256i lasx_shuffle_b(__m256i a, __m256i b) {
@@ -235,19 +235,19 @@ static __m256i lasx_shuffle_b(__m256i a, __m256i b) {
     tmp0 = __lasx_xvori_b(tmp0, 0x10); // make each mask or  with 0x10 prepare for positive
     mask = __lasx_xvsle_b(zero, tmp0); // if mask >= 0, set mask
     tmp2 = __lasx_xvand_v(tmp0, mask); // maskout the in2 < ones
-    return __lasx_xvshuf_b(a, zero, tmp2);
+    return __lasx_xvshuf_b(a, zero, tmp2);  // __lasx_xvshuf_b
 }
 
 static __m256i lasx_extu8_16(__m128i a) {
-    return __lasx_vext2xv_hu_bu(____m256i(a));
+    return __lasx_vext2xv_hu_bu(____m256i(a));  // __lasx_vext2xv_hu_bu
 }
 
 static __m256i lasx_ext8_16(__m128i a) {
-    return __lasx_vext2xv_h_b(____m256i(a));
+    return __lasx_vext2xv_h_b(____m256i(a));  // __lasx_vext2xv_h_b
 }
 
 static __m256i lasx_ext16_32(__m128i a) {
-    return __lasx_vext2xv_w_h(____m256i(a));
+    return __lasx_vext2xv_w_h(____m256i(a));  // __lasx_vext2xv_w_h
 }
 
 static __m128i lasx_extracti128( __m256i a, int pos) {
@@ -258,7 +258,7 @@ static __m128i lasx_extracti128( __m256i a, int pos) {
     } else {
        ret = lasx_extracti128_hi(a);
     }
-    return ret;
+    return ret;  // 返回
 }
 
 static __m128 lasx_extractf128( __m256 a, int pos) {
@@ -269,42 +269,42 @@ static __m128 lasx_extractf128( __m256 a, int pos) {
     } else {
        ret = (__m128)lasx_extracti128_hi((__m256i)a);
     }
-    return ret;
+    return ret;  // 返回
 }
 
 static __m256i lasx_maddubs_h(__m256i a, __m256i b) {
     __m256i tmp1, tmp2;
     tmp1 = __lasx_xvmulwev_h_b(a, b);
     tmp2 = __lasx_xvmulwod_h_b(a, b);
-    return __lasx_xvsadd_h(tmp1, tmp2);
+    return __lasx_xvsadd_h(tmp1, tmp2);  // __lasx_xvsadd_h
 }
 
 static __m256i lasx_madd_h(__m256i a, __m256i b) {
     __m256i tmp1, tmp2;
     tmp1 = __lasx_xvmulwev_w_h(a, b);
     tmp2 = __lasx_xvmulwod_w_h(a, b);
-    return __lasx_xvadd_w(tmp1, tmp2);
+    return __lasx_xvadd_w(tmp1, tmp2);  // __lasx_xvadd_w
 }
 
 static __m256i lasx_packs_w(__m256i a, __m256i b) {
     __m256i tmp, tmp1;
     tmp = __lasx_xvsat_w(a, 15);
     tmp1 = __lasx_xvsat_w(b, 15);
-    return __lasx_xvpickev_h(tmp1, tmp);
+    return __lasx_xvpickev_h(tmp1, tmp);  // __lasx_xvpickev_h
 }
 
 static __m256i lasx_packs_h(__m256i a, __m256i b) {
     __m256i tmp, tmp1;
     tmp = __lasx_xvsat_h(a, 7);
     tmp1 = __lasx_xvsat_h(b, 7);
-    return __lasx_xvpickev_b(tmp1, tmp);
+    return __lasx_xvpickev_b(tmp1, tmp);  // __lasx_xvpickev_b
 }
 
 static inline __m256i lasx_madd_h_b(__m256i a, __m256i b) {
     __m256i tmp1, tmp2;
     tmp1 = __lasx_xvmulwev_h_b(a, b);
     tmp2 = __lasx_xvmulwod_h_b(a, b);
-    return __lasx_xvadd_h(tmp1, tmp2);
+    return __lasx_xvadd_h(tmp1, tmp2);  // __lasx_xvadd_h
 }
 
 static inline __m256i lasx_xvrepl128vei_h(__m256i a, const unsigned int b) {
@@ -363,7 +363,7 @@ static inline int hsum_i32_8(const __m256i a) {
     sum64_1 = __lsx_vpickve2gr_w(sum64, 0);
     sum64_2 = __lsx_vpickve2gr_w(sum64, 1);
 
-    return  sum64_1 + sum64_2;
+    return  sum64_1 + sum64_2;  // 返回
 }
 
 // horizontally add 4 int32_t
@@ -376,7 +376,7 @@ static inline int hsum_i32_4(const __m128i a) {
     sum64_1 = __lsx_vpickve2gr_w(sum64, 0);
     sum64_2 = __lsx_vpickve2gr_w(sum64, 1);
 
-    return  sum64_1 + sum64_2;
+    return  sum64_1 + sum64_2;  // 返回
 }
 
 // spread 32 bits to 32 bytes { 0x00, 0xFF }
@@ -391,7 +391,7 @@ static inline __m256i bytes_from_bits_32(const uint8_t * x) {
     __m256i bytes = lasx_shuffle_b(__lasx_xvreplgr2vr_w(x32), shuf_mask);
     const __m256i bit_mask = __lasx_xvreplgr2vr_d(0x7fbfdfeff7fbfdfe);
     bytes = __lasx_xvor_v(bytes, bit_mask);
-    return __lasx_xvseq_b(bytes, __lasx_xvreplgr2vr_d(-1));
+    return __lasx_xvseq_b(bytes, __lasx_xvreplgr2vr_d(-1));  // __lasx_xvseq_b
 }
 
 // Unpack 32 4-bit fields into 32 bytes
@@ -399,26 +399,26 @@ static inline __m256i bytes_from_bits_32(const uint8_t * x) {
 static inline __m256i bytes_from_nibbles_32(const uint8_t * rsi) {
     const __m128i lo = __lsx_vld((const __m128i *)rsi, 0);
     __m128i hi = __lsx_vsrli_h(lo, 4);
-    return __lasx_xvandi_b(lasx_insertf128(hi, lo), 0xf);
+    return __lasx_xvandi_b(lasx_insertf128(hi, lo), 0xf);  // __lasx_xvandi_b
 }
 
 // add int16_t pairwise and return as float vector
 static inline __m256 sum_i16_pairs_float(const __m256i x) {
     __m256i v = __lasx_xvpackod_h(x, x);
     __m256i summed_pairs = __lasx_xvaddwev_w_h(x, v);
-    return __lasx_xvffint_s_w(summed_pairs);
+    return __lasx_xvffint_s_w(summed_pairs);  // __lasx_xvffint_s_w
 }
 
 static inline __m256 mul_sum_us8_pairs_float(const __m256i ax, const __m256i sy) {
     // Perform multiplication and create 16-bit values
     const __m256i dot = lasx_maddubs_h(ax, sy);
-    return sum_i16_pairs_float(dot);
+    return sum_i16_pairs_float(dot);  // sum_i16_pairs_float
 }
 
 // multiply int8_t, add results pairwise twice and return as float vector
 static inline __m256 mul_sum_i8_pairs_float(const __m256i x, const __m256i y) {
     const __m256i dot = lasx_madd_h_b(x, y);
-    return sum_i16_pairs_float(dot);
+    return sum_i16_pairs_float(dot);  // sum_i16_pairs_float
 }
 
 static inline __m128i packNibbles( __m256i bytes ) {
@@ -441,9 +441,9 @@ static inline __m128i packNibbles( __m256i bytes ) {
 
     tmp = __lsx_vmax_h(zero, *r1);
     tmp3 = __lsx_vsat_hu(tmp, 7);
-    return  __lsx_vpickev_b(tmp3, tmp2);
+    return  __lsx_vpickev_b(tmp3, tmp2);  // __lsx_vpickev_b
 }
-#endif  //__loongarch_asx
+#endif  //__loongarch_asx  // 条件编译结束
 
 void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
@@ -452,7 +452,7 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
     block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
     for (int i = 0; i < nb; i++) {
         __m256 v0 = (__m256)__lasx_xvld( x , 0);
         __m256 v1 = (__m256)__lasx_xvld( x , 32);
@@ -513,11 +513,11 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         __lsx_vst(ni4, (__m128i *)(y[i].qs + 16), 0);
 
     }
-#else
+#else  // 否则
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_0_ref(x, y, k);
-#endif
+#endif  // 条件编译结束
 }
 
 void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
@@ -526,7 +526,7 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
     block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
     for (int i = 0; i < nb; i++) {
         __m256 v0 = (__m256)__lasx_xvld( x , 0 );
         __m256 v1 = (__m256)__lasx_xvld( x , 32 );
@@ -591,11 +591,11 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         __lsx_vst(ni0, (__m128i *)(y[i].qs +  0), 0);
         __lsx_vst(ni4, (__m128i *)(y[i].qs + 16), 0);
     }
-#else
+#else  // 否则
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_1_ref(x, y, k);
-#endif
+#endif  // 条件编译结束
 }
 
 
@@ -605,7 +605,7 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 // Helper functions
 //
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
 // shuffles to pick the required scales in dot products
 static inline __m256i get_scale_shuffle_q3k(int i) {
     static const uint8_t k_shuffle[128] = {
@@ -614,7 +614,7 @@ static inline __m256i get_scale_shuffle_q3k(int i) {
          8, 9, 8, 9, 8, 9, 8, 9, 8, 9, 8, 9, 8, 9, 8, 9,    10,11,10,11,10,11,10,11,10,11,10,11,10,11,10,11,
         12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,    14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,
     };
-    return __lasx_xvld((const __m256i*)k_shuffle + i, 0);
+    return __lasx_xvld((const __m256i*)k_shuffle + i, 0);  // __lasx_xvld
 }
 static inline __m256i get_scale_shuffle_k4(int i) {
     static const uint8_t k_shuffle[256] = {
@@ -627,7 +627,7 @@ static inline __m256i get_scale_shuffle_k4(int i) {
         12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,
         14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15
     };
-    return __lasx_xvld((const __m256i*)k_shuffle + i, 0);
+    return __lasx_xvld((const __m256i*)k_shuffle + i, 0);  // __lasx_xvld
 }
 static inline __m128i get_scale_shuffle(int i) {
     static const uint8_t k_shuffle[128] = {
@@ -640,9 +640,9 @@ static inline __m128i get_scale_shuffle(int i) {
         12,12,12,12,12,12,12,12, 13,13,13,13,13,13,13,13,
         14,14,14,14,14,14,14,14, 15,15,15,15,15,15,15,15
     };
-    return __lsx_vld((const __m128i*)k_shuffle + i, 0);
+    return __lsx_vld((const __m128i*)k_shuffle + i, 0);  // __lsx_vld
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     const int qk = QK8_0;
@@ -661,7 +661,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     int ib = 0;
     float sumf = 0;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
@@ -686,7 +686,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     sumf = hsum_float_8(acc);
 
-#elif defined(__loongarch_sx)
+#elif defined(__loongarch_sx)  // 否则如果
     // set constants
     const __m128i low_mask = __lsx_vreplgr2vr_b(0xF);
     const __m128i off = __lsx_vreplgr2vr_b(8);
@@ -752,7 +752,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     sumf = hsum_float_4x4(acc_0, acc_1, acc_2, acc_3);
 
-#endif
+#endif  // 条件编译结束
     for (; ib < nb; ++ib) {
         int sumi0 = 0;
         int sumi1 = 0;
@@ -789,7 +789,7 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     int ib = 0;
     float sumf = 0;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
@@ -821,14 +821,14 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = hsum_float_8(acc) + summs;
 
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
     UNUSED(ib);
     UNUSED(sumf);
     ggml_vec_dot_q4_1_q8_1_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -849,7 +849,7 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
@@ -874,14 +874,14 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = hsum_float_8(acc);
 
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
     UNUSED(x);
     UNUSED(y);
     ggml_vec_dot_q5_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -902,7 +902,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_1 * GGML_RESTRICT x = vx;
     const block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
@@ -930,14 +930,14 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = hsum_float_8(acc) + summs;
 
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
     UNUSED(x);
     UNUSED(y);
     ggml_vec_dot_q5_1_q8_1_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -957,7 +957,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     int ib = 0;
     float sumf = 0;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
@@ -977,14 +977,14 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = hsum_float_8(acc);
 
     *s = sumf;
-#else
+#else  // 否则
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
     UNUSED(x);
     UNUSED(y);
     ggml_vec_dot_q8_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -999,7 +999,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     const int nb = n / QK_K;
 
-#if defined __loongarch_asx
+#if defined __loongarch_asx  // 条件编译
 
     __m256 acc = (__m256)__lasx_xvldi(0);
 
@@ -1059,12 +1059,12 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_q2_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1083,7 +1083,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     const int nb = n / QK_K;
 
-#if defined __loongarch_asx
+#if defined __loongarch_asx  // 条件编译
 
     const __m128i m32 = __lsx_vreplgr2vr_b(32);
 
@@ -1160,14 +1160,14 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc);
 
-#else
+#else  // 否则
     UNUSED(kmask1);
     UNUSED(kmask2);
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_q3_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1189,7 +1189,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined __loongarch_asx
+#if defined __loongarch_asx  // 条件编译
 
     __m256 acc = (__m256)__lasx_xvldi(0);
     __m128 acc_m = (__m128)__lsx_vldi(0);
@@ -1255,7 +1255,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc) + ((v4f32)acc_m)[0];
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1264,7 +1264,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     UNUSED(kmask3);
     UNUSED(utmp);
     ggml_vec_dot_q4_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, int nrc) {
@@ -1286,7 +1286,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined __loongarch_asx
+#if defined __loongarch_asx  // 条件编译
 
     __m256 acc = (__m256)__lasx_xvldi(0);
     __m128 acc_m = (__m128)__lsx_vldi(0);
@@ -1358,7 +1358,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc) + ((v4f32)acc_m)[0];
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1367,7 +1367,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     UNUSED(kmask3);
     UNUSED(utmp);
     ggml_vec_dot_q5_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1383,7 +1383,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     const int nb = n / QK_K;
 
-#if defined __loongarch_asx
+#if defined __loongarch_asx  // 条件编译
 
     const __m256i m32s = __lasx_xvreplgr2vr_b(32);
 
@@ -1443,15 +1443,15 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_q6_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
 static const int8_t keven_signs_q2xs[1024] = {
      1,  1,  1,  1,  1,  1,  1,  1, -1,  1,  1,  1,  1,  1,  1, -1,  1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1,  1,  1,
      1,  1, -1,  1,  1,  1,  1, -1, -1,  1, -1,  1,  1,  1,  1,  1,  1, -1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1, -1,
@@ -1486,7 +1486,7 @@ static const int8_t keven_signs_q2xs[1024] = {
      1,  1,  1, -1, -1, -1, -1,  1, -1,  1,  1, -1, -1, -1, -1, -1,  1, -1,  1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1,  1,
      1,  1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1,  1,  1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(n % QK_K == 0);
@@ -1501,7 +1501,7 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     const int nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
 
     const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
 
@@ -1543,12 +1543,12 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     *s = 0.125f * hsum_float_8(accumf);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq2_xxs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1564,7 +1564,7 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     const int nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
 
     const __m256i mone = __lasx_xvreplgr2vr_b(1);
     static const char block_sign_shuffle_mask_1[32] = {
@@ -1682,12 +1682,12 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     *s = 0.125f * hsum_float_8(accumf);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq2_xs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1703,7 +1703,7 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     const int nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
 
    static const uint8_t k_mask1[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                                        0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03
@@ -1777,12 +1777,12 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = 0.125f * hsum_float_8(accumf);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq2_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1798,7 +1798,7 @@ void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     const int nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
 
     const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
 
@@ -1845,12 +1845,12 @@ void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     *s = 0.25f * hsum_float_8(accumf);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq3_xxs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -1866,7 +1866,7 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     const int nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
 
    static const uint8_t k_mask1[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                                        0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03
@@ -1882,7 +1882,7 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     __m256i idx_shift = lasx_set_w(1, 2, 3, 4, 5, 6, 7, 8);
     const __m256i idx_mask  = __lasx_xvreplgr2vr_w(256);
 
-    typedef union {
+    typedef union {  // 类型定义
         __m256i  vec[2];
         uint32_t index[16];
     } index_t;
@@ -1948,21 +1948,21 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = hsum_float_8(accumf);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq3_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
 static inline __m256i mul_add_epi8(const __m256i x, const __m256i y) {
     const __m256i a = __lasx_xvmulwev_h_b(x, y);
     const __m256i b = __lasx_xvmulwod_h_b(x, y);
-    return __lasx_xvadd_h(a, b);
+    return __lasx_xvadd_h(a, b);  // __lasx_xvadd_h
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
     assert(n % QK_K == 0);
@@ -1977,7 +1977,7 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     const int nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
 
     __m256 accum = (__m256)__lasx_xvldi(0);
     float accum1 = 0;
@@ -2032,12 +2032,12 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = hsum_float_8(accum) + IQ1S_DELTA * accum1;
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq1_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
@@ -2057,7 +2057,7 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     int ib = 0;
     float sumf = 0;
 
-#if defined (__loongarch_asx)
+#if defined (__loongarch_asx)  // 条件编译
 
     const __m128i values128 = __lsx_vld((const __m128i*)kvalues_iq4nl, 0);
     const __m128i m4b  = __lsx_vreplgr2vr_b(0x0f);
@@ -2086,7 +2086,7 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     sumf = hsum_float_8(__lasx_xvfadd_s(accum1, accum2));
 
-#endif
+#endif  // 条件编译结束
     for (; ib < nb; ++ib) {
         const float d = GGML_CPU_FP16_TO_FP32(y[ib].d)*GGML_CPU_FP16_TO_FP32(x[ib].d);
         int sumi1 = 0, sumi2 = 0;
@@ -2112,7 +2112,7 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     const int nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#if defined(__loongarch_asx)  // 条件编译
 
     const __m128i values128 = __lsx_vld((const __m128i*)kvalues_iq4nl, 0);
 
@@ -2149,10 +2149,10 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     *s = hsum_float_8(accum);
 
-#else
+#else  // 否则
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
     ggml_vec_dot_iq4_xs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#endif  // 条件编译结束
 }

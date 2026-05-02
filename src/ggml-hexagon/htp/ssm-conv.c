@@ -2,23 +2,23 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_mem.h>
-#include <HAP_perf.h>
-#include <HAP_ps.h>
-#include <hexagon_protos.h>
-#include <hexagon_types.h>
-#include <math.h>
-#include <qurt_thread.h>
-#include <string.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_mem.h>  // 引入 HAP_mem.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
+#include <HAP_ps.h>  // 引入 HAP_ps.h 头文件
+#include <hexagon_protos.h>  // 引入 hexagon_protos.h 头文件
+#include <hexagon_types.h>  // 引入 hexagon_types.h 头文件
+#include <math.h>  // 引入 math.h 头文件
+#include <qurt_thread.h>  // 引入 qurt_thread.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "hex-dma.h"
-#include "htp-ops.h"
-#include "htp-ops.h"
-#include "hvx-utils.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
 
 #define htp_ssm_conv_tensors_preamble                          \
     const struct htp_tensor * restrict src0    = octx->src[0]; \
@@ -58,7 +58,7 @@
     const uint32_t nb2 = dst->nb[2];                         \
     const uint32_t nb3 = dst->nb[3];
 
-struct htp_ssm_conv_context {
+struct htp_ssm_conv_context {  // 结构体定义
     struct htp_ops_context * octx;
     uint32_t nrows_per_thread;
     uint64_t t_start;
@@ -99,7 +99,7 @@ static void ssm_conv_thread_f32_f32(unsigned int nth, unsigned int ith, void *da
 
     // No work for this thread
     if (d_inner_start >= d_inner_end) {
-        return;
+        return;  // 返回
     }
 
     for (uint32_t i3 = 0; i3 < n_s; ++i3) {
@@ -249,10 +249,10 @@ int op_ssm_conv_f32(struct htp_ops_context * octx) {
 
     if (src0->type != HTP_TYPE_F32 || src1->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32) {
         FARF(ERROR, "ssm_conv: only (F32 x F32 -> F32) OPs supported");
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
-    struct htp_ssm_conv_context scctx = { 0 };
+    struct htp_ssm_conv_context scctx = { 0 };  // 结构体定义
     scctx.octx = octx;
 
     const uint32_t d_conv  = src1->ne[0];
@@ -319,7 +319,7 @@ int op_ssm_conv_f32(struct htp_ops_context * octx) {
         }
     }
 
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }
 
 int op_ssm_conv(struct htp_ops_context * octx) {
@@ -336,5 +336,5 @@ int op_ssm_conv(struct htp_ops_context * octx) {
             break;
     }
 
-    return err;
+    return err;  // 返回
 }

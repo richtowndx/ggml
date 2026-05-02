@@ -1,16 +1,16 @@
-#include "ops.h"
+#include "ops.h"  // 引入 ops.h 头文件
 
-#include "ggml-cpu.h"
-#include "ggml-impl.h"
-#include "binary-ops.h"
-#include "simd-gemm.h"
-#include "ggml.h"
-#include "unary-ops.h"
-#include "vec.h"
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "binary-ops.h"  // 引入 binary-ops.h 头文件
+#include "simd-gemm.h"  // 引入 simd-gemm.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "unary-ops.h"  // 引入 unary-ops.h 头文件
+#include "vec.h"  // 引入 vec.h 头文件
 
-#include <algorithm>
-#include <cfloat>
-#include <cmath>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cfloat>  // 引入 cfloat 头文件
+#include <cmath>  // 引入 cmath 头文件
 
 // ggml_compute_forward_dup
 
@@ -43,7 +43,7 @@ static void ggml_compute_forward_dup_same_cont(
     }
 }
 
-template<typename src_t, typename dst_t>
+template<typename src_t, typename dst_t>  // 模板
 static void ggml_compute_forward_dup_flt(
         const ggml_compute_params * params,
         ggml_tensor * dst) {
@@ -82,7 +82,7 @@ static void ggml_compute_forward_dup_flt(
                 }
             }
         }
-        return;
+        return;  // 返回
     }
 
     // case: dst tensor is contiguous
@@ -147,7 +147,7 @@ static void ggml_compute_forward_dup_flt(
                 }
             }
         }
-        return;
+        return;  // 返回
     }
 
     // dst counters
@@ -266,7 +266,7 @@ static void ggml_compute_forward_dup_flt(
 }
 
 
-template<typename src_t>
+template<typename src_t>  // 模板
 static void ggml_compute_forward_dup_to_q(
         const ggml_compute_params * params,
         ggml_tensor * dst) {
@@ -335,7 +335,7 @@ static void ggml_compute_forward_dup_bytes(
 
     if (ggml_is_contiguous(src0) && ggml_is_contiguous(dst)) {
         ggml_compute_forward_dup_same_cont(params, dst);
-        return;
+        return;  // 返回
     }
 
     const size_t type_size = ggml_type_size(src0->type);
@@ -366,7 +366,7 @@ static void ggml_compute_forward_dup_bytes(
                 }
             }
         }
-        return;
+        return;  // 返回
     }
 
     if (ggml_is_contiguous(dst)) {
@@ -406,7 +406,7 @@ static void ggml_compute_forward_dup_bytes(
             }
         }
 
-        return;
+        return;  // 返回
     }
 
     // dst counters
@@ -531,7 +531,7 @@ void ggml_compute_forward_dup(
 
     if (src0->type == dst->type) {
         ggml_compute_forward_dup_bytes(params, dst);
-        return;
+        return;  // 返回
     }
 
     switch (src0->type) {
@@ -560,7 +560,7 @@ void ggml_compute_forward_dup(
         case GGML_TYPE_I32:
             {
                 if (dst->type == GGML_TYPE_F32) ggml_compute_forward_dup_flt<int32_t, float>(params, dst);
-                else GGML_ABORT("not implemented");
+                else GGML_ABORT("not implemented");  // GGML_ABORT
             } break;
         default:
             {
@@ -804,7 +804,7 @@ static void ggml_compute_forward_add1_f32(
         const int i2 = (ir - i3*ne2*ne1)/ne1;
         const int i1 = (ir - i3*ne2*ne1 - i2*ne1);
 
-#ifdef GGML_USE_ACCELERATE
+#ifdef GGML_USE_ACCELERATE  // 如果定义了 GGML_USE_ACCELERATE 则编译
         GGML_UNUSED(ggml_vec_add1_f32);
 
         vDSP_vadd(
@@ -812,12 +812,12 @@ static void ggml_compute_forward_add1_f32(
                 (float *) ((char *) src1->data), 0,
                 (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 ), 1,
                 ne0);
-#else
+#else  // 否则
         ggml_vec_add1_f32(ne0,
                 (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1 ),
                 (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01),
                *(float *) src1->data);
-#endif
+#endif  // 条件编译结束
     }
 }
 
@@ -1217,17 +1217,17 @@ static void ggml_compute_forward_acc_f32(
         const int i2 = (ir - i3*ne12*ne11)/ne11;
         const int i1 = (ir - i3*ne12*ne11 - i2*ne11);
 
-#ifdef GGML_USE_ACCELERATE
+#ifdef GGML_USE_ACCELERATE  // 如果定义了 GGML_USE_ACCELERATE 则编译
         vDSP_vadd(
                 (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01 + offset), 1,
                 (float *) ((char *) src1->data + i3*nb13 + i2*nb12 + i1*nb11), 1,
                 (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1  + offset), 1, nc);
-#else
+#else  // 否则
         ggml_vec_add_f32(nc,
                 (float *) ((char *)  dst->data + i3*nb3  + i2*nb2  + i1*nb1  + offset),
                 (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01 + offset),
                 (float *) ((char *) src1->data + i3*nb13 + i2*nb12 + i1*nb11));
-#endif
+#endif  // 条件编译结束
     }
 }
 
@@ -1285,7 +1285,7 @@ static void ggml_compute_forward_sum_f32(
     const ggml_tensor * src0 = dst->src[0];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     assert(ggml_is_scalar(dst));
@@ -1317,7 +1317,7 @@ static void ggml_compute_forward_sum_f16(
     const ggml_tensor * src0 = dst->src[0];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     assert(ggml_is_scalar(dst));
@@ -1350,7 +1350,7 @@ static void ggml_compute_forward_sum_bf16(
     const ggml_tensor * src0 = dst->src[0];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     assert(ggml_is_scalar(dst));
@@ -1461,7 +1461,7 @@ static void ggml_compute_forward_sum_rows_f32(
     const ggml_tensor * src0 = dst->src[0];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     GGML_ASSERT(src0->nb[0] == sizeof(float));
@@ -1514,7 +1514,7 @@ static void ggml_compute_forward_mean_f32(
     const ggml_tensor * src0 = dst->src[0];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     assert(src0->nb[0] == sizeof(float));
@@ -1571,7 +1571,7 @@ static void ggml_compute_forward_argmax_f32(
     const ggml_tensor * src0 = dst->src[0];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     assert(src0->nb[0] == sizeof(float));
@@ -1663,7 +1663,7 @@ static void ggml_compute_forward_count_equal_i32(
     ggml_barrier(params->threadpool);
 
     if (ith != 0) {
-        return;
+        return;  // 返回
     }
 
     for (int ith_other = 1; ith_other < nth; ++ith_other) {
@@ -1699,7 +1699,7 @@ static void ggml_compute_forward_repeat_f32(
     const ggml_tensor * src0 = dst->src[0];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     GGML_ASSERT(ggml_can_repeat(src0, dst));
@@ -1743,7 +1743,7 @@ static void ggml_compute_forward_repeat_f16(
     const ggml_tensor * src0 = dst->src[0];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     GGML_ASSERT(ggml_can_repeat(src0, dst));
@@ -1823,7 +1823,7 @@ static void ggml_compute_forward_repeat_back_f32(
     const ggml_tensor * src0 = dst->src[0];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     GGML_ASSERT(ggml_can_repeat(dst, src0));
@@ -2133,14 +2133,14 @@ static void ggml_compute_forward_gelu_f32(
                 (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
                 (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const float x = ((float *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*(dst->nb[1])))[k];
             GGML_UNUSED(x);
             assert(!isnan(x));
             assert(!isinf(x));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -2180,7 +2180,7 @@ static void ggml_compute_forward_gelu_f16(
                 (ggml_fp16_t *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
                 (ggml_fp16_t *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*( dst->nb[1])))[k];
             const float v = GGML_CPU_FP16_TO_FP32(x);
@@ -2188,7 +2188,7 @@ static void ggml_compute_forward_gelu_f16(
             assert(!isnan(v));
             assert(!isinf(v));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -2329,14 +2329,14 @@ static void ggml_compute_forward_gelu_erf_f32(
                 (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
                 (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const float x = ((float *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*(dst->nb[1])))[k];
             GGML_UNUSED(x);
             assert(!isnan(x));
             assert(!isinf(x));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -2376,7 +2376,7 @@ static void ggml_compute_forward_gelu_erf_f16(
                 (ggml_fp16_t *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
                 (ggml_fp16_t *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*( dst->nb[1])))[k];
             const float v = GGML_CPU_FP16_TO_FP32(x);
@@ -2384,7 +2384,7 @@ static void ggml_compute_forward_gelu_erf_f16(
             assert(!isnan(v));
             assert(!isinf(v));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -2448,14 +2448,14 @@ static void ggml_compute_forward_gelu_quick_f32(
                 (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
                 (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const float x = ((float *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*(dst->nb[1])))[k];
             GGML_UNUSED(x);
             assert(!isnan(x));
             assert(!isinf(x));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -2495,7 +2495,7 @@ static void ggml_compute_forward_gelu_quick_f16(
                 (ggml_fp16_t *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
                 (ggml_fp16_t *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*( dst->nb[1])))[k];
             const float v = GGML_CPU_FP16_TO_FP32(x);
@@ -2503,7 +2503,7 @@ static void ggml_compute_forward_gelu_quick_f16(
             assert(!isnan(v));
             assert(!isinf(v));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -2567,14 +2567,14 @@ static void ggml_compute_forward_silu_f32(
                 (float *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
                 (float *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const float x = ((float *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*(dst->nb[1])))[k];
             GGML_UNUSED(x);
             assert(!isnan(x));
             assert(!isinf(x));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -2614,7 +2614,7 @@ static void ggml_compute_forward_silu_f16(
                 (ggml_fp16_t *) ((char *) dst->data  + i3*nb3  + i2*nb2  + i1*nb1),
                 (ggml_fp16_t *) ((char *) src0->data + i3*nb03 + i2*nb02 + i1*nb01));
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i3*nb3 + i2*nb2 + i1*( dst->nb[1])))[k];
             const float v = GGML_CPU_FP16_TO_FP32(x);
@@ -2622,7 +2622,7 @@ static void ggml_compute_forward_silu_f16(
             assert(!isnan(v));
             assert(!isinf(v));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -2656,7 +2656,7 @@ static void ggml_compute_forward_leaky_relu_f32(
     const ggml_tensor * src0 = dst->src[0];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     assert(ggml_is_contiguous_1(src0));
@@ -2686,7 +2686,7 @@ static void ggml_compute_forward_leaky_relu_f16(
     const ggml_tensor * src0 = dst->src[0];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     assert(ggml_is_contiguous_1(src0));
@@ -2765,14 +2765,14 @@ static void ggml_compute_forward_silu_back_f32(
                 (float *) ((char *) src1->data + i1*(src1->nb[1])),
                 (float *) ((char *) grad->data + i1*(grad->nb[1])));
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const float x = ((float *) ((char *) dst->data + i1*( dst->nb[1])))[k];
             GGML_UNUSED(x);
             assert(!isnan(x));
             assert(!isinf(x));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -2808,7 +2808,7 @@ static void ggml_compute_forward_silu_back_f16(
                 (ggml_fp16_t *) ((char *) src1->data + i1*(src1->nb[1])),
                 (ggml_fp16_t *) ((char *) grad->data + i1*(grad->nb[1])));
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const float x = ((ggml_fp16_t *) ((char *) dst->data + i1*( dst->nb[1])))[k];
             const float v = GGML_CPU_FP16_TO_FP32(x);
@@ -2816,7 +2816,7 @@ static void ggml_compute_forward_silu_back_f16(
             assert(!isnan(v));
             assert(!isinf(v));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -2892,14 +2892,14 @@ static void ggml_compute_forward_reglu_f32(
 
         ggml_vec_reglu_f32(nc, (float *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const float x = ((float *) ((char *) dst->data + i1*( dst->nb[1])))[k];
             GGML_UNUSED(x);
             assert(!isnan(x));
             assert(!isinf(x));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -2951,7 +2951,7 @@ static void ggml_compute_forward_reglu_f16(
 
         ggml_vec_reglu_f16(nc, (ggml_fp16_t *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i1*( dst->nb[1])))[k];
             const float v = GGML_FP16_TO_FP32(x);
@@ -2959,7 +2959,7 @@ static void ggml_compute_forward_reglu_f16(
             assert(!isnan(v));
             assert(!isinf(v));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -3035,14 +3035,14 @@ static void ggml_compute_forward_geglu_f32(
 
         ggml_vec_geglu_f32(nc, (float *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const float x = ((float *) ((char *) dst->data + i1*( dst->nb[1])))[k];
             GGML_UNUSED(x);
             assert(!isnan(x));
             assert(!isinf(x));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -3094,7 +3094,7 @@ static void ggml_compute_forward_geglu_f16(
 
         ggml_vec_geglu_f16(nc, (ggml_fp16_t *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i1*( dst->nb[1])))[k];
             const float v = GGML_FP16_TO_FP32(x);
@@ -3102,7 +3102,7 @@ static void ggml_compute_forward_geglu_f16(
             assert(!isnan(v));
             assert(!isinf(v));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -3178,14 +3178,14 @@ static void ggml_compute_forward_swiglu_f32(
 
         ggml_vec_swiglu_f32(nc, (float *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const float x = ((float *) ((char *) dst->data + i1*( dst->nb[1])))[k];
             GGML_UNUSED(x);
             assert(!isnan(x));
             assert(!isinf(x));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -3237,7 +3237,7 @@ static void ggml_compute_forward_swiglu_f16(
 
         ggml_vec_swiglu_f16(nc, (ggml_fp16_t *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i1*( dst->nb[1])))[k];
             const float v = GGML_FP16_TO_FP32(x);
@@ -3245,7 +3245,7 @@ static void ggml_compute_forward_swiglu_f16(
             assert(!isnan(v));
             assert(!isinf(v));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -3329,14 +3329,14 @@ static void ggml_compute_forward_swiglu_oai_f32(
             dst_p[k] = out_glu * (y + 1.f);
         }
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const float x = dst_p[k];
             GGML_UNUSED(x);
             assert(!isnan(x));
             assert(!isinf(x));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -3408,14 +3408,14 @@ static void ggml_compute_forward_geglu_erf_f32(
 
         ggml_vec_geglu_erf_f32(nc, (float *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const float x = ((float *) ((char *) dst->data + i1*( dst->nb[1])))[k];
             GGML_UNUSED(x);
             assert(!isnan(x));
             assert(!isinf(x));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -3467,7 +3467,7 @@ static void ggml_compute_forward_geglu_erf_f16(
 
         ggml_vec_geglu_erf_f16(nc, (ggml_fp16_t *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i1*( dst->nb[1])))[k];
             const float v = GGML_FP16_TO_FP32(x);
@@ -3475,7 +3475,7 @@ static void ggml_compute_forward_geglu_erf_f16(
             assert(!isnan(v));
             assert(!isinf(v));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -3551,14 +3551,14 @@ static void ggml_compute_forward_geglu_quick_f32(
 
         ggml_vec_geglu_quick_f32(nc, (float *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const float x = ((float *) ((char *) dst->data + i1*( dst->nb[1])))[k];
             GGML_UNUSED(x);
             assert(!isnan(x));
             assert(!isinf(x));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -3610,7 +3610,7 @@ static void ggml_compute_forward_geglu_quick_f16(
 
         ggml_vec_geglu_quick_f16(nc, (ggml_fp16_t *) ((char *) dst->data + i1*(dst->nb[1])), src0_p, src1_p);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int k = 0; k < nc; k++) {
             const ggml_fp16_t x = ((ggml_fp16_t *) ((char *) dst->data + i1*( dst->nb[1])))[k];
             const float v = GGML_FP16_TO_FP32(x);
@@ -3618,7 +3618,7 @@ static void ggml_compute_forward_geglu_quick_f16(
             assert(!isnan(v));
             assert(!isinf(v));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -3678,13 +3678,13 @@ static void ggml_compute_forward_norm_f32(
                 float * y = (float *) ((char *) dst->data + i01*nb1 + i02*nb2 + i03*nb3);
                 float variance = 0;
 
-#ifdef GGML_USE_ACCELERATE
+#ifdef GGML_USE_ACCELERATE  // 如果定义了 GGML_USE_ACCELERATE 则编译
                 mean = -mean;
                 vDSP_vsadd(x, 1, &mean, y, 1, ne00);
                 vDSP_measqv(y, 1, &variance, ne00);
-#else
+#else  // 否则
                 variance = ggml_vec_cvar_f32(ne00, y, x, mean);
-#endif //GGML_USE_ACCELERATE
+#endif //GGML_USE_ACCELERATE  // 条件编译结束
 
                 const float scale = 1.0f/sqrtf(variance + eps);
                 ggml_vec_scale_f32(ne00, y, scale);
@@ -4202,7 +4202,7 @@ static void ggml_compute_forward_out_prod_f32(
                 const int64_t i12 = i2;
                 const int64_t i13 = i3;
 
-#if GGML_VEC_MAD_UNROLL > 2
+#if GGML_VEC_MAD_UNROLL > 2  // 条件编译
                 const int64_t bne01_unroll = bne01 - (bne01 % GGML_VEC_MAD_UNROLL);
                 for (int64_t i01 = bi01; i01 < bne01_unroll; i01 += GGML_VEC_MAD_UNROLL) {
                     const int64_t i11 = i01;
@@ -4222,7 +4222,7 @@ static void ggml_compute_forward_out_prod_f32(
 
                     ggml_vec_mad_f32(ne0, d, s0, *s1);
                 }
-#else
+#else  // 否则
                 for (int64_t i01 = bi01; i01 < bne01; ++i01) {
                     const int64_t i11 = i01;
 
@@ -4232,7 +4232,7 @@ static void ggml_compute_forward_out_prod_f32(
 
                     ggml_vec_mad_f32(ne0, d, s0, *s1);
                 }
-#endif
+#endif  // 条件编译结束
             }
         }
     }
@@ -4900,7 +4900,7 @@ void ggml_compute_forward_get_rows(
     //}
 }
 
-template<typename idx_t>
+template<typename idx_t>  // 模板
 static void ggml_compute_forward_set_rows_f32(
         const ggml_compute_params * params,
               ggml_tensor * dst) {
@@ -4986,7 +4986,7 @@ static void ggml_compute_forward_get_rows_back_f32_f16(
     const ggml_tensor * src1 = dst->src[1];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     GGML_ASSERT(ggml_is_contiguous(dst));
@@ -5019,7 +5019,7 @@ static void ggml_compute_forward_get_rows_back_f32(
     const ggml_tensor * src1 = dst->src[1];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     GGML_ASSERT(ggml_is_contiguous(dst));
@@ -5093,7 +5093,7 @@ static void ggml_compute_forward_diag_f32(
     const ggml_tensor * src0 = dst->src[0];
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     // TODO: handle transposed/permuted matrices
@@ -5310,12 +5310,12 @@ static void ggml_compute_forward_soft_max_f32(
                     }
                 }
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
                 for (int i = 0; i < ne00; ++i) {
                     //printf("p[%d] = %f\n", i, p[i]);
                     assert(!isnan(wp[i]));
                 }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
 
                 float max = -INFINITY;
                 ggml_vec_max_f32(ne00, &max, wp);
@@ -5335,12 +5335,12 @@ static void ggml_compute_forward_soft_max_f32(
                 sum = 1.0/sum;
                 ggml_vec_scale_f32(ne00, dp, sum);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
                 for (int i = 0; i < ne00; ++i) {
                     assert(!isnan(dp[i]));
                     assert(!isinf(dp[i]));
                 }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
             }
         }
     }
@@ -5408,13 +5408,13 @@ static void ggml_compute_forward_soft_max_ext_back_f32(
         float *y  = (float *)((char *) src1->data + i1*src1->nb[1]);
         float *dx = (float *)((char *) dst->data  + i1*dst->nb[1]);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int i = 0; i < nc; ++i) {
             //printf("p[%d] = %f\n", i, p[i]);
             assert(!isnan(dy[i]));
             assert(!isnan(y[i]));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
         // Jii = yi - yi*yi
         // Jij = -yi*yj
         // J = diag(y)-y.T*y
@@ -5442,12 +5442,12 @@ static void ggml_compute_forward_soft_max_ext_back_f32(
         ggml_vec_mul_f32  (nc, dx, dx, y);
         ggml_vec_scale_f32(nc, dx, scale);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int i = 0; i < nc; ++i) {
             assert(!isnan(dx[i]));
             assert(!isinf(dx[i]));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 
@@ -5711,7 +5711,7 @@ static void ggml_mrope_cache_init(
 }
 
 
-template<typename T>
+template<typename T>  // 模板
 static void rotate_pairs(const int64_t n, const int64_t n_offset, const float * cache, const T * src_data, T * dst_data, const int scale = 2) {
   for (int64_t i0 = 0; i0 < n; i0 += 2) {
     const int64_t ic = i0/scale; // hack for GGML_ROPE_TYPE_NORMAL, where we need ic = i0; for all other cases, ic = i0/2
@@ -5730,7 +5730,7 @@ static void rotate_pairs(const int64_t n, const int64_t n_offset, const float * 
   }
 }
 
-template<typename T> //float or ggml_fp16_t
+template<typename T> //float or ggml_fp16_t  // 模板
 static void ggml_compute_forward_rope_flt(
         const ggml_compute_params * params,
         ggml_tensor * dst,
@@ -6606,7 +6606,7 @@ void ggml_compute_forward_im2col_3d(
 static void ggml_call_mul_mat(ggml_type type, const ggml_compute_params * params, int64_t m, int64_t n, int64_t k,
                               void * a, void * b, float * c) {
     const ggml_type_traits * traits = ggml_get_type_traits(type);
-    struct ggml_tensor src1 = {};
+    struct ggml_tensor src1 = {};  // 结构体定义
     src1.type  = type;
     src1.ne[0] = k;
     src1.ne[1] = m;
@@ -6618,7 +6618,7 @@ static void ggml_call_mul_mat(ggml_type type, const ggml_compute_params * params
     src1.nb[3] = src1.nb[2];
     src1.data  = a;
 
-    struct ggml_tensor src0 = {};
+    struct ggml_tensor src0 = {};  // 结构体定义
     src0.type  = type;
     src0.ne[0] = k;
     src0.ne[1] = n;
@@ -6630,7 +6630,7 @@ static void ggml_call_mul_mat(ggml_type type, const ggml_compute_params * params
     src0.nb[3] = src0.nb[2];
     src0.data  = b;
 
-    struct ggml_tensor dst = {};
+    struct ggml_tensor dst = {};  // 结构体定义
     dst.ne[0] = n;
     dst.ne[1] = m;
     dst.ne[2] = 1;
@@ -6930,7 +6930,7 @@ void ggml_compute_forward_conv_3d(
     ggml_compute_forward_conv_3d_impl(params, src0, src1, dst, src0->type);
 }
 
-template <typename kernel_t>
+template <typename kernel_t>  // 模板
 static void ggml_compute_forward_conv_transpose_2d_impl(
     const ggml_compute_params * params,
           ggml_tensor * dst) {
@@ -7059,7 +7059,7 @@ void ggml_compute_forward_conv_transpose_2d(
 
 // ggml_compute_forward_conv_2d_dw
 
-struct ggml_conv_2d_dw_params {
+struct ggml_conv_2d_dw_params {  // 结构体定义
     int64_t channels;
     int64_t batch;
     int64_t src_w;
@@ -7091,17 +7091,17 @@ static void ggml_compute_forward_conv_2d_dw_cwhn(
     const int64_t row_start = params->ith * rows_per_thread;
     const int64_t row_end = MIN(row_start + rows_per_thread, rows_total);
 
-#ifdef GGML_SIMD
-    #if defined(__ARM_FEATURE_SVE)
+#ifdef GGML_SIMD  // 如果定义了 GGML_SIMD 则编译
+    #if defined(__ARM_FEATURE_SVE)  // 条件编译
         const int64_t pkg_size = svcntw();
-    #else
+    #else  // 否则
         const int64_t pkg_size = GGML_F32_EPR;
-    #endif
+    #endif  // 条件编译结束
     const int64_t pkg_count = c / pkg_size;
     const int64_t c_pkg_end = pkg_count * pkg_size;
-#else
+#else  // 否则
     const int64_t c_pkg_end = 0;
-#endif
+#endif  // 条件编译结束
 
     for (int64_t row = row_start; row < row_end; ++row) {
         const int64_t dst_y = row % p.dst_h;
@@ -7111,7 +7111,7 @@ static void ggml_compute_forward_conv_2d_dw_cwhn(
             const int64_t src_y_base = dst_y * p.stride_y - p.pad_y;
             const int64_t src_x_base = dst_x * p.stride_x - p.pad_x;
 
-#ifdef GGML_SIMD
+#ifdef GGML_SIMD  // 如果定义了 GGML_SIMD 则编译
             // Vectorized loop
             for (int64_t c_i = 0; c_i < c_pkg_end; c_i += pkg_size) {
                 GGML_F32_VEC sum = GGML_F32_VEC_ZERO;
@@ -7132,7 +7132,7 @@ static void ggml_compute_forward_conv_2d_dw_cwhn(
                 }
                 GGML_F32_VEC_STORE(dst_data + c_i, sum);
             }
-#endif
+#endif  // 条件编译结束
             // Scalar loop
             for (int64_t c_i = c_pkg_end; c_i < c; ++c_i) {
                 float sum = 0.0f;
@@ -7247,7 +7247,7 @@ static void ggml_compute_forward_pool_1d_ksp(
     assert(src->type == GGML_TYPE_F32 || src->type == GGML_TYPE_F16);
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     const int64_t IW = src->ne[0];
@@ -7329,7 +7329,7 @@ void ggml_compute_forward_pool_2d(
     assert(src->type == GGML_TYPE_F32 || src->type == GGML_TYPE_F16);
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     const int32_t * opts = (const int32_t *)dst->op_params;
@@ -7417,7 +7417,7 @@ void ggml_compute_forward_pool_2d_back(
     assert(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16);
 
     if (params->ith != 0) {
-        return;
+        return;  // 返回
     }
 
     const int32_t * opts = (const int32_t *)dst->op_params;
@@ -7685,7 +7685,7 @@ static void ggml_compute_forward_upscale_f32(
             const float w1 = weight1(x + 0);
             const float w2 = weight1(1 - x);
             const float w3 = weight2(2 - x);
-            return p0*w0 + p1*w1 + p2*w2 + p3*w3;
+            return p0*w0 + p1*w1 + p2*w2 + p3*w3;  // 返回
         };
 
         for (int64_t i3 = 0; i3 < ne3; i3++) {
@@ -7746,7 +7746,7 @@ void ggml_compute_forward_upscale(
 
 // ggml_compute_forward_pad
 
-template<bool circular_t>
+template<bool circular_t>  // 模板
 static void ggml_compute_forward_pad_f32(
     const ggml_compute_params * params,
           ggml_tensor * dst) {
@@ -7872,11 +7872,11 @@ void ggml_compute_forward_pad_reflect_1d(
 
 static int64_t ggml_wrap_index(int64_t i, int64_t ne) {
     if (i < 0) {
-        return i + ne;
+        return i + ne;  // 返回
     } else if (i >= ne) {
-        return i - ne;
+        return i - ne;  // 返回
     }
-    return i;
+    return i;  // 返回
 }
 
 static void ggml_compute_forward_roll_f32(
@@ -8028,14 +8028,14 @@ void ggml_compute_forward_timestep_embedding(
 
 // ggml_compute_forward_argsort
 
-template<enum ggml_sort_order order>
-struct cmp_argsort {
+template<enum ggml_sort_order order>  // 模板
+struct cmp_argsort {  // 结构体定义
     const float * data;
     bool operator()(int32_t a, int32_t b) const {
         if constexpr (order == GGML_SORT_ORDER_ASC) {
-            return data[a] < data[b];
+            return data[a] < data[b];  // 返回
         } else {
-            return data[a] > data[b];
+            return data[a] > data[b];  // 返回
         }
     }
 };
@@ -8101,10 +8101,10 @@ void ggml_compute_forward_argsort(
 
 // ggml_compute_forward_top_k
 
-struct cmp_top_k {
+struct cmp_top_k {  // 结构体定义
     const float * data;
     bool operator()(int32_t a, int32_t b) const {
-        return data[a] > data[b];
+        return data[a] > data[b];  // 返回
     }
 };
 
@@ -8874,9 +8874,9 @@ static void ggml_compute_forward_flash_attn_ext_f16(
                                 kv_is_f32_or_f16 &&
                                 k->type == v->type &&
                                 neq1 >= Q_TILE_SZ);
-#ifdef GGML_SIMD
+#ifdef GGML_SIMD  // 如果定义了 GGML_SIMD 则编译
         use_tiled &= (DV % GGML_F32_EPR == 0);
-#endif
+#endif  // 条件编译结束
         int current_chunk = ith;
 
         while (current_chunk < nchunk) {
@@ -9077,14 +9077,14 @@ static void ggml_compute_forward_flash_attn_back_f32(
 
                     ggml_float sum = 0.0;
                     {
-#ifdef GGML_SOFT_MAX_ACCELERATE
+#ifdef GGML_SOFT_MAX_ACCELERATE  // 如果定义了 GGML_SOFT_MAX_ACCELERATE 则编译
                         max = -max;
                         vDSP_vsadd(SM, 1, &max, SM, 1, Mup);
                         vvexpf(SM, SM, &Mup);
                         ggml_vec_sum_f32(Mup, &sum, SM);
-#else
+#else  // 否则
                         sum = ggml_vec_soft_max_f32(Mup, SM, S, max);
-#endif
+#endif  // 条件编译结束
                     }
 
                     assert(sum > 0.0);
@@ -9389,8 +9389,8 @@ static void ggml_compute_forward_ssm_scan_f32(
                         const int ii = i1 + h*nr;
                         const float x_dt = x[ii] * dt_soft_plus;
                         float sumf = 0.0f;
-#if defined(GGML_SIMD)
-    #if defined(__ARM_FEATURE_SVE)
+#if defined(GGML_SIMD)  // 条件编译
+    #if defined(__ARM_FEATURE_SVE)  // 条件编译
                         const int ggml_f32_epr = svcntw();
                         const int ggml_f32_step = 1 * ggml_f32_epr;
 
@@ -9420,10 +9420,10 @@ static void ggml_compute_forward_ssm_scan_f32(
                         }
 
                         sumf = GGML_F32xt_REDUCE_ONE(sum);
-    #elif defined(__riscv_v_intrinsic)
+    #elif defined(__riscv_v_intrinsic)  // 否则如果
                         // todo: RVV implementation
                         const int np = 0;
-    #else
+    #else  // 否则
                         const int np = (nc & ~(GGML_F32_STEP - 1));
 
                         GGML_F32_VEC sum[GGML_F32_ARR] = { GGML_F32_VEC_ZERO };
@@ -9454,10 +9454,10 @@ static void ggml_compute_forward_ssm_scan_f32(
 
                         // reduce sum0..sum3 to sum0
                         GGML_F32_VEC_REDUCE(sumf, sum);
-    #endif
-#else
+    #endif  // 条件编译结束
+#else  // 否则
                         const int np = 0;
-#endif
+#endif  // 条件编译结束
                         // d_state
                         for (int i0 = np; i0 < nc; ++i0) {
                             const int i = i0 + ii*nc;
@@ -9484,7 +9484,7 @@ static void ggml_compute_forward_ssm_scan_f32(
                     for (int i1 = 0; i1 < nr; ++i1) {
                         const int ii = i1 + h*nr;
                         const float x_dt = x[ii] * dt_soft_plus;
-#if defined(__ARM_FEATURE_SVE)
+#if defined(__ARM_FEATURE_SVE)  // 条件编译
                         svfloat32_t vx_dt = GGML_F32_VEC_SET1(x_dt);
                         svfloat32_t vdt_soft_plus = GGML_F32_VEC_SET1(dt_soft_plus);
                         svfloat32_t r1_vector = GGML_F32_VEC_ZERO;
@@ -9507,7 +9507,7 @@ static void ggml_compute_forward_ssm_scan_f32(
                             GGML_F32_VEC_STORE(&s[ii*nc + k], vs0);
                         }
                         y[ii] = GGML_F32xt_REDUCE_ONE(r1_vector);
-#else
+#else  // 否则
                         float sumf = 0.0f;
                         // NOTE: can't really use GGML_SIMD here because d_state is usually 16
                         //       and also because expf is used within the loop.
@@ -9522,7 +9522,7 @@ static void ggml_compute_forward_ssm_scan_f32(
                             s[i] = state;
                         }
                         y[ii] = sumf;
-#endif
+#endif  // 条件编译结束
                     }
                 }
             }
@@ -9982,47 +9982,47 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
     ggml_barrier(params->threadpool);
 
 
-    #if defined(__AVX__) && !defined(__AVX512F__)
-        #define GGML_F32X GGML_F32x8
-        #define GGML_F32X_SET1 GGML_F32x8_SET1
-        #define GGML_F32X_LOAD GGML_F32x8_LOAD
-        #define GGML_F32X_STORE GGML_F32x8_STORE
-        #define GGML_F32X_MUL GGML_F32x8_MUL
-        #define GGML_F32X_FMA GGML_F32x8_FMA
-        #define WKV_VECTOR_SIZE 8
-    #elif defined(__AVX512F__)
-        #define GGML_F32X GGML_F32x16
-        #define GGML_F32X_SET1 GGML_F32x16_SET1
-        #define GGML_F32X_LOAD GGML_F32x16_LOAD
-        #define GGML_F32X_STORE GGML_F32x16_STORE
-        #define GGML_F32X_MUL GGML_F32x16_MUL
-        #define GGML_F32X_FMA GGML_F32x16_FMA
-        #define WKV_VECTOR_SIZE 16
-    #elif defined(__ARM_FEATURE_SVE) && defined(__aarch64__)
-        #define GGML_F32X GGML_F32xt
-        #define GGML_F32X_SET1 GGML_F32xt_SET1
-        #define GGML_F32X_LOAD GGML_F32xt_LOAD
-        #define GGML_F32X_STORE GGML_F32xt_STORE
-        #define GGML_F32X_MUL GGML_F32xt_MUL
-        #define GGML_F32X_FMA GGML_F32xt_FMA
-        #define WKV_VECTOR_SIZE 8
-    #elif defined(__ARM_NEON) && defined(__aarch64__)
-        #define GGML_F32X GGML_F32x4
-        #define GGML_F32X_SET1 GGML_F32x4_SET1
-        #define GGML_F32X_LOAD GGML_F32x4_LOAD
-        #define GGML_F32X_STORE GGML_F32x4_STORE
-        #define GGML_F32X_MUL GGML_F32x4_MUL
-        #define GGML_F32X_FMA GGML_F32x4_FMA
-        #define WKV_VECTOR_SIZE 4
-    #endif
+    #if defined(__AVX__) && !defined(__AVX512F__)  // 条件编译
+        #define GGML_F32X GGML_F32x8  // 宏定义 GGML_F32X
+        #define GGML_F32X_SET1 GGML_F32x8_SET1  // 宏定义 GGML_F32X_SET1
+        #define GGML_F32X_LOAD GGML_F32x8_LOAD  // 宏定义 GGML_F32X_LOAD
+        #define GGML_F32X_STORE GGML_F32x8_STORE  // 宏定义 GGML_F32X_STORE
+        #define GGML_F32X_MUL GGML_F32x8_MUL  // 宏定义 GGML_F32X_MUL
+        #define GGML_F32X_FMA GGML_F32x8_FMA  // 宏定义 GGML_F32X_FMA
+        #define WKV_VECTOR_SIZE 8  // 宏定义 WKV_VECTOR_SIZE
+    #elif defined(__AVX512F__)  // 否则如果
+        #define GGML_F32X GGML_F32x16  // 宏定义 GGML_F32X
+        #define GGML_F32X_SET1 GGML_F32x16_SET1  // 宏定义 GGML_F32X_SET1
+        #define GGML_F32X_LOAD GGML_F32x16_LOAD  // 宏定义 GGML_F32X_LOAD
+        #define GGML_F32X_STORE GGML_F32x16_STORE  // 宏定义 GGML_F32X_STORE
+        #define GGML_F32X_MUL GGML_F32x16_MUL  // 宏定义 GGML_F32X_MUL
+        #define GGML_F32X_FMA GGML_F32x16_FMA  // 宏定义 GGML_F32X_FMA
+        #define WKV_VECTOR_SIZE 16  // 宏定义 WKV_VECTOR_SIZE
+    #elif defined(__ARM_FEATURE_SVE) && defined(__aarch64__)  // 否则如果
+        #define GGML_F32X GGML_F32xt  // 宏定义 GGML_F32X
+        #define GGML_F32X_SET1 GGML_F32xt_SET1  // 宏定义 GGML_F32X_SET1
+        #define GGML_F32X_LOAD GGML_F32xt_LOAD  // 宏定义 GGML_F32X_LOAD
+        #define GGML_F32X_STORE GGML_F32xt_STORE  // 宏定义 GGML_F32X_STORE
+        #define GGML_F32X_MUL GGML_F32xt_MUL  // 宏定义 GGML_F32X_MUL
+        #define GGML_F32X_FMA GGML_F32xt_FMA  // 宏定义 GGML_F32X_FMA
+        #define WKV_VECTOR_SIZE 8  // 宏定义 WKV_VECTOR_SIZE
+    #elif defined(__ARM_NEON) && defined(__aarch64__)  // 否则如果
+        #define GGML_F32X GGML_F32x4  // 宏定义 GGML_F32X
+        #define GGML_F32X_SET1 GGML_F32x4_SET1  // 宏定义 GGML_F32X_SET1
+        #define GGML_F32X_LOAD GGML_F32x4_LOAD  // 宏定义 GGML_F32X_LOAD
+        #define GGML_F32X_STORE GGML_F32x4_STORE  // 宏定义 GGML_F32X_STORE
+        #define GGML_F32X_MUL GGML_F32x4_MUL  // 宏定义 GGML_F32X_MUL
+        #define GGML_F32X_FMA GGML_F32x4_FMA  // 宏定义 GGML_F32X_FMA
+        #define WKV_VECTOR_SIZE 4  // 宏定义 WKV_VECTOR_SIZE
+    #endif  // 条件编译结束
 
-    #ifdef WKV_VECTOR_SIZE
+    #ifdef WKV_VECTOR_SIZE  // 如果定义了 WKV_VECTOR_SIZE 则编译
         int wkv_vector_size;
-        #if defined(__ARM_FEATURE_SVE)
+        #if defined(__ARM_FEATURE_SVE)  // 条件编译
             wkv_vector_size = svcntw();
-        #else
+        #else  // 否则
             wkv_vector_size = WKV_VECTOR_SIZE;
-        #endif
+        #endif  // 条件编译结束
         const int64_t vec_count = head_size / wkv_vector_size;
 
         for (int64_t t = 0; t < T; t++) {
@@ -10092,7 +10092,7 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
             }
         }
 
-    #else
+    #else  // 否则
         // basically fused operations:
         // dst = r @ (time_faaaa * (k @ v) + state),
         // state = time_decay * state + (k @ v),
@@ -10133,7 +10133,7 @@ static void ggml_compute_forward_rwkv_wkv6_f32(
                 }
             }
         }
-    #endif
+    #endif  // 条件编译结束
 }
 
 
@@ -10194,47 +10194,47 @@ static void ggml_compute_forward_gla_f32(
     ggml_barrier(params->threadpool);
 
 
-    #if defined(__AVX__) && !defined(__AVX512F__)
-        #define GGML_F32X GGML_F32x8
-        #define GGML_F32X_SET1 GGML_F32x8_SET1
-        #define GGML_F32X_LOAD GGML_F32x8_LOAD
-        #define GGML_F32X_STORE GGML_F32x8_STORE
-        #define GGML_F32X_MUL GGML_F32x8_MUL
-        #define GGML_F32X_FMA GGML_F32x8_FMA
-        #define GLA_VECTOR_SIZE 8
-    #elif defined(__AVX512F__)
-        #define GGML_F32X GGML_F32x16
-        #define GGML_F32X_SET1 GGML_F32x16_SET1
-        #define GGML_F32X_LOAD GGML_F32x16_LOAD
-        #define GGML_F32X_STORE GGML_F32x16_STORE
-        #define GGML_F32X_MUL GGML_F32x16_MUL
-        #define GGML_F32X_FMA GGML_F32x16_FMA
-        #define GLA_VECTOR_SIZE 16
-    #elif defined(__ARM_FEATURE_SVE) && defined(__aarch64__)
-        #define GGML_F32X GGML_F32xt
-        #define GGML_F32X_SET1 GGML_F32xt_SET1
-        #define GGML_F32X_LOAD GGML_F32xt_LOAD
-        #define GGML_F32X_STORE GGML_F32xt_STORE
-        #define GGML_F32X_MUL GGML_F32xt_MUL
-        #define GGML_F32X_FMA GGML_F32xt_FMA
-        #define GLA_VECTOR_SIZE 8
-    #elif defined(__ARM_NEON) && defined(__aarch64__)
-        #define GGML_F32X GGML_F32x4
-        #define GGML_F32X_SET1 GGML_F32x4_SET1
-        #define GGML_F32X_LOAD GGML_F32x4_LOAD
-        #define GGML_F32X_STORE GGML_F32x4_STORE
-        #define GGML_F32X_MUL GGML_F32x4_MUL
-        #define GGML_F32X_FMA GGML_F32x4_FMA
-        #define GLA_VECTOR_SIZE 4
-    #endif
+    #if defined(__AVX__) && !defined(__AVX512F__)  // 条件编译
+        #define GGML_F32X GGML_F32x8  // 宏定义 GGML_F32X
+        #define GGML_F32X_SET1 GGML_F32x8_SET1  // 宏定义 GGML_F32X_SET1
+        #define GGML_F32X_LOAD GGML_F32x8_LOAD  // 宏定义 GGML_F32X_LOAD
+        #define GGML_F32X_STORE GGML_F32x8_STORE  // 宏定义 GGML_F32X_STORE
+        #define GGML_F32X_MUL GGML_F32x8_MUL  // 宏定义 GGML_F32X_MUL
+        #define GGML_F32X_FMA GGML_F32x8_FMA  // 宏定义 GGML_F32X_FMA
+        #define GLA_VECTOR_SIZE 8  // 宏定义 GLA_VECTOR_SIZE
+    #elif defined(__AVX512F__)  // 否则如果
+        #define GGML_F32X GGML_F32x16  // 宏定义 GGML_F32X
+        #define GGML_F32X_SET1 GGML_F32x16_SET1  // 宏定义 GGML_F32X_SET1
+        #define GGML_F32X_LOAD GGML_F32x16_LOAD  // 宏定义 GGML_F32X_LOAD
+        #define GGML_F32X_STORE GGML_F32x16_STORE  // 宏定义 GGML_F32X_STORE
+        #define GGML_F32X_MUL GGML_F32x16_MUL  // 宏定义 GGML_F32X_MUL
+        #define GGML_F32X_FMA GGML_F32x16_FMA  // 宏定义 GGML_F32X_FMA
+        #define GLA_VECTOR_SIZE 16  // 宏定义 GLA_VECTOR_SIZE
+    #elif defined(__ARM_FEATURE_SVE) && defined(__aarch64__)  // 否则如果
+        #define GGML_F32X GGML_F32xt  // 宏定义 GGML_F32X
+        #define GGML_F32X_SET1 GGML_F32xt_SET1  // 宏定义 GGML_F32X_SET1
+        #define GGML_F32X_LOAD GGML_F32xt_LOAD  // 宏定义 GGML_F32X_LOAD
+        #define GGML_F32X_STORE GGML_F32xt_STORE  // 宏定义 GGML_F32X_STORE
+        #define GGML_F32X_MUL GGML_F32xt_MUL  // 宏定义 GGML_F32X_MUL
+        #define GGML_F32X_FMA GGML_F32xt_FMA  // 宏定义 GGML_F32X_FMA
+        #define GLA_VECTOR_SIZE 8  // 宏定义 GLA_VECTOR_SIZE
+    #elif defined(__ARM_NEON) && defined(__aarch64__)  // 否则如果
+        #define GGML_F32X GGML_F32x4  // 宏定义 GGML_F32X
+        #define GGML_F32X_SET1 GGML_F32x4_SET1  // 宏定义 GGML_F32X_SET1
+        #define GGML_F32X_LOAD GGML_F32x4_LOAD  // 宏定义 GGML_F32X_LOAD
+        #define GGML_F32X_STORE GGML_F32x4_STORE  // 宏定义 GGML_F32X_STORE
+        #define GGML_F32X_MUL GGML_F32x4_MUL  // 宏定义 GGML_F32X_MUL
+        #define GGML_F32X_FMA GGML_F32x4_FMA  // 宏定义 GGML_F32X_FMA
+        #define GLA_VECTOR_SIZE 4  // 宏定义 GLA_VECTOR_SIZE
+    #endif  // 条件编译结束
 
-    #ifdef GLA_VECTOR_SIZE
+    #ifdef GLA_VECTOR_SIZE  // 如果定义了 GLA_VECTOR_SIZE 则编译
         int gla_vector_size;
-        #if defined(__ARM_FEATURE_SVE)
+        #if defined(__ARM_FEATURE_SVE)  // 条件编译
             gla_vector_size = svcntw();
-        #else
+        #else  // 否则
             gla_vector_size = GLA_VECTOR_SIZE;
-        #endif
+        #endif  // 条件编译结束
         const int64_t vec_count = head_size / gla_vector_size;
 
         for (int64_t t = 0; t < T; t++) {
@@ -10300,7 +10300,7 @@ static void ggml_compute_forward_gla_f32(
             }
         }
 
-    #else
+    #else  // 否则
         for (int64_t t = 0; t < T; t++) {
             size_t t_offset = t * t_stride;
             size_t state_offset = head_size * C * (t / (T / n_seqs));
@@ -10334,7 +10334,7 @@ static void ggml_compute_forward_gla_f32(
                 }
             }
         }
-    #endif
+    #endif  // 条件编译结束
 }
 
 
@@ -10649,8 +10649,8 @@ static void ggml_compute_forward_rwkv_wkv7_f32(
     GGML_ASSERT(C % HEADS == 0); // C must be divisible by HEADS
     int64_t h_stride_2d = head_size * head_size;
 
-    #if defined(GGML_SIMD)
-        #if defined(__ARM_FEATURE_SVE) || defined(__riscv_v_intrinsic)
+    #if defined(GGML_SIMD)  // 条件编译
+        #if defined(__ARM_FEATURE_SVE) || defined(__riscv_v_intrinsic)  // 条件编译
             // scalar Route to scalar implementation       //TODO: Write SVE code and RVV code
             for (int64_t t = 0; t < T; t++) {
                 int64_t t_offset = t * t_stride;
@@ -10691,7 +10691,7 @@ static void ggml_compute_forward_rwkv_wkv7_f32(
                     }
                 }
             }
-        #else
+        #else  // 否则
             for (int64_t t = 0; t < T; t++) {
                 int64_t t_offset = t * t_stride;
                 int64_t state_offset = head_size * C * (t / (T / n_seqs));
@@ -10769,8 +10769,8 @@ static void ggml_compute_forward_rwkv_wkv7_f32(
                     }
                 }
             }
-        #endif
-    #else
+        #endif  // 条件编译结束
+    #else  // 否则
         for (int64_t t = 0; t < T; t++) {
             int64_t t_offset = t * t_stride;
             int64_t state_offset = head_size * C * (t / (T / n_seqs));
@@ -10810,7 +10810,7 @@ static void ggml_compute_forward_rwkv_wkv7_f32(
                 }
             }
         }
-    #endif
+    #endif  // 条件编译结束
 }
 
 
@@ -10881,7 +10881,7 @@ void ggml_compute_forward_map_custom3(
 
 void ggml_compute_forward_custom(
     const struct ggml_compute_params * params,
-          struct ggml_tensor * dst) {
+          struct ggml_tensor * dst) {  // 结构体定义
 
     struct ggml_custom_op_params p;
     memcpy(&p, dst->op_params, sizeof(p));
@@ -10930,13 +10930,13 @@ static void ggml_compute_forward_cross_entropy_loss_f32(
         const float * s0 = (const float *)((const char *) src0->data + i1*src0->nb[1]);
         const float * s1 = (const float *)((const char *) src1->data + i1*src1->nb[1]);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int64_t i = 0; i < nc; ++i) {
             //printf("p[%d] = %f\n", i, p[i]);
             assert(!isnan(s0[i]));
             assert(!isnan(s1[i]));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
 
         float max = -INFINITY;
         ggml_vec_max_f32(nc, &max, s0);
@@ -10950,12 +10950,12 @@ static void ggml_compute_forward_cross_entropy_loss_f32(
         ggml_vec_sum_f32(nc, &sum_st, st);
         sum_thread += sum_st;
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int64_t i = 0; i < nc; ++i) {
             assert(!isnan(st[i]));
             assert(!isinf(st[i]));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
     sums[ith] = sum_thread;
     ggml_barrier(params->threadpool);
@@ -11022,13 +11022,13 @@ static void ggml_compute_forward_cross_entropy_loss_back_f32(
         const float * s0  = (const float *)((const char *) src0f->data + i1*src0f->nb[1]);
         const float * s1  = (const float *)((const char *) src1f->data + i1*src1f->nb[1]);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int64_t i = 0; i < nc; ++i) {
             //printf("p[%d] = %f\n", i, p[i]);
             assert(!isnan(s0[i]));
             assert(!isnan(s1[i]));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
 
         // soft_max
         float max = -INFINITY;
@@ -11041,12 +11041,12 @@ static void ggml_compute_forward_cross_entropy_loss_back_f32(
         ggml_vec_sub_f32(nc, ds0, ds0, s1);
         ggml_vec_scale_f32(nc, ds0, d_by_nr);
 
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
         for (int64_t i = 0; i < nc; ++i) {
             assert(!isnan(ds0[i]));
             assert(!isinf(ds0[i]));
         }
-#endif // NDEBUG
+#endif // NDEBUG  // 条件编译结束
     }
 }
 

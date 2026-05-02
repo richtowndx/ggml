@@ -1,148 +1,148 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include <musa_runtime.h>
-#include <musa.h>
-#include <mublas.h>
-#include <musa_bf16.h>
-#include <musa_fp16.h>
-#define CUBLAS_COMPUTE_16F CUDA_R_16F
-#define CUBLAS_COMPUTE_32F CUDA_R_32F
-#define CUBLAS_COMPUTE_32F_FAST_16F MUBLAS_COMPUTE_32F_FAST_16F
-#define CUBLAS_GEMM_DEFAULT MUBLAS_GEMM_DEFAULT
-#define CUBLAS_GEMM_DEFAULT_TENSOR_OP MUBLAS_GEMM_DEFAULT
-#define CUBLAS_OP_N MUBLAS_OP_N
-#define CUBLAS_OP_T MUBLAS_OP_T
-#define CUBLAS_DEFAULT_MATH MUBLAS_DEFAULT_MATH
-#define CUBLAS_SIDE_RIGHT MUBLAS_SIDE_RIGHT
-#define CUBLAS_FILL_MODE_UPPER MUBLAS_FILL_MODE_UPPER
-#define CUBLAS_DIAG_NON_UNIT MUBLAS_DIAG_NON_UNIT
-#define CUBLAS_STATUS_SUCCESS MUBLAS_STATUS_SUCCESS
-#define CUBLAS_TF32_TENSOR_OP_MATH MUBLAS_TENSOR_OP_MATH
-#define CUDA_R_16F  MUSA_R_16F
-#define CUDA_R_16BF MUSA_R_16BF
-#define CUDA_R_32F  MUSA_R_32F
-#define cublasStrsmBatched mublasStrsmBatched
-#define cublasComputeType_t cudaDataType_t
-#define cublasCreate mublasCreate
-#define cublasDestroy mublasDestroy
-#define cublasGemmEx mublasGemmEx
-#define cublasGemmBatchedEx mublasGemmBatchedEx
-#define cublasGemmStridedBatchedEx mublasGemmStridedBatchedEx
-#define cublasHandle_t mublasHandle_t
-#define cublasSetMathMode mublasSetMathMode
-#define cublasSetStream mublasSetStream
-#define cublasSgemm mublasSgemm
-#define cublasStatus_t mublasStatus_t
-#define cublasOperation_t mublasOperation_t
-#define cublasGetStatusString mublasGetStatusString
-#define cudaDataType_t musaDataType_t
-#define cudaDeviceCanAccessPeer musaDeviceCanAccessPeer
-#define cudaDeviceDisablePeerAccess musaDeviceDisablePeerAccess
-#define cudaDeviceEnablePeerAccess musaDeviceEnablePeerAccess
-#define cudaDeviceProp musaDeviceProp
-#define cudaDeviceSynchronize musaDeviceSynchronize
-#define cudaError_t musaError_t
-#define cudaErrorMemoryAllocation musaErrorMemoryAllocation
-#define cudaErrorPeerAccessAlreadyEnabled musaErrorPeerAccessAlreadyEnabled
-#define cudaErrorPeerAccessNotEnabled musaErrorPeerAccessNotEnabled
-#define cudaEventCreateWithFlags musaEventCreateWithFlags
-#define cudaEventDisableTiming musaEventDisableTiming
-#define cudaEventRecord musaEventRecord
-#define cudaEventSynchronize musaEventSynchronize
-#define cudaEvent_t musaEvent_t
-#define cudaEventDestroy musaEventDestroy
-#define cudaFree musaFree
-#define cudaFreeHost musaFreeHost
-#define cudaGetDevice musaGetDevice
-#define cudaGetDeviceCount musaGetDeviceCount
-#define cudaGetDeviceProperties musaGetDeviceProperties
-#define cudaGetErrorString musaGetErrorString
-#define cudaGetLastError musaGetLastError
-#define cudaHostRegister musaHostRegister
-#define cudaHostRegisterPortable musaHostRegisterPortable
-#define cudaHostRegisterReadOnly musaHostRegisterReadOnly
-#define cudaHostUnregister musaHostUnregister
-#define cudaLaunchCooperativeKernel musaLaunchCooperativeKernel
-#define cudaLaunchHostFunc musaLaunchHostFunc
-#define cudaMalloc musaMalloc
-#define cudaMallocHost musaMallocHost
-#define cudaMallocManaged musaMallocManaged
-#define cudaMemcpy musaMemcpy
-#define cudaMemcpyAsync musaMemcpyAsync
-#define cudaMemcpyPeerAsync musaMemcpyPeerAsync
-#define cudaMemcpy2DAsync musaMemcpy2DAsync
-#define cudaMemcpyDeviceToDevice musaMemcpyDeviceToDevice
-#define cudaMemcpyDeviceToHost musaMemcpyDeviceToHost
-#define cudaMemcpyHostToDevice musaMemcpyHostToDevice
-#define cudaMemcpyKind musaMemcpyKind
-#define cudaMemset musaMemset
-#define cudaMemsetAsync musaMemsetAsync
-#define cudaMemGetInfo musaMemGetInfo
-#define cudaOccupancyMaxPotentialBlockSize musaOccupancyMaxPotentialBlockSize
-#define cudaSetDevice musaSetDevice
-#define cudaStreamCreateWithFlags musaStreamCreateWithFlags
-#define cudaStreamDestroy musaStreamDestroy
-#define cudaStreamFireAndForget musaStreamFireAndForget
-#define cudaStreamNonBlocking musaStreamNonBlocking
-#define cudaStreamPerThread musaStreamPerThread
-#define cudaStreamSynchronize musaStreamSynchronize
-#define cudaStreamWaitEvent musaStreamWaitEvent
-#define cudaStream_t musaStream_t
-#define cudaSuccess musaSuccess
+#include <musa_runtime.h>  // 引入 musa_runtime.h 头文件
+#include <musa.h>  // 引入 musa.h 头文件
+#include <mublas.h>  // 引入 mublas.h 头文件
+#include <musa_bf16.h>  // 引入 musa_bf16.h 头文件
+#include <musa_fp16.h>  // 引入 musa_fp16.h 头文件
+#define CUBLAS_COMPUTE_16F CUDA_R_16F  // 宏定义 CUBLAS_COMPUTE_16F
+#define CUBLAS_COMPUTE_32F CUDA_R_32F  // 宏定义 CUBLAS_COMPUTE_32F
+#define CUBLAS_COMPUTE_32F_FAST_16F MUBLAS_COMPUTE_32F_FAST_16F  // 宏定义 CUBLAS_COMPUTE_32F_FAST_16F
+#define CUBLAS_GEMM_DEFAULT MUBLAS_GEMM_DEFAULT  // 宏定义 CUBLAS_GEMM_DEFAULT
+#define CUBLAS_GEMM_DEFAULT_TENSOR_OP MUBLAS_GEMM_DEFAULT  // 宏定义 CUBLAS_GEMM_DEFAULT_TENSOR_OP
+#define CUBLAS_OP_N MUBLAS_OP_N  // 宏定义 CUBLAS_OP_N
+#define CUBLAS_OP_T MUBLAS_OP_T  // 宏定义 CUBLAS_OP_T
+#define CUBLAS_DEFAULT_MATH MUBLAS_DEFAULT_MATH  // 宏定义 CUBLAS_DEFAULT_MATH
+#define CUBLAS_SIDE_RIGHT MUBLAS_SIDE_RIGHT  // 宏定义 CUBLAS_SIDE_RIGHT
+#define CUBLAS_FILL_MODE_UPPER MUBLAS_FILL_MODE_UPPER  // 宏定义 CUBLAS_FILL_MODE_UPPER
+#define CUBLAS_DIAG_NON_UNIT MUBLAS_DIAG_NON_UNIT  // 宏定义 CUBLAS_DIAG_NON_UNIT
+#define CUBLAS_STATUS_SUCCESS MUBLAS_STATUS_SUCCESS  // 宏定义 CUBLAS_STATUS_SUCCESS
+#define CUBLAS_TF32_TENSOR_OP_MATH MUBLAS_TENSOR_OP_MATH  // 宏定义 CUBLAS_TF32_TENSOR_OP_MATH
+#define CUDA_R_16F  MUSA_R_16F  // 宏定义 CUDA_R_16F
+#define CUDA_R_16BF MUSA_R_16BF  // 宏定义 CUDA_R_16BF
+#define CUDA_R_32F  MUSA_R_32F  // 宏定义 CUDA_R_32F
+#define cublasStrsmBatched mublasStrsmBatched  // 宏定义 cublasStrsmBatched
+#define cublasComputeType_t cudaDataType_t  // 宏定义 cublasComputeType_t
+#define cublasCreate mublasCreate  // 宏定义 cublasCreate
+#define cublasDestroy mublasDestroy  // 宏定义 cublasDestroy
+#define cublasGemmEx mublasGemmEx  // 宏定义 cublasGemmEx
+#define cublasGemmBatchedEx mublasGemmBatchedEx  // 宏定义 cublasGemmBatchedEx
+#define cublasGemmStridedBatchedEx mublasGemmStridedBatchedEx  // 宏定义 cublasGemmStridedBatchedEx
+#define cublasHandle_t mublasHandle_t  // 宏定义 cublasHandle_t
+#define cublasSetMathMode mublasSetMathMode  // 宏定义 cublasSetMathMode
+#define cublasSetStream mublasSetStream  // 宏定义 cublasSetStream
+#define cublasSgemm mublasSgemm  // 宏定义 cublasSgemm
+#define cublasStatus_t mublasStatus_t  // 宏定义 cublasStatus_t
+#define cublasOperation_t mublasOperation_t  // 宏定义 cublasOperation_t
+#define cublasGetStatusString mublasGetStatusString  // 宏定义 cublasGetStatusString
+#define cudaDataType_t musaDataType_t  // 宏定义 cudaDataType_t
+#define cudaDeviceCanAccessPeer musaDeviceCanAccessPeer  // 宏定义 cudaDeviceCanAccessPeer
+#define cudaDeviceDisablePeerAccess musaDeviceDisablePeerAccess  // 宏定义 cudaDeviceDisablePeerAccess
+#define cudaDeviceEnablePeerAccess musaDeviceEnablePeerAccess  // 宏定义 cudaDeviceEnablePeerAccess
+#define cudaDeviceProp musaDeviceProp  // 宏定义 cudaDeviceProp
+#define cudaDeviceSynchronize musaDeviceSynchronize  // 宏定义 cudaDeviceSynchronize
+#define cudaError_t musaError_t  // 宏定义 cudaError_t
+#define cudaErrorMemoryAllocation musaErrorMemoryAllocation  // 宏定义 cudaErrorMemoryAllocation
+#define cudaErrorPeerAccessAlreadyEnabled musaErrorPeerAccessAlreadyEnabled  // 宏定义 cudaErrorPeerAccessAlreadyEnabled
+#define cudaErrorPeerAccessNotEnabled musaErrorPeerAccessNotEnabled  // 宏定义 cudaErrorPeerAccessNotEnabled
+#define cudaEventCreateWithFlags musaEventCreateWithFlags  // 宏定义 cudaEventCreateWithFlags
+#define cudaEventDisableTiming musaEventDisableTiming  // 宏定义 cudaEventDisableTiming
+#define cudaEventRecord musaEventRecord  // 宏定义 cudaEventRecord
+#define cudaEventSynchronize musaEventSynchronize  // 宏定义 cudaEventSynchronize
+#define cudaEvent_t musaEvent_t  // 宏定义 cudaEvent_t
+#define cudaEventDestroy musaEventDestroy  // 宏定义 cudaEventDestroy
+#define cudaFree musaFree  // 宏定义 cudaFree
+#define cudaFreeHost musaFreeHost  // 宏定义 cudaFreeHost
+#define cudaGetDevice musaGetDevice  // 宏定义 cudaGetDevice
+#define cudaGetDeviceCount musaGetDeviceCount  // 宏定义 cudaGetDeviceCount
+#define cudaGetDeviceProperties musaGetDeviceProperties  // 宏定义 cudaGetDeviceProperties
+#define cudaGetErrorString musaGetErrorString  // 宏定义 cudaGetErrorString
+#define cudaGetLastError musaGetLastError  // 宏定义 cudaGetLastError
+#define cudaHostRegister musaHostRegister  // 宏定义 cudaHostRegister
+#define cudaHostRegisterPortable musaHostRegisterPortable  // 宏定义 cudaHostRegisterPortable
+#define cudaHostRegisterReadOnly musaHostRegisterReadOnly  // 宏定义 cudaHostRegisterReadOnly
+#define cudaHostUnregister musaHostUnregister  // 宏定义 cudaHostUnregister
+#define cudaLaunchCooperativeKernel musaLaunchCooperativeKernel  // 宏定义 cudaLaunchCooperativeKernel
+#define cudaLaunchHostFunc musaLaunchHostFunc  // 宏定义 cudaLaunchHostFunc
+#define cudaMalloc musaMalloc  // 宏定义 cudaMalloc
+#define cudaMallocHost musaMallocHost  // 宏定义 cudaMallocHost
+#define cudaMallocManaged musaMallocManaged  // 宏定义 cudaMallocManaged
+#define cudaMemcpy musaMemcpy  // 宏定义 cudaMemcpy
+#define cudaMemcpyAsync musaMemcpyAsync  // 宏定义 cudaMemcpyAsync
+#define cudaMemcpyPeerAsync musaMemcpyPeerAsync  // 宏定义 cudaMemcpyPeerAsync
+#define cudaMemcpy2DAsync musaMemcpy2DAsync  // 宏定义 cudaMemcpy2DAsync
+#define cudaMemcpyDeviceToDevice musaMemcpyDeviceToDevice  // 宏定义 cudaMemcpyDeviceToDevice
+#define cudaMemcpyDeviceToHost musaMemcpyDeviceToHost  // 宏定义 cudaMemcpyDeviceToHost
+#define cudaMemcpyHostToDevice musaMemcpyHostToDevice  // 宏定义 cudaMemcpyHostToDevice
+#define cudaMemcpyKind musaMemcpyKind  // 宏定义 cudaMemcpyKind
+#define cudaMemset musaMemset  // 宏定义 cudaMemset
+#define cudaMemsetAsync musaMemsetAsync  // 宏定义 cudaMemsetAsync
+#define cudaMemGetInfo musaMemGetInfo  // 宏定义 cudaMemGetInfo
+#define cudaOccupancyMaxPotentialBlockSize musaOccupancyMaxPotentialBlockSize  // 宏定义 cudaOccupancyMaxPotentialBlockSize
+#define cudaSetDevice musaSetDevice  // 宏定义 cudaSetDevice
+#define cudaStreamCreateWithFlags musaStreamCreateWithFlags  // 宏定义 cudaStreamCreateWithFlags
+#define cudaStreamDestroy musaStreamDestroy  // 宏定义 cudaStreamDestroy
+#define cudaStreamFireAndForget musaStreamFireAndForget  // 宏定义 cudaStreamFireAndForget
+#define cudaStreamNonBlocking musaStreamNonBlocking  // 宏定义 cudaStreamNonBlocking
+#define cudaStreamPerThread musaStreamPerThread  // 宏定义 cudaStreamPerThread
+#define cudaStreamSynchronize musaStreamSynchronize  // 宏定义 cudaStreamSynchronize
+#define cudaStreamWaitEvent musaStreamWaitEvent  // 宏定义 cudaStreamWaitEvent
+#define cudaStream_t musaStream_t  // 宏定义 cudaStream_t
+#define cudaSuccess musaSuccess  // 宏定义 cudaSuccess
 
 // Additional mappings for MUSA virtual memory pool
-#define CU_DEVICE_ATTRIBUTE_VIRTUAL_MEMORY_MANAGEMENT_SUPPORTED MU_DEVICE_ATTRIBUTE_VIRTUAL_ADDRESS_MANAGEMENT_SUPPORTED
-#define CU_MEM_ACCESS_FLAGS_PROT_READWRITE MU_MEM_ACCESS_FLAGS_PROT_READWRITE
-#define CU_MEM_ALLOC_GRANULARITY_RECOMMENDED MU_MEM_ALLOC_GRANULARITY_RECOMMENDED
-#define CU_MEM_ALLOCATION_TYPE_PINNED MU_MEM_ALLOCATION_TYPE_PINNED
-#define CU_MEM_LOCATION_TYPE_DEVICE MU_MEM_LOCATION_TYPE_DEVICE
-#define CUdevice MUdevice
-#define CUdeviceptr MUdeviceptr
-#define CUmemAccessDesc MUmemAccessDesc
-#define CUmemAllocationProp MUmemAllocationProp
-#define CUmemGenericAllocationHandle MUmemGenericAllocationHandle
-#define cuDeviceGet muDeviceGet
-#define cuDeviceGetAttribute muDeviceGetAttribute
-#define cuMemAddressFree muMemAddressFree
-#define cuMemAddressReserve muMemAddressReserve
-#define cuMemCreate muMemCreate
-#define cuMemGetAllocationGranularity muMemGetAllocationGranularity
-#define cuMemMap muMemMap
-#define cuMemRelease muMemRelease
-#define cuMemSetAccess muMemSetAccess
-#define cuMemUnmap muMemUnmap
-#define cudaFuncAttributeMaxDynamicSharedMemorySize musaFuncAttributeMaxDynamicSharedMemorySize
-#define cudaFuncSetAttribute musaFuncSetAttribute
-#define cudaMemcpy3DPeerParms musaMemcpy3DPeerParms
-#define make_cudaExtent make_musaExtent
-#define make_cudaPitchedPtr make_musaPitchedPtr
+#define CU_DEVICE_ATTRIBUTE_VIRTUAL_MEMORY_MANAGEMENT_SUPPORTED MU_DEVICE_ATTRIBUTE_VIRTUAL_ADDRESS_MANAGEMENT_SUPPORTED  // 宏定义 CU_DEVICE_ATTRIBUTE_VIRTUAL_MEMORY_MANAGEMENT_SUPPORTED
+#define CU_MEM_ACCESS_FLAGS_PROT_READWRITE MU_MEM_ACCESS_FLAGS_PROT_READWRITE  // 宏定义 CU_MEM_ACCESS_FLAGS_PROT_READWRITE
+#define CU_MEM_ALLOC_GRANULARITY_RECOMMENDED MU_MEM_ALLOC_GRANULARITY_RECOMMENDED  // 宏定义 CU_MEM_ALLOC_GRANULARITY_RECOMMENDED
+#define CU_MEM_ALLOCATION_TYPE_PINNED MU_MEM_ALLOCATION_TYPE_PINNED  // 宏定义 CU_MEM_ALLOCATION_TYPE_PINNED
+#define CU_MEM_LOCATION_TYPE_DEVICE MU_MEM_LOCATION_TYPE_DEVICE  // 宏定义 CU_MEM_LOCATION_TYPE_DEVICE
+#define CUdevice MUdevice  // 宏定义 CUdevice
+#define CUdeviceptr MUdeviceptr  // 宏定义 CUdeviceptr
+#define CUmemAccessDesc MUmemAccessDesc  // 宏定义 CUmemAccessDesc
+#define CUmemAllocationProp MUmemAllocationProp  // 宏定义 CUmemAllocationProp
+#define CUmemGenericAllocationHandle MUmemGenericAllocationHandle  // 宏定义 CUmemGenericAllocationHandle
+#define cuDeviceGet muDeviceGet  // 宏定义 cuDeviceGet
+#define cuDeviceGetAttribute muDeviceGetAttribute  // 宏定义 cuDeviceGetAttribute
+#define cuMemAddressFree muMemAddressFree  // 宏定义 cuMemAddressFree
+#define cuMemAddressReserve muMemAddressReserve  // 宏定义 cuMemAddressReserve
+#define cuMemCreate muMemCreate  // 宏定义 cuMemCreate
+#define cuMemGetAllocationGranularity muMemGetAllocationGranularity  // 宏定义 cuMemGetAllocationGranularity
+#define cuMemMap muMemMap  // 宏定义 cuMemMap
+#define cuMemRelease muMemRelease  // 宏定义 cuMemRelease
+#define cuMemSetAccess muMemSetAccess  // 宏定义 cuMemSetAccess
+#define cuMemUnmap muMemUnmap  // 宏定义 cuMemUnmap
+#define cudaFuncAttributeMaxDynamicSharedMemorySize musaFuncAttributeMaxDynamicSharedMemorySize  // 宏定义 cudaFuncAttributeMaxDynamicSharedMemorySize
+#define cudaFuncSetAttribute musaFuncSetAttribute  // 宏定义 cudaFuncSetAttribute
+#define cudaMemcpy3DPeerParms musaMemcpy3DPeerParms  // 宏定义 cudaMemcpy3DPeerParms
+#define make_cudaExtent make_musaExtent  // 宏定义 make_cudaExtent
+#define make_cudaPitchedPtr make_musaPitchedPtr  // 宏定义 make_cudaPitchedPtr
 
 // Additional mappings for MUSA graphs
-#define CUDA_SUCCESS MUSA_SUCCESS
-#define CUresult MUresult
-#define cuGetErrorString muGetErrorString
-#define cudaErrorGraphExecUpdateFailure musaErrorGraphExecUpdateFailure
-#define cudaErrorInvalidDeviceFunction musaErrorInvalidDeviceFunction
-#define cudaGraphDestroy musaGraphDestroy
-#define cudaGraphExecDestroy musaGraphExecDestroy
-#define cudaGraphExec_t musaGraphExec_t
-#define cudaGraphExecUpdate musaGraphExecUpdate
-#define cudaGraphExecUpdateResult musaGraphExecUpdateResult
-#define cudaGraphGetNodes musaGraphGetNodes
-#define cudaGraphInstantiate musaGraphInstantiate
-#define cudaGraphKernelNodeGetParams musaGraphKernelNodeGetParams
-#define cudaGraphKernelNodeSetParams musaGraphKernelNodeSetParams
-#define cudaGraphLaunch musaGraphLaunch
-#define cudaGraphNodeGetType musaGraphNodeGetType
-#define cudaGraphNode_t musaGraphNode_t
-#define cudaGraphNodeType musaGraphNodeType
-#define cudaGraphNodeTypeKernel musaGraphNodeTypeKernel
-#define cudaGraph_t musaGraph_t
-#define cudaKernelNodeParams musaKernelNodeParams
-#define cudaStreamCaptureModeRelaxed musaStreamCaptureModeRelaxed
-#define cudaStreamBeginCapture musaStreamBeginCapture
-#define cudaStreamEndCapture musaStreamEndCapture
-#define cudaOccupancyMaxActiveBlocksPerMultiprocessor musaOccupancyMaxActiveBlocksPerMultiprocessor
+#define CUDA_SUCCESS MUSA_SUCCESS  // 宏定义 CUDA_SUCCESS
+#define CUresult MUresult  // 宏定义 CUresult
+#define cuGetErrorString muGetErrorString  // 宏定义 cuGetErrorString
+#define cudaErrorGraphExecUpdateFailure musaErrorGraphExecUpdateFailure  // 宏定义 cudaErrorGraphExecUpdateFailure
+#define cudaErrorInvalidDeviceFunction musaErrorInvalidDeviceFunction  // 宏定义 cudaErrorInvalidDeviceFunction
+#define cudaGraphDestroy musaGraphDestroy  // 宏定义 cudaGraphDestroy
+#define cudaGraphExecDestroy musaGraphExecDestroy  // 宏定义 cudaGraphExecDestroy
+#define cudaGraphExec_t musaGraphExec_t  // 宏定义 cudaGraphExec_t
+#define cudaGraphExecUpdate musaGraphExecUpdate  // 宏定义 cudaGraphExecUpdate
+#define cudaGraphExecUpdateResult musaGraphExecUpdateResult  // 宏定义 cudaGraphExecUpdateResult
+#define cudaGraphGetNodes musaGraphGetNodes  // 宏定义 cudaGraphGetNodes
+#define cudaGraphInstantiate musaGraphInstantiate  // 宏定义 cudaGraphInstantiate
+#define cudaGraphKernelNodeGetParams musaGraphKernelNodeGetParams  // 宏定义 cudaGraphKernelNodeGetParams
+#define cudaGraphKernelNodeSetParams musaGraphKernelNodeSetParams  // 宏定义 cudaGraphKernelNodeSetParams
+#define cudaGraphLaunch musaGraphLaunch  // 宏定义 cudaGraphLaunch
+#define cudaGraphNodeGetType musaGraphNodeGetType  // 宏定义 cudaGraphNodeGetType
+#define cudaGraphNode_t musaGraphNode_t  // 宏定义 cudaGraphNode_t
+#define cudaGraphNodeType musaGraphNodeType  // 宏定义 cudaGraphNodeType
+#define cudaGraphNodeTypeKernel musaGraphNodeTypeKernel  // 宏定义 cudaGraphNodeTypeKernel
+#define cudaGraph_t musaGraph_t  // 宏定义 cudaGraph_t
+#define cudaKernelNodeParams musaKernelNodeParams  // 宏定义 cudaKernelNodeParams
+#define cudaStreamCaptureModeRelaxed musaStreamCaptureModeRelaxed  // 宏定义 cudaStreamCaptureModeRelaxed
+#define cudaStreamBeginCapture musaStreamBeginCapture  // 宏定义 cudaStreamBeginCapture
+#define cudaStreamEndCapture musaStreamEndCapture  // 宏定义 cudaStreamEndCapture
+#define cudaOccupancyMaxActiveBlocksPerMultiprocessor musaOccupancyMaxActiveBlocksPerMultiprocessor  // 宏定义 cudaOccupancyMaxActiveBlocksPerMultiprocessor
 
-typedef __mt_bfloat16 nv_bfloat16;
-typedef __mt_bfloat162 nv_bfloat162;
+typedef __mt_bfloat16 nv_bfloat16;  // 类型定义
+typedef __mt_bfloat162 nv_bfloat162;  // 类型定义

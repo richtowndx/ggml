@@ -1,17 +1,17 @@
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
-#include <string.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "hvx-types.h"
-#include "hvx-utils.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "hvx-types.h"  // 引入 hvx-types.h 头文件
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
 
-struct htp_solve_tri_context {
+struct htp_solve_tri_context {  // 结构体定义
     struct htp_ops_context * octx;
     uint32_t                 jobs_per_thread;
     uint32_t                 total_jobs;
@@ -39,7 +39,7 @@ static inline void solve_tri_row_scalar(const float * A_row,
 static inline HVX_Vector hvx_load_partial_f32(const float * src, uint32_t n) {
     HVX_Vector v = *((const HVX_UVector *) src);
     HVX_VectorPred mask = Q6_Q_vsetq2_R(n * sizeof(float));
-    return Q6_V_vmux_QVV(mask, v, Q6_V_vzero());
+    return Q6_V_vmux_QVV(mask, v, Q6_V_vzero());  // Q6_V_vmux_QVV
 }
 
 static inline void solve_tri_row_hvx(const float * A_row,
@@ -200,26 +200,26 @@ int op_solve_tri(struct htp_ops_context * octx) {
     const struct htp_tensor * dst  = octx->dst;     // X
 
     if (src0->type != HTP_TYPE_F32 || src1->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     // left=true, lower=true, uni=false only
     if (src0->ne[0] != src0->ne[1]) {
-        return HTP_STATUS_INVAL_PARAMS;
+        return HTP_STATUS_INVAL_PARAMS;  // 返回
     }
     if (src0->ne[1] != src1->ne[1]) {
-        return HTP_STATUS_INVAL_PARAMS;
+        return HTP_STATUS_INVAL_PARAMS;  // 返回
     }
     if (src0->ne[2] != src1->ne[2] || src0->ne[3] != src1->ne[3]) {
-        return HTP_STATUS_INVAL_PARAMS;
+        return HTP_STATUS_INVAL_PARAMS;  // 返回
     }
     if (dst->ne[0] != src1->ne[0] || dst->ne[1] != src1->ne[1] || dst->ne[2] != src1->ne[2] ||
         dst->ne[3] != src1->ne[3]) {
-        return HTP_STATUS_INVAL_PARAMS;
+        return HTP_STATUS_INVAL_PARAMS;  // 返回
     }
 
     if (octx->flags & HTP_OPFLAGS_SKIP_COMPUTE) {
-        return HTP_STATUS_OK;
+        return HTP_STATUS_OK;  // 返回
     }
 
     const uint32_t k = src1->ne[0];
@@ -238,7 +238,7 @@ int op_solve_tri(struct htp_ops_context * octx) {
         // Batch-level parallelism
         const uint32_t n_threads = MIN((uint32_t) octx->n_threads, total_batches);
 
-        struct htp_solve_tri_context sctx = {
+        struct htp_solve_tri_context sctx = {  // 结构体定义
             .octx            = octx,
             .jobs_per_thread = (total_batches + n_threads - 1) / n_threads,
             .total_jobs      = total_batches,
@@ -252,7 +252,7 @@ int op_solve_tri(struct htp_ops_context * octx) {
         const uint32_t total_jobs = total_batches * k_chunks;
         const uint32_t n_threads  = MIN((uint32_t) octx->n_threads, MAX(total_jobs, 1));
 
-        struct htp_solve_tri_context sctx = {
+        struct htp_solve_tri_context sctx = {  // 结构体定义
             .octx            = octx,
             .jobs_per_thread = (total_jobs + n_threads - 1) / n_threads,
             .total_jobs      = total_jobs,
@@ -263,5 +263,5 @@ int op_solve_tri(struct htp_ops_context * octx) {
         worker_pool_run_func(octx->ctx->worker_pool, solve_tri_chunk_thread_f32, &sctx, n_threads);
     }
 
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }

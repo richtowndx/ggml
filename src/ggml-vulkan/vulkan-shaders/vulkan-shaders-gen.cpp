@@ -1,36 +1,36 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <stdexcept>
-#include <array>
-#include <vector>
-#include <map>
-#include <thread>
-#include <mutex>
-#include <future>
-#include <queue>
-#include <condition_variable>
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
-#include <cassert>
-#include <algorithm>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <filesystem>
+#include <iostream>  // 引入 iostream 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <sstream>  // 引入 sstream 头文件
+#include <string>  // 引入 string 头文件
+#include <stdexcept>  // 引入 stdexcept 头文件
+#include <array>  // 引入 array 头文件
+#include <vector>  // 引入 vector 头文件
+#include <map>  // 引入 map 头文件
+#include <thread>  // 引入 thread 头文件
+#include <mutex>  // 引入 mutex 头文件
+#include <future>  // 引入 future 头文件
+#include <queue>  // 引入 queue 头文件
+#include <condition_variable>  // 引入 condition_variable 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <cstdlib>  // 引入 cstdlib 头文件
+#include <cassert>  // 引入 cassert 头文件
+#include <algorithm>  // 引入 algorithm 头文件
+#include <sys/stat.h>  // 引入 sys/stat.h 头文件
+#include <sys/types.h>  // 引入 sys/types.h 头文件
+#include <filesystem>  // 引入 filesystem 头文件
 
-#ifdef _WIN32
-    #define NOMINMAX
-    #include <windows.h>
-    #include <direct.h> // For _mkdir on Windows
-#else
-    #include <unistd.h>
-    #include <sys/wait.h>
-    #include <fcntl.h>
-#endif
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
+    #define NOMINMAX  // 宏定义 NOMINMAX
+    #include <windows.h>  // 引入 windows.h 头文件
+    #include <direct.h> // For _mkdir on Windows  // 引入 direct.h 头文件
+#else  // 否则
+    #include <unistd.h>  // 引入 unistd.h 头文件
+    #include <sys/wait.h>  // 引入 sys/wait.h 头文件
+    #include <fcntl.h>  // 引入 fcntl.h 头文件
+#endif  // 条件编译结束
 
-#define ASYNCIO_CONCURRENCY 64
+#define ASYNCIO_CONCURRENCY 64  // 宏定义 ASYNCIO_CONCURRENCY
 
 std::mutex lock;
 std::vector<std::pair<std::string, std::string>> shader_fnames;
@@ -70,16 +70,16 @@ const std::vector<std::string> type_names = {
     "bf16",
 };
 
-enum MatMulIdType {
+enum MatMulIdType {  // 枚举定义
     NONE,
     DEFAULT,
     SUBGROUP,
 };
 
-namespace {
+namespace {  // 命名空间
 
 void execute_command(std::vector<std::string>& command, std::string& stdout_str, std::string& stderr_str) {
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
     HANDLE stdout_read, stdout_write;
     HANDLE stderr_read, stderr_write;
     SECURITY_ATTRIBUTES sa = { sizeof(SECURITY_ATTRIBUTES), NULL, TRUE };
@@ -129,7 +129,7 @@ void execute_command(std::vector<std::string>& command, std::string& stdout_str,
     WaitForSingleObject(pi.hProcess, INFINITE);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
-#else
+#else  // 否则
     int stdout_pipe[2];
     int stderr_pipe[2];
 
@@ -177,23 +177,23 @@ void execute_command(std::vector<std::string>& command, std::string& stdout_str,
         close(stderr_pipe[0]);
         waitpid(pid, nullptr, 0);
     }
-#endif
+#endif  // 条件编译结束
 }
 
 bool directory_exists(const std::string& path) {
     struct stat info;
     if (stat(path.c_str(), &info) != 0) {
-        return false; // Path doesn't exist or can't be accessed
+        return false; // Path doesn't exist or can't be accessed  // 返回
     }
     return (info.st_mode & S_IFDIR) != 0; // Check if it is a directory
 }
 
 bool create_directory(const std::string& path) {
-#ifdef _WIN32
-    return _mkdir(path.c_str()) == 0 || errno == EEXIST; // EEXIST means the directory already exists
-#else
-    return mkdir(path.c_str(), 0755) == 0 || errno == EEXIST; // 0755 is the directory permissions
-#endif
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
+    return _mkdir(path.c_str()) == 0 || errno == EEXIST; // EEXIST means the directory already exists  // _mkdir
+#else  // 否则
+    return mkdir(path.c_str(), 0755) == 0 || errno == EEXIST; // 0755 is the directory permissions  // mkdir
+#endif  // 条件编译结束
 }
 
 std::string to_uppercase(const std::string& input) {
@@ -201,43 +201,43 @@ std::string to_uppercase(const std::string& input) {
     for (char& c : result) {
         c = std::toupper(c);
     }
-    return result;
+    return result;  // 返回
 }
 
 bool string_starts_with(const std::string& str, const std::string& prefix) {
     if (prefix.size() > str.size()) {
-        return false;
+        return false;  // 返回
     }
     return std::equal(prefix.begin(), prefix.end(), str.begin());
 }
 
 bool string_ends_with(const std::string& str, const std::string& suffix) {
     if (suffix.size() > str.size()) {
-        return false;
+        return false;  // 返回
     }
     return std::equal(suffix.rbegin(), suffix.rend(), str.rbegin());
 }
 
 bool is_quantized_type(const std::string& type_name) {
-    return type_name != "f32" && type_name != "f16" && type_name != "bf16";
+    return type_name != "f32" && type_name != "f16" && type_name != "bf16";  // 返回
 }
 
 bool is_legacy_quant(const std::string& type_name) {
-    return type_name == "q4_0" || type_name == "q4_1" || type_name == "q5_0" || type_name == "q5_1" || type_name == "q8_0";
+    return type_name == "q4_0" || type_name == "q4_1" || type_name == "q5_0" || type_name == "q5_1" || type_name == "q8_0";  // 返回
 }
 
 bool is_k_quant(const std::string& type_name) {
-    return string_ends_with(type_name, "_k");
+    return string_ends_with(type_name, "_k");  // string_ends_with
 }
 
 bool is_iq_quant(const std::string& type_name) {
-    return string_starts_with(type_name, "iq");
+    return string_starts_with(type_name, "iq");  // string_starts_with
 }
 
 static const char path_separator = '/';
 
 std::string join_paths(const std::string& path1, const std::string& path2) {
-    return path1 + path_separator + path2;
+    return path1 + path_separator + path2;  // 返回
 }
 
 std::string basename(const std::string &path) {
@@ -247,7 +247,7 @@ std::string basename(const std::string &path) {
 std::stringstream make_generic_stringstream() {
     std::stringstream ss;
     ss.imbue(c_locale);
-    return ss;
+    return ss;  // 返回
 }
 
 std::string read_binary_file(const std::string& path, bool may_not_exist = false) {
@@ -256,7 +256,7 @@ std::string read_binary_file(const std::string& path, bool may_not_exist = false
         if (!may_not_exist) {
             std::cerr << "Error opening file: " << path << " (" << strerror(errno) << ")\n";
         }
-        return {};
+        return {};  // 返回
     }
 
     fseek(f, 0, SEEK_END);
@@ -268,24 +268,24 @@ std::string read_binary_file(const std::string& path, bool may_not_exist = false
     fclose(f);
     if (read_size != size) {
         std::cerr << "Error reading file: " << path << " (" << strerror(errno) << ")\n";
-        return {};
+        return {};  // 返回
     }
 
-    return data;
+    return data;  // 返回
 }
 
 void write_binary_file(const std::string& path, const std::string& content) {
     FILE* f = fopen(path.c_str(), "wb");
     if (!f) {
         std::cerr << "Error opening file for writing: " << path << " (" << strerror(errno) << ")\n";
-        return;
+        return;  // 返回
     }
 
     size_t write_size = fwrite(content.data(), 1, content.size(), f);
     fclose(f);
     if (write_size != content.size()) {
         std::cerr << "Error writing file: " << path << " (" << strerror(errno) << ")\n";
-        return;
+        return;  // 返回
     }
 }
 
@@ -321,17 +321,17 @@ compile_count_guard acquire_compile_slot() {
     std::unique_lock<std::mutex> guard(compile_count_mutex);
     compile_count_cond.wait(guard, [N] { return compile_count < N; });
     compile_count++;
-    return compile_count_guard(&compile_count, &decrement_compile_count);
+    return compile_count_guard(&compile_count, &decrement_compile_count);  // compile_count_guard
 }
 
 void string_to_spv_func(std::string name, std::string in_path, std::string out_path, std::map<std::string, std::string> defines, bool coopmat, bool dep_file, compile_count_guard slot) {
     std::string target_env = (name.find("_cm2") != std::string::npos) ? "--target-env=vulkan1.3" : "--target-env=vulkan1.2";
 
-    #ifdef _WIN32
+    #ifdef _WIN32  // 如果定义了 _WIN32 则编译
         std::vector<std::string> cmd = {GLSLC, "-fshader-stage=compute", target_env, "\"" + in_path + "\"", "-o", "\"" + out_path + "\""};
-    #else
+    #else  // 否则
         std::vector<std::string> cmd = {GLSLC, "-fshader-stage=compute", target_env, in_path, "-o", out_path};
-    #endif
+    #endif  // 条件编译结束
 
     // disable spirv-opt for coopmat shaders for https://github.com/ggml-org/llama.cpp/issues/10734
     // disable spirv-opt for bf16 shaders for https://github.com/ggml-org/llama.cpp/issues/15344
@@ -343,16 +343,16 @@ void string_to_spv_func(std::string name, std::string in_path, std::string out_p
     if (dep_file) {
         cmd.push_back("-MD");
         cmd.push_back("-MF");
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
         cmd.push_back("\"" + target_cpp + ".d\"");
-#else
+#else  // 否则
         cmd.push_back(target_cpp + ".d");
-#endif
+#endif  // 条件编译结束
     }
 
-    #ifdef GGML_VULKAN_SHADER_DEBUG_INFO
+    #ifdef GGML_VULKAN_SHADER_DEBUG_INFO  // 如果定义了 GGML_VULKAN_SHADER_DEBUG_INFO 则编译
         cmd.push_back("-g");
-    #endif
+    #endif  // 条件编译结束
 
     for (const auto& define : defines) {
         cmd.push_back("-D" + define.first + "=" + define.second);
@@ -378,7 +378,7 @@ void string_to_spv_func(std::string name, std::string in_path, std::string out_p
                 std::cerr << part << " ";
             }
             std::cerr << "\n\n" << stderr_str << std::endl;
-            return;
+            return;  // 返回
         }
 
         if (dep_file) {
@@ -403,7 +403,7 @@ void string_to_spv_func(std::string name, std::string in_path, std::string out_p
 std::map<std::string, std::string> merge_maps(const std::map<std::string, std::string>& a, const std::map<std::string, std::string>& b) {
     std::map<std::string, std::string> result = a;
     result.insert(b.begin(), b.end());
-    return result;
+    return result;  // 返回
 }
 
 static std::vector<std::future<void>> compiles;
@@ -414,10 +414,10 @@ void string_to_spv(std::string name, const std::string& source, const std::map<s
     if (input_filepath == "") {
         // No input source to compile, only generate header for all shaders
         shader_fnames.push_back(std::pair(name, out_path));
-        return;
+        return;  // 返回
     } else if (basename(input_filepath) != source) {
         // Only compile shader variants matching the input filename
-        return;
+        return;  // 返回
     }
 
     compile_count_guard slot = acquire_compile_slot();
@@ -466,50 +466,50 @@ void matmul_shaders(bool fp16, MatMulIdType matmul_id_type, bool coopmat, bool c
             if (t == "bf16") {
                 // scalar path promotes to float
                 if (!coopmat && !coopmat2) {
-                    return "float";
+                    return "float";  // 返回
                 }
-                return "bfloat16_t";
+                return "bfloat16_t";  // 返回
             }
             if (coopmat2 || fp16) {
-                return "float16_t";
+                return "float16_t";  // 返回
             }
-            return "float";
+            return "float";  // 返回
         case 2:
             if (t == "bf16") {
                 // scalar path promotes to float
                 if (!coopmat && !coopmat2) {
-                    return "vec2";
+                    return "vec2";  // 返回
                 }
-                return "bf16vec2";
+                return "bf16vec2";  // 返回
             }
             if (coopmat2 || fp16) {
-                return "f16vec2";
+                return "f16vec2";  // 返回
             }
-            return "vec2";
+            return "vec2";  // 返回
         case 4:
             if (t == "bf16") {
                 // scalar path promotes to float
                 if (!coopmat && !coopmat2) {
-                    return "vec4";
+                    return "vec4";  // 返回
                 }
-                return "bf16vec4";
+                return "bf16vec4";  // 返回
             }
             if (coopmat2 || fp16) {
-                return "f16vec4";
+                return "f16vec4";  // 返回
             }
-            return "vec4";
+            return "vec4";  // 返回
         case 8:
             if (t == "bf16") {
                 // scalar path promotes to float
                 if (!coopmat && !coopmat2) {
-                    return "mat2x4";
+                    return "mat2x4";  // 返回
                 }
                 throw std::runtime_error("bf16 vec8 not supported");
             }
             if (coopmat2 || fp16) {
-                return "f16mat2x4";
+                return "f16mat2x4";  // 返回
             }
-            return "mat2x4";
+            return "mat2x4";  // 返回
         default:
             throw std::runtime_error("invalid vector size");
         }
@@ -544,9 +544,9 @@ void matmul_shaders(bool fp16, MatMulIdType matmul_id_type, bool coopmat, bool c
         };
 
         // If bfloat16 is not supported, then only compile the scalar (promote to fp32) shader
-#if !defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)
+#if !defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)  // 条件编译
         if (!(coopmat || coopmat2))
-#endif
+#endif  // 条件编译结束
         {
             string_to_spv(shader_name + "_bf16",         source_name, merge_maps(merge_maps(base_dict, float_type_dict_bf16), {{"TO_FLOAT_TYPE", to_float_type}, {"DATA_A_BF16", "1"},                             {"B_TYPE", coopmat2 ? "bfloat16_t" : "uint16_t"}, {"D_TYPE", "float"}, {"B_IS_FLOAT", "1"}, {"DATA_B_BF16", "1"}}),                   fp16, coopmat, coopmat2, f16acc);
             string_to_spv(shader_name + "_bf16_aligned", source_name, merge_maps(merge_maps(base_dict, float_type_dict_bf16), {{"TO_FLOAT_TYPE", to_float_type}, {"DATA_A_BF16", "1"}, {"LOAD_VEC_A", load_vec_a}, {"LOAD_VEC_B", "4"}, {"B_TYPE", coopmat2 ? "bfloat16_t" : "u16vec4"},  {"D_TYPE", "float"}, {"B_IS_FLOAT", "1"}, {"DATA_B_BF16", "1"}, {"ALIGNED", "1"}}), fp16, coopmat, coopmat2, f16acc);
@@ -588,12 +588,12 @@ void matmul_shaders(bool fp16, MatMulIdType matmul_id_type, bool coopmat, bool c
             string_to_spv(shader_name + "_" + tname + "_f16_aligned", source_name,  merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_key, "1"}, {"LOAD_VEC_A", load_vec_a},           {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f16}, {"D_TYPE", "float"}, {"ALIGNED", "1"}}), fp16, coopmat, coopmat2, f16acc);
         }
 
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
         // Integer dot mmq performs better with f32 accumulators
         if (!f16acc && !coopmat && !coopmat2 && (is_legacy_quant(tname) || is_k_quant(tname) || tname == "mxfp4")) {
             string_to_spv(shader_name + "_" + tname + "_q8_1", "mul_mmq.comp", merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_key, "1"}, {"D_TYPE", "float"},}), fp16, coopmat, coopmat2, f16acc);
         }
-#endif
+#endif  // 条件编译结束
     }
 }
 
@@ -609,17 +609,17 @@ void process_shaders() {
         matmul_shaders(true, matmul_id_type, false, false, true);
 
         if (matmul_id_type != MatMulIdType::DEFAULT) {
-#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)  // 条件编译
             // Coopmat, fp32acc and fp16acc
             matmul_shaders(true, matmul_id_type, true, false, false);
             matmul_shaders(true, matmul_id_type, true, false, true);
-#endif
+#endif  // 条件编译结束
 
-#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)  // 条件编译
             // Coopmat2, fp32acc and fp16acc
             matmul_shaders(true, matmul_id_type, false, true, false);
             matmul_shaders(true, matmul_id_type, false, true, true);
-#endif
+#endif  // 条件编译结束
         }
     }
 
@@ -642,17 +642,17 @@ void process_shaders() {
             }
 
             if (fp16) {
-#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)  // 条件编译
                 string_to_spv("flash_attn_f32_f16_mixed", "flash_attn_cm2.comp",
                     merge_maps(fa_base_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}}), fp16, false, true, f16acc);
-#endif
+#endif  // 条件编译结束
             }
 
             for (const auto& tname : type_names) {
                 if (tname == "bf16") continue;
 
                 if (fp16) {
-#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)  // 条件编译
                 if (tname == "f16") {
                     string_to_spv("flash_attn_f32_f16_" + tname, "flash_attn_cm1.comp",
                         merge_maps(fa_base_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}, {"COOPMAT", "1"}}), fp16, true, false, f16acc);
@@ -661,7 +661,7 @@ void process_shaders() {
                     string_to_spv("flash_attn_f32_f16_" + tname, "flash_attn_cm1.comp",
                         merge_maps(fa_base_dict, {{data_a_key, "1"}, {"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}, {"BLOCK_SIZE", "QUANT_K_"+to_uppercase(tname)}, {"COOPMAT", "1"}}), fp16, true, false, f16acc);
                 }
-#endif
+#endif  // 条件编译结束
                 }
 
                 if (tname == "f16") {
@@ -671,12 +671,12 @@ void process_shaders() {
                     std::string data_a_key = "DATA_A_" + to_uppercase(tname);
                     string_to_spv("flash_attn_f32_f16_" + tname, "flash_attn.comp",
                         merge_maps(fa_base_dict, {{data_a_key, "1"}, {"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}, {"BLOCK_SIZE", "QUANT_K_"+to_uppercase(tname) }}), fp16, false, false, f16acc);
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
                     if (tname != "f32") {
                         string_to_spv("flash_attn_f32_f16_" + tname, "flash_attn.comp",
                             merge_maps(fa_base_dict, {{data_a_key, "1"}, {"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}, {"BLOCK_SIZE", "QUANT_K_"+to_uppercase(tname) }, {"MMQ", "1"}}), fp16, false, false, f16acc, "_int8");
                     }
-#endif
+#endif  // 条件编译结束
                 }
             }
         }
@@ -703,7 +703,7 @@ void process_shaders() {
         string_to_spv("mul_mat_vec_id_" + tname + "_f32_f32_subgroup_no_shmem", shader, merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_key, "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
 
         // mul mat vec with integer dot product
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
         if (is_legacy_quant(tname) || tname == "mxfp4" || is_k_quant(tname) || tname == "iq1_s" || tname == "iq1_m") {
             string_to_spv("mul_mat_vec_" + tname + "_q8_1_f32", "mul_mat_vecq.comp", merge_maps(base_dict, {{data_a_key, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}}));
             string_to_spv("mul_mat_vec_" + tname + "_q8_1_f32_subgroup", "mul_mat_vecq.comp", merge_maps(base_dict, {{data_a_key, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
@@ -713,7 +713,7 @@ void process_shaders() {
             string_to_spv("mul_mat_vec_id_" + tname + "_q8_1_f32_subgroup", "mul_mat_vecq.comp", merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_key, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
             string_to_spv("mul_mat_vec_id_" + tname + "_q8_1_f32_subgroup_no_shmem", "mul_mat_vecq.comp", merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_key, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
         }
-#endif
+#endif  // 条件编译结束
 
         // Dequant shaders
         if (tname != "f16" && tname != "bf16") {
@@ -775,14 +775,14 @@ void process_shaders() {
     }
 
     auto get_type_str = [](bool f16) {
-        return f16 ? "float16_t" : "float";
+        return f16 ? "float16_t" : "float";  // 返回
     };
     auto get_suffix = [](bool src0_f16, bool src1_f16, bool dst_f16) {
         std::string s;
         s += std::string(src0_f16 ? "_f16" : "_f32");
         s += std::string(src1_f16 ? "_f16" : "_f32");
         s += std::string(dst_f16 ? "_f16" : "_f32");
-        return s;
+        return s;  // 返回
     };
     for (std::string op : {"add", "sub", "mul", "div", "add_rms", }) {
     for (auto src0_f16 : {false, true}) {
@@ -996,12 +996,12 @@ void process_shaders() {
                 std::string name = std::string(transpose ? "conv_transpose_2d": "conv2d")
                     + (a_f16 ? "_f16" : "") + "_f32";
                 string_to_spv(name + (unroll ? "_unroll" : ""), "conv2d_mm.comp", defines);
-#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)  // 条件编译
                 if (unroll) {
                     defines["COOPMAT2"] = "1";
                     string_to_spv(name, "conv2d_mm.comp", defines, true, false, true);
                 }
-#endif
+#endif  // 条件编译结束
             }
         }
     }
@@ -1040,12 +1040,12 @@ void write_output_files() {
     std::sort(shader_fnames.begin(), shader_fnames.end());
     for (const auto& pair : shader_fnames) {
         const std::string& name = pair.first;
-        #ifdef _WIN32
+        #ifdef _WIN32  // 如果定义了 _WIN32 则编译
             std::string path = pair.second;
             std::replace(path.begin(), path.end(), '/', '\\' );
-        #else
+        #else  // 否则
             const std::string& path = pair.second;
-        #endif
+        #endif  // 条件编译结束
 
         hdr << "extern const uint64_t " << name << "_len;\n";
         hdr << "extern const unsigned char " << name << "_data[];\n\n";
@@ -1120,9 +1120,9 @@ void write_output_files() {
 
     std::vector<std::string> btypes = {"f16", "f32"};
 
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)  // 条件编译
     btypes.push_back("q8_1");
-#endif
+#endif  // 条件编译结束
 
     for (const std::string& btype : btypes) {
     for (const auto& tname : type_names) {
@@ -1191,7 +1191,7 @@ int main(int argc, char** argv) {
     if (!directory_exists(output_dir)) {
         if (!create_directory(output_dir)) {
             std::cerr << "Error creating output directory: " << output_dir << "\n";
-            return EXIT_FAILURE;
+            return EXIT_FAILURE;  // 返回
         }
     }
 
@@ -1199,5 +1199,5 @@ int main(int argc, char** argv) {
 
     write_output_files();
 
-    return EXIT_SUCCESS;
+    return EXIT_SUCCESS;  // 返回
 }

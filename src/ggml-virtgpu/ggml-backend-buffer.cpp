@@ -1,16 +1,16 @@
-#include "ggml-remoting.h"
+#include "ggml-remoting.h"  // 引入 ggml-remoting.h 头文件
 
-#define BUFFER_TO_GPU(name) ((ggml_backend_remoting_buffer_context *) (name)->context)->gpu
+#define BUFFER_TO_GPU(name) ((ggml_backend_remoting_buffer_context *) (name)->context)->gpu  // 宏定义 BUFFER_TO_GPU
 
 static void * ggml_backend_remoting_buffer_get_base(ggml_backend_buffer_t buffer) {
     ggml_backend_remoting_buffer_context * context = (ggml_backend_remoting_buffer_context *) buffer->context;
     if (context->base) {
-        return context->base;
+        return context->base;  // 返回
     }
 
     context->base = apir_buffer_get_base(BUFFER_TO_GPU(buffer), BUFFER_TO_APIR_CONTEXT(buffer));
 
-    return context->base;
+    return context->base;  // 返回
 }
 
 static void ggml_backend_remoting_buffer_set_tensor(ggml_backend_buffer_t buffer,
@@ -27,7 +27,7 @@ static void ggml_backend_remoting_buffer_set_tensor(ggml_backend_buffer_t buffer
         apir_buffer_set_tensor(gpu, BUFFER_TO_APIR_CONTEXT(buffer), tensor, data, offset, size);
     }
 
-    return;
+    return;  // 返回
 }
 
 static void ggml_backend_remoting_buffer_get_tensor(ggml_backend_buffer_t buffer,
@@ -53,7 +53,7 @@ static void ggml_backend_remoting_buffer_set_tensor_from_ptr(ggml_backend_buffer
 
     memcpy((char *) tensor->data + offset, data, size);
 
-    return;
+    return;  // 返回
 }
 
 static void ggml_backend_remoting_buffer_get_tensor_from_ptr(ggml_backend_buffer_t buffer,
@@ -73,7 +73,7 @@ static bool ggml_backend_remoting_buffer_cpy_tensor(ggml_backend_buffer_t buffer
 
     bool ret = apir_buffer_cpy_tensor(gpu, BUFFER_TO_APIR_CONTEXT(buffer), src, dst);
 
-    return ret;
+    return ret;  // 返回
 }
 
 static void ggml_backend_remoting_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
@@ -81,7 +81,7 @@ static void ggml_backend_remoting_buffer_clear(ggml_backend_buffer_t buffer, uin
 
     apir_buffer_clear(gpu, BUFFER_TO_APIR_CONTEXT(buffer), value);
 
-    return;
+    return;  // 返回
 }
 
 static void ggml_backend_remoting_buffer_free_buffer(ggml_backend_buffer_t buffer) {

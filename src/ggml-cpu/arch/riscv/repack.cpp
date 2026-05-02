@@ -1,35 +1,35 @@
-#define GGML_COMMON_IMPL_CPP
-#define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
-#include "ggml-backend-impl.h"
+#define GGML_COMMON_IMPL_CPP  // 宏定义 GGML_COMMON_IMPL_CPP
+#define GGML_COMMON_DECL_CPP  // 宏定义 GGML_COMMON_DECL_CPP
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
 
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "ggml-cpu-impl.h"
-#include "simd-mappings.h"
-#include "traits.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-cpu-impl.h"  // 引入 ggml-cpu-impl.h 头文件
+#include "simd-mappings.h"  // 引入 simd-mappings.h 头文件
+#include "traits.h"  // 引入 traits.h 头文件
 
-#include <cmath>
-#include <cstring>
-#include <cassert>
-#include <cstdlib> // for qsort
-#include <cstdio>  // for GGML_ASSERT
+#include <cmath>  // 引入 cmath 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <cassert>  // 引入 cassert 头文件
+#include <cstdlib> // for qsort  // 引入 cstdlib 头文件
+#include <cstdio>  // for GGML_ASSERT  // 引入 cstdio 头文件
 
-#define GGML_CPU_CLANG_WORKAROUND
-#include "../../repack.h"
+#define GGML_CPU_CLANG_WORKAROUND  // 宏定义 GGML_CPU_CLANG_WORKAROUND
+#include "../../repack.h"  // 引入 ../../repack.h 头文件
 
-#if defined(__GNUC__)
+#if defined(__GNUC__)  // 条件编译
 #pragma GCC diagnostic ignored "-Woverlength-strings"
-#endif
+#endif  // 条件编译结束
 
-#define UNUSED GGML_UNUSED
+#define UNUSED GGML_UNUSED  // 宏定义 UNUSED
 
 void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
     assert(k % QK8_0 == 0);
     const int nb = k / QK8_0;
 
-#if defined(__riscv_v_intrinsic)
+#if defined(__riscv_v_intrinsic)  // 条件编译
     block_q8_0x4 * GGML_RESTRICT y = (block_q8_0x4 *) vy;
     const size_t vl_calc = __riscv_vsetvl_e32m8(QK8_0);
     const size_t vl_save = __riscv_vsetvl_e64m2(4);
@@ -52,7 +52,7 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
             vint16m4_t v_i16 = __riscv_vfncvt_x_f_w_i16m4_rm(v_scaled, 4, vl_calc);
             q_r0 = __riscv_vncvt_x_x_w_i8m2(v_i16, vl_calc);
         }
-        asm volatile ("" ::: "memory");
+        asm volatile ("" ::: "memory");  // volatile
 
         {
             vfloat32m8_t v_src = __riscv_vle32_v_f32m8(x_block_base + 1 * k, vl_calc);
@@ -68,7 +68,7 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
             vint16m4_t v_i16 = __riscv_vfncvt_x_f_w_i16m4_rm(v_scaled, 4, vl_calc);
             q_r1 = __riscv_vncvt_x_x_w_i8m2(v_i16, vl_calc);
         }
-        asm volatile ("" ::: "memory");
+        asm volatile ("" ::: "memory");  // volatile
         {
             vfloat32m8_t v_src = __riscv_vle32_v_f32m8(x_block_base + 2 * k, vl_calc);
             vfloat32m8_t v_abs = __riscv_vfabs_v_f32m8(v_src, vl_calc);
@@ -83,7 +83,7 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
             vint16m4_t v_i16 = __riscv_vfncvt_x_f_w_i16m4_rm(v_scaled, 4, vl_calc);
             q_r2 = __riscv_vncvt_x_x_w_i8m2(v_i16, vl_calc);
         }
-        asm volatile ("" ::: "memory");
+        asm volatile ("" ::: "memory");  // volatile
         {
             vfloat32m8_t v_src = __riscv_vle32_v_f32m8(x_block_base + 3 * k, vl_calc);
             vfloat32m8_t v_abs = __riscv_vfabs_v_f32m8(v_src, vl_calc);
@@ -105,10 +105,10 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
         vint64m2x4_t v_quant_tuple = __riscv_vcreate_v_i64m2x4(v_q64_r0, v_q64_r1, v_q64_r2, v_q64_r3);
         __riscv_vsseg4e64_v_i64m2x4((int64_t*)y[i].qs, v_quant_tuple, vl_save);
     }
-#else
+#else  // 否则
     UNUSED(nb);
     ggml_quantize_mat_q8_0_4x8_generic(x, vy, k);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_gemv_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
@@ -130,7 +130,7 @@ void ggml_gemv_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined __riscv_v
+#if defined __riscv_v  // 条件编译
     if (__riscv_vlenb() >= QK4_0) {
         const size_t vl = QK4_0;
 
@@ -144,7 +144,7 @@ void ggml_gemv_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 const int64_t a1 = *(const int64_t *)&a_ptr[l].qs[8];
                 const int64_t a2 = *(const int64_t *)&a_ptr[l].qs[16];
                 const int64_t a3 = *(const int64_t *)&a_ptr[l].qs[24];
-                __asm__ __volatile__("" ::: "memory"); // prevent gcc from emitting fused vlse64, violating alignment constraints
+                __asm__ __volatile__("" ::: "memory"); // prevent gcc from emitting fused vlse64, violating alignment constraints  // __volatile__
                 const vint8m2_t lhs_0_8 =__riscv_vreinterpret_v_i64m2_i8m2(__riscv_vmv_v_x_i64m2(a0, vl / 4));
                 const vint8m2_t lhs_1_8 =__riscv_vreinterpret_v_i64m2_i8m2(__riscv_vmv_v_x_i64m2(a1, vl / 4));
                 const vint8m2_t lhs_2_8 =__riscv_vreinterpret_v_i64m2_i8m2(__riscv_vmv_v_x_i64m2(a2, vl / 4));
@@ -195,14 +195,14 @@ void ggml_gemv_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
             }
             __riscv_vse32_v_f32m1(s + x * ncols_interleaved, sumf, vl / 4);
         }
-        return;
+        return;  // 返回
     }
 
-#endif
+#endif  // 条件编译结束
     ggml_gemv_q4_0_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-#if defined __riscv_zvfh
+#if defined __riscv_zvfh  // 条件编译
 void ggml_gemv_q4_0_16x1_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
     const int qk = QK8_0;
     const int nb = n / qk;
@@ -665,7 +665,7 @@ void ggml_gemv_q2_K_16x1_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
         __riscv_vse32_v_f32m2(s + col_tile, v_sumf, vl);
     }
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
     const int qk = QK8_0;
@@ -687,7 +687,7 @@ void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined __riscv_v
+#if defined __riscv_v  // 条件编译
     if (__riscv_vlenb() >= QK4_0) {
         const size_t vl = QK4_0;
 
@@ -731,7 +731,7 @@ void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
                     const int64_t A4 = *(const int64_t *)&a_ptr[l].qs[32];
                     const int64_t A8 = *(const int64_t *)&a_ptr[l].qs[64];
                     const int64_t Ac = *(const int64_t *)&a_ptr[l].qs[96];
-                    __asm__ __volatile__("" ::: "memory"); // prevent gcc from emitting fused vlse64, violating alignment
+                    __asm__ __volatile__("" ::: "memory"); // prevent gcc from emitting fused vlse64, violating alignment  // __volatile__
                     vint16m4_t sumi_l0;
                     {
                         const vint8m2_t lhs_0_8 =__riscv_vreinterpret_v_i64m2_i8m2(__riscv_vmv_v_x_i64m2(A0, vl / 4));
@@ -769,7 +769,7 @@ void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
                     const int64_t A5 = *(const int64_t *)&a_ptr[l].qs[40];
                     const int64_t A9 = *(const int64_t *)&a_ptr[l].qs[72];
                     const int64_t Ad = *(const int64_t *)&a_ptr[l].qs[104];
-                    __asm__ __volatile__("" ::: "memory"); // prevent gcc from emitting fused vlse64, violating alignment
+                    __asm__ __volatile__("" ::: "memory"); // prevent gcc from emitting fused vlse64, violating alignment  // __volatile__
                     vint16m4_t sumi_l1;
                     {
                         const vint8m2_t lhs_0_8 =__riscv_vreinterpret_v_i64m2_i8m2(__riscv_vmv_v_x_i64m2(A1, vl / 4));
@@ -807,7 +807,7 @@ void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
                     const int64_t A6 = *(const int64_t *)&a_ptr[l].qs[48];
                     const int64_t Aa = *(const int64_t *)&a_ptr[l].qs[80];
                     const int64_t Ae = *(const int64_t *)&a_ptr[l].qs[112];
-                    __asm__ __volatile__("" ::: "memory"); // prevent gcc from emitting fused vlse64, violating alignment
+                    __asm__ __volatile__("" ::: "memory"); // prevent gcc from emitting fused vlse64, violating alignment  // __volatile__
                     vint16m4_t sumi_l2;
                     {
                         const vint8m2_t lhs_0_8 =__riscv_vreinterpret_v_i64m2_i8m2(__riscv_vmv_v_x_i64m2(A2, vl / 4));
@@ -845,7 +845,7 @@ void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
                     const int64_t A7 = *(const int64_t *)&a_ptr[l].qs[56];
                     const int64_t Ab = *(const int64_t *)&a_ptr[l].qs[88];
                     const int64_t Af = *(const int64_t *)&a_ptr[l].qs[120];
-                    __asm__ __volatile__("" ::: "memory"); // prevent gcc from emitting fused vlse64, violating alignment
+                    __asm__ __volatile__("" ::: "memory"); // prevent gcc from emitting fused vlse64, violating alignment  // __volatile__
                     vint16m4_t sumi_l3;
                     {
                         const vint8m2_t lhs_0_8 =__riscv_vreinterpret_v_i64m2_i8m2(__riscv_vmv_v_x_i64m2(A3, vl / 4));
@@ -886,14 +886,14 @@ void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
             }
         }
 
-        return;
+        return;  // 返回
     }
 
-#endif
+#endif  // 条件编译结束
     ggml_gemm_q4_0_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-#if defined __riscv_zvfh
+#if defined __riscv_zvfh  // 条件编译
 void ggml_gemm_q4_0_16x1_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
     const int qk = QK8_0;
     const int nb = n / qk;
@@ -1700,4 +1700,4 @@ void ggml_gemm_q2_K_16x1_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
         }
     }
 }
-#endif
+#endif  // 条件编译结束

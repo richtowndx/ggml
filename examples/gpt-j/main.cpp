@@ -1,25 +1,25 @@
-#include "ggml.h"
-#include "ggml-cpu.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
 
-#include "common.h"
-#include "common-ggml.h"
+#include "common.h"  // 引入 common.h 头文件
+#include "common-ggml.h"  // 引入 common-ggml.h 头文件
 
-#include <cassert>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <map>
-#include <string>
-#include <vector>
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <map>  // 引入 map 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER)  // 条件编译
 #pragma warning(disable: 4244 4267) // possible loss of data
-#endif
+#endif  // 条件编译结束
 
 
 // default hparams (GPT-J 6B)
-struct gptj_hparams {
+struct gptj_hparams {  // 结构体定义
     int32_t n_vocab = 50400;
     int32_t n_ctx   = 2048;
     int32_t n_embd  = 4096;
@@ -30,7 +30,7 @@ struct gptj_hparams {
     float   eps     = 1e-5f;
 };
 
-struct gptj_layer {
+struct gptj_layer {  // 结构体定义
     // normalization
     struct ggml_tensor * ln_1_g;
     struct ggml_tensor * ln_1_b;
@@ -50,7 +50,7 @@ struct gptj_layer {
     struct ggml_tensor * c_mlp_proj_b;
 };
 
-struct gptj_model {
+struct gptj_model {  // 结构体定义
     gptj_hparams hparams;
 
     // normalization
@@ -80,7 +80,7 @@ bool gptj_model_load(const std::string & fname, gptj_model & model, gpt_vocab & 
     auto fin = std::ifstream(fname, std::ios::binary);
     if (!fin) {
         fprintf(stderr, "%s: failed to open '%s'\n", __func__, fname.c_str());
-        return false;
+        return false;  // 返回
     }
 
     // verify magic
@@ -89,7 +89,7 @@ bool gptj_model_load(const std::string & fname, gptj_model & model, gpt_vocab & 
         fin.read((char *) &magic, sizeof(magic));
         if (magic != GGML_FILE_MAGIC) {
             fprintf(stderr, "%s: invalid model file '%s' (bad magic)\n", __func__, fname.c_str());
-            return false;
+            return false;  // 返回
         }
     }
 
@@ -127,7 +127,7 @@ bool gptj_model_load(const std::string & fname, gptj_model & model, gpt_vocab & 
         if (n_vocab != model.hparams.n_vocab) {
             fprintf(stderr, "%s: invalid model file '%s' (bad vocab size %d != %d)\n",
                     __func__, fname.c_str(), n_vocab, model.hparams.n_vocab);
-            return false;
+            return false;  // 返回
         }
 
         std::string word;
@@ -152,7 +152,7 @@ bool gptj_model_load(const std::string & fname, gptj_model & model, gpt_vocab & 
     if (wtype == GGML_TYPE_COUNT) {
         fprintf(stderr, "%s: invalid model file '%s' (bad ftype value %d)\n",
                 __func__, fname.c_str(), model.hparams.ftype);
-        return false;
+        return false;  // 返回
     }
 
     auto & ctx = model.ctx;
@@ -200,7 +200,7 @@ bool gptj_model_load(const std::string & fname, gptj_model & model, gpt_vocab & 
 
     // create the ggml context
     {
-        struct ggml_init_params params = {
+        struct ggml_init_params params = {  // 结构体定义
             /*.mem_size   =*/ ctx_size,
             /*.mem_buffer =*/ NULL,
             /*.no_alloc   =*/ false,
@@ -209,7 +209,7 @@ bool gptj_model_load(const std::string & fname, gptj_model & model, gpt_vocab & 
         model.ctx = ggml_init(params);
         if (!model.ctx) {
             fprintf(stderr, "%s: ggml_init() failed\n", __func__);
-            return false;
+            return false;  // 返回
         }
     }
 
@@ -327,19 +327,19 @@ bool gptj_model_load(const std::string & fname, gptj_model & model, gpt_vocab & 
 
             if (model.tensors.find(name) == model.tensors.end()) {
                 fprintf(stderr, "%s: unknown tensor '%s' in model file\n", __func__, name.c_str());
-                return false;
+                return false;  // 返回
             }
 
             auto tensor = model.tensors[name];
             if (ggml_nelements(tensor) != nelements) {
                 fprintf(stderr, "%s: tensor '%s' has wrong size in model file\n", __func__, name.c_str());
-                return false;
+                return false;  // 返回
             }
 
             if (tensor->ne[0] != ne[0] || tensor->ne[1] != ne[1]) {
                 fprintf(stderr, "%s: tensor '%s' has wrong shape in model file: got [%d, %d], expected [%d, %d]\n",
                         __func__, name.c_str(), (int) tensor->ne[0], (int) tensor->ne[1], ne[0], ne[1]);
-                return false;
+                return false;  // 返回
             }
 
             // for debugging
@@ -352,7 +352,7 @@ bool gptj_model_load(const std::string & fname, gptj_model & model, gpt_vocab & 
             if ((nelements*bpe)/ggml_blck_size(tensor->type) != ggml_nbytes(tensor)) {
                 fprintf(stderr, "%s: tensor '%s' has wrong size in model file: got %zu, expected %zu\n",
                         __func__, name.c_str(), ggml_nbytes(tensor), nelements*bpe);
-                return false;
+                return false;  // 返回
             }
 
             fin.read(reinterpret_cast<char *>(tensor->data), ggml_nbytes(tensor));
@@ -372,7 +372,7 @@ bool gptj_model_load(const std::string & fname, gptj_model & model, gpt_vocab & 
 
     fin.close();
 
-    return true;
+    return true;  // 返回
 }
 
 // evaluate the transformer
@@ -415,11 +415,11 @@ bool gptj_eval(
         buf = realloc(buf, buf_size);
         if (buf == nullptr) {
             fprintf(stderr, "%s: failed to allocate %zu bytes\n", __func__, buf_size);
-            return false;
+            return false;  // 返回
         }
     }
 
-    struct ggml_init_params params = {
+    struct ggml_init_params params = {  // 结构体定义
         /*.mem_size   =*/ buf_size,
         /*.mem_buffer =*/ buf,
         /*.no_alloc   =*/ false,
@@ -509,8 +509,8 @@ bool gptj_eval(
             struct ggml_tensor * V =
                 ggml_view_3d(ctx0, model.memory_v,
                         n_past + N, n_embd/n_head, n_head,
-                        n_ctx*ggml_element_size(model.memory_v),
-                        n_ctx*ggml_element_size(model.memory_v)*n_embd/n_head,
+                        n_ctx*ggml_element_size(model.memory_v),  // ggml_element_size
+                        n_ctx*ggml_element_size(model.memory_v)*n_embd/n_head,  // ggml_element_size
                         il*n_ctx*ggml_element_size(model.memory_v)*n_embd);
 
             // KQV = transpose(V) * KQ_soft_max
@@ -612,7 +612,7 @@ bool gptj_eval(
 
     ggml_free(ctx0);
 
-    return true;
+    return true;  // 返回
 }
 
 int main(int argc, char ** argv) {
@@ -624,7 +624,7 @@ int main(int argc, char ** argv) {
     params.model = "models/gpt-j-6B/ggml-model.bin";
 
     if (gpt_params_parse(argc, argv, params) == false) {
-        return 1;
+        return 1;  // 返回
     }
 
     if (params.seed < 0) {
@@ -649,7 +649,7 @@ int main(int argc, char ** argv) {
 
         if (!gptj_model_load(params.model, model, vocab)) {
             fprintf(stderr, "%s: failed to load model from '%s'\n", __func__, params.model.c_str());
-            return 1;
+            return 1;  // 返回
         }
 
         t_load_us = ggml_time_us() - t_start_us;
@@ -685,7 +685,7 @@ int main(int argc, char ** argv) {
 
             if (!gptj_eval(model, params.n_threads, n_past, embd, logits, mem_per_token)) {
                 printf("Failed to predict\n");
-                return 1;
+                return 1;  // 返回
             }
 
             t_predict_us += ggml_time_us() - t_start_us;
@@ -751,5 +751,5 @@ int main(int argc, char ** argv) {
 
     ggml_free(model.ctx);
 
-    return 0;
+    return 0;  // 返回
 }

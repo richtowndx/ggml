@@ -1,30 +1,30 @@
-#define GGML_COMMON_IMPL_CPP
-#define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
-#include "ggml-backend-impl.h"
+#define GGML_COMMON_IMPL_CPP  // 宏定义 GGML_COMMON_IMPL_CPP
+#define GGML_COMMON_DECL_CPP  // 宏定义 GGML_COMMON_DECL_CPP
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
 
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "ggml-cpu-impl.h"
-#include "simd-mappings.h"
-#include "traits.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-cpu-impl.h"  // 引入 ggml-cpu-impl.h 头文件
+#include "simd-mappings.h"  // 引入 simd-mappings.h 头文件
+#include "traits.h"  // 引入 traits.h 头文件
 
-#include <cmath>
-#include <cstring>
-#include <cassert>
-#include <cstdlib> // for qsort
-#include <cstdio>  // for GGML_ASSERT
+#include <cmath>  // 引入 cmath 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <cassert>  // 引入 cassert 头文件
+#include <cstdlib> // for qsort  // 引入 cstdlib 头文件
+#include <cstdio>  // for GGML_ASSERT  // 引入 cstdio 头文件
 
-#define GGML_CPU_CLANG_WORKAROUND
-#include "../../repack.h"
+#define GGML_CPU_CLANG_WORKAROUND  // 宏定义 GGML_CPU_CLANG_WORKAROUND
+#include "../../repack.h"  // 引入 ../../repack.h 头文件
 
-#if defined(__GNUC__)
+#if defined(__GNUC__)  // 条件编译
 #pragma GCC diagnostic ignored "-Woverlength-strings"
-#endif
+#endif  // 条件编译结束
 
-#define UNUSED GGML_UNUSED
+#define UNUSED GGML_UNUSED  // 宏定义 UNUSED
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && (defined(__ARM_FEATURE_MATMUL_INT8) || defined(__ARM_FEATURE_DOTPROD))
+#if defined(__aarch64__) && defined(__ARM_NEON) && (defined(__ARM_FEATURE_MATMUL_INT8) || defined(__ARM_FEATURE_DOTPROD))  // 条件编译
 // Helper for decoding scales and mins of Q4_K and Q5_K block formats
 static inline void decode_q_Kx8_6bit_scales(const uint8_t * scales_in, int16x8_t * out_mins, int8_t * out_scales) {
     constexpr uint32_t kmask1 = 0x3f3f3f3f;
@@ -46,7 +46,7 @@ static inline void decode_q_Kx8_6bit_scales(const uint8_t * scales_in, int16x8_t
     scales_u32[1] = (sm[2] & kmask2) | (((sm[0] >> 6) & kmask3) << 4);
     memcpy(out_scales, scales_u32, 8);
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_quantize_mat_q8_0_4x4(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
@@ -55,7 +55,7 @@ void ggml_quantize_mat_q8_0_4x4(const float * GGML_RESTRICT x, void * GGML_RESTR
 
     block_q8_0x4 * GGML_RESTRICT y = (block_q8_0x4 *) vy;
 
-#if defined(__ARM_NEON)
+#if defined(__ARM_NEON)  // 条件编译
     float32x4_t srcv[4][8];
     float id[4];
 
@@ -109,11 +109,11 @@ void ggml_quantize_mat_q8_0_4x4(const float * GGML_RESTRICT x, void * GGML_RESTR
             y[i].qs[16 * j + 15] = vgetq_lane_s32(vi, 3);
         }
     }
-#else
+#else  // 否则
     UNUSED(nb);
     UNUSED(y);
     ggml_quantize_mat_q8_0_4x4_generic(x, vy, k);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
@@ -123,7 +123,7 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
 
     block_q8_0x4 * GGML_RESTRICT y = (block_q8_0x4 *) vy;
 
-#if defined(__ARM_NEON)
+#if defined(__ARM_NEON)  // 条件编译
     float32x4_t srcv[4][8];
     float id[4];
 
@@ -202,11 +202,11 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
         }
     }
 
-#else
+#else  // 否则
     UNUSED(nb);
     UNUSED(y);
     ggml_quantize_mat_q8_0_4x8_generic(x, vy, k);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_gemv_q4_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
@@ -228,7 +228,7 @@ void ggml_gemv_q4_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     const block_q4_0x4 * b_ptr = (const block_q4_0x4 *) vx;
 
     for (int c = 0; c < nc; c += ncols_interleaved) {
@@ -265,8 +265,8 @@ void ggml_gemv_q4_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         vst1q_f32(s, acc);
         s += ncols_interleaved;
     }
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    return;  // 返回
+#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemv_q4_0_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -289,7 +289,7 @@ void ggml_gemv_q4_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     const block_q4_0x4 * b_ptr = (const block_q4_0x4 *) vx;
 
     for (int c = 0; c < nc; c += ncols_interleaved) {
@@ -331,8 +331,8 @@ void ggml_gemv_q4_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         vst1q_f32(s, acc);
         s += ncols_interleaved;
     }
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    return;  // 返回
+#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemv_q4_0_4x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -355,8 +355,8 @@ void ggml_gemv_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)
-#if defined(__ARM_FEATURE_SVE)
+#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)  // 条件编译
+#if defined(__ARM_FEATURE_SVE)  // 条件编译
     if (ggml_cpu_get_sve_cnt() == QK8_0) {
         const void * b_ptr = vx;
         const void * a_ptr = vy;
@@ -420,11 +420,11 @@ void ggml_gemv_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
             : [a_ptr] "r" (a_ptr), [nb] "r" (nb)
             : "memory", "p0", "x20", "x21", "x22", "z16", "z17", "z18", "z19", "z20", "z21", "z22", "z23", "z24", "z25", "z26", "z27", "z28", "z29", "z30", "z31"
         );
-        return;
+        return;  // 返回
     }
-#endif // #if defined(__ARM_FEATURE_SVE)
+#endif // #if defined(__ARM_FEATURE_SVE)  // 条件编译结束
 
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)
+#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)  // 条件编译结束
     ggml_gemv_q4_0_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -447,7 +447,7 @@ void ggml_gemv_iq4_nl_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const 
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     const int8x16_t kvalues = vld1q_s8(kvalues_iq4nl);
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
     float * res_ptr = s;
@@ -493,8 +493,8 @@ void ggml_gemv_iq4_nl_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const 
 
         vst1q_f32(res_ptr + x * 4, sumf);
     }
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
+    return;  // 返回
+#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)  // 条件编译结束
     ggml_gemv_iq4_nl_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -517,7 +517,7 @@ void ggml_gemv_mxfp4_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     const int8x16_t kvalues = vld1q_s8(kvalues_mxfp4);
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
     float * res_ptr = s;
@@ -568,8 +568,8 @@ void ggml_gemv_mxfp4_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
 
         vst1q_f32(res_ptr + x * 4, sumf);
     }
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
+    return;  // 返回
+#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)  // 条件编译结束
     ggml_gemv_mxfp4_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -587,7 +587,7 @@ void ggml_gemv_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     constexpr int    col_groups = ncols_interleaved / 4; // 0123 and 4567
     const uint8x16_t m4b        = vdupq_n_u8(0x0f);
 
@@ -701,8 +701,8 @@ void ggml_gemv_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
         vst1q_f32(s + base, acc_f32[0]);
         vst1q_f32(s + base + 4, acc_f32[1]);
     }  // for x
-    return;
-#endif  // #if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    return;  // 返回
+#endif  // #if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemv_q4_K_8x4_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -726,7 +726,7 @@ void ggml_gemv_q4_K_8x8_q8_K(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     constexpr int    col_pairs = ncols_interleaved / 2;
     const uint8x16_t m4b       = vdupq_n_u8(0x0f);
 
@@ -855,8 +855,8 @@ void ggml_gemv_q4_K_8x8_q8_K(int                        n,
         vst1q_f32(s + base, acc_f32[0]);
         vst1q_f32(s + base + 4, acc_f32[1]);
     }  // for x
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    return;  // 返回
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemv_q4_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -880,7 +880,7 @@ void ggml_gemv_q5_K_8x4_q8_K(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     constexpr int    col_groups = ncols_interleaved / 4;  // 0123 and 4567
     const uint8x16_t m4b        = vdupq_n_u8(0x0f);
     const uint8x16_t mone       = vdupq_n_u8(1);
@@ -1014,8 +1014,8 @@ void ggml_gemv_q5_K_8x4_q8_K(int                        n,
         vst1q_f32(s + base, acc_f32[0]);
         vst1q_f32(s + base + 4, acc_f32[1]);
     }  // for x
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    return;  // 返回
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemv_q5_K_8x4_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -1039,7 +1039,7 @@ void ggml_gemv_q5_K_8x8_q8_K(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     constexpr int    col_pairs = ncols_interleaved / 2;
     const uint8x16_t m4b       = vdupq_n_u8(0x0f);
     const uint8x16_t mone      = vdupq_n_u8(1);
@@ -1301,8 +1301,8 @@ void ggml_gemv_q5_K_8x8_q8_K(int                        n,
         vst1q_f32(s + base, acc_f32[0]);
         vst1q_f32(s + base + 4, acc_f32[1]);
     }  // for x
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    return;  // 返回
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemv_q5_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -1326,7 +1326,7 @@ void ggml_gemv_q6_K_8x4_q8_K(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     constexpr int    col_groups = ncols_interleaved / 4;
     const uint8x16_t m4b        = vdupq_n_u8(0x0f);
     const uint8x16_t mask_lo    = vdupq_n_u8(0x03);
@@ -1490,8 +1490,8 @@ void ggml_gemv_q6_K_8x4_q8_K(int                        n,
         vst1q_f32(s + base, acc_f32[0]);
         vst1q_f32(s + base + 4, acc_f32[1]);
     }  // for x
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    return;  // 返回
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemv_q6_K_8x4_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -1515,7 +1515,7 @@ void ggml_gemv_q6_K_8x8_q8_K(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     constexpr int    col_pairs = ncols_interleaved / 2;
     const uint8x16_t m4b       = vdupq_n_u8(0x0f);
     const uint8x16_t mask_lo   = vdupq_n_u8(0x03);
@@ -1691,8 +1691,8 @@ void ggml_gemv_q6_K_8x8_q8_K(int                        n,
         vst1q_f32(s + base, acc_f32[0]);
         vst1q_f32(s + base + 4, acc_f32[1]);
     }  // for x
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    return;  // 返回
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemv_q6_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -1715,7 +1715,7 @@ void ggml_gemv_q8_0_4x4_q8_0(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     const block_q8_0x4 * b_ptr = (const block_q8_0x4 *) vx;
 
     for (int c = 0; c < nc; c += ncols_interleaved) {
@@ -1748,9 +1748,9 @@ void ggml_gemv_q8_0_4x4_q8_0(int                        n,
         vst1q_f32(s, acc);
         s += ncols_interleaved;
     }
-    return;
+    return;  // 返回
 
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemv_q8_0_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -1773,7 +1773,7 @@ void ggml_gemv_q8_0_4x8_q8_0(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     const block_q8_0x4 * b_ptr = (const block_q8_0x4 *) vx;
 
     for (int c = 0; c < nc; c += ncols_interleaved) {
@@ -1817,9 +1817,9 @@ void ggml_gemv_q8_0_4x8_q8_0(int                        n,
         vst1q_f32(s, acc);
         s += ncols_interleaved;
     }
-    return;
+    return;  // 返回
 
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemv_q8_0_4x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -1843,7 +1843,7 @@ void ggml_gemm_q4_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     const void * b_ptr = vx;
     const void * a_ptr = vy;
     float * res_ptr = s;
@@ -2299,8 +2299,8 @@ void ggml_gemm_q4_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         : [b_ptr] "r" (b_ptr), [nr] "r" (nr), [nb] "r" (nb), [res_stride] "r" (res_stride), [nc] "r" (nc)
         : "cc", "memory", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "x9", "x10", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28"
     );
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
+    return;  // 返回
+#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)  // 条件编译结束
     ggml_gemm_q4_0_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -2324,7 +2324,7 @@ void ggml_gemm_q4_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
     const void * b_ptr = vx;
     const void * a_ptr = vy;
     float * res_ptr = s;
@@ -2720,8 +2720,8 @@ void ggml_gemm_q4_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         : [b_ptr] "r" (b_ptr), [nr] "r" (nr), [nb] "r" (nb), [res_stride] "r" (res_stride), [nc] "r" (nc)
         : "cc", "memory", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "x9", "x10", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28"
     );
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    return;  // 返回
+#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译结束
     ggml_gemm_q4_0_4x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -2745,8 +2745,8 @@ void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)
-#if defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)
+#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)  // 条件编译
+#if defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
     if (ggml_cpu_get_sve_cnt() == QK8_0) {
         const void * b_ptr = vx;
         const void * a_ptr = vy;
@@ -3155,11 +3155,11 @@ void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
             : [b_ptr] "r" (b_ptr), [nr] "r" (nr), [nb] "r" (nb), [res_stride] "r" (res_stride), [nc] "r" (nc)
             : "cc", "memory", "p0", "p1", "x9", "x10", "x11", "x12", "x13", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "z0", "z1", "z2", "z3", "z4", "z5", "z6", "z7", "z8", "z9", "z10", "z11", "z12", "z13", "z14", "z15", "z16", "z17", "z18", "z19", "z20", "z21", "z22", "z23", "z24", "z25", "z26", "z27", "z28", "z29", "z30", "z31"
         );
-        return;
+        return;  // 返回
     }
-#endif // #if defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)
+#endif // #if defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译结束
 
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)
+#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)  // 条件编译结束
     ggml_gemm_q4_0_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -3183,7 +3183,7 @@ void ggml_gemm_iq4_nl_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const 
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     const int8x16_t kvalues = vld1q_s8(kvalues_iq4nl);
 
     for (int y = 0; y < nr / 4; y++) {
@@ -3234,8 +3234,8 @@ void ggml_gemm_iq4_nl_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const 
             }
         }
     }
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
+    return;  // 返回
+#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)  // 条件编译结束
     ggml_gemm_iq4_nl_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -3259,7 +3259,7 @@ void ggml_gemm_mxfp4_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     const int8x16_t kvalues = vld1q_s8(kvalues_mxfp4);
 
     for (int y = 0; y < nr / 4; y++) {
@@ -3315,8 +3315,8 @@ void ggml_gemm_mxfp4_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
             }
         }
     }
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
+    return;  // 返回
+#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)  // 条件编译结束
     ggml_gemm_mxfp4_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -3335,7 +3335,7 @@ void ggml_gemm_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     constexpr int    q8_k_blocklen = 4;
     constexpr int    acc_size  = 2 * 4;  // 2 row pairs × 4 col pairs
     const uint8x16_t m4b       = vdupq_n_u8(0x0f);
@@ -3515,8 +3515,8 @@ void ggml_gemm_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             }
         }  // for x
     }  // for y
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    return;  // 返回
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemm_q4_K_8x4_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -3541,7 +3541,7 @@ void ggml_gemm_q5_K_8x4_q8_K(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     constexpr int    q8_k_blocklen = 4;
     constexpr int    acc_size      = 2 * 4;  // 2 row pairs, 4 col pairs
     constexpr int    col_groups    = ncols_interleaved / 4;
@@ -3744,8 +3744,8 @@ void ggml_gemm_q5_K_8x4_q8_K(int                        n,
             }
         }  // for x
     }  // for y
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    return;  // 返回
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemm_q5_K_8x4_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -3770,7 +3770,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)
+#if defined(__aarch64__) && defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
     if (svcntb() * 8 == 256) {
         constexpr int    q8_k_blocklen = 4;
         const svuint8_t m4b_1          = svdup_n_u8(0x0f);
@@ -4076,11 +4076,11 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
                 }
             }  // for x
         }  // for y
-        return;
+        return;  // 返回
     }
-#endif  // SVE compile-time end
+#endif  // SVE compile-time end  // 条件编译结束
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
     constexpr int    q8_k_blocklen = 4;
     const uint8x16_t m4b           = vdupq_n_u8(0x0f);
 
@@ -4264,8 +4264,8 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
             }
         }  // for x
     }  // for y
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    return;  // 返回
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译结束
     ggml_gemm_q4_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -4290,7 +4290,7 @@ void ggml_gemm_q5_K_8x8_q8_K(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
     constexpr int    q8_k_blocklen = 4;
     constexpr int    col_pairs     = ncols_interleaved / 2;
     const uint8x16_t m4b           = vdupq_n_u8(0x0f);
@@ -4511,8 +4511,8 @@ void ggml_gemm_q5_K_8x8_q8_K(int                        n,
             }
         }  // for x
     }  // for y
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    return;  // 返回
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译结束
     ggml_gemm_q5_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -4537,7 +4537,7 @@ void ggml_gemm_q6_K_8x4_q8_K(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     constexpr int    q8_k_blocklen = 4;
     constexpr int    col_groups    = ncols_interleaved / 4;
     constexpr int    acc_size      = q8_k_blocklen * col_groups;  // 4 rows, 2 column groups
@@ -4713,8 +4713,8 @@ void ggml_gemm_q6_K_8x4_q8_K(int                        n,
             }
         }  // for x
     }  // for y
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    return;  // 返回
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemm_q6_K_8x4_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -4739,7 +4739,7 @@ void ggml_gemm_q6_K_8x8_q8_K(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
     constexpr int    q8_k_blocklen = 4;
     const uint8x16_t m4b           = vdupq_n_u8(0x0f);
     const uint8x16_t mask_lo       = vdupq_n_u8(0x03);
@@ -4930,8 +4930,8 @@ void ggml_gemm_q6_K_8x8_q8_K(int                        n,
             }
         }  // for x
     }  // for y
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    return;  // 返回
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译结束
     ggml_gemm_q6_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -4955,7 +4955,7 @@ void ggml_gemm_q8_0_4x4_q8_0(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
     for (int y = 0; y < nr / 4; y++) {
         const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
         for (int x = 0; x < nc / ncols_interleaved; x++) {
@@ -4998,8 +4998,8 @@ void ggml_gemm_q8_0_4x4_q8_0(int                        n,
             }
         }
     }
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    return;  // 返回
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译结束
     ggml_gemm_q8_0_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
@@ -5023,7 +5023,7 @@ void ggml_gemm_q8_0_4x8_q8_0(int                        n,
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)
+#if defined(__aarch64__) && defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
     if (svcntb() * 8 == 256) {
         const block_q8_0x4 * b_ptr_base = (const block_q8_0x4 *) vx;
 
@@ -5084,11 +5084,11 @@ void ggml_gemm_q8_0_4x8_q8_0(int                        n,
                 svst1_f32(pg4, s + (y+3) * bs + x, svext_f32(acc_f32_23, acc_f32_23, 4));
             }
         }
-        return;
+        return;  // 返回
     }
-#endif  // SVE compile-time end
+#endif  // SVE compile-time end  // 条件编译结束
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
     const block_q8_0x4 * b_ptr_base = (const block_q8_0x4 *) vx;
 
     for (int y = 0; y < nr; y += 4) {
@@ -5150,7 +5150,7 @@ void ggml_gemm_q8_0_4x8_q8_0(int                        n,
             }
         }
     }
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    return;  // 返回
+#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译结束
     ggml_gemm_q8_0_4x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }

@@ -1,15 +1,15 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
 
-#include "ggml.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
 
 // GGML internal header
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
 // NOTE: these functions are defined as GGML_API because they used by the CPU backend
 
@@ -107,6 +107,6 @@ GGML_API void iq2xs_free_impl(enum ggml_type type);
 GGML_API void iq3xs_init_impl(int grid_size);
 GGML_API void iq3xs_free_impl(int grid_size);
 
-#ifdef __cplusplus
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束

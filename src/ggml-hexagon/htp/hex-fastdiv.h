@@ -1,5 +1,5 @@
-#ifndef HEX_FASTDIV_H
-#define HEX_FASTDIV_H
+#ifndef HEX_FASTDIV_H  // 如果未定义 HEX_FASTDIV_H 则编译
+#define HEX_FASTDIV_H  // 宏定义 HEX_FASTDIV_H
 
 // See https://gmplib.org/~tege/divcnst-pldi94.pdf figure 4.1.
 // Precompute mp (m' in the paper) and L such that division
@@ -7,20 +7,20 @@
 // and a shift:
 //
 // n/d = (mulhi(n, mp) + n) >> L;
-struct fastdiv_values {
+struct fastdiv_values {  // 结构体定义
     uint32_t mp;
     uint32_t l;
 };
 
 static inline struct fastdiv_values init_fastdiv_values(uint32_t d) {
-    struct fastdiv_values result = { 0, 0 };
+    struct fastdiv_values result = { 0, 0 };  // 结构体定义
     // compute L = ceil(log2(d));
     while (result.l < 32 && ((uint32_t) 1 << result.l) < d) {
         ++(result.l);
     }
 
     result.mp = (uint32_t) (((uint64_t) 1 << 32) * (((uint64_t) 1 << result.l) - d) / d + 1);
-    return result;
+    return result;  // 返回
 }
 
 static inline uint32_t fastdiv(uint32_t n, const struct fastdiv_values * vals) {
@@ -34,4 +34,4 @@ static inline uint32_t fastmodulo(uint32_t n, uint32_t d, const struct fastdiv_v
     return n - fastdiv(n, vals) * d;
 }
 
-#endif /* HEX_FASTDIV_H */
+#endif /* HEX_FASTDIV_H */  // 条件编译结束

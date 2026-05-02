@@ -1,41 +1,41 @@
-#include "ggml-backend.h"
-#include "ggml-backend-impl.h"
-#include "ggml-cpu.h"
-#include "repack.h"
-#include "traits.h"
-#include "ggml-impl.h"
-#include "amx/amx.h"
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "repack.h"  // 引入 repack.h 头文件
+#include "traits.h"  // 引入 traits.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "amx/amx.h"  // 引入 amx/amx.h 头文件
 
-#include <cctype>
-#include <string>
-#include <vector>
+#include <cctype>  // 引入 cctype 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
 
-#ifdef GGML_USE_CPU_HBM
-#    include "hbm.h"
-#endif
+#ifdef GGML_USE_CPU_HBM  // 如果定义了 GGML_USE_CPU_HBM 则编译
+#    include "hbm.h"  // 引入 hbm.h 头文件
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_CPU_KLEIDIAI
-#    include "kleidiai/kleidiai.h"
-#endif
+#ifdef GGML_USE_CPU_KLEIDIAI  // 如果定义了 GGML_USE_CPU_KLEIDIAI 则编译
+#    include "kleidiai/kleidiai.h"  // 引入 kleidiai/kleidiai.h 头文件
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_CPU_RISCV64_SPACEMIT
-#    include "spacemit/ime.h"
-#endif
+#ifdef GGML_USE_CPU_RISCV64_SPACEMIT  // 如果定义了 GGML_USE_CPU_RISCV64_SPACEMIT 则编译
+#    include "spacemit/ime.h"  // 引入 spacemit/ime.h 头文件
+#endif  // 条件编译结束
 
-#if defined(_WIN32)
-#    define WIN32_LEAN_AND_MEAN
-#    ifndef NOMINMAX
-#        define NOMINMAX
+#if defined(_WIN32)  // 条件编译
+#    define WIN32_LEAN_AND_MEAN  // 宏定义 WIN32_LEAN_AND_MEAN
+#    ifndef NOMINMAX  // 如果未定义 NOMINMAX 则编译
+#        define NOMINMAX  // 宏定义 NOMINMAX
 #    endif
-#    include <windows.h>
-#else
-#    include <unistd.h>
-#endif
+#    include <windows.h>  // 引入 windows.h 头文件
+#else  // 否则
+#    include <unistd.h>  // 引入 unistd.h 头文件
+#endif  // 条件编译结束
 
-#if defined(__APPLE__)
-#    include <sys/sysctl.h>
-#    include <sys/types.h>
-#endif
+#if defined(__APPLE__)  // 条件编译
+#    include <sys/sysctl.h>  // 引入 sys/sysctl.h 头文件
+#    include <sys/types.h>  // 引入 sys/types.h 头文件
+#endif  // 条件编译结束
 
 // ggml-backend interface
 
@@ -43,41 +43,41 @@ std::vector<ggml_backend_buffer_type_t> & ggml_backend_cpu_get_extra_buffer_type
     static std::vector<ggml_backend_buffer_type_t> bufts = []() {
         std::vector<ggml_backend_buffer_type_t> bufts;
 
-#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)  // 条件编译
         if (ggml_backend_amx_buffer_type()) {
             bufts.push_back(ggml_backend_amx_buffer_type());
         }
-#endif
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_CPU_RISCV64_SPACEMIT
+#ifdef GGML_USE_CPU_RISCV64_SPACEMIT  // 如果定义了 GGML_USE_CPU_RISCV64_SPACEMIT 则编译
         if (ggml_backend_cpu_riscv64_spacemit_buffer_type()) {
             bufts.push_back(ggml_backend_cpu_riscv64_spacemit_buffer_type());
         }
-#endif
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_CPU_KLEIDIAI
+#ifdef GGML_USE_CPU_KLEIDIAI  // 如果定义了 GGML_USE_CPU_KLEIDIAI 则编译
         if (ggml_backend_cpu_kleidiai_buffer_type()) {
             bufts.push_back(ggml_backend_cpu_kleidiai_buffer_type());
         }
-#endif
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_CPU_REPACK
+#ifdef GGML_USE_CPU_REPACK  // 如果定义了 GGML_USE_CPU_REPACK 则编译
         if (ggml_backend_cpu_repack_buffer_type()) {
             bufts.push_back(ggml_backend_cpu_repack_buffer_type());
         }
-#endif
+#endif  // 条件编译结束
 
-        return bufts;
+        return bufts;  // 返回
     }();
 
-    return bufts;
+    return bufts;  // 返回
 }
 
 static ggml_backend_buffer_type_t * ggml_backend_cpu_device_get_extra_buffers_type(ggml_backend_dev_t device) {
     static std::vector<ggml_backend_buffer_type_t> extra_bufts = [] {
         std::vector<ggml_backend_buffer_type_t> bufts = ggml_backend_cpu_get_extra_buffer_types();
         bufts.push_back(nullptr);
-        return bufts;
+        return bufts;  // 返回
     }();
 
     return extra_bufts.data();
@@ -88,15 +88,15 @@ static ggml_backend_buffer_type_t * ggml_backend_cpu_device_get_extra_buffers_ty
 static bool ggml_backend_cpu_is_extra_buffer_type(ggml_backend_buffer_type_t buft) {
     for (auto * extra : ggml_backend_cpu_get_extra_buffer_types()) {
         if (extra == buft) {
-            return true;
+            return true;  // 返回
         }
     }
-    return false;
+    return false;  // 返回
 }
 
 // CPU backend - backend (stream)
 
-struct ggml_backend_cpu_context {
+struct ggml_backend_cpu_context {  // 结构体定义
     int                 n_threads;
     ggml_threadpool_t   threadpool;
 
@@ -110,7 +110,7 @@ struct ggml_backend_cpu_context {
 };
 
 static const char * ggml_backend_cpu_get_name(ggml_backend_t backend) {
-    return "CPU";
+    return "CPU";  // 返回
 
     GGML_UNUSED(backend);
 }
@@ -122,7 +122,7 @@ static void ggml_backend_cpu_free(ggml_backend_t backend) {
     delete backend;
 }
 
-struct ggml_backend_plan_cpu {
+struct ggml_backend_plan_cpu {  // 结构体定义
     struct ggml_cplan cplan;
     struct ggml_cgraph cgraph;
 };
@@ -139,7 +139,7 @@ static ggml_backend_graph_plan_t ggml_backend_cpu_graph_plan_create(ggml_backend
         cpu_plan->cplan.work_data = new uint8_t[cpu_plan->cplan.work_size];
         if (cpu_plan->cplan.work_data == NULL) {
             delete cpu_plan;
-            return NULL;
+            return NULL;  // 返回
         }
     }
 
@@ -147,7 +147,7 @@ static ggml_backend_graph_plan_t ggml_backend_cpu_graph_plan_create(ggml_backend
     cpu_plan->cplan.abort_callback_data = cpu_ctx->abort_callback_data;
     cpu_plan->cplan.use_ref             = cpu_ctx->use_ref;
 
-    return cpu_plan;
+    return cpu_plan;  // 返回
 }
 
 static void ggml_backend_cpu_graph_plan_free(ggml_backend_t backend, ggml_backend_graph_plan_t plan) {
@@ -162,7 +162,7 @@ static void ggml_backend_cpu_graph_plan_free(ggml_backend_t backend, ggml_backen
 static enum ggml_status ggml_backend_cpu_graph_plan_compute(ggml_backend_t backend, ggml_backend_graph_plan_t plan) {
     struct ggml_backend_plan_cpu * cpu_plan = (struct ggml_backend_plan_cpu *)plan;
 
-    return ggml_graph_compute(&cpu_plan->cgraph, &cpu_plan->cplan);
+    return ggml_graph_compute(&cpu_plan->cgraph, &cpu_plan->cplan);  // ggml_graph_compute
 
     GGML_UNUSED(backend);
 }
@@ -177,7 +177,7 @@ static enum ggml_status ggml_backend_cpu_graph_compute(ggml_backend_t backend, s
         cpu_ctx->work_data = new uint8_t[cplan.work_size];
         if (cpu_ctx->work_data == NULL) {
             cpu_ctx->work_size = 0;
-            return GGML_STATUS_ALLOC_FAILED;
+            return GGML_STATUS_ALLOC_FAILED;  // 返回
         }
         cpu_ctx->work_size = cplan.work_size;
     }
@@ -187,7 +187,7 @@ static enum ggml_status ggml_backend_cpu_graph_compute(ggml_backend_t backend, s
     cplan.abort_callback_data = cpu_ctx->abort_callback_data;
     cplan.use_ref             = cpu_ctx->use_ref;
 
-    return ggml_graph_compute(cgraph, &cplan);
+    return ggml_graph_compute(cgraph, &cplan);  // ggml_graph_compute
 }
 
 static const struct ggml_backend_i ggml_backend_cpu_i = {
@@ -211,7 +211,7 @@ static const struct ggml_backend_i ggml_backend_cpu_i = {
 
 static ggml_guid_t ggml_backend_cpu_guid(void) {
     static ggml_guid guid = { 0xaa, 0x67, 0xc7, 0x43, 0x96, 0xe6, 0xa3, 0x8a, 0xe3, 0xaf, 0xea, 0x92, 0x36, 0xbc, 0xfc, 0x89 };
-    return &guid;
+    return &guid;  // 返回
 }
 
 ggml_backend_t ggml_backend_cpu_init(void) {
@@ -220,7 +220,7 @@ ggml_backend_t ggml_backend_cpu_init(void) {
 
     struct ggml_backend_cpu_context * ctx = new ggml_backend_cpu_context;
     if (ctx == NULL) {
-        return NULL;
+        return NULL;  // 返回
     }
 
     ctx->n_threads           = GGML_DEFAULT_N_THREADS;
@@ -240,10 +240,10 @@ ggml_backend_t ggml_backend_cpu_init(void) {
 
     if (cpu_backend == NULL) {
         delete ctx;
-        return NULL;
+        return NULL;  // 返回
     }
 
-    return cpu_backend;
+    return cpu_backend;  // 返回
 }
 
 bool ggml_backend_is_cpu(ggml_backend_t backend) {
@@ -286,17 +286,17 @@ void ggml_backend_cpu_set_use_ref(ggml_backend_t backend_cpu, bool use_ref) {
 
 // CPU backend - device
 
-struct ggml_backend_cpu_device_context {
+struct ggml_backend_cpu_device_context {  // 结构体定义
     std::string description = "CPU";
 
     ggml_backend_cpu_device_context() {
-#ifdef __APPLE__
+#ifdef __APPLE__  // 如果定义了 __APPLE__ 则编译
         size_t len = 0;
         if (!sysctlbyname("machdep.cpu.brand_string", NULL, &len, NULL, 0)) {
             description.resize(len);
             sysctlbyname("machdep.cpu.brand_string", &description[0], &len, NULL, 0); // NOLINT
         }
-#elif defined(__linux__)
+#elif defined(__linux__)  // 否则如果
         FILE * f = fopen("/proc/cpuinfo", "r");
         if (f) {
             char buf[1024];
@@ -318,7 +318,7 @@ struct ggml_backend_cpu_device_context {
             }
             fclose(f);
         }
-#elif defined(_WIN32)
+#elif defined(_WIN32)  // 否则如果
         HKEY hKey;
         if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
                         TEXT("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"),
@@ -346,12 +346,12 @@ struct ggml_backend_cpu_device_context {
             }
             RegCloseKey(hKey);
         }
-#endif
+#endif  // 条件编译结束
     }
 };
 
 static const char * ggml_backend_cpu_device_get_name(ggml_backend_dev_t dev) {
-    return "CPU";
+    return "CPU";  // 返回
 
     GGML_UNUSED(dev);
 }
@@ -363,26 +363,26 @@ static const char * ggml_backend_cpu_device_get_description(ggml_backend_dev_t d
 }
 
 static void ggml_backend_cpu_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
     MEMORYSTATUSEX status;
     status.dwLength = sizeof(status);
     GlobalMemoryStatusEx(&status);
     *total = status.ullTotalPhys;
     *free = status.ullAvailPhys;
-#else
+#else  // 否则
     long pages = sysconf(_SC_PHYS_PAGES);
     long page_size = sysconf(_SC_PAGE_SIZE);
     *total = pages * page_size;
 
     // "free" system memory is ill-defined, for practical purposes assume that all of it is free:
     *free = *total;
-#endif // _WIN32
+#endif // _WIN32  // 条件编译结束
 
     GGML_UNUSED(dev);
 }
 
 static enum ggml_backend_dev_type ggml_backend_cpu_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_CPU;
+    return GGML_BACKEND_DEVICE_TYPE_CPU;  // 返回
 
     GGML_UNUSED(dev);
 }
@@ -401,20 +401,20 @@ static void ggml_backend_cpu_device_get_props(ggml_backend_dev_t dev, struct ggm
 }
 
 static ggml_backend_t ggml_backend_cpu_device_init_backend(ggml_backend_dev_t dev, const char * params) {
-    return ggml_backend_cpu_init();
+    return ggml_backend_cpu_init();  // ggml_backend_cpu_init
 
     GGML_UNUSED(dev);
     GGML_UNUSED(params);
 }
 
 static ggml_backend_buffer_type_t ggml_backend_cpu_device_get_buffer_type(ggml_backend_dev_t dev) {
-    return ggml_backend_cpu_buffer_type();
+    return ggml_backend_cpu_buffer_type();  // ggml_backend_cpu_buffer_type
 
     GGML_UNUSED(dev);
 }
 
 static ggml_backend_buffer_t ggml_backend_cpu_device_buffer_from_host_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
-    return ggml_backend_cpu_buffer_from_ptr(ptr, size);
+    return ggml_backend_cpu_buffer_from_ptr(ptr, size);  // ggml_backend_cpu_buffer_from_ptr
 
     GGML_UNUSED(dev);
     GGML_UNUSED(max_tensor_size);
@@ -425,7 +425,7 @@ static bool ggml_backend_cpu_device_supports_op(ggml_backend_dev_t dev, const st
     const struct ggml_tensor * src1 = op->src[1];
 
     if (op->op == GGML_OP_NONE || op->op == GGML_OP_RESHAPE || op->op == GGML_OP_VIEW || op->op == GGML_OP_PERMUTE || op->op == GGML_OP_TRANSPOSE) {
-        return true;
+        return true;  // 返回
     }
 
     // check extra buffer types
@@ -453,28 +453,28 @@ static bool ggml_backend_cpu_device_supports_op(ggml_backend_dev_t dev, const st
             return src1->type == GGML_TYPE_F32 || src1->type == ggml_get_type_traits_cpu(src0->type)->vec_dot_type;
         case GGML_OP_SOFT_MAX_BACK: {
             if (op->src[0]->type != GGML_TYPE_F32 || op->src[1]->type != GGML_TYPE_F32) {
-                return false;
+                return false;  // 返回
             }
             float max_bias = 0.0f;
 
             memcpy(&max_bias, (const float *) op->op_params + 1, sizeof(float));
 
-            return max_bias == 0.0f;
+            return max_bias == 0.0f;  // 返回
         }
         case GGML_OP_IM2COL_BACK:
-            return src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32;
+            return src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_GET_ROWS_BACK:
-            return src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16;
+            return src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16;  // 返回
         case GGML_OP_OUT_PROD:
             return (src0->type == GGML_TYPE_F32 || (ggml_is_quantized(src0->type) && src0->ne[2] == src1->ne[2] && src0->ne[3] == src1->ne[3])) &&
                 src1->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;
         default:
-            return true;
+            return true;  // 返回
     }
 }
 
 static bool ggml_backend_cpu_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return ggml_backend_buft_is_host(buft) || ggml_backend_cpu_is_extra_buffer_type(buft);
+    return ggml_backend_buft_is_host(buft) || ggml_backend_cpu_is_extra_buffer_type(buft);  // ggml_backend_buft_is_host
     GGML_UNUSED(dev);
 }
 
@@ -499,13 +499,13 @@ static const struct ggml_backend_device_i ggml_backend_cpu_device_i = {
 // CPU backend - backend (reg)
 
 static const char * ggml_backend_cpu_reg_get_name(ggml_backend_reg_t reg) {
-    return "CPU";
+    return "CPU";  // 返回
 
     GGML_UNUSED(reg);
 }
 
 static size_t ggml_backend_cpu_reg_get_device_count(ggml_backend_reg_t reg) {
-    return 1;
+    return 1;  // 返回
 
     GGML_UNUSED(reg);
 }
@@ -520,7 +520,7 @@ static ggml_backend_dev_t ggml_backend_cpu_reg_get_device(ggml_backend_reg_t reg
         /* .context = */ &ctx,
     };
 
-    return &ggml_backend_cpu_device;
+    return &ggml_backend_cpu_device;  // 返回
 }
 
 // This is intended to replace the the ggml_cpu_has_* functions when loading the CPU backend dynamically,
@@ -613,25 +613,25 @@ static ggml_backend_feature * ggml_backend_cpu_get_features(ggml_backend_reg_t r
         if (ggml_cpu_has_llamafile()) {
             features.push_back({ "LLAMAFILE", "1" });
         }
-    #ifdef GGML_USE_ACCELERATE
+    #ifdef GGML_USE_ACCELERATE  // 如果定义了 GGML_USE_ACCELERATE 则编译
         features.push_back({ "ACCELERATE", "1" });
-    #endif
-    #ifdef GGML_USE_CPU_HBM
+    #endif  // 条件编译结束
+    #ifdef GGML_USE_CPU_HBM  // 如果定义了 GGML_USE_CPU_HBM 则编译
         features.push_back({ "CPU_HBM", "1" });
-    #endif
-    #ifdef GGML_USE_OPENMP
+    #endif  // 条件编译结束
+    #ifdef GGML_USE_OPENMP  // 如果定义了 GGML_USE_OPENMP 则编译
         features.push_back({ "OPENMP", "1" });
-    #endif
-    #ifdef GGML_USE_CPU_KLEIDIAI
+    #endif  // 条件编译结束
+    #ifdef GGML_USE_CPU_KLEIDIAI  // 如果定义了 GGML_USE_CPU_KLEIDIAI 则编译
         features.push_back({ "KLEIDIAI", "1" });
-    #endif
-    #ifdef GGML_USE_CPU_REPACK
+    #endif  // 条件编译结束
+    #ifdef GGML_USE_CPU_REPACK  // 如果定义了 GGML_USE_CPU_REPACK 则编译
         features.push_back({ "REPACK", "1" });
-    #endif
+    #endif  // 条件编译结束
 
         features.push_back({ nullptr, nullptr });
 
-        return features;
+        return features;  // 返回
     }();
 
     return features.data();
@@ -675,7 +675,7 @@ static void * ggml_backend_cpu_get_proc_address(ggml_backend_reg_t reg, const ch
         return (void *)ggml_backend_cpu_set_threadpool;
     }
 
-    return NULL;
+    return NULL;  // 返回
 
     GGML_UNUSED(reg);
 }
@@ -697,7 +697,7 @@ ggml_backend_reg_t ggml_backend_cpu_reg(void) {
         /* .context     = */ NULL,
     };
 
-    return &ggml_backend_cpu_reg;
+    return &ggml_backend_cpu_reg;  // 返回
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_cpu_reg)

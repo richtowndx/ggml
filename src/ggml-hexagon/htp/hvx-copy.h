@@ -1,13 +1,13 @@
-#ifndef HVX_COPY_H
-#define HVX_COPY_H
+#ifndef HVX_COPY_H  // 如果未定义 HVX_COPY_H 则编译
+#define HVX_COPY_H  // 宏定义 HVX_COPY_H
 
-#include <assert.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <assert.h>  // 引入 assert.h 头文件
+#include <stddef.h>  // 引入 stddef.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
 
-#include "hvx-base.h"
+#include "hvx-base.h"  // 引入 hvx-base.h 头文件
 
-#define hvx_splat_pragma(x) _Pragma(#x)
+#define hvx_splat_pragma(x) _Pragma(#x)  // 宏定义 hvx_splat_pragma
 #define hvx_splat_loop_body(dst_type, vec_store, unroll_cnt)     \
     do {                                                         \
         dst_type * restrict vdst = (dst_type *) dst;             \
@@ -259,4 +259,4 @@ static inline void hvx_copy_f32_f16_uu(uint8_t * restrict dst, const uint8_t * r
     hvx_copy_f32_f16_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-#endif // HVX_COPY_H
+#endif // HVX_COPY_H  // 条件编译结束

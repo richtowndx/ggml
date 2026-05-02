@@ -1,7 +1,7 @@
-#include "unary-ops.h"
+#include "unary-ops.h"  // 引入 unary-ops.h 头文件
 
 static inline float op_abs(float x) {
-    return fabsf(x);
+    return fabsf(x);  // fabsf
 }
 
 static inline float op_sgn(float x) {
@@ -9,7 +9,7 @@ static inline float op_sgn(float x) {
 }
 
 static inline float op_neg(float x) {
-    return -x;
+    return -x;  // 返回
 }
 
 static inline float op_step(float x) {
@@ -17,7 +17,7 @@ static inline float op_step(float x) {
 }
 
 static inline float op_tanh(float x) {
-    return tanhf(x);
+    return tanhf(x);  // tanhf
 }
 
 static inline float op_elu(float x) {
@@ -33,11 +33,11 @@ static inline float op_sigmoid(float x) {
 }
 
 static inline float op_hardsigmoid(float x) {
-    return fminf(1.0f, fmaxf(0.0f, (x + 3.0f) / 6.0f));
+    return fminf(1.0f, fmaxf(0.0f, (x + 3.0f) / 6.0f));  // fminf
 }
 
 static inline float op_exp(float x) {
-    return expf(x);
+    return expf(x);  // expf
 }
 
 static inline float op_hardswish(float x) {
@@ -45,16 +45,16 @@ static inline float op_hardswish(float x) {
 }
 
 static inline float op_sqr(float x) {
-    return x * x;
+    return x * x;  // 返回
 }
 
 static inline float op_sqrt(float x) {
-    return sqrtf(x);
+    return sqrtf(x);  // sqrtf
 }
 
 static inline float op_xielu(float x, float alpha_n, float alpha_p, float beta, float eps) {
     if (x > 0.0f) {
-        return alpha_p * x * x + beta * x;
+        return alpha_p * x * x + beta * x;  // 返回
     } else {
         const float min_x_eps = fminf(x, eps);
         return (expm1f(min_x_eps) - x) * alpha_n + beta * x;
@@ -62,19 +62,19 @@ static inline float op_xielu(float x, float alpha_n, float alpha_p, float beta, 
 }
 
 static inline float op_sin(float x) {
-    return sinf(x);
+    return sinf(x);  // sinf
 }
 
 static inline float op_cos(float x) {
-    return cosf(x);
+    return cosf(x);  // cosf
 }
 
 static inline float op_log(float x) {
-    return logf(x);
+    return logf(x);  // logf
 }
 
 static inline float op_expm1(float x) {
-    return expf(x) - 1.0f;
+    return expf(x) - 1.0f;  // expf
 }
 
 static inline float op_softplus(float x) {
@@ -82,19 +82,19 @@ static inline float op_softplus(float x) {
 }
 
 static inline float op_floor(float x) {
-    return floorf(x);
+    return floorf(x);  // floorf
 }
 
 static inline float op_ceil(float x) {
-    return ceilf(x);
+    return ceilf(x);  // ceilf
 }
 
 static inline float op_round(float x) {
-    return roundf(x);
+    return roundf(x);  // roundf
 }
 
 static inline float op_trunc(float x) {
-    return truncf(x);
+    return truncf(x);  // truncf
 }
 
 template <float (*op)(float), typename src0_t, typename dst_t>
@@ -176,7 +176,7 @@ static void unary_op_params(const ggml_compute_params * params, ggml_tensor * ds
 }
 
 // Extend vec_unary_op to support functors
-template <typename Op, typename src0_t, typename dst_t>
+template <typename Op, typename src0_t, typename dst_t>  // 模板
 static inline void vec_unary_op_functor(int64_t n, dst_t * y, const src0_t * x, Op op) {
     constexpr auto src0_to_f32 = type_conversion_table<src0_t>::to_f32;
     constexpr auto f32_to_dst  = type_conversion_table<dst_t >::from_f32;
@@ -187,7 +187,7 @@ static inline void vec_unary_op_functor(int64_t n, dst_t * y, const src0_t * x, 
 }
 
 // Extend apply_unary_op to support functors
-template <typename Op, typename src0_t, typename dst_t>
+template <typename Op, typename src0_t, typename dst_t>  // 模板
 static void apply_unary_op_functor(const ggml_compute_params * params, ggml_tensor * dst, Op op) {
     const ggml_tensor * src0 = dst->src[0];
 
@@ -213,7 +213,7 @@ static void apply_unary_op_functor(const ggml_compute_params * params, ggml_tens
 }
 
 // Generic dispatcher for functors
-template <typename Op>
+template <typename Op>  // 模板
 static void unary_op_functor(const ggml_compute_params * params, ggml_tensor * dst, Op op) {
     const ggml_tensor * src0 = dst->src[0];
 
@@ -329,7 +329,7 @@ void ggml_compute_forward_xielu(const ggml_compute_params * params, ggml_tensor 
     const float eps = ggml_get_op_params_f32(dst, 4);
 
     const auto xielu_op_params = [alpha_n, alpha_p, beta, eps](float f) {
-        return op_xielu(f, alpha_n, alpha_p, beta, eps);
+        return op_xielu(f, alpha_n, alpha_p, beta, eps);  // op_xielu
     };
 
     unary_op_functor(params, dst, xielu_op_params);

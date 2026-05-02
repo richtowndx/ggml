@@ -1,30 +1,30 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "apir_backend.gen.h"
+#include "apir_backend.gen.h"  // 引入 apir_backend.gen.h 头文件
 
-#include <stdint.h>  // for uintptr_t
-#include <time.h>    // for timespec, clock_gettime
+#include <stdint.h>  // for uintptr_t  // 引入 stdint.h 头文件
+#include <time.h>    // for timespec, clock_gettime  // 引入 time.h 头文件
 
-#define APIR_BACKEND_INITIALIZE_SUCCESS                     0
-#define APIR_BACKEND_INITIALIZE_CANNOT_OPEN_BACKEND_LIBRARY 1
-#define APIR_BACKEND_INITIALIZE_CANNOT_OPEN_GGML_LIBRARY    2
-#define APIR_BACKEND_INITIALIZE_MISSING_BACKEND_SYMBOLS     3
-#define APIR_BACKEND_INITIALIZE_MISSING_GGML_SYMBOLS        4
-#define APIR_BACKEND_INITIALIZE_BACKEND_FAILED              5
-#define APIR_BACKEND_INITIALIZE_BACKEND_REG_FAILED          6
-#define APIR_BACKEND_INITIALIZE_ALREADY_INITED              7
-#define APIR_BACKEND_INITIALIZE_NO_DEVICE                   8
-#define APIR_BACKEND_INITIALIZE_BACKEND_INIT_FAILED         9
+#define APIR_BACKEND_INITIALIZE_SUCCESS                     0  // 宏定义 APIR_BACKEND_INITIALIZE_SUCCESS
+#define APIR_BACKEND_INITIALIZE_CANNOT_OPEN_BACKEND_LIBRARY 1  // 宏定义 APIR_BACKEND_INITIALIZE_CANNOT_OPEN_BACKEND_LIBRARY
+#define APIR_BACKEND_INITIALIZE_CANNOT_OPEN_GGML_LIBRARY    2  // 宏定义 APIR_BACKEND_INITIALIZE_CANNOT_OPEN_GGML_LIBRARY
+#define APIR_BACKEND_INITIALIZE_MISSING_BACKEND_SYMBOLS     3  // 宏定义 APIR_BACKEND_INITIALIZE_MISSING_BACKEND_SYMBOLS
+#define APIR_BACKEND_INITIALIZE_MISSING_GGML_SYMBOLS        4  // 宏定义 APIR_BACKEND_INITIALIZE_MISSING_GGML_SYMBOLS
+#define APIR_BACKEND_INITIALIZE_BACKEND_FAILED              5  // 宏定义 APIR_BACKEND_INITIALIZE_BACKEND_FAILED
+#define APIR_BACKEND_INITIALIZE_BACKEND_REG_FAILED          6  // 宏定义 APIR_BACKEND_INITIALIZE_BACKEND_REG_FAILED
+#define APIR_BACKEND_INITIALIZE_ALREADY_INITED              7  // 宏定义 APIR_BACKEND_INITIALIZE_ALREADY_INITED
+#define APIR_BACKEND_INITIALIZE_NO_DEVICE                   8  // 宏定义 APIR_BACKEND_INITIALIZE_NO_DEVICE
+#define APIR_BACKEND_INITIALIZE_BACKEND_INIT_FAILED         9  // 宏定义 APIR_BACKEND_INITIALIZE_BACKEND_INIT_FAILED
 
 // new entries here need to be added to the apir_backend_initialize_error function below
 
-#define APIR_BACKEND_FORWARD_INDEX_INVALID 6
+#define APIR_BACKEND_FORWARD_INDEX_INVALID 6  // 宏定义 APIR_BACKEND_FORWARD_INDEX_INVALID
 
 // 0 is fast, 1 avoids the backend to crash if an unsupported tensor is received
-#define APIR_BACKEND_CHECK_SUPPORTS_OP 0
+#define APIR_BACKEND_CHECK_SUPPORTS_OP 0  // 宏定义 APIR_BACKEND_CHECK_SUPPORTS_OP
 
-typedef uintptr_t apir_buffer_type_host_handle_t;
-typedef uintptr_t apir_buffer_host_handle_t;
+typedef uintptr_t apir_buffer_type_host_handle_t;  // 类型定义
+typedef uintptr_t apir_buffer_host_handle_t;  // 类型定义
 
 static const char * apir_backend_initialize_error(int code) {
 #define APIR_BACKEND_INITIALIZE_ERROR(code_name) \
@@ -44,7 +44,7 @@ static const char * apir_backend_initialize_error(int code) {
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_NO_DEVICE);
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_BACKEND_INIT_FAILED);
 
-    return "Unknown APIR_BACKEND_INITIALIZE error:/";
+    return "Unknown APIR_BACKEND_INITIALIZE error:/";  // 返回
 
 #undef APIR_BACKEND_INITIALIZE_ERROR
 }

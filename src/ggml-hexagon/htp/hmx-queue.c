@@ -1,19 +1,19 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stdbool.h>  // 引入 stdbool.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#include <qurt_thread.h>
-#include <qurt_futex.h>
+#include <qurt_thread.h>  // 引入 qurt_thread.h 头文件
+#include <qurt_futex.h>  // 引入 qurt_futex.h 头文件
 
-#include <HAP_compute_res.h>
+#include <HAP_compute_res.h>  // 引入 HAP_compute_res.h 头文件
 
-#include "hmx-queue.h"
+#include "hmx-queue.h"  // 引入 hmx-queue.h 头文件
 
-#define QURT_LOWEST_PRIO (254)
+#define QURT_LOWEST_PRIO (254)  // 宏定义 QURT_LOWEST_PRIO
 
-static inline void hmx_lock(struct hmx_queue *q)
+static inline void hmx_lock(struct hmx_queue *q)  // hmx_lock
 {
     if (!q->hmx_locked) {
         HAP_compute_res_hmx_lock(q->hap_rctx);
@@ -21,7 +21,7 @@ static inline void hmx_lock(struct hmx_queue *q)
     }
 }
 
-static inline void hmx_unlock(struct hmx_queue *q)
+static inline void hmx_unlock(struct hmx_queue *q)  // hmx_unlock
 {
     if (q->hmx_locked) {
         HAP_compute_res_hmx_unlock(q->hap_rctx);
@@ -84,13 +84,13 @@ static void hmx_queue_thread(void * arg) {
     FARF(HIGH, "hmx-queue-thread: stopped");
 }
 
-struct hmx_queue * hmx_queue_create(size_t capacity, uint32_t hap_rctx) {
+struct hmx_queue * hmx_queue_create(size_t capacity, uint32_t hap_rctx) {  // 结构体定义
     capacity = hex_ceil_pow2(capacity);
 
     struct hmx_queue * q = (struct hmx_queue *) memalign(32, sizeof(struct hmx_queue));
     if (q == NULL) {
         FARF(ERROR, "%s: failed to allocate DMA queue\n", __FUNCTION__);
-        return NULL;
+        return NULL;  // 返回
     }
     memset(q, 0, sizeof(struct hmx_queue));
     q->capacity = capacity;
@@ -100,7 +100,7 @@ struct hmx_queue * hmx_queue_create(size_t capacity, uint32_t hap_rctx) {
     q->desc = (struct hmx_queue_desc *) memalign(64, capacity * sizeof(struct hmx_queue_desc));
     if (!q->desc) {
         FARF(ERROR, "hmx-queue: failed to allocate HMX queue descriptors\n");
-        return NULL;
+        return NULL;  // 返回
     }
     memset(q->desc, 0, capacity * sizeof(struct hmx_queue_desc));
 
@@ -108,7 +108,7 @@ struct hmx_queue * hmx_queue_create(size_t capacity, uint32_t hap_rctx) {
     q->stack = (unsigned char *) memalign(64, stack_size);
     if (!q->stack) {
         FARF(ERROR, "hmx-queue: thread stack allocation failed (%zu bytes)", stack_size);
-        return NULL;
+        return NULL;  // 返回
     }
     memset(q->stack, 0, stack_size);
 
@@ -131,17 +131,17 @@ struct hmx_queue * hmx_queue_create(size_t capacity, uint32_t hap_rctx) {
     int err = qurt_thread_create(&q->thread, &attr, hmx_queue_thread, q);
     if (err) {
         FARF(ERROR, "hmx-worker: thread create failed (%d)", err);
-        return NULL;
+        return NULL;  // 返回
     }
 
     FARF(HIGH, "hmx-queue: capacity %u\n", capacity);
 
-    return q;
+    return q;  // 返回
 }
 
 void hmx_queue_delete(struct hmx_queue * q) {
     if (!q) {
-        return;
+        return;  // 返回
     }
 
     // Tell the worker to exit.

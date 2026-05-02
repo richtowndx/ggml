@@ -2,29 +2,29 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <assert.h>
-#include <HAP_farf.h>
-#include <HAP_perf.h>
-#include <math.h>
-#include <string.h>
+#include <assert.h>  // 引入 assert.h 头文件
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#include "hex-dma.h"
-#include "hvx-utils.h"
-#include "hvx-dump.h"
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
+#include "hvx-dump.h"  // 引入 hvx-dump.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-ops.h"
-#include "hmx-ops.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "hmx-ops.h"  // 引入 hmx-ops.h 头文件
 
 // Must be multiple of 32
-#define FLASH_ATTN_BLOCK_SIZE (32 * 2)
+#define FLASH_ATTN_BLOCK_SIZE (32 * 2)  // 宏定义 FLASH_ATTN_BLOCK_SIZE
 
 // This is a bit of a hack because the compiler is strugling to properly inline
 // the default hvx_vec_f32_to_f16 with output into the local array.
-static __attribute__((noinline)) void hvx_vec_f32_to_f16_a(void *ptr, HVX_Vector v0, HVX_Vector v1)
+static __attribute__((noinline)) void hvx_vec_f32_to_f16_a(void *ptr, HVX_Vector v0, HVX_Vector v1)  // __attribute__
 {
     *(HVX_Vector *) ptr = hvx_vec_f32_to_f16(v0, v1);
 }
@@ -111,7 +111,7 @@ static inline HVX_Vector hvx_dot_f16_f16_aa_rx4(const void * restrict y,
     HVX_Vector rsum3 = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(rsum3_p), Q6_V_hi_W(rsum3_p)));
 
     HVX_Vector_x4 rsum0123 = { .v = { rsum0, rsum1, rsum2, rsum3 } };
-    return hvx_vec_reduce_sum_f32x4(rsum0123);
+    return hvx_vec_reduce_sum_f32x4(rsum0123);  // hvx_vec_reduce_sum_f32x4
 }
 
 static inline HVX_Vector hvx_dot_f16_f16_aa_rx32(const void * restrict y,
@@ -133,7 +133,7 @@ static inline HVX_Vector hvx_dot_f16_f16_aa_rx32(const void * restrict y,
     }
 
     sums = Q6_Vqf32_vmpy_VsfVsf(hvx_vec_splat_f32(s), sums);
-    return Q6_Vsf_equals_Vqf32(sums);
+    return Q6_Vsf_equals_Vqf32(sums);  // Q6_Vsf_equals_Vqf32
 }
 
 // MAD: y (F32) += x (F16) * s (F16)
@@ -215,7 +215,7 @@ static inline void hvx_mad_f32_f16_aa_rx2(float * restrict y, const void * restr
     }
 }
 
-struct htp_fa_context {
+struct htp_fa_context {  // 结构体定义
     const struct htp_ops_context * octx;
 
     struct fastdiv_values src0_div21;
@@ -481,7 +481,7 @@ static void flash_attn_ext_f16_thread(unsigned int nth, unsigned int ith, void *
                     p_sum_vec = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(p_sum_vec, P));
 
                     // 5. Accumulate V
-                    __fp16 __attribute__((aligned(VLEN))) p_arr[VLEN_FP16];
+                    __fp16 __attribute__((aligned(VLEN))) p_arr[VLEN_FP16];  // __attribute__
                     hvx_vec_f32_to_f16_a(p_arr, P, hvx_vec_splat_f32(0));
 
                     for (uint32_t j = 0; j < VLEN_FP32; j += 2) {
@@ -619,19 +619,19 @@ int op_flash_attn_ext(struct htp_ops_context * octx) {
 
     // Check support
     if ((q->type != HTP_TYPE_F16 && q->type != HTP_TYPE_F32) || k->type != HTP_TYPE_F16 || v->type != HTP_TYPE_F16) {
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
-#ifdef HTP_HAS_HMX
+#ifdef HTP_HAS_HMX  // 如果定义了 HTP_HAS_HMX 则编译
     // HMX path: prefill (neq1 >= 32), head_dim multiple of 32, F16 KV
     if (k->type == HTP_TYPE_F16 && v->type == HTP_TYPE_F16 && k->ne[0] % 32 == 0 && q->ne[1] >= 32) {
         int ret = hmx_flash_attn_ext(octx);
         if (ret == HTP_STATUS_OK) {
-            return ret;
+            return ret;  // 返回
         }
         // VTCM too small or other failure -> fall through to HVX path
     }
-#endif
+#endif  // 条件编译结束
 
     struct htp_fa_context factx;
     factx.octx = octx;
@@ -710,7 +710,7 @@ int op_flash_attn_ext(struct htp_ops_context * octx) {
     size_t total_spad = octx->src0_spad.size + octx->src1_spad.size + octx->src2_spad.size + octx->src3_spad.size + octx->dst_spad.size;
 
     if (octx->ctx->vtcm_size < total_spad) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        return HTP_STATUS_VTCM_TOO_SMALL;  // 返回
     }
 
     octx->src0_spad.data = octx->ctx->vtcm_base;                        octx->src0_spad.src = NULL;
@@ -723,5 +723,5 @@ int op_flash_attn_ext(struct htp_ops_context * octx) {
         worker_pool_run_func(octx->ctx->worker_pool, flash_attn_ext_f16_thread, &factx, octx->n_threads);
     }
 
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }

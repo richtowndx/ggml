@@ -1,15 +1,15 @@
-#include "mmvq.hpp"
+#include "mmvq.hpp"  // 引入 mmvq.hpp 头文件
 
-#include "ggml.h"
-#include "common.hpp"
-#include "quants.hpp"
-#include "vecdotq.hpp"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "common.hpp"  // 引入 common.hpp 头文件
+#include "quants.hpp"  // 引入 quants.hpp 头文件
+#include "vecdotq.hpp"  // 引入 vecdotq.hpp 头文件
 
-template <typename reorder_vec_dot_q_sycl>
+template <typename reorder_vec_dot_q_sycl>  // 模板
 static void mul_mat_vec_q_reorder(const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
                                   const int ncols, const int nrows, const sycl::nd_item<3> & nd_item) {
-    using block_type   = ggml_sycl_reordered::block_q_t<reorder_vec_dot_q_sycl::gtype>;
-    using block_traits = typename block_type::traits;
+    using block_type   = ggml_sycl_reordered::block_q_t<reorder_vec_dot_q_sycl::gtype>;  // using 声明
+    using block_traits = typename block_type::traits;  // using 声明
 
     const auto sg           = nd_item.get_sub_group();
     const int  sg_range     = sg.get_group_linear_range();
@@ -18,7 +18,7 @@ static void mul_mat_vec_q_reorder(const void * __restrict__ vx, const void * __r
     const int  row          = workgroup_id * sg_range + sg_id;
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int     blocks_per_row              = ncols / block_traits::qk;
@@ -56,13 +56,13 @@ static void mul_mat_vec_q_reorder(const void * __restrict__ vx, const void * __r
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
+template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>  // 模板
 static void mul_mat_vec_q(const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
                           const int ncols, const int nrows, const sycl::nd_item<3> & item_ct1) {
     const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int     blocks_per_row  = ncols / qk;
@@ -100,7 +100,7 @@ static void mul_mat_vec_q(const void * __restrict__ vx, const void * __restrict_
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
+template <int qk, int qi, typename block_q_t, int vdr>  // 模板
 static void mul_mat_vec_q_iq2_xxs_q8_1(const void *__restrict__ vx,
                                        const void *__restrict__ vy,
                                        float *__restrict__ dst, const int ncols,
@@ -110,7 +110,7 @@ static void mul_mat_vec_q_iq2_xxs_q8_1(const void *__restrict__ vx,
                     item_ct1.get_local_id(1);
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int blocks_per_row = ncols / qk;
@@ -149,7 +149,7 @@ static void mul_mat_vec_q_iq2_xxs_q8_1(const void *__restrict__ vx,
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
+template <int qk, int qi, typename block_q_t, int vdr>  // 模板
 static void mul_mat_vec_q_iq2_xs_q8_1(const void *__restrict__ vx,
                                       const void *__restrict__ vy,
                                       float *__restrict__ dst, const int ncols,
@@ -159,7 +159,7 @@ static void mul_mat_vec_q_iq2_xs_q8_1(const void *__restrict__ vx,
                     item_ct1.get_local_id(1);
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int blocks_per_row = ncols / qk;
@@ -197,7 +197,7 @@ static void mul_mat_vec_q_iq2_xs_q8_1(const void *__restrict__ vx,
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
+template <int qk, int qi, typename block_q_t, int vdr>  // 模板
 static void mul_mat_vec_q_iq2_s_q8_1(const void *__restrict__ vx,
                                      const void *__restrict__ vy,
                                      float *__restrict__ dst, const int ncols,
@@ -207,7 +207,7 @@ static void mul_mat_vec_q_iq2_s_q8_1(const void *__restrict__ vx,
                     item_ct1.get_local_id(1);
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int blocks_per_row = ncols / qk;
@@ -245,7 +245,7 @@ static void mul_mat_vec_q_iq2_s_q8_1(const void *__restrict__ vx,
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
+template <int qk, int qi, typename block_q_t, int vdr>  // 模板
 static void mul_mat_vec_q_iq3_xxs_q8_1(const void *__restrict__ vx,
                                        const void *__restrict__ vy,
                                        float *__restrict__ dst, const int ncols,
@@ -255,7 +255,7 @@ static void mul_mat_vec_q_iq3_xxs_q8_1(const void *__restrict__ vx,
                     item_ct1.get_local_id(1);
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int blocks_per_row = ncols / qk;
@@ -293,7 +293,7 @@ static void mul_mat_vec_q_iq3_xxs_q8_1(const void *__restrict__ vx,
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
+template <int qk, int qi, typename block_q_t, int vdr>  // 模板
 static void mul_mat_vec_q_iq3_s_q8_1(const void *__restrict__ vx,
                                      const void *__restrict__ vy,
                                      float *__restrict__ dst, const int ncols,
@@ -303,7 +303,7 @@ static void mul_mat_vec_q_iq3_s_q8_1(const void *__restrict__ vx,
                     item_ct1.get_local_id(1);
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int blocks_per_row = ncols / qk;
@@ -341,7 +341,7 @@ static void mul_mat_vec_q_iq3_s_q8_1(const void *__restrict__ vx,
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
+template <int qk, int qi, typename block_q_t, int vdr>  // 模板
 static void mul_mat_vec_q_iq1_s_q8_1(const void *__restrict__ vx,
                                      const void *__restrict__ vy,
                                      float *__restrict__ dst, const int ncols,
@@ -351,7 +351,7 @@ static void mul_mat_vec_q_iq1_s_q8_1(const void *__restrict__ vx,
                     item_ct1.get_local_id(1);
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int blocks_per_row = ncols / qk;
@@ -389,7 +389,7 @@ static void mul_mat_vec_q_iq1_s_q8_1(const void *__restrict__ vx,
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
+template <int qk, int qi, typename block_q_t, int vdr>  // 模板
 static void mul_mat_vec_q_iq1_m_q8_1(const void *__restrict__ vx,
                                      const void *__restrict__ vy,
                                      float *__restrict__ dst, const int ncols,
@@ -399,7 +399,7 @@ static void mul_mat_vec_q_iq1_m_q8_1(const void *__restrict__ vx,
                     item_ct1.get_local_id(1);
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int blocks_per_row = ncols / qk;
@@ -437,7 +437,7 @@ static void mul_mat_vec_q_iq1_m_q8_1(const void *__restrict__ vx,
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
+template <int qk, int qi, typename block_q_t, int vdr>  // 模板
 static void mul_mat_vec_q_iq4_nl_q8_1(const void *__restrict__ vx,
                                       const void *__restrict__ vy,
                                       float *__restrict__ dst, const int ncols,
@@ -447,7 +447,7 @@ static void mul_mat_vec_q_iq4_nl_q8_1(const void *__restrict__ vx,
                     item_ct1.get_local_id(1);
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int blocks_per_row = ncols / qk;
@@ -486,7 +486,7 @@ static void mul_mat_vec_q_iq4_nl_q8_1(const void *__restrict__ vx,
 }
 
 
-template <int qk, int qi, typename block_q_t, int vdr>
+template <int qk, int qi, typename block_q_t, int vdr>  // 模板
 static void mul_mat_vec_q_iq4_xs_q8_1(const void *__restrict__ vx,
                                       const void *__restrict__ vy,
                                       float *__restrict__ dst, const int ncols,
@@ -496,7 +496,7 @@ static void mul_mat_vec_q_iq4_xs_q8_1(const void *__restrict__ vx,
                     item_ct1.get_local_id(1);
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int blocks_per_row = ncols / qk;
@@ -1201,7 +1201,7 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
 }
 
 // src1_row_stride: 0 for shared src1 (gate/up proj), else per-expert stride (down proj).
-template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
+template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>  // 模板
 static void mul_mat_vec_q_moe(
     const void * __restrict__ vx_base, const void * __restrict__ vy_base,
     float * __restrict__ dst_base, const int32_t * __restrict__ ids_dev,
@@ -1220,7 +1220,7 @@ static void mul_mat_vec_q_moe(
     const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
 
     if (row >= nrows) {
-        return;
+        return;  // 返回
     }
 
     const int     blocks_per_row  = ncols / qk;
@@ -1251,7 +1251,7 @@ static void mul_mat_vec_q_moe(
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
+template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>  // 模板
 static void launch_mul_mat_vec_q_moe(
     const void * vx_base, const void * vy, const int32_t * ids_dev,
     float * dst_base, const int ncols, const int nrows, const int n_experts_used,
@@ -1290,63 +1290,63 @@ bool ggml_sycl_mul_mat_vec_q_id(
             launch_mul_mat_vec_q_moe<QK4_0, QI4_0, block_q4_0, VDR_Q4_0_Q8_1_MMVQ, vec_dot_q4_0_q8_1>(
                 vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
                 expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
+            return true;  // 返回
         case GGML_TYPE_Q4_1:
             launch_mul_mat_vec_q_moe<QK4_1, QI4_1, block_q4_1, VDR_Q4_1_Q8_1_MMVQ, vec_dot_q4_1_q8_1>(
                 vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
                 expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
+            return true;  // 返回
         case GGML_TYPE_Q5_0:
             launch_mul_mat_vec_q_moe<QK5_0, QI5_0, block_q5_0, VDR_Q5_0_Q8_1_MMVQ, vec_dot_q5_0_q8_1>(
                 vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
                 expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
+            return true;  // 返回
         case GGML_TYPE_Q5_1:
             launch_mul_mat_vec_q_moe<QK5_1, QI5_1, block_q5_1, VDR_Q5_1_Q8_1_MMVQ, vec_dot_q5_1_q8_1>(
                 vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
                 expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
+            return true;  // 返回
         case GGML_TYPE_Q8_0:
             launch_mul_mat_vec_q_moe<QK8_0, QI8_0, block_q8_0, VDR_Q8_0_Q8_1_MMVQ, vec_dot_q8_0_q8_1>(
                 vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
                 expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
+            return true;  // 返回
         case GGML_TYPE_Q2_K:
             launch_mul_mat_vec_q_moe<QK_K, QI2_K, block_q2_K, VDR_Q2_K_Q8_1_MMVQ, vec_dot_q2_K_q8_1>(
                 vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
                 expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
+            return true;  // 返回
         case GGML_TYPE_Q3_K:
             launch_mul_mat_vec_q_moe<QK_K, QI3_K, block_q3_K, VDR_Q3_K_Q8_1_MMVQ, vec_dot_q3_K_q8_1>(
                 vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
                 expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
+            return true;  // 返回
         case GGML_TYPE_Q4_K:
             launch_mul_mat_vec_q_moe<QK_K, QI4_K, block_q4_K, VDR_Q4_K_Q8_1_MMVQ, vec_dot_q4_K_q8_1>(
                 vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
                 expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
+            return true;  // 返回
         case GGML_TYPE_Q5_K:
             launch_mul_mat_vec_q_moe<QK_K, QI5_K, block_q5_K, VDR_Q5_K_Q8_1_MMVQ, vec_dot_q5_K_q8_1>(
                 vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
                 expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
+            return true;  // 返回
         case GGML_TYPE_Q6_K:
             launch_mul_mat_vec_q_moe<QK_K, QI6_K, block_q6_K, VDR_Q6_K_Q8_1_MMVQ, vec_dot_q6_K_q8_1>(
                 vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
                 expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
+            return true;  // 返回
         case GGML_TYPE_MXFP4:
             launch_mul_mat_vec_q_moe<QK_MXFP4, QI_MXFP4, block_mxfp4, VDR_MXFP4_Q8_1_MMVQ, vec_dot_mxfp4_q8_1>(
                 vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
                 expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
+            return true;  // 返回
         case GGML_TYPE_NVFP4:
             launch_mul_mat_vec_q_moe<QK_NVFP4, QI_NVFP4, block_nvfp4, VDR_NVFP4_Q8_1_MMVQ, vec_dot_nvfp4_q8_1>(
                 vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
                 expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
+            return true;  // 返回
         default:
-            return false;
+            return false;  // 返回
     }
 }

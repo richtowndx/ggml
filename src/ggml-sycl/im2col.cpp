@@ -10,14 +10,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "im2col.hpp"
+#include "im2col.hpp"  // 引入 im2col.hpp 头文件
 
-#include <sycl/sycl.hpp>
-#include <type_traits>  // For std::is_same_v
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
+#include <type_traits>  // For std::is_same_v  // 引入 type_traits 头文件
 
-#include "ggml.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-template <typename T>
+template <typename T>  // 模板
 static void im2col_kernel(const float * x, T * dst, int64_t batch_offset, int64_t offset_delta, int64_t IC, int64_t IW,
                           int64_t IH, int64_t OH, int64_t OW, int64_t KW, int64_t KH, int64_t pelements, int64_t CHW,
                           int s0, int s1, int p0, int p1, int d0, int d1, const sycl::nd_item<3> & item_ct1) {
@@ -55,7 +55,7 @@ static void im2col_kernel(const float * x, T * dst, int64_t batch_offset, int64_
     }
 }
 
-template <typename T>
+template <typename T>  // 模板
 static void im2col_sycl_internal(const float * x, T * dst, int64_t IW, int64_t IH, int64_t OW, int64_t OH, int64_t KW,
                                  int64_t KH, int64_t IC, int64_t batch, int64_t batch_offset, int64_t offset_delta,
                                  int s0, int s1, int p0, int p1, int d0, int d1, queue_ptr stream) {

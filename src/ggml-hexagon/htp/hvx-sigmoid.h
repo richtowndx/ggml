@@ -1,13 +1,13 @@
-#ifndef HVX_SIGMOID_H
-#define HVX_SIGMOID_H
+#ifndef HVX_SIGMOID_H  // 如果未定义 HVX_SIGMOID_H 则编译
+#define HVX_SIGMOID_H  // 宏定义 HVX_SIGMOID_H
 
-#include "hvx-base.h"
-#include "hvx-inverse.h"
+#include "hvx-base.h"  // 引入 hvx-base.h 头文件
+#include "hvx-inverse.h"  // 引入 hvx-inverse.h 头文件
 
-#define FAST_SIGMOID_LOG2F (0x3fb8aa3b)  // 1.442695022
-#define FAST_SIGMOID_C1    (0x3d009076)  // 0.03138777
-#define FAST_SIGMOID_C2    (0x3e8d74bd)  // 0.276281267
-#define FAST_SIGMOID_C3    (0x3f000000)  // 0.5
+#define FAST_SIGMOID_LOG2F (0x3fb8aa3b)  // 1.442695022  // 宏定义 FAST_SIGMOID_LOG2F
+#define FAST_SIGMOID_C1    (0x3d009076)  // 0.03138777  // 宏定义 FAST_SIGMOID_C1
+#define FAST_SIGMOID_C2    (0x3e8d74bd)  // 0.276281267  // 宏定义 FAST_SIGMOID_C2
+#define FAST_SIGMOID_C3    (0x3f000000)  // 0.5  // 宏定义 FAST_SIGMOID_C3
 
 static inline HVX_Vector hvx_vec_fast_sigmoid_f32(HVX_Vector v) {
     v = Q6_Vqf32_vmpy_VsfVsf(v, Q6_V_vsplat_R(FAST_SIGMOID_LOG2F));
@@ -36,7 +36,7 @@ static inline HVX_Vector hvx_vec_fast_sigmoid_f32(HVX_Vector v) {
     HVX_Vector res = hvx_vec_inverse_f32(v5);
     res            = Q6_Vqf32_vmpy_VsfVsf(v3, res);
 
-    return Q6_Vsf_equals_Vqf32(res);
+    return Q6_Vsf_equals_Vqf32(res);  // Q6_Vsf_equals_Vqf32
 }
 
 static inline HVX_Vector hvx_vec_fast_sigmoid_f32_guard(HVX_Vector v,
@@ -48,7 +48,7 @@ static inline HVX_Vector hvx_vec_fast_sigmoid_f32_guard(HVX_Vector v,
 
     HVX_Vector out = hvx_vec_fast_sigmoid_f32(v);
     out            = Q6_V_vmux_QVV(pred_max, out, one);
-    return Q6_V_vmux_QVV(pred_min, out, Q6_V_vzero());
+    return Q6_V_vmux_QVV(pred_min, out, Q6_V_vzero());  // Q6_V_vmux_QVV
 }
 
 static inline HVX_Vector hvx_vec_tanh_f32(HVX_Vector x) {
@@ -64,7 +64,7 @@ static inline HVX_Vector hvx_vec_tanh_f32(HVX_Vector x) {
 
     HVX_Vector res = Q6_Vqf32_vmpy_VsfVsf(sig2x, two);
     res = Q6_Vqf32_vsub_Vqf32Vsf(res, one);
-    return Q6_Vsf_equals_Vqf32(res);
+    return Q6_Vsf_equals_Vqf32(res);  // Q6_Vsf_equals_Vqf32
 }
 
 #define hvx_sigmoid_loop_body(dst_type, src_type, vec_store)    \
@@ -139,4 +139,4 @@ static inline void hvx_tanh_f32_aa(uint8_t * restrict dst, const uint8_t * restr
     hvx_tanh_loop_body(HVX_Vector, HVX_Vector, hvx_vec_store_a);
 }
 
-#endif /* HVX_SIGMOID_H */
+#endif /* HVX_SIGMOID_H */  // 条件编译结束

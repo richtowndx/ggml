@@ -1,19 +1,19 @@
-#ifndef HVX_ARITH_H
-#define HVX_ARITH_H
+#ifndef HVX_ARITH_H  // 如果未定义 HVX_ARITH_H 则编译
+#define HVX_ARITH_H  // 宏定义 HVX_ARITH_H
 
-#include <assert.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <math.h>
+#include <assert.h>  // 引入 assert.h 头文件
+#include <stddef.h>  // 引入 stddef.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
+#include <math.h>  // 引入 math.h 头文件
 
-#include "hvx-base.h"
-#include "hex-utils.h"
+#include "hvx-base.h"  // 引入 hvx-base.h 头文件
+#include "hex-utils.h"  // 引入 hex-utils.h 头文件
 
 //
 // Binary operations (add, mul, sub)
 //
 
-#define UNUSED(x) (void)(x)
+#define UNUSED(x) (void)(x)  // 宏定义 UNUSED
 
 #define hvx_arith_loop_body(dst_type, src0_type, src1_type, elem_size, vec_store, vec_op) \
     do {                                                                       \
@@ -37,23 +37,23 @@
         }                                                                      \
     } while(0)
 
-#if __HVX_ARCH__ < 79
+#if __HVX_ARCH__ < 79  // 条件编译
 
-#define HVX_OP_ADD_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b))
-#define HVX_OP_SUB_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vsub_VsfVsf(a, b))
-#define HVX_OP_MUL_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))
+#define HVX_OP_ADD_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b))  // 宏定义 HVX_OP_ADD_F32
+#define HVX_OP_SUB_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vsub_VsfVsf(a, b))  // 宏定义 HVX_OP_SUB_F32
+#define HVX_OP_MUL_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))  // 宏定义 HVX_OP_MUL_F32
 
-#else
+#else  // 否则
 
-#define HVX_OP_ADD_F32(a, b) Q6_Vsf_vadd_VsfVsf(a, b)
-#define HVX_OP_SUB_F32(a, b) Q6_Vsf_vsub_VsfVsf(a, b)
-#define HVX_OP_MUL_F32(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)
+#define HVX_OP_ADD_F32(a, b) Q6_Vsf_vadd_VsfVsf(a, b)  // 宏定义 HVX_OP_ADD_F32
+#define HVX_OP_SUB_F32(a, b) Q6_Vsf_vsub_VsfVsf(a, b)  // 宏定义 HVX_OP_SUB_F32
+#define HVX_OP_MUL_F32(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)  // 宏定义 HVX_OP_MUL_F32
 
-#endif
+#endif  // 条件编译结束
 
-#define HVX_OP_ADD_F16(a, b) hvx_vec_add_f16_f16(a, b)
-#define HVX_OP_SUB_F16(a, b) hvx_vec_sub_f16_f16(a, b)
-#define HVX_OP_MUL_F16(a, b) hvx_vec_mul_f16_f16(a, b)
+#define HVX_OP_ADD_F16(a, b) hvx_vec_add_f16_f16(a, b)  // 宏定义 HVX_OP_ADD_F16
+#define HVX_OP_SUB_F16(a, b) hvx_vec_sub_f16_f16(a, b)  // 宏定义 HVX_OP_SUB_F16
+#define HVX_OP_MUL_F16(a, b) hvx_vec_mul_f16_f16(a, b)  // 宏定义 HVX_OP_MUL_F16
 
 // Generic macro to define alignment permutations for an op
 #define DEFINE_HVX_BINARY_OP_VARIANTS(OP_NAME, OP_MACRO, ELEM_TYPE) \
@@ -196,8 +196,8 @@ static inline void hvx_mul_mul_f32_aa(uint8_t * restrict dst, const uint8_t * re
         Q6_V_vmux_QVV(pred_inf, inf, out); \
     })
 
-#define HVX_OP_MUL_SCALAR_F32(v) HVX_OP_MUL_F32(v, val_vec)
-#define HVX_OP_SUB_SCALAR_F32(v) HVX_OP_SUB_F32(v, val_vec)
+#define HVX_OP_MUL_SCALAR_F32(v) HVX_OP_MUL_F32(v, val_vec)  // 宏定义 HVX_OP_MUL_SCALAR_F32
+#define HVX_OP_SUB_SCALAR_F32(v) HVX_OP_SUB_F32(v, val_vec)  // 宏定义 HVX_OP_SUB_SCALAR_F32
 
 #define HVX_OP_ADD_SCALAR_F16(v) \
     ({ \
@@ -206,8 +206,8 @@ static inline void hvx_mul_mul_f32_aa(uint8_t * restrict dst, const uint8_t * re
         Q6_V_vmux_QVV(pred_inf, inf, out); \
     })
 
-#define HVX_OP_MUL_SCALAR_F16(v) HVX_OP_MUL_F16(v, val_vec)
-#define HVX_OP_SUB_SCALAR_F16(v) HVX_OP_SUB_F16(v, val_vec)
+#define HVX_OP_MUL_SCALAR_F16(v) HVX_OP_MUL_F16(v, val_vec)  // 宏定义 HVX_OP_MUL_SCALAR_F16
+#define HVX_OP_SUB_SCALAR_F16(v) HVX_OP_SUB_F16(v, val_vec)  // 宏定义 HVX_OP_SUB_SCALAR_F16
 
 // Scalar Variants
 
@@ -270,7 +270,7 @@ HVX_BINARY_SCALAR_DISPATCHER(hvx_mul_scalar_f16, _Float16)
 
 // MIN Scalar variants
 
-#define HVX_OP_MIN_SCALAR(v) Q6_Vsf_vmin_VsfVsf(val_vec, v)
+#define HVX_OP_MIN_SCALAR(v) Q6_Vsf_vmin_VsfVsf(val_vec, v)  // 宏定义 HVX_OP_MIN_SCALAR
 
 static inline void hvx_min_scalar_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, const float val, uint32_t n) {
     const HVX_Vector val_vec = hvx_vec_splat_f32(val);
@@ -440,4 +440,4 @@ static inline void hvx_sqr_f32(uint8_t * restrict dst, const uint8_t * restrict 
 #undef HVX_BINARY_DISPATCHER
 #undef UNUSED
 
-#endif // HVX_ARITH_H
+#endif // HVX_ARITH_H  // 条件编译结束

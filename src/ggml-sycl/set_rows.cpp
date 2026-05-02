@@ -1,18 +1,18 @@
-#include "set_rows.hpp"
-#include "cpy.hpp"
+#include "set_rows.hpp"  // 引入 set_rows.hpp 头文件
+#include "cpy.hpp"  // 引入 cpy.hpp 头文件
 
-namespace utils {
-template<typename T>
+namespace utils {  // 命名空间
+template<typename T>  // 模板
 static constexpr bool is_arithmetic_v() {
-    return std::is_arithmetic_v<T> || std::is_same_v<T, sycl::half>
-#ifdef GGML_SYCL_HAS_BF16
+    return std::is_arithmetic_v<T> || std::is_same_v<T, sycl::half>  // 返回
+#ifdef GGML_SYCL_HAS_BF16  // 如果定义了 GGML_SYCL_HAS_BF16 则编译
         || std::is_same_v<T, sycl::ext::oneapi::bfloat16>
-#endif
+#endif  // 条件编译结束
         ;
 }
 }
 
-template<typename TIn, typename TOut>
+template<typename TIn, typename TOut>  // 模板
 static inline std::enable_if_t<utils::is_arithmetic_v<TIn>() && utils::is_arithmetic_v<TOut>(), void>
 convert (const char* src, char* dst) {
     auto src_val = *reinterpret_cast<const TIn*>(src);
@@ -20,7 +20,7 @@ convert (const char* src, char* dst) {
    *reinterpret_cast<TOut*>(dst) = dst_val;
 }
 
-template <typename TIdx, typename blockType, int qk, cpy_kernel_t cpyblck>
+template <typename TIdx, typename blockType, int qk, cpy_kernel_t cpyblck>  // 模板
 static void set_rows_sycl_q(const char * __restrict__ src0_d,
                             const TIdx * __restrict__ src1_d,
                             blockType * __restrict__ dst_d,
@@ -55,7 +55,7 @@ static void set_rows_sycl_q(const char * __restrict__ src0_d,
     stream->parallel_for(sycl::nd_range<1>(grid_size * block_size, block_size), [=](sycl::nd_item<1> item_ct1) {
         const int64_t i = item_ct1.get_global_linear_id();
         if (i >= total_blocks) {
-            return;
+            return;  // 返回
         }
         const int64_t i_base      = i * qk;
         const int64_t i03         = i_base / (ne00 * ne01 * ne02);
@@ -82,7 +82,7 @@ static void set_rows_sycl_q(const char * __restrict__ src0_d,
     GGML_UNUSED(nb13);
 }
 
-template<typename TIn, typename TIdx, typename TOut>
+template<typename TIn, typename TIdx, typename TOut>  // 模板
 static void k_set_rows(
         const char * __restrict__ src0, const TIdx * __restrict__ src1, char * __restrict__ dst,
         const int64_t ne00, const int64_t ne01, const int64_t ne02,
@@ -96,7 +96,7 @@ static void k_set_rows(
 
     const int64_t i = item_ct1.get_global_linear_id();
     if (i >= total_elements) {
-        return;
+        return;  // 返回
     }
 
     const int64_t i03 = i / (ne00 * ne01 * ne02);
@@ -118,7 +118,7 @@ static void k_set_rows(
     convert<TIn, TOut>(src_elem, dst_elem);
 }
 
-template<typename TIn, typename TIdx, typename TOut>
+template<typename TIn, typename TIdx, typename TOut>  // 模板
 static void set_rows_sycl(
         const char * src0_d, const TIdx * src1_d, char * dst_d,
         const int64_t ne00, const int64_t ne01, const int64_t ne02, const int64_t ne03,
@@ -151,7 +151,7 @@ static void set_rows_sycl(
     );
 }
 
-template<typename TIn, typename TIdx>
+template<typename TIn, typename TIdx>  // 模板
 static void set_rows_sycl(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
     const char * src0_d = (const char *)src0->data;
     const TIdx * src1_d = (const TIdx *)src1->data;
@@ -185,7 +185,7 @@ static void set_rows_sycl(ggml_backend_sycl_context & ctx, const ggml_tensor * s
                 stream
             );
             break;
-#ifdef GGML_SYCL_HAS_BF16
+#ifdef GGML_SYCL_HAS_BF16  // 如果定义了 GGML_SYCL_HAS_BF16 则编译
         case GGML_TYPE_BF16:
             set_rows_sycl<TIn, TIdx, sycl::ext::oneapi::bfloat16>(
                 src0_d, src1_d, (char *)dst->data,
@@ -198,7 +198,7 @@ static void set_rows_sycl(ggml_backend_sycl_context & ctx, const ggml_tensor * s
                 stream
             );
             break;
-#endif
+#endif  // 条件编译结束
         case GGML_TYPE_Q8_0:
             set_rows_sycl_q<TIdx, block_q8_0, QK8_0, cpy_blck_f32_q8_0>(src0_d, src1_d, (block_q8_0 *)dst->data, ne00, ne01, ne02, ne03, ne10, ne11, ne12, ne13, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13, nb1, nb2, nb3, stream);
             break;
@@ -225,7 +225,7 @@ static void set_rows_sycl(ggml_backend_sycl_context & ctx, const ggml_tensor * s
 }
 
 void ggml_sycl_op_set_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 

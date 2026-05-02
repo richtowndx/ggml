@@ -2,21 +2,21 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
 
-#include <math.h>
-#include <string.h>
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#include "hex-dma.h"
-#include "hvx-utils.h"
-#include "hex-fastdiv.h"
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
+#include "hex-fastdiv.h"  // 引入 hex-fastdiv.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-ops.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
 
 #define htp_softmax_preamble3                     \
     const uint32_t ne00 = src0->ne[0];            \
@@ -49,7 +49,7 @@
     const uint32_t nb2 = dst->nb[2];              \
     const uint32_t nb3 = dst->nb[3];
 
-struct htp_softmax_context {
+struct htp_softmax_context {  // 结构体定义
     struct htp_ops_context * octx;
 
     bool     use_f16;
@@ -78,7 +78,7 @@ static void apply_mask(float * restrict wp0,
                        float slope,
                        bool use_f16) {
     if (!mp_f32) {
-        return;
+        return;  // 返回
     }
     if (use_f16) {
         for (uint32_t i = 0; i < ne00; ++i) {
@@ -210,7 +210,7 @@ static float hvx_softmax_f32(const uint8_t * restrict src, uint8_t * restrict ds
     hvx_sub_scalar_f32(spad, src, max, num_elems);
 
     hvx_exp_f32(dst, spad, num_elems, false);
-    return hvx_reduce_sum_f32(dst, num_elems);
+    return hvx_reduce_sum_f32(dst, num_elems);  // hvx_reduce_sum_f32
 }
 
 static void softmax_job_f32(unsigned int nth, unsigned int ith, void * data) {
@@ -231,7 +231,7 @@ static void softmax_job_f32(unsigned int nth, unsigned int ith, void * data) {
 
     // no work for this thread
     if (src0_start_row >= src0_end_row) {
-        return;
+        return;  // 返回
     }
 
     uint64_t qt = HAP_perf_get_qtimer_count();
@@ -376,7 +376,7 @@ static int execute_op_softmax_f32(struct htp_ops_context * octx) {
     // Make sure the reserved vtcm size is sufficient
     if (octx->ctx->vtcm_size < spad_size) {
         FARF(ERROR, "%s : current VTCM reservation %zu is too small, needed %zu\n", op_type, octx->ctx->vtcm_size, spad_size);
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        return HTP_STATUS_VTCM_TOO_SMALL;  // 返回
     }
 
     octx->src0_spad.data = octx->ctx->vtcm_base;                        octx->src0_spad.src = NULL;
@@ -387,7 +387,7 @@ static int execute_op_softmax_f32(struct htp_ops_context * octx) {
 
     worker_pool_run_func(octx->ctx->worker_pool, softmax_job_f32, &smctx, n_threads);
 
-    return err;
+    return err;  // 返回
 }
 
 int op_softmax(struct htp_ops_context * octx) {
@@ -403,5 +403,5 @@ int op_softmax(struct htp_ops_context * octx) {
             break;
     }
 
-    return err;
+    return err;  // 返回
 }

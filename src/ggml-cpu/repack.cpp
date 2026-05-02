@@ -1,28 +1,28 @@
-#define GGML_COMMON_IMPL_CPP
-#define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
-#include "ggml-backend-impl.h"
+#define GGML_COMMON_IMPL_CPP  // 宏定义 GGML_COMMON_IMPL_CPP
+#define GGML_COMMON_DECL_CPP  // 宏定义 GGML_COMMON_DECL_CPP
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
 
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "ggml-cpu-impl.h"
-#include "simd-mappings.h"
-#include "traits.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-cpu-impl.h"  // 引入 ggml-cpu-impl.h 头文件
+#include "simd-mappings.h"  // 引入 simd-mappings.h 头文件
+#include "traits.h"  // 引入 traits.h 头文件
 
-#include "arch-fallback.h"
+#include "arch-fallback.h"  // 引入 arch-fallback.h 头文件
 
-#include <cmath>
-#include <cstring>
-#include <cassert>
-#include <cstdio>  // for GGML_ASSERT
+#include <cmath>  // 引入 cmath 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <cassert>  // 引入 cassert 头文件
+#include <cstdio>  // for GGML_ASSERT  // 引入 cstdio 头文件
 
-#include "repack.h"
+#include "repack.h"  // 引入 repack.h 头文件
 
-#if defined(__GNUC__)
+#if defined(__GNUC__)  // 条件编译
 #pragma GCC diagnostic ignored "-Woverlength-strings"
-#endif
+#endif  // 条件编译结束
 
-#define UNUSED GGML_UNUSED
+#define UNUSED GGML_UNUSED  // 宏定义 UNUSED
 
 static inline int nearest_int(float fval) {
     assert(fabsf(fval) <= 4194303.f);
@@ -46,9 +46,9 @@ static inline int nearest_int(float fval) {
 //                         operations durin unpacking)
 //
 
-extern "C" {
+extern "C" {  // C 链接声明
 
-#if defined __riscv_zvfh
+#if defined __riscv_zvfh  // 条件编译
 void ggml_quantize_mat_q8_0_4x1_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
     assert(k % QK8_0 == 0);
@@ -130,7 +130,7 @@ void ggml_quantize_mat_q8_K_4x1_generic(const float * GGML_RESTRICT x, void * GG
         }
     }
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_quantize_mat_q8_0_4x4_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
@@ -310,50 +310,50 @@ void ggml_quantize_mat_q8_K_4x8_generic(const float * GGML_RESTRICT x, void * GG
     }
 }
 
-} // extern "C"
+} // extern "C"  // C 链接声明
 
-template <int64_t INTER_SIZE, ggml_type PARAM_TYPE>
-void ggml_quantize_mat_t(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row);
+template <int64_t INTER_SIZE, ggml_type PARAM_TYPE>  // 模板
+void ggml_quantize_mat_t(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row);  // ggml_quantize_mat_t
 
-template <> void ggml_quantize_mat_t<4, GGML_TYPE_Q8_0>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {
+template <> void ggml_quantize_mat_t<4, GGML_TYPE_Q8_0>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {  // 模板
     assert(nrow == 4);
     UNUSED(nrow);
     ggml_quantize_mat_q8_0_4x4(x, vy, n_per_row);
 }
 
-template <> void ggml_quantize_mat_t<8, GGML_TYPE_Q8_0>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {
+template <> void ggml_quantize_mat_t<8, GGML_TYPE_Q8_0>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {  // 模板
     assert(nrow == 4);
     UNUSED(nrow);
     ggml_quantize_mat_q8_0_4x8(x, vy, n_per_row);
 }
 
-template <> void ggml_quantize_mat_t<4, GGML_TYPE_Q8_K>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {
+template <> void ggml_quantize_mat_t<4, GGML_TYPE_Q8_K>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {  // 模板
     assert(nrow == 4);
     UNUSED(nrow);
     ggml_quantize_mat_q8_K_4x4(x, vy, n_per_row);
 }
 
-template <> void ggml_quantize_mat_t<8, GGML_TYPE_Q8_K>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {
+template <> void ggml_quantize_mat_t<8, GGML_TYPE_Q8_K>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {  // 模板
     assert(nrow == 4);
     UNUSED(nrow);
     ggml_quantize_mat_q8_K_4x8(x, vy, n_per_row);
 }
 
-#if defined __riscv_zvfh
-template <> void ggml_quantize_mat_t<1, GGML_TYPE_Q8_0>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {
+#if defined __riscv_zvfh  // 条件编译
+template <> void ggml_quantize_mat_t<1, GGML_TYPE_Q8_0>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {  // 模板
     assert(nrow == 4);
     UNUSED(nrow);
     ggml_quantize_mat_q8_0_4x1(x, vy, n_per_row);
 }
 
-template <> void ggml_quantize_mat_t<1, GGML_TYPE_Q8_K>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {
+template <> void ggml_quantize_mat_t<1, GGML_TYPE_Q8_K>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {  // 模板
     assert(nrow == 4);
     UNUSED(nrow);
     ggml_quantize_mat_q8_K_4x1(x, vy, n_per_row);
 }
-#endif
+#endif  // 条件编译结束
 
-template <int M, int N>
+template <int M, int N>  // 模板
 static void ggml_gemv_q6_K_NxM_q8_K_generic_impl(int                        n,
                                                  float * GGML_RESTRICT      s,
                                                  size_t                     bs,
@@ -443,7 +443,7 @@ static void ggml_gemv_q6_K_NxM_q8_K_generic_impl(int                        n,
     }
 }
 
-template <int M, int N>
+template <int M, int N>  // 模板
 static void ggml_gemm_q6_K_NxM_q8_K_generic_impl(int                        n,
                                                  float * GGML_RESTRICT      s,
                                                  size_t                     bs,
@@ -547,7 +547,7 @@ static void ggml_gemm_q6_K_NxM_q8_K_generic_impl(int                        n,
     }
 }
 
-template <int M, int N>
+template <int M, int N>  // 模板
 static void ggml_gemv_q5_K_NxM_q8_K_generic_impl(int                        n,
                                                  float * GGML_RESTRICT      s,
                                                  size_t                     bs,
@@ -643,7 +643,7 @@ static void ggml_gemv_q5_K_NxM_q8_K_generic_impl(int                        n,
     }
 }
 
-template <int M, int N>
+template <int M, int N>  // 模板
 static void ggml_gemm_q5_K_NxM_q8_K_generic_impl(int                        n,
                                                  float * GGML_RESTRICT      s,
                                                  size_t                     bs,
@@ -749,7 +749,7 @@ static void ggml_gemm_q5_K_NxM_q8_K_generic_impl(int                        n,
     }
 }
 
-extern "C" {
+extern "C" {  // C 链接声明
 
 void ggml_gemv_q4_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
     const int qk = QK8_0;
@@ -1366,7 +1366,7 @@ void ggml_gemv_q8_0_4x8_q8_0_generic(int                        n,
 }
 
 // Only enable these for RISC-V.
-#if defined __riscv_zvfh
+#if defined __riscv_zvfh  // 条件编译
 void ggml_gemv_q4_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
     const int qk = QK8_0;
     const int nb = n / qk;
@@ -1653,7 +1653,7 @@ void ggml_gemv_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
         }
     }
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_gemm_q4_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
     const int qk = QK8_0;
@@ -2315,7 +2315,7 @@ void ggml_gemm_q8_0_4x4_q8_0_generic(int                        n,
                                 sumi += v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i];
                             }
                             sumf[m][j] +=
-                                sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                                sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);  // GGML_CPU_FP16_TO_FP32
                         }
                     }
                 }
@@ -2369,7 +2369,7 @@ void ggml_gemm_q8_0_4x8_q8_0_generic(int                        n,
                                 sumi += v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i];
                             }
                             sumf[m][j] +=
-                                sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                                sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);  // GGML_CPU_FP16_TO_FP32
                         }
                     }
                 }
@@ -2384,7 +2384,7 @@ void ggml_gemm_q8_0_4x8_q8_0_generic(int                        n,
 }
 
 // Only enable these for RISC-V.
-#if defined __riscv_zvfh
+#if defined __riscv_zvfh  // 条件编译
 void ggml_gemm_q4_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
     const int qk = QK8_0;
     const int nb = n / qk;
@@ -2609,7 +2609,7 @@ void ggml_gemm_q8_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs,
                                 sumi += v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i];
                             }
                             sumf[m][j] +=
-                                sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                                sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);  // GGML_CPU_FP16_TO_FP32
                         }
                     }
                 }
@@ -2718,9 +2718,9 @@ void ggml_gemm_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
         }
     }
 }
-#endif
+#endif  // 条件编译结束
 
-} // extern "C"
+} // extern "C"  // C 链接声明
 
 static block_q8_0x4 make_block_q8_0x4(block_q8_0 * in, unsigned int blck_size_interleave) {
     block_q8_0x4 out;
@@ -2736,7 +2736,7 @@ static block_q8_0x4 make_block_q8_0x4(block_q8_0 * in, unsigned int blck_size_in
         int dst_offset = i * blck_size_interleave;
         memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], blck_size_interleave);
     }
-    return out;
+    return out;  // 返回
 }
 
 static block_q4_0x4 make_block_q4_0x4(block_q4_0 * in, unsigned int blck_size_interleave) {
@@ -2777,7 +2777,7 @@ static block_q4_0x4 make_block_q4_0x4(block_q4_0 * in, unsigned int blck_size_in
         GGML_ASSERT(false);
     }
 
-    return out;
+    return out;  // 返回
 }
 
 // interleave 8 block_q4_0s in blocks of blck_size_interleave
@@ -2805,7 +2805,7 @@ static block_q4_0x8 make_block_q4_0x8(block_q4_0 * in, unsigned int blck_size_in
         memcpy(&out.qs[dst_offset], &elems, sizeof(uint64_t));
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static block_q4_0x16 make_block_q4_0x16(block_q4_0 * in, unsigned int blck_size_interleave) {
@@ -2830,7 +2830,7 @@ static block_q4_0x16 make_block_q4_0x16(block_q4_0 * in, unsigned int blck_size_
         GGML_ASSERT(false);
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static block_q4_Kx8 make_block_q4_Kx8(block_q4_K * in, unsigned int blck_size_interleave) {
@@ -2907,7 +2907,7 @@ static block_q4_Kx8 make_block_q4_Kx8(block_q4_K * in, unsigned int blck_size_in
 
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static block_q4_Kx16 make_block_q4_Kx16(block_q4_K * in, unsigned int blck_size_interleave) {
@@ -2959,7 +2959,7 @@ static block_q4_Kx16 make_block_q4_Kx16(block_q4_K * in, unsigned int blck_size_
         GGML_ASSERT(false);
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static block_q2_Kx8 make_block_q2_Kx8(block_q2_K * in, unsigned int blck_size_interleave) {
@@ -3001,7 +3001,7 @@ static block_q2_Kx8 make_block_q2_Kx8(block_q2_K * in, unsigned int blck_size_in
 
         out.scales[i] = in[src1].scales[src2];
     }
-    return out;
+    return out;  // 返回
 }
 
 static block_q5_Kx8 make_block_q5_Kx8(block_q5_K * in, unsigned int blck_size_interleave) {
@@ -3086,7 +3086,7 @@ static block_q5_Kx8 make_block_q5_Kx8(block_q5_K * in, unsigned int blck_size_in
         out.scales[i * 12 + 59] = (s[7] & 15) + ((m[7] & 15) << 4);
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static block_q6_Kx8 make_block_q6_Kx8(block_q6_K * in, unsigned int blck_size_interleave) {
@@ -3132,7 +3132,7 @@ static block_q6_Kx8 make_block_q6_Kx8(block_q6_K * in, unsigned int blck_size_in
         }
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static block_q2_Kx16 make_block_q2_Kx16(const block_q2_K * in, unsigned int blck_size_interleave) {
@@ -3194,7 +3194,7 @@ static block_q2_Kx16 make_block_q2_Kx16(const block_q2_K * in, unsigned int blck
         }
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static int repack_q4_0_to_q4_0_4_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
@@ -3211,7 +3211,7 @@ static int repack_q4_0_to_q4_0_4_bl(struct ggml_tensor * t, int interleave_block
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_0));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3223,7 +3223,7 @@ static int repack_q4_0_to_q4_0_4_bl(struct ggml_tensor * t, int interleave_block
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
@@ -3242,7 +3242,7 @@ static int repack_q4_K_to_q4_K_8_bl(struct ggml_tensor * t, int interleave_block
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_K));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3254,7 +3254,7 @@ static int repack_q4_K_to_q4_K_8_bl(struct ggml_tensor * t, int interleave_block
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
@@ -3272,7 +3272,7 @@ static int repack_q4_K_to_q4_K_16_bl(struct ggml_tensor * t, int interleave_bloc
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_K));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3284,7 +3284,7 @@ static int repack_q4_K_to_q4_K_16_bl(struct ggml_tensor * t, int interleave_bloc
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
@@ -3303,7 +3303,7 @@ static int repack_q2_K_to_q2_K_8_bl(struct ggml_tensor * t, int interleave_block
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q2_K));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3315,7 +3315,7 @@ static int repack_q2_K_to_q2_K_8_bl(struct ggml_tensor * t, int interleave_block
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
@@ -3335,7 +3335,7 @@ static int repack_q2_K_to_q2_K_16_bl(struct ggml_tensor * t, int interleave_bloc
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q2_K));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3350,7 +3350,7 @@ static int repack_q2_K_to_q2_K_16_bl(struct ggml_tensor * t, int interleave_bloc
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
@@ -3368,7 +3368,7 @@ static int repack_q4_0_to_q4_0_16_bl(struct ggml_tensor * t, int interleave_bloc
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_0));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3380,7 +3380,7 @@ static int repack_q4_0_to_q4_0_16_bl(struct ggml_tensor * t, int interleave_bloc
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
@@ -3402,7 +3402,7 @@ static int repack_q5_K_to_q5_K_8_bl(struct ggml_tensor *       t,
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q5_K));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3414,7 +3414,7 @@ static int repack_q5_K_to_q5_K_8_bl(struct ggml_tensor *       t,
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 }
 
 static int repack_q6_K_to_q6_K_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
@@ -3431,7 +3431,7 @@ static int repack_q6_K_to_q6_K_8_bl(struct ggml_tensor * t, int interleave_block
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q6_K));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3443,7 +3443,7 @@ static int repack_q6_K_to_q6_K_8_bl(struct ggml_tensor * t, int interleave_block
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 }
 
 static int repack_q4_0_to_q4_0_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
@@ -3460,7 +3460,7 @@ static int repack_q4_0_to_q4_0_8_bl(struct ggml_tensor * t, int interleave_block
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_0));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3472,7 +3472,7 @@ static int repack_q4_0_to_q4_0_8_bl(struct ggml_tensor * t, int interleave_block
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
@@ -3494,7 +3494,7 @@ static int repack_q8_0_to_q8_0_4_bl(struct ggml_tensor *       t,
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q8_0));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3506,7 +3506,7 @@ static int repack_q8_0_to_q8_0_4_bl(struct ggml_tensor *       t,
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 }
 
 static block_q8_0x16 make_block_q8_0x16(block_q8_0 * in, unsigned int blck_size_interleave) {
@@ -3529,7 +3529,7 @@ static block_q8_0x16 make_block_q8_0x16(block_q8_0 * in, unsigned int blck_size_
         GGML_ASSERT(false);
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static int repack_q8_0_to_q8_0_16_bl(struct ggml_tensor *       t,
@@ -3548,7 +3548,7 @@ static int repack_q8_0_to_q8_0_16_bl(struct ggml_tensor *       t,
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q8_0));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3560,7 +3560,7 @@ static int repack_q8_0_to_q8_0_16_bl(struct ggml_tensor *       t,
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 }
 
 static block_iq4_nlx4 make_block_iq4_nlx4(block_iq4_nl * in, unsigned int blck_size_interleave) {
@@ -3595,7 +3595,7 @@ static block_iq4_nlx4 make_block_iq4_nlx4(block_iq4_nl * in, unsigned int blck_s
         GGML_ASSERT(false);
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static int repack_iq4_nl_to_iq4_nl_4_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
@@ -3614,7 +3614,7 @@ static int repack_iq4_nl_to_iq4_nl_4_bl(struct ggml_tensor * t, int interleave_b
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_iq4_nl));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3626,7 +3626,7 @@ static int repack_iq4_nl_to_iq4_nl_4_bl(struct ggml_tensor * t, int interleave_b
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
@@ -3652,7 +3652,7 @@ static block_iq4_nlx8 make_block_iq4_nlx8(block_iq4_nl * in, unsigned int blck_s
         GGML_ASSERT(false);
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static int repack_iq4_nl_to_iq4_nl_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
@@ -3671,7 +3671,7 @@ static int repack_iq4_nl_to_iq4_nl_8_bl(struct ggml_tensor * t, int interleave_b
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_iq4_nl));
 
     if (t->ne[1] % nrows_interleaved != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3683,7 +3683,7 @@ static int repack_iq4_nl_to_iq4_nl_8_bl(struct ggml_tensor * t, int interleave_b
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
@@ -3709,7 +3709,7 @@ static block_iq4_nlx16 make_block_iq4_nlx16(block_iq4_nl * in, unsigned int blck
         GGML_ASSERT(false);
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static int repack_iq4_nl_to_iq4_nl_16_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
@@ -3728,7 +3728,7 @@ static int repack_iq4_nl_to_iq4_nl_16_bl(struct ggml_tensor * t, int interleave_
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_iq4_nl));
 
     if (t->ne[1] % nrows_interleaved != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3740,7 +3740,7 @@ static int repack_iq4_nl_to_iq4_nl_16_bl(struct ggml_tensor * t, int interleave_
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
@@ -3766,7 +3766,7 @@ static block_mxfp4x4 make_block_mxfp4x4(block_mxfp4 * in, unsigned int blck_size
         GGML_ASSERT(false);
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static int repack_mxfp4_to_mxfp4_4_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
@@ -3785,7 +3785,7 @@ static int repack_mxfp4_to_mxfp4_4_bl(struct ggml_tensor * t, int interleave_blo
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_mxfp4));
 
     if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3797,7 +3797,7 @@ static int repack_mxfp4_to_mxfp4_4_bl(struct ggml_tensor * t, int interleave_blo
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
@@ -3823,7 +3823,7 @@ static block_mxfp4x8 make_block_mxfp4x8(block_mxfp4 * in, unsigned int blck_size
         GGML_ASSERT(false);
     }
 
-    return out;
+    return out;  // 返回
 }
 
 static int repack_mxfp4_to_mxfp4_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
@@ -3842,7 +3842,7 @@ static int repack_mxfp4_to_mxfp4_8_bl(struct ggml_tensor * t, int interleave_blo
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_mxfp4));
 
     if (t->ne[1] % nrows_interleaved != 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     for (int b = 0; b < nrow; b += nrows_interleaved) {
@@ -3854,59 +3854,59 @@ static int repack_mxfp4_to_mxfp4_8_bl(struct ggml_tensor * t, int interleave_blo
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    return 0;  // 返回
 
     GGML_UNUSED(data_size);
 }
 
-namespace ggml::cpu::repack {
+namespace ggml::cpu::repack {  // 命名空间
 // repack
-template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS>
-int repack(struct ggml_tensor *, const void *, size_t);
+template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS>  // 模板
+int repack(struct ggml_tensor *, const void *, size_t);  // repack
 
 // TODO: generalise.
-template <> int repack<block_q4_0, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_0_to_q4_0_4_bl(t, 4, data, data_size);
+template <> int repack<block_q4_0, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q4_0_to_q4_0_4_bl(t, 4, data, data_size);  // repack_q4_0_to_q4_0_4_bl
 }
 
-template <> int repack<block_q4_0, 8, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_0_to_q4_0_4_bl(t, 8, data, data_size);
+template <> int repack<block_q4_0, 8, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q4_0_to_q4_0_4_bl(t, 8, data, data_size);  // repack_q4_0_to_q4_0_4_bl
 }
 
-template <> int repack<block_q4_0, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_0_to_q4_0_8_bl(t, 8, data, data_size);
+template <> int repack<block_q4_0, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q4_0_to_q4_0_8_bl(t, 8, data, data_size);  // repack_q4_0_to_q4_0_8_bl
 }
 
-template <> int repack<block_q4_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_K_to_q4_K_8_bl(t, 8, data, data_size);
+template <> int repack<block_q4_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q4_K_to_q4_K_8_bl(t, 8, data, data_size);  // repack_q4_K_to_q4_K_8_bl
 }
 
-template <> int repack<block_q4_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_K_to_q4_K_8_bl(t, 4, data, data_size);
+template <> int repack<block_q4_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q4_K_to_q4_K_8_bl(t, 4, data, data_size);  // repack_q4_K_to_q4_K_8_bl
 }
 
-template <> int repack<block_q2_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q2_K_to_q2_K_8_bl(t, 8, data, data_size);
+template <> int repack<block_q2_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q2_K_to_q2_K_8_bl(t, 8, data, data_size);  // repack_q2_K_to_q2_K_8_bl
 }
 
-template <> int repack<block_q5_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q5_K_to_q5_K_8_bl(t, 4, data, data_size);
+template <> int repack<block_q5_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q5_K_to_q5_K_8_bl(t, 4, data, data_size);  // repack_q5_K_to_q5_K_8_bl
 }
 
-template <> int repack<block_q5_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q5_K_to_q5_K_8_bl(t, 8, data, data_size);
+template <> int repack<block_q5_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q5_K_to_q5_K_8_bl(t, 8, data, data_size);  // repack_q5_K_to_q5_K_8_bl
 }
 
-template <> int repack<block_q6_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q6_K_to_q6_K_8_bl(t, 4, data, data_size);
+template <> int repack<block_q6_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q6_K_to_q6_K_8_bl(t, 4, data, data_size);  // repack_q6_K_to_q6_K_8_bl
 }
 
-template <> int repack<block_q6_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q6_K_to_q6_K_8_bl(t, 8, data, data_size);
+template <> int repack<block_q6_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q6_K_to_q6_K_8_bl(t, 8, data, data_size);  // repack_q6_K_to_q6_K_8_bl
 }
 
-template <> int repack<block_iq4_nl, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_iq4_nl_to_iq4_nl_4_bl(t, 4, data, data_size);
+template <> int repack<block_iq4_nl, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_iq4_nl_to_iq4_nl_4_bl(t, 4, data, data_size);  // repack_iq4_nl_to_iq4_nl_4_bl
 }
 
 // TODO: needs to be revisited
@@ -3914,65 +3914,65 @@ template <> int repack<block_iq4_nl, 4, 4>(struct ggml_tensor * t, const void * 
 //    return repack_iq4_nl_to_iq4_nl_4_bl(t, 8, data, data_size);
 //}
 
-template <> int repack<block_iq4_nl, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_iq4_nl_to_iq4_nl_8_bl(t, 8, data, data_size);
+template <> int repack<block_iq4_nl, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_iq4_nl_to_iq4_nl_8_bl(t, 8, data, data_size);  // repack_iq4_nl_to_iq4_nl_8_bl
 }
 
-template <> int repack<block_mxfp4, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_mxfp4_to_mxfp4_4_bl(t, 4, data, data_size);
+template <> int repack<block_mxfp4, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_mxfp4_to_mxfp4_4_bl(t, 4, data, data_size);  // repack_mxfp4_to_mxfp4_4_bl
 }
 
-template <> int repack<block_mxfp4, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_mxfp4_to_mxfp4_8_bl(t, 8, data, data_size);
+template <> int repack<block_mxfp4, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_mxfp4_to_mxfp4_8_bl(t, 8, data, data_size);  // repack_mxfp4_to_mxfp4_8_bl
 }
 
-template <> int repack<block_q8_0, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q8_0_to_q8_0_4_bl(t, 4, data, data_size);
+template <> int repack<block_q8_0, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q8_0_to_q8_0_4_bl(t, 4, data, data_size);  // repack_q8_0_to_q8_0_4_bl
 }
 
-template <> int repack<block_q8_0, 8, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q8_0_to_q8_0_4_bl(t, 8, data, data_size);
+template <> int repack<block_q8_0, 8, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q8_0_to_q8_0_4_bl(t, 8, data, data_size);  // repack_q8_0_to_q8_0_4_bl
 }
 
-#if defined __riscv_zvfh
-template <> int repack<block_q4_0, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_0_to_q4_0_16_bl(t, 1, data, data_size);
+#if defined __riscv_zvfh  // 条件编译
+template <> int repack<block_q4_0, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q4_0_to_q4_0_16_bl(t, 1, data, data_size);  // repack_q4_0_to_q4_0_16_bl
 }
 
-template <> int repack<block_q4_K, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_K_to_q4_K_16_bl(t, 1, data, data_size);
+template <> int repack<block_q4_K, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q4_K_to_q4_K_16_bl(t, 1, data, data_size);  // repack_q4_K_to_q4_K_16_bl
 }
 
-template <> int repack<block_iq4_nl, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_iq4_nl_to_iq4_nl_16_bl(t, 1, data, data_size);
+template <> int repack<block_iq4_nl, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_iq4_nl_to_iq4_nl_16_bl(t, 1, data, data_size);  // repack_iq4_nl_to_iq4_nl_16_bl
 }
 
-template <> int repack<block_q8_0, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q8_0_to_q8_0_16_bl(t, 1, data, data_size);
+template <> int repack<block_q8_0, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q8_0_to_q8_0_16_bl(t, 1, data, data_size);  // repack_q8_0_to_q8_0_16_bl
 }
 
-template <> int repack<block_q2_K, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q2_K_to_q2_K_16_bl(t, 1, data, data_size);
+template <> int repack<block_q2_K, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {  // 模板
+    return repack_q2_K_to_q2_K_16_bl(t, 1, data, data_size);  // repack_q2_K_to_q2_K_16_bl
 }
-#endif
+#endif  // 条件编译结束
 
 // gemv
-template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PARAM_TYPE>
-void gemv(int, float *, size_t, const void *, const void *, int, int);
+template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PARAM_TYPE>  // 模板
+void gemv(int, float *, size_t, const void *, const void *, int, int);  // gemv
 
-template <> void gemv<block_q4_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q4_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q4_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q4_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q4_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_0, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q4_0, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q4_0_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <>
+template <>  // 模板
 void gemv<block_q2_K, 8, 8, GGML_TYPE_Q8_K>(int          n,
                                             float *      s,
                                             size_t       bs,
@@ -3983,89 +3983,89 @@ void gemv<block_q2_K, 8, 8, GGML_TYPE_Q8_K>(int          n,
     ggml_gemv_q2_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q4_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q4_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q4_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q4_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q5_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q5_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q5_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q5_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q5_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q5_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q6_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q6_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q6_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q6_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q6_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q6_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_iq4_nl, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_iq4_nl, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_iq4_nl_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_iq4_nl, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_iq4_nl, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_iq4_nl_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_mxfp4, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_mxfp4, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_mxfp4_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_mxfp4, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_mxfp4, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_mxfp4_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q8_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q8_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q8_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q8_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q8_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q8_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-#if defined __riscv_zvfh
-template <> void gemv<block_q4_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+#if defined __riscv_zvfh  // 条件编译
+template <> void gemv<block_q4_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q4_0_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q4_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q4_K_16x1_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_iq4_nl, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_iq4_nl, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_iq4_nl_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q8_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q8_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q8_0_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q2_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q2_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemv_q2_K_16x1_q8_K(n, s, bs, vx, vy, nr, nc);
 }
-#endif
+#endif  // 条件编译结束
 
 // gemm
-template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PARAM_TYPE>
-void gemm(int, float *, size_t, const void *, const void *, int, int);
+template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PARAM_TYPE>  // 模板
+void gemm(int, float *, size_t, const void *, const void *, int, int);  // gemm
 
-template <> void gemm<block_q4_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q4_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q4_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q4_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q4_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <>
+template <>  // 模板
 void gemm<block_q4_0, 8, 8, GGML_TYPE_Q8_0>(int          n,
                                             float *      s,
                                             size_t       bs,
@@ -4076,86 +4076,86 @@ void gemm<block_q4_0, 8, 8, GGML_TYPE_Q8_0>(int          n,
     ggml_gemm_q4_0_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q2_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q2_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q2_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q4_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q4_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q4_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q4_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q5_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q5_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q5_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q5_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q5_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q5_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q6_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q6_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q6_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q6_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q6_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q6_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_iq4_nl, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_iq4_nl, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_iq4_nl_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_iq4_nl, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_iq4_nl, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_iq4_nl_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_mxfp4, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_mxfp4, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_mxfp4_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_mxfp4, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_mxfp4, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_mxfp4_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q8_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q8_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q8_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q8_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q8_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q8_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-#if defined __riscv_zvfh
-template <> void gemm<block_q4_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+#if defined __riscv_zvfh  // 条件编译
+template <> void gemm<block_q4_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q4_0_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q4_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q4_K_16x1_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_iq4_nl, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_iq4_nl, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_iq4_nl_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q8_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q8_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q8_0_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q2_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q2_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {  // 模板
     ggml_gemm_q2_K_16x1_q8_K(n, s, bs, vx, vy, nr, nc);
 }
-#endif
+#endif  // 条件编译结束
 
-class tensor_traits_base : public ggml::cpu::tensor_traits {
+class tensor_traits_base : public ggml::cpu::tensor_traits {  // 类定义
   public:
     virtual int repack(struct ggml_tensor * t, const void * data, size_t data_size) = 0;
 };
 
-template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PARAM_TYPE> class tensor_traits : public tensor_traits_base {
+template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PARAM_TYPE> class tensor_traits : public tensor_traits_base {  // 模板
 
     bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
         // not realy a GGML_TYPE_Q8_0 but same size.
@@ -4163,7 +4163,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
             case GGML_OP_MUL_MAT:
                 {
                     size = ggml_row_size(PARAM_TYPE, ggml_nelements(op->src[1]));
-                    return true;
+                    return true;  // 返回
                 }
             case GGML_OP_MUL_MAT_ID:
                 {
@@ -4177,28 +4177,28 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
 
                     size += sizeof_mmid_row_mapping*ne02*(ne12 + 1);
 
-                    return true;
+                    return true;  // 返回
                 }
             default:
                 // GGML_ABORT("fatal error");
                 break;
         }
-        return false;
+        return false;  // 返回
     }
 
     bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) override {
         switch (op->op) {
             case GGML_OP_MUL_MAT:
                 forward_mul_mat(params, op);
-                return true;
+                return true;  // 返回
             case GGML_OP_MUL_MAT_ID:
                 forward_mul_mat_id(params, op);
-                return true;
+                return true;  // 返回
             default:
                 // GGML_ABORT("fatal error");
                 break;
         }
-        return false;
+        return false;  // 返回
     }
 
     void forward_mul_mat_one_chunk(ggml_compute_params * params,
@@ -4420,12 +4420,12 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         const size_t nbw2 = nbw1*ne11;
         const size_t nbw3 = nbw2*ne12;
 
-        struct mmid_row_mapping {
+        struct mmid_row_mapping {  // 结构体定义
             int32_t i1;
             int32_t i2;
         };
 
-        GGML_ASSERT(params->wsize >=
+        GGML_ASSERT(params->wsize >=  // 断言检查
                 (GGML_PAD(nbw3, sizeof(int64_t)) +
                  n_as*(ne12 + 1)*sizeof(mmid_row_mapping))
                 );
@@ -4446,7 +4446,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
             }
         }
 
-#define MMID_MATRIX_ROW(row_id, i1) matrix_rows[(row_id) * ne12 + (i1)]
+#define MMID_MATRIX_ROW(row_id, i1) matrix_rows[(row_id) * ne12 + (i1)]  // 宏定义 MMID_MATRIX_ROW
 
         if (ith == 0) {
             // initialize matrix_row_counts
@@ -4492,7 +4492,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
             }
 
             if (src0_cur_start >= src0_cur_end) {
-                return;
+                return;  // 返回
             }
 
             for (int ir1 = 0; ir1 < nr1; ir1++) {
@@ -4562,32 +4562,32 @@ static const ggml::cpu::tensor_traits * ggml_repack_get_optimal_repack_type(cons
     //
     // These implement outer-product style matrix multiplication kernels with
     // an interleave of 1.
-#if defined __riscv_zvfh
+#if defined __riscv_zvfh  // 条件编译
     static const ggml::cpu::repack::tensor_traits<block_q4_0, 1, 16, GGML_TYPE_Q8_0> q4_0_16x1_q8_0;
     static const ggml::cpu::repack::tensor_traits<block_q4_K, 1, 16, GGML_TYPE_Q8_K> q4_K_16x1_q8_K;
     static const ggml::cpu::repack::tensor_traits<block_iq4_nl, 1, 16, GGML_TYPE_Q8_0> iq4_nl_16x1_q8_0;
     static const ggml::cpu::repack::tensor_traits<block_q8_0, 1, 16, GGML_TYPE_Q8_0> q8_0_16x1_q8_0;
     static const ggml::cpu::repack::tensor_traits<block_q2_K, 1, 16, GGML_TYPE_Q8_K> q2_K_16x1_q8_K;
-#endif
+#endif  // 条件编译结束
 
     if (cur->type == GGML_TYPE_Q4_0) {
         if (ggml_cpu_has_avx2() || (ggml_cpu_has_sve() && ggml_cpu_has_matmul_int8() && ggml_cpu_get_sve_cnt() == QK8_0)) {
             if (cur->ne[1] % 8 == 0) {
-                return &q4_0_8x8_q8_0;
+                return &q4_0_8x8_q8_0;  // 返回
             }
         }
         if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
             if (cur->ne[1] % 4 == 0) {
-                return &q4_0_4x8_q8_0;
+                return &q4_0_4x8_q8_0;  // 返回
             }
         }
         if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
             if (cur->ne[1] % 4 == 0) {
-                return &q4_0_4x4_q8_0;
+                return &q4_0_4x4_q8_0;  // 返回
             }
         }
         if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
+            #if defined __riscv_zvfh  // 条件编译
             switch (__riscv_vlenb() * 8) {
                 case 128:  { break; } // TODO
                 case 256:  { if (cur->ne[1] % 16 == 0) { return &q4_0_16x1_q8_0; } break; }
@@ -4595,26 +4595,26 @@ static const ggml::cpu::tensor_traits * ggml_repack_get_optimal_repack_type(cons
                 case 1024: { break; } // TODO
                 default:   { return nullptr; }
             }
-            #endif
+            #endif  // 条件编译结束
         }
     } else if (cur->type == GGML_TYPE_Q4_K) {
         if (ggml_cpu_has_avx2()) {
             if (cur->ne[1] % 8 == 0) {
-                return &q4_K_8x8_q8_K;
+                return &q4_K_8x8_q8_K;  // 返回
             }
         }
         if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
             if (cur->ne[1] % 8 == 0) {
-                return &q4_K_8x8_q8_K;
+                return &q4_K_8x8_q8_K;  // 返回
             }
         }
         if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
             if (cur->ne[1] % 8 == 0) {
-                return &q4_K_8x4_q8_K;
+                return &q4_K_8x4_q8_K;  // 返回
             }
         }
         if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
+            #if defined __riscv_zvfh  // 条件编译
             switch (__riscv_vlenb() * 8) {
                 case 128:  { break; } // TODO
                 case 256:  { if (cur->ne[1] % 16 == 0) { return &q4_K_16x1_q8_K; } break; }
@@ -4622,16 +4622,16 @@ static const ggml::cpu::tensor_traits * ggml_repack_get_optimal_repack_type(cons
                 case 1024: { break; } // TODO
                 default:   { return nullptr; }
             }
-            #endif
+            #endif  // 条件编译结束
         }
     } else if (cur->type == GGML_TYPE_Q2_K) {
         if (ggml_cpu_has_avx512()) {
             if (cur->ne[1] % 8 == 0) {
-                return &q2_K_8x8_q8_K;
+                return &q2_K_8x8_q8_K;  // 返回
             }
         }
         if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
+            #if defined __riscv_zvfh  // 条件编译
             switch (__riscv_vlenb() * 8) {
                 case 128:  { break; } // TODO
                 case 256:  { if (cur->ne[1] % 16 == 0) { return &q2_K_16x1_q8_K; } break; }
@@ -4639,43 +4639,43 @@ static const ggml::cpu::tensor_traits * ggml_repack_get_optimal_repack_type(cons
                 case 1024: { break; } // TODO
                 default:   { return nullptr; }
             }
-            #endif
+            #endif  // 条件编译结束
         }
     } else if (cur->type == GGML_TYPE_Q5_K) {
         if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
             if (cur->ne[1] % 8 == 0) {
-                return &q5_K_8x8_q8_K;
+                return &q5_K_8x8_q8_K;  // 返回
             }
         }
         if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
             if (cur->ne[1] % 8 == 0) {
-                return &q5_K_8x4_q8_K;
+                return &q5_K_8x4_q8_K;  // 返回
             }
         }
     } else if (cur->type == GGML_TYPE_Q6_K) {
         if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
             if (cur->ne[1] % 8 == 0) {
-                return &q6_K_8x8_q8_K;
+                return &q6_K_8x8_q8_K;  // 返回
             }
         }
         if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
             if (cur->ne[1] % 8 == 0) {
-                return &q6_K_8x4_q8_K;
+                return &q6_K_8x4_q8_K;  // 返回
             }
         }
     } else if (cur->type == GGML_TYPE_IQ4_NL) {
         if (ggml_cpu_has_avx2()) {
             if (cur->ne[1] % 8 == 0) {
-                return &iq4_nl_8x8_q8_0;
+                return &iq4_nl_8x8_q8_0;  // 返回
             }
         }
         if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
             if (cur->ne[1] % 4 == 0) {
-                return &iq4_nl_4x4_q8_0;
+                return &iq4_nl_4x4_q8_0;  // 返回
             }
         }
         if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
+            #if defined __riscv_zvfh  // 条件编译
             switch (__riscv_vlenb() * 8) {
                 case 128:  { break; } // TODO
                 case 256:  { if (cur->ne[1] % 16 == 0) { return &iq4_nl_16x1_q8_0; } break; }
@@ -4683,32 +4683,32 @@ static const ggml::cpu::tensor_traits * ggml_repack_get_optimal_repack_type(cons
                 case 1024: { break; } // TODO
                 default:   { return nullptr; }
             }
-            #endif
+            #endif  // 条件编译结束
         }
     } else if (cur->type == GGML_TYPE_MXFP4) {
         if (ggml_cpu_has_avx2()) {
             if (cur->ne[1] % 8 == 0) {
-                return &mxfp4_8x8_q8_0;
+                return &mxfp4_8x8_q8_0;  // 返回
             }
         }
         if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
             if (cur->ne[1] % 4 == 0) {
-                return &mxfp4_4x4_q8_0;
+                return &mxfp4_4x4_q8_0;  // 返回
             }
         }
     } else if (cur->type == GGML_TYPE_Q8_0) {
         if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
             if (cur->ne[1] % 4 == 0) {
-                return &q8_0_4x8_q8_0;
+                return &q8_0_4x8_q8_0;  // 返回
             }
         }
         if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
             if (cur->ne[1] % 4 == 0) {
-                return &q8_0_4x4_q8_0;
+                return &q8_0_4x4_q8_0;  // 返回
             }
         }
         if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
+            #if defined __riscv_zvfh  // 条件编译
             switch (__riscv_vlenb() * 8) {
                 case 128:  { break; } // TODO
                 case 256:  { if (cur->ne[1] % 16 == 0) { return &q8_0_16x1_q8_0; } break; }
@@ -4716,18 +4716,18 @@ static const ggml::cpu::tensor_traits * ggml_repack_get_optimal_repack_type(cons
                 case 1024: { break; } // TODO
                 default:   { return nullptr; }
             }
-            #endif
+            #endif  // 条件编译结束
         }
     }
 
-    return nullptr;
+    return nullptr;  // 返回
 }
 
 static enum ggml_status ggml_backend_cpu_repack_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
     tensor->extra = (void *) const_cast<ggml::cpu::tensor_traits *>(ggml_repack_get_optimal_repack_type(tensor));
 
     GGML_UNUSED(buffer);
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 static void ggml_backend_cpu_repack_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
@@ -4743,7 +4743,7 @@ static void ggml_backend_cpu_repack_buffer_set_tensor(ggml_backend_buffer_t buff
 }
 
 static const char * ggml_backend_cpu_repack_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "CPU_REPACK";
+    return "CPU_REPACK";  // 返回
 
     GGML_UNUSED(buft);
 }
@@ -4752,7 +4752,7 @@ static ggml_backend_buffer_t ggml_backend_cpu_repack_buffer_type_alloc_buffer(gg
     ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
 
     if (buffer == nullptr) {
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     buffer->buft              = buft;
@@ -4760,17 +4760,17 @@ static ggml_backend_buffer_t ggml_backend_cpu_repack_buffer_type_alloc_buffer(gg
     buffer->iface.set_tensor  = ggml_backend_cpu_repack_buffer_set_tensor;
     buffer->iface.get_tensor  = nullptr;
     buffer->iface.cpy_tensor  = nullptr;
-    return buffer;
+    return buffer;  // 返回
 }
 
 static size_t ggml_backend_cpu_repack_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return TENSOR_ALIGNMENT;
+    return TENSOR_ALIGNMENT;  // 返回
 
     GGML_UNUSED(buft);
 }
 
-namespace ggml::cpu::repack {
-class extra_buffer_type : ggml::cpu::extra_buffer_type {
+namespace ggml::cpu::repack {  // 命名空间
+class extra_buffer_type : ggml::cpu::extra_buffer_type {  // 类定义
     bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
         if (    op->op == GGML_OP_MUL_MAT &&
                 op->src[0]->buffer &&
@@ -4779,10 +4779,10 @@ class extra_buffer_type : ggml::cpu::extra_buffer_type {
                 ggml_repack_get_optimal_repack_type(op->src[0])
                 ) {
             if (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {
-                return false;
+                return false;  // 返回
             }
             if (op->src[1]->type == GGML_TYPE_F32) {
-                return true;
+                return true;  // 返回
             }
             //if (op->src[1]->type == GGML_TYPE_Q8_0) {
             //    return true;
@@ -4795,16 +4795,16 @@ class extra_buffer_type : ggml::cpu::extra_buffer_type {
                 && ggml_repack_get_optimal_repack_type(op->src[0])
                 ) {
             if (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {
-                return false;
+                return false;  // 返回
             }
             if (op->src[1]->type == GGML_TYPE_F32) {
-                return true;
+                return true;  // 返回
             }
             //if (op->src[1]->type == GGML_TYPE_Q8_0) {
             //    return true;
             //}
         }
-        return false;
+        return false;  // 返回
     }
 
     ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
@@ -4813,7 +4813,7 @@ class extra_buffer_type : ggml::cpu::extra_buffer_type {
                 return (ggml::cpu::tensor_traits *) op->src[0]->extra;
             }
         }
-        return nullptr;
+        return nullptr;  // 返回
     }
 };
 }  // namespace ggml::cpu::repack
@@ -4832,5 +4832,5 @@ ggml_backend_buffer_type_t ggml_backend_cpu_repack_buffer_type(void) {
         /* .context = */ new ggml::cpu::repack::extra_buffer_type(),
     };
 
-    return &ggml_backend_cpu_buffer_type_repack;
+    return &ggml_backend_cpu_buffer_type_repack;  // 返回
 }

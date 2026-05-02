@@ -1,25 +1,25 @@
-#include "binary-ops.h"
+#include "binary-ops.h"  // 引入 binary-ops.h 头文件
 
-#if defined(GGML_USE_ACCELERATE)
-#include <Accelerate/Accelerate.h>
+#if defined(GGML_USE_ACCELERATE)  // 条件编译
+#include <Accelerate/Accelerate.h>  // 引入 Accelerate/Accelerate.h 头文件
 
 using vDSP_fn_t = void (*)(const float *, vDSP_Stride, const float *, vDSP_Stride, float *, vDSP_Stride, vDSP_Length);
-#endif
+#endif  // 条件编译结束
 
 static inline float op_add(float a, float b) {
-    return a + b;
+    return a + b;  // 返回
 }
 
 static inline float op_sub(float a, float b) {
-    return a - b;
+    return a - b;  // 返回
 }
 
 static inline float op_mul(float a, float b) {
-    return a * b;
+    return a * b;  // 返回
 }
 
 static inline float op_div(float a, float b) {
-    return a / b;
+    return a / b;  // 返回
 }
 
 template <float (*op)(float, float), typename src0_t, typename src1_t, typename dst_t>
@@ -61,7 +61,7 @@ static void apply_binary_op(const ggml_compute_params * params, ggml_tensor * ds
     const auto [ir0, ir1] = get_thread_range(params, src0);
     const bool is_src1_contiguous_rows = ggml_is_contiguous_rows(src1);
 
-#ifdef GGML_USE_ACCELERATE
+#ifdef GGML_USE_ACCELERATE  // 如果定义了 GGML_USE_ACCELERATE 则编译
     vDSP_fn_t vDSP_op = nullptr;
     // TODO - avoid the f32-only check using type 'trait' lookup tables and row-based src-to-float conversion functions
     if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
@@ -75,7 +75,7 @@ static void apply_binary_op(const ggml_compute_params * params, ggml_tensor * ds
             vDSP_op = vDSP_vdiv;
         }
     }
-#endif
+#endif  // 条件编译结束
 
     for (int64_t ir = ir0; ir < ir1; ++ir) {
         const int64_t i03 = ir/(ne02*ne01);
@@ -95,14 +95,14 @@ static void apply_binary_op(const ggml_compute_params * params, ggml_tensor * ds
             const int64_t nr0 = ne00 / ne10;
 
             for (int64_t r = 0; r < nr0; ++r) {
-#ifdef GGML_USE_ACCELERATE
+#ifdef GGML_USE_ACCELERATE  // 如果定义了 GGML_USE_ACCELERATE 则编译
                 if constexpr (std::is_same_v<src0_t, float> && std::is_same_v<src1_t, float> && std::is_same_v<dst_t, float>) {
                     if (vDSP_op != nullptr) {
                         vDSP_op(src1_ptr, 1, src0_ptr + r*ne10, 1, dst_ptr + r*ne10, 1, ne10);
                         continue;
                     }
                 }
-#endif
+#endif  // 条件编译结束
                 vec_binary_op_contiguous<op>(ne10, dst_ptr + r*ne10, src0_ptr + r*ne10, src1_ptr);
             }
         } else {

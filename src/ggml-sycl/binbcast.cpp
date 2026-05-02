@@ -1,10 +1,10 @@
-#include "binbcast.hpp"
+#include "binbcast.hpp"  // 引入 binbcast.hpp 头文件
 
-#include <cstddef>
-#include <cstdint>
-#include <sycl/sycl.hpp>
+#include <cstddef>  // 引入 cstddef 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
 
-#include "ggml.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
 
 template<float (*bin_op)(const float, const float), typename src0_t, typename src1_t, typename dst_t>
 static void k_bin_bcast(const src0_t * src0, const src1_t * src1, dst_t * dst,
@@ -26,7 +26,7 @@ static void k_bin_bcast(const src0_t * src0, const src1_t * src1, dst_t * dst,
                    ne3;
 
     if (i0s >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
-        return;
+        return;  // 返回
     }
 
     const int i11 = i1 % ne11;
@@ -66,7 +66,7 @@ static void k_bin_bcast_unravel(const src0_t * src0, const src1_t * src1, dst_t 
     const int i0 = i % ne0;
 
     if (i0 >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
-        return;
+        return;  // 返回
     }
 
     const int i11 = i1 % ne11;
@@ -87,9 +87,9 @@ static void k_bin_bcast_unravel(const src0_t * src0, const src1_t * src1, dst_t 
 
 
 template<float (*bin_op)(const float, const float)>
-struct bin_bcast_sycl {
-    template <typename src0_t, typename src1_t, typename dst_t>
-    void operator()(const src0_t * src0_dd, const src1_t * src1_dd, dst_t * dst_dd, const int64_t ne00,
+struct bin_bcast_sycl {  // 结构体定义
+    template <typename src0_t, typename src1_t, typename dst_t>  // 模板
+    void operator()(const src0_t * src0_dd, const src1_t * src1_dd, dst_t * dst_dd, const int64_t ne00,  // operator
                     const int64_t ne01, const int64_t ne02, const int64_t ne03, const int64_t ne10, const int64_t ne11,
                     const int64_t ne12, const int64_t ne13, const int64_t ne0, const int64_t ne1, const int64_t ne2,
                     const int64_t ne3, const size_t nb00, const size_t nb01, const size_t nb02, const size_t nb03,
@@ -257,7 +257,7 @@ struct bin_bcast_sycl {
     }
 };
 
-template <class op>
+template <class op>  // 模板
 inline void ggml_sycl_op_bin_bcast(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1,
                                    ggml_tensor * dst) {
     dpct::queue_ptr main_stream = ctx.stream();
@@ -320,27 +320,27 @@ inline void ggml_sycl_op_repeat(ggml_backend_sycl_context & ctx, ggml_tensor *ds
 
 
 void ggml_sycl_add(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     ggml_sycl_op_add(ctx, dst);
 }
 
 void ggml_sycl_sub(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     ggml_sycl_op_sub(ctx, dst);
 }
 
 void ggml_sycl_mul(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     ggml_sycl_op_mul(ctx, dst);
 }
 
 void ggml_sycl_div(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     ggml_sycl_op_div(ctx, dst);
 }
 
 void ggml_sycl_repeat(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_op_repeat(ctx, dst);
 }
 

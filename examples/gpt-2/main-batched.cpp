@@ -1,34 +1,34 @@
-#include "ggml.h"
-#include "ggml-cpu.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#ifdef GGML_USE_CUDA
-#include "ggml-cuda.h"
-#endif
+#ifdef GGML_USE_CUDA  // 如果定义了 GGML_USE_CUDA 则编译
+#include "ggml-cuda.h"  // 引入 ggml-cuda.h 头文件
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_METAL
-#include "ggml-metal.h"
-#endif
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
+#include "ggml-metal.h"  // 引入 ggml-metal.h 头文件
+#endif  // 条件编译结束
 
-#include "common.h"
-#include "common-ggml.h"
+#include "common.h"  // 引入 common.h 头文件
+#include "common-ggml.h"  // 引入 common-ggml.h 头文件
 
-#include <cassert>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <map>
-#include <set>
-#include <string>
-#include <vector>
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <map>  // 引入 map 头文件
+#include <set>  // 引入 set 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER)  // 条件编译
 #pragma warning(disable: 4244 4267) // possible loss of data
-#endif
+#endif  // 条件编译结束
 
-#define GPT2_MAX_NODES 4096
+#define GPT2_MAX_NODES 4096  // 宏定义 GPT2_MAX_NODES
 
 static void ggml_log_callback_default(ggml_log_level level, const char * text, void * user_data) {
     (void) level;
@@ -37,11 +37,11 @@ static void ggml_log_callback_default(ggml_log_level level, const char * text, v
     fflush(stderr);
 }
 
-typedef int32_t gpt2_pos;
-typedef int32_t gpt2_seq_id;
+typedef int32_t gpt2_pos;  // 类型定义
+typedef int32_t gpt2_seq_id;  // 类型定义
 
 // default hparams (GPT-2 117M)
-struct gpt2_hparams {
+struct gpt2_hparams {  // 结构体定义
     int32_t n_vocab = 50257;
     int32_t n_ctx   = 1024;
     int32_t n_embd  = 768;
@@ -51,7 +51,7 @@ struct gpt2_hparams {
     float   eps     = 1e-5f;
 };
 
-struct gpt2_layer {
+struct gpt2_layer {  // 结构体定义
     // normalization
     struct ggml_tensor * ln_1_g;
     struct ggml_tensor * ln_1_b;
@@ -74,7 +74,7 @@ struct gpt2_layer {
     struct ggml_tensor * c_mlp_proj_b;
 };
 
-struct gpt2_kv_cell {
+struct gpt2_kv_cell {  // 结构体定义
     gpt2_pos pos   = -1;
     gpt2_pos delta = 0;
 
@@ -85,7 +85,7 @@ struct gpt2_kv_cell {
     }
 };
 
-struct gpt2_kv_cache {
+struct gpt2_kv_cache {  // 结构体定义
     // key + value memory
     struct ggml_tensor * k;
     struct ggml_tensor * v;
@@ -102,7 +102,7 @@ struct gpt2_kv_cache {
     ggml_backend_buffer_t buffer;
 };
 
-struct gpt2_model {
+struct gpt2_model {  // 结构体定义
     gpt2_hparams hparams;
 
     // normalization
@@ -136,7 +136,7 @@ struct gpt2_model {
 // - seq_id : the sequence to which the respective token belongs
 // - logits : if zero, the logits for the respective token will not be output
 //
-struct gpt2_batch {
+struct gpt2_batch {  // 结构体定义
     int32_t n_tokens = -1;
 
     gpt_vocab::id  * token  = {};
@@ -153,7 +153,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
     auto fin = std::ifstream(fname, std::ios::binary);
     if (!fin) {
         fprintf(stderr, "%s: failed to open '%s'\n", __func__, fname.c_str());
-        return false;
+        return false;  // 返回
     }
 
     // verify magic
@@ -162,7 +162,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
         fin.read((char *) &magic, sizeof(magic));
         if (magic != GGML_FILE_MAGIC) {
             fprintf(stderr, "%s: invalid model file '%s' (bad magic)\n", __func__, fname.c_str());
-            return false;
+            return false;  // 返回
         }
     }
 
@@ -198,7 +198,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
         if (n_vocab != model.hparams.n_vocab) {
             fprintf(stderr, "%s: invalid model file '%s' (bad vocab size %d != %d)\n",
                     __func__, fname.c_str(), n_vocab, model.hparams.n_vocab);
-            return false;
+            return false;  // 返回
         }
 
         std::string word;
@@ -223,7 +223,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
     if (wtype == GGML_TYPE_COUNT) {
         fprintf(stderr, "%s: invalid model file '%s' (bad ftype value %d)\n",
                 __func__, fname.c_str(), model.hparams.ftype);
-        return false;
+        return false;  // 返回
     }
 
     auto & ctx = model.ctx_w;
@@ -274,7 +274,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
     // create the ggml context
     {
         size_t n_tensors = 2 + 6 + 12*model.hparams.n_layer;
-        struct ggml_init_params params = {
+        struct ggml_init_params params = {  // 结构体定义
             /*.mem_size   =*/ ggml_tensor_overhead() * n_tensors,
             /*.mem_buffer =*/ NULL,
             /*.no_alloc   =*/ true,
@@ -283,12 +283,12 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
         model.ctx_w = ggml_init(params);
         if (!model.ctx_w) {
             fprintf(stderr, "%s: ggml_init() failed\n", __func__);
-            return false;
+            return false;  // 返回
         }
     }
 
     // initialize the backend
-#ifdef GGML_USE_CUDA
+#ifdef GGML_USE_CUDA  // 如果定义了 GGML_USE_CUDA 则编译
     if (n_gpu_layers > 0) {
         fprintf(stderr, "%s: using CUDA backend\n", __func__);
         model.backend = ggml_backend_cuda_init(0);
@@ -296,9 +296,9 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
             fprintf(stderr, "%s: ggml_backend_cuda_init() failed\n", __func__);
         }
     }
-#endif
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_METAL
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
     if (n_gpu_layers > 0) {
         fprintf(stderr, "%s: using Metal backend\n", __func__);
         model.backend = ggml_backend_metal_init();
@@ -306,7 +306,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
             fprintf(stderr, "%s: ggml_backend_metal_init() failed\n", __func__);
         }
     }
-#endif
+#endif  // 条件编译结束
 
     if (!model.backend) {
         // fallback to CPU backend
@@ -316,7 +316,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
 
     if (!model.backend) {
         fprintf(stderr, "%s: ggml_backend_cpu_init() failed\n", __func__);
-        return false;
+        return false;  // 返回
     }
 
     // allocate weights buffer
@@ -466,20 +466,20 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
 
             if (model.tensors.find(name) == model.tensors.end()) {
                 fprintf(stderr, "%s: unknown tensor '%s' in model file\n", __func__, name.c_str());
-                return false;
+                return false;  // 返回
             }
 
             auto tensor = model.tensors[name];
             ggml_set_name(tensor, name.c_str());
             if (ggml_nelements(tensor) != nelements) {
                 fprintf(stderr, "%s: tensor '%s' has wrong size in model file\n", __func__, name.c_str());
-                return false;
+                return false;  // 返回
             }
 
             if (tensor->ne[0] != ne[0] || tensor->ne[1] != ne[1]) {
                 fprintf(stderr, "%s: tensor '%s' has wrong shape in model file: got [%d, %d], expected [%d, %d]\n",
                         __func__, name.c_str(), (int) tensor->ne[0], (int) tensor->ne[1], ne[0], ne[1]);
-                return false;
+                return false;  // 返回
             }
 
             // for debugging
@@ -492,15 +492,15 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
             if ((nelements*bpe)/ggml_blck_size(tensor->type) != ggml_nbytes(tensor)) {
                 fprintf(stderr, "%s: tensor '%s' has wrong size in model file: got %zu, expected %zu\n",
                         __func__, name.c_str(), ggml_nbytes(tensor), nelements*bpe);
-                return false;
+                return false;  // 返回
             }
 
             ggml_tallocr_alloc(&alloc, tensor);
 
             if (ggml_backend_is_cpu  (model.backend)
-#ifdef GGML_USE_METAL
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
                 || ggml_backend_is_metal(model.backend)
-#endif
+#endif  // 条件编译结束
                 ) {
                 // for the CPU and Metal backend, we can read directly into the tensor
                 fin.read(reinterpret_cast<char *>(tensor->data), ggml_nbytes(tensor));
@@ -530,7 +530,7 @@ bool gpt2_model_load(const std::string & fname, gpt2_model & model, gpt_vocab & 
 
     fin.close();
 
-    return true;
+    return true;  // 返回
 }
 
 // build the computation graph
@@ -555,7 +555,7 @@ struct ggml_cgraph * gpt2_graph(
     static size_t buf_size = ggml_tensor_overhead()*GPT2_MAX_NODES + ggml_graph_overhead_custom(GPT2_MAX_NODES, false);
     static std::vector<uint8_t> buf(buf_size);
 
-    struct ggml_init_params params = {
+    struct ggml_init_params params = {  // 结构体定义
         /*.mem_size   =*/ buf_size,
         /*.mem_buffer =*/ buf.data(),
         /*.no_alloc   =*/ true, // the tensors will be allocated later by ggml_gallocr_alloc_graph()
@@ -822,7 +822,7 @@ struct ggml_cgraph * gpt2_graph(
 
     ggml_free(ctx);
 
-    return gf;
+    return gf;  // 返回
 }
 
 static void gpt2_kv_cache_seq_cp(
@@ -841,7 +841,7 @@ static void gpt2_kv_cache_seq_cp(
     }
 }
 
-struct gpt2_batch gpt2_batch_init(int32_t n_tokens, int32_t embd) {
+struct gpt2_batch gpt2_batch_init(int32_t n_tokens, int32_t embd) {  // 结构体定义
     gpt2_batch batch;
 
     if (embd) {
@@ -854,7 +854,7 @@ struct gpt2_batch gpt2_batch_init(int32_t n_tokens, int32_t embd) {
     batch.seq_id = (gpt2_seq_id *) malloc(sizeof(gpt2_seq_id) * n_tokens);
     batch.logits = (int8_t *)      malloc(sizeof(int8_t)      * n_tokens);
 
-    return batch;
+    return batch;  // 返回
 }
 
 void gpt2_batch_free(struct gpt2_batch batch) {
@@ -880,7 +880,7 @@ int gpt2_decode(
 
     if (n_tokens == 0) {
         printf("%s: n_tokens == 0", __func__);
-        return -1;
+        return -1;  // 返回
     }
 
     GGML_ASSERT((!batch.token && batch.embd) || (batch.token && !batch.embd));
@@ -975,10 +975,10 @@ int gpt2_decode(
     // ensure kv cache head points to a valid index.
     if (cache.head >= cache.size) {
         printf("%s: cache.head >= cache.size\n", __func__);
-        return -2;
+        return -2;  // 返回
     }
 
-    return 0;
+    return 0;  // 返回
 }
 
 int main(int argc, char ** argv) {
@@ -989,7 +989,7 @@ int main(int argc, char ** argv) {
     gpt_params params;
 
     if (gpt_params_parse(argc, argv, params) == false) {
-        return 1;
+        return 1;  // 返回
     }
 
     if (params.seed < 0) {
@@ -1014,7 +1014,7 @@ int main(int argc, char ** argv) {
 
         if (!gpt2_model_load(params.model, model, vocab, params.n_ctx, params.n_gpu_layers)) {
             fprintf(stderr, "%s: failed to load model from '%s'\n", __func__, params.model.c_str());
-            return 1;
+            return 1;  // 返回
         }
 
         t_load_us = ggml_time_us() - t_start_us;
@@ -1068,7 +1068,7 @@ int main(int argc, char ** argv) {
 
     if (gpt2_decode(model, allocr, batch, params.n_threads, logits) != 0) {
         printf("%s: gpt2_decode() failed\n", __func__);
-        return 1;
+        return 1;  // 返回
     }
 
     // assign the system KV cache to all parallel sequences
@@ -1171,7 +1171,7 @@ int main(int argc, char ** argv) {
             int ret_code = gpt2_decode(model, allocr, batch, params.n_threads, logits);
             if (ret_code != 0) {
                 fprintf(stderr, "%s : failed to eval, return code %d\n", __func__, ret_code);
-                return 1;
+                return 1;  // 返回
             }
 
             t_predict_us += ggml_time_us() - t_start_us;
@@ -1206,5 +1206,5 @@ int main(int argc, char ** argv) {
     ggml_backend_buffer_free(model.kv_cache.buffer);
     ggml_backend_free(model.backend);
 
-    return 0;
+    return 0;  // 返回
 }

@@ -1,14 +1,14 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "node_context.h"
+#include "node_context.h"  // 引入 node_context.h 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
 
-namespace op {
+namespace op {  // 命名空间
 
-#define GGML_OP_CONVERTER(op) OutputVector op(const NodeContext& context)
+#define GGML_OP_CONVERTER(op) OutputVector op(const NodeContext& context)  // 宏定义 GGML_OP_CONVERTER
 
 GGML_OP_CONVERTER(translate_add);
 GGML_OP_CONVERTER(translate_cont);

@@ -1,21 +1,21 @@
-#include "ggml.h"
-#include "ggml-cpu.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#ifdef GGML_USE_CUDA
-#include "ggml-cuda.h"
-#endif
+#ifdef GGML_USE_CUDA  // 如果定义了 GGML_USE_CUDA 则编译
+#include "ggml-cuda.h"  // 引入 ggml-cuda.h 头文件
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_METAL
-#include "ggml-metal.h"
-#endif
+#ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
+#include "ggml-metal.h"  // 引入 ggml-metal.h 头文件
+#endif  // 条件编译结束
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <vector>
-#include <cmath>
+#include <string.h>  // 引入 string.h 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
+#include <vector>  // 引入 vector 头文件
+#include <cmath>  // 引入 cmath 头文件
 
 void ggml_tensor_set_f32(struct ggml_tensor* tensor, float value, int l, int k = 0, int j = 0, int i = 0) {
     GGML_ASSERT(tensor->nb[0] == sizeof(float));
@@ -44,9 +44,9 @@ void set_timestep_embedding(struct ggml_tensor* timesteps, struct ggml_tensor* e
 
 static bool equalsf(float v1, float v2) {
     if (fabs(v1 - v2) <= 0.00001) {
-        return true;
+        return true;  // 返回
     }
-    return false;
+    return false;  // 返回
 }
 
 struct ggml_tensor* new_timestep_embedding(struct ggml_context* ctx,
@@ -58,7 +58,7 @@ struct ggml_tensor* new_timestep_embedding(struct ggml_context* ctx,
     int actual_dim = dim;
     struct ggml_tensor* embedding = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, actual_dim, timesteps->ne[0]);
     set_timestep_embedding(timesteps, embedding, dim, max_period);
-    return embedding;
+    return embedding;  // 返回
 }
 
 int main(int argc, const char** argv) {
@@ -94,7 +94,7 @@ int main(int argc, const char** argv) {
         ggml_backend_t backend = NULL;
         ggml_backend_buffer_t params_buffer = NULL;
 
-        #ifdef GGML_USE_CUDA
+        #ifdef GGML_USE_CUDA  // 如果定义了 GGML_USE_CUDA 则编译
         if (use_gpu) {
             fprintf(stderr, "%s: using CUDA backend\n", __func__);
             backend = ggml_backend_cuda_init(0);
@@ -102,9 +102,9 @@ int main(int argc, const char** argv) {
                 fprintf(stderr, "%s: ggml_backend_cuda_init() failed\n", __func__);
             }
         }
-        #endif
+        #endif  // 条件编译结束
 
-        #ifdef GGML_USE_METAL
+        #ifdef GGML_USE_METAL  // 如果定义了 GGML_USE_METAL 则编译
         if (use_gpu) {
             fprintf(stderr, "%s: using Metal backend\n", __func__);
             backend = ggml_backend_metal_init();
@@ -112,11 +112,11 @@ int main(int argc, const char** argv) {
                 fprintf(stderr, "%s: ggml_backend_metal_init() failed\n", __func__);
             }
         }
-        #endif
+        #endif  // 条件编译结束
 
         const int num_tensors = 2;
 
-        struct ggml_init_params params = {
+        struct ggml_init_params params = {  // 结构体定义
                 /*.mem_size   =*/ ggml_tensor_overhead() * num_tensors + 2 * 1024 * 1024,
                 /*.mem_size   =*/ NULL,
                 /*.mem_size   =*/ true,
@@ -176,5 +176,5 @@ int main(int argc, const char** argv) {
         ggml_gallocr_free(galloc);
     }
 
-    return 0;
+    return 0;  // 返回
 }

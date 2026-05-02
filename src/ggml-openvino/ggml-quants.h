@@ -1,12 +1,12 @@
-#pragma once
-#include "ggml-openvino-extra.h"  // For ExtraQuantType
-#include "ggml.h"
+#pragma once  // 防止重复包含
+#include "ggml-openvino-extra.h"  // For ExtraQuantType  // 引入 ggml-openvino-extra.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-#include <cstdint>
-#include <openvino/op/constant.hpp>
-#include <openvino/runtime/tensor.hpp>
+#include <cstdint>  // 引入 cstdint 头文件
+#include <openvino/op/constant.hpp>  // 引入 openvino/op/constant.hpp 头文件
+#include <openvino/runtime/tensor.hpp>  // 引入 openvino/runtime/tensor.hpp 头文件
 
-void unpack_32_4(const uint8_t* data, uint8_t* dst);
+void unpack_32_4(const uint8_t* data, uint8_t* dst);  // unpack_32_4
 
 void extract_q4_0_data(const ggml_tensor * tensor,
                        ov::Tensor & weights_arr,
@@ -24,7 +24,7 @@ void extract_q8_0_data(const ggml_tensor * tensor,
                        ov::Tensor & scales_arr,
                        ov::Tensor & zp_arr);
 
-void unpack_256_4(const uint8_t* data, uint8_t* dst);
+void unpack_256_4(const uint8_t* data, uint8_t* dst);  // unpack_256_4
 
 void extract_q4_k_data(const ggml_tensor * tensor,
                        ov::Tensor & weights_arr,
@@ -83,25 +83,25 @@ std::shared_ptr<ov::Node> requantize_to_buffers(const ggml_tensor * tensor,
 inline const char * extra_quant_type_name(ExtraQuantType t) {
     switch (t) {
     case ExtraQuantType::F16:
-        return "F16";
+        return "F16";  // 返回
     case ExtraQuantType::Q4_0_C:
-        return "Q4_0_C";
+        return "Q4_0_C";  // 返回
     case ExtraQuantType::Q4_0_128:
-        return "Q4_0_128";
+        return "Q4_0_128";  // 返回
     case ExtraQuantType::Q8_0_C:
-        return "Q8_0_C";
+        return "Q8_0_C";  // 返回
     case ExtraQuantType::Q8_0_32:
-        return "Q8_0_32";
+        return "Q8_0_32";  // 返回
     case ExtraQuantType::Q8_1_C:
-        return "Q8_1_C";
+        return "Q8_1_C";  // 返回
     default:
-        return "unknown";
+        return "unknown";  // 返回
     }
 }
 
 // Result from process_weight_tensor containing the weight node and tensors.
 // For quantized weights, also contains the extracted layout and scale/zp tensors.
-struct OvWeight {
+struct OvWeight {  // 结构体定义
     std::shared_ptr<ov::Node> weight_node;
     ggml_openvino_extracted_layout layout;  // Only meaningful for quantized (layout.total_size > 0)
     ov::Tensor weights;
@@ -141,9 +141,9 @@ void quantize_q8_0(const float * x,
                    int64_t k,
                    int64_t qk);
 
-namespace ov {
-namespace op {
-namespace util {
+namespace ov {  // 命名空间
+namespace op {  // 命名空间
+namespace util {  // 命名空间
 // From <openvino>/src/common/transformations/include/transformations/utils/utils.hpp
 bool get_single_value(const std::shared_ptr<ov::op::v0::Constant>& const_node,
                       float& value,

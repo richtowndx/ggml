@@ -1,12 +1,12 @@
-#include "ggml.h"
-#include "ggml-backend.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#include <cassert>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <vector>
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <vector>  // 引入 vector 头文件
 
 static void ggml_log_callback_default(ggml_log_level level, const char * text, void * user_data) {
     (void) level;
@@ -16,9 +16,9 @@ static void ggml_log_callback_default(ggml_log_level level, const char * text, v
 }
 
 // This is a simple model with two tensors a and b
-struct simple_model {
-    struct ggml_tensor * a {};
-    struct ggml_tensor * b {};
+struct simple_model {  // 结构体定义
+    struct ggml_tensor * a {};  // 结构体定义
+    struct ggml_tensor * b {};  // 结构体定义
 
     // the backend to perform the computation (CPU, CUDA, METAL)
     ggml_backend_t backend {};
@@ -65,11 +65,11 @@ void init_model(simple_model & model) {
 }
 
 // build the compute graph to perform a matrix multiplication
-struct ggml_cgraph * build_graph(simple_model& model) {
+struct ggml_cgraph * build_graph(simple_model& model) {  // 结构体定义
     size_t buf_size = ggml_tensor_overhead()*GGML_DEFAULT_GRAPH_SIZE + ggml_graph_overhead();
     model.buf.resize(buf_size);
 
-    struct ggml_init_params params0 = {
+    struct ggml_init_params params0 = {  // 结构体定义
         /*.mem_size   =*/ buf_size,
         /*.mem_buffer =*/ model.buf.data(),
         /*.no_alloc   =*/ true, // the tensors will be allocated later
@@ -92,11 +92,11 @@ struct ggml_cgraph * build_graph(simple_model& model) {
 
     ggml_free(ctx);
 
-    return gf;
+    return gf;  // 返回
 }
 
 // compute with backend
-struct ggml_tensor * compute(simple_model & model, struct ggml_cgraph * gf) {
+struct ggml_tensor * compute(simple_model & model, struct ggml_cgraph * gf) {  // 结构体定义
     ggml_backend_sched_reset(model.sched);
     ggml_backend_sched_alloc_graph(model.sched, gf);
 
@@ -108,7 +108,7 @@ struct ggml_tensor * compute(simple_model & model, struct ggml_cgraph * gf) {
     ggml_backend_sched_graph_compute(model.sched, gf);
 
     // in this case, the output tensor is the last one in the graph
-    return ggml_graph_node(gf, -1);
+    return ggml_graph_node(gf, -1);  // ggml_graph_node
 }
 
 int main(void) {
@@ -149,5 +149,5 @@ int main(void) {
     ggml_backend_sched_free(model.sched);
     ggml_backend_free(model.backend);
     ggml_backend_free(model.cpu_backend);
-    return 0;
+    return 0;  // 返回
 }

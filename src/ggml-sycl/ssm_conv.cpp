@@ -1,9 +1,9 @@
-#include "ssm_conv.hpp"
-#include "common.hpp"
+#include "ssm_conv.hpp"  // 引入 ssm_conv.hpp 头文件
+#include "common.hpp"  // 引入 common.hpp 头文件
 
-#include <cstdio>
+#include <cstdio>  // 引入 cstdio 头文件
 
-using namespace sycl;
+using namespace sycl;  // using 声明
 
 static void kernel_ssm_conv(
     queue &q,
@@ -33,7 +33,7 @@ static void kernel_ssm_conv(
             [=](nd_item<1> item) {
                 const size_t idx = item.get_global_id(0);
                 if (idx >= total_work) {
-                    return;
+                    return;  // 返回
                 }
 
                 const int channel = static_cast<int>(idx % d_inner);

@@ -10,13 +10,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "ggml-impl.h"
-#include "common.hpp"
-#include "dequantize.hpp"
-#include "getrows.hpp"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "common.hpp"  // 引入 common.hpp 头文件
+#include "dequantize.hpp"  // 引入 dequantize.hpp 头文件
+#include "getrows.hpp"  // 引入 getrows.hpp 头文件
 
 
-template<int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+template<int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>  // 模板
 static void k_get_rows(
             const void * src0, const int32_t * src1, dst_t * dst,
             int64_t ne00, /*int64_t ne01, int64_t ne02, int64_t ne03,*/
@@ -39,7 +39,7 @@ static void k_get_rows(
                     ne12;
 
     if (i00 >= ne00) {
-        return;
+        return;  // 返回
     }
 
     const int i01 = src1[i10*s10 + i11*s11 + i12*s12];
@@ -60,7 +60,7 @@ static void k_get_rows(
     dst_row[iybs + iqs + y_offset] = v.y();
 }
 
-template<typename src0_t, typename dst_t>
+template<typename src0_t, typename dst_t>  // 模板
 static void k_get_rows_float(
             const src0_t * src0, const int32_t * src1, dst_t * dst,
             int64_t ne00, /*int64_t ne01, int64_t ne02, int64_t ne03,*/
@@ -82,7 +82,7 @@ static void k_get_rows_float(
                     ne12;
 
     if (i00 >= ne00) {
-        return;
+        return;  // 返回
     }
 
     const int i01 = src1[i10*s10 + i11*s11 + i12*s12];
@@ -93,7 +93,7 @@ static void k_get_rows_float(
     dst_row[i00] = src0_row[i00];
 }
 
-template <int qk, int qr, dequantize_kernel_t dq>
+template <int qk, int qr, dequantize_kernel_t dq>  // 模板
 static void get_rows_sycl(ggml_backend_sycl_context & ctx, const ggml_tensor *src0, const ggml_tensor *src1,
                           ggml_tensor *dst, const void *src0_dd,
                           const int32_t *src1_dd, float *dst_dd,
@@ -129,7 +129,7 @@ static void get_rows_sycl(ggml_backend_sycl_context & ctx, const ggml_tensor *sr
     GGML_UNUSED(ctx);
 }
 
-template <typename src0_t>
+template <typename src0_t>  // 模板
 static void get_rows_sycl_float(ggml_backend_sycl_context & ctx, const ggml_tensor *src0,
                                 const ggml_tensor *src1, ggml_tensor *dst,
                                 const src0_t *src0_dd, const int32_t *src1_dd,

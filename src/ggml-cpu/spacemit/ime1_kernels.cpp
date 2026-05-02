@@ -1,17 +1,17 @@
-#include "ggml.h"
-#include "ime_kernels.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ime_kernels.h"  // 引入 ime_kernels.h 头文件
 
-#include <algorithm>
-#include <cmath>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cmath>  // 引入 cmath 头文件
 
 // clang-format off
-#if defined(__GNUC__)
+#if defined(__GNUC__)  // 条件编译
 #pragma GCC diagnostic ignored "-Woverlength-strings"
 #pragma GCC diagnostic ignored "-Wcast-qual"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
+#endif  // 条件编译结束
 // clang-format on
-namespace sqnbitgemm_spacemit_ime {
+namespace sqnbitgemm_spacemit_ime {  // 命名空间
 
 #define QUANTIZEM4ROW_KERNEL                           \
     "vmv.s.x            v16, zero                \n\t" \
@@ -75,7 +75,7 @@ namespace sqnbitgemm_spacemit_ime {
     "vsetvli            t0, t1, e8, mf4          \n\t" \
     "vse8.v             v31, (s1)                \n\t"
 
-namespace ime1 {
+namespace ime1 {  // 命名空间
 void quantize_a_4row_i8(size_t BlkLen, const float * A, size_t CountK, std::byte * QuantA) {
     constexpr float range_max_reciprocal = 1.0f / ((1 << 7) - 1);
     const float     fone                 = 1.0f;
@@ -369,7 +369,7 @@ void quantize_a_row_i8(size_t BlkLen, const float * A, size_t CountK, std::byte 
             QuantAData_offset[k] = 0;
         }
 
-        return;
+        return;  // 返回
     }
 
     if (BlkLen != 32 || BlkLen != 64 || BlkLen != 128) {
@@ -1167,7 +1167,7 @@ void quantize_a_row_i8(size_t BlkLen, const float * A, size_t CountK, std::byte 
 
 }  // namespace ime1
 
-namespace {
+namespace {  // 命名空间
 #define SQ4BIT_KERNEL_COMP_1x8x2_4X8X4          \
     "vmadot       v16, v14, v0            \n\t" \
     "vmadot       v18, v14, v1            \n\t" \
@@ -1450,7 +1450,7 @@ namespace {
     "vrgather.vv  v15, v11, v1            \n\t" \
     "vadd.vi      v1, v1, -12             \n\t"
 
-template <bool HasZeroPoint>
+template <bool HasZeroPoint>  // 模板
 void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t            BlkLen,
                                                 const std::byte * QuantA,
                                                 const std::byte * QuantBData,
@@ -1823,7 +1823,7 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t            BlkLen,
     }
 }
 
-template <bool HasZeroPoint>
+template <bool HasZeroPoint>  // 模板
 void SQ4BitGemmM4Kernel_CompInt8_Impl(size_t            BlkLen,
                                       const std::byte * QuantA,
                                       const std::byte * QuantBData,
@@ -2194,7 +2194,7 @@ void SQ4BitGemmM4Kernel_CompInt8_Impl(size_t            BlkLen,
     }
 }
 
-template <bool HasZeroPoint>
+template <bool HasZeroPoint>  // 模板
 void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t            BlkLen,
                                                 const std::byte * QuantA,
                                                 const std::byte * QuantBData,
@@ -2657,7 +2657,7 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t            BlkLen,
     }
 }
 
-template <bool HasZeroPoint>
+template <bool HasZeroPoint>  // 模板
 void SQ4BitGemmM1Kernel_CompInt8_Impl(size_t            BlkLen,
                                       const std::byte * QuantA,
                                       const std::byte * QuantBData,
@@ -3106,7 +3106,7 @@ void SQ4BitGemmM1Kernel_CompInt8_Impl(size_t            BlkLen,
     }
 }
 
-template <bool HasZeroPoint>
+template <bool HasZeroPoint>  // 模板
 inline void SQ4BitGemmM4Kernel_CompInt8_DispatchOnBlkLen(size_t            BlkLen,
                                                          const std::byte * QuantA,
                                                          const std::byte * QuantBData,
@@ -3129,7 +3129,7 @@ inline void SQ4BitGemmM4Kernel_CompInt8_DispatchOnBlkLen(size_t            BlkLe
     }
 }
 
-template <bool HasZeroPoint>
+template <bool HasZeroPoint>  // 模板
 inline void SQ4BitGemmM1Kernel_CompInt8_DispatchOnBlkLen(size_t            BlkLen,
                                                          const std::byte * QuantA,
                                                          const std::byte * QuantBData,
@@ -3153,7 +3153,7 @@ inline void SQ4BitGemmM1Kernel_CompInt8_DispatchOnBlkLen(size_t            BlkLe
 
 }  // namespace
 
-namespace ime1 {
+namespace ime1 {  // 命名空间
 size_t gemm_kernel_i8i4(size_t            BlkLen,
                         const std::byte * QuantA,
                         const std::byte * QuantBData,
@@ -3179,7 +3179,7 @@ size_t gemm_kernel_i8i4(size_t            BlkLen,
                                                                 QuantBZeroPoint, C, CountM, CountN, BlockCountK, Bias,
                                                                 ldc, ScaleStride);
         }
-        return 4;
+        return 4;  // 返回
     } else {
         if (QuantBZeroPoint != nullptr) {
             SQ4BitGemmM1Kernel_CompInt8_DispatchOnBlkLen<true>(BlkLen, QuantA, QuantBData, QuantBScale, QuantBZeroPoint,
@@ -3189,7 +3189,7 @@ size_t gemm_kernel_i8i4(size_t            BlkLen,
                                                                 QuantBZeroPoint, C, CountM, CountN, BlockCountK, Bias,
                                                                 ldc, ScaleStride);
         }
-        return 1;
+        return 1;  // 返回
     }
 }
 }  // namespace ime1

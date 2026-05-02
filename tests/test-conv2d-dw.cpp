@@ -1,14 +1,14 @@
-#include <ggml.h>
-#include <ggml-cpu.h>
-#include <ggml-alloc.h>
-#include <ggml-backend.h>
-#include <ggml-cpp.h>
+#include <ggml.h>  // 引入 ggml.h 头文件
+#include <ggml-cpu.h>  // 引入 ggml-cpu.h 头文件
+#include <ggml-alloc.h>  // 引入 ggml-alloc.h 头文件
+#include <ggml-backend.h>  // 引入 ggml-backend.h 头文件
+#include <ggml-cpp.h>  // 引入 ggml-cpp.h 头文件
 
-#include <cassert>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <vector>
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <vector>  // 引入 vector 头文件
 
 std::vector<float> f32_range(int n, float start, float end) {
     std::vector<float> values(n);
@@ -16,7 +16,7 @@ std::vector<float> f32_range(int n, float start, float end) {
     for (int i = 0; i < n; i++) {
         values[i] = start + i * step;
     }
-    return values;
+    return values;  // 返回
 }
 
 // Most straightforward implementation without any optimizations
@@ -51,21 +51,21 @@ std::vector<float> conv_2d_dw_reference(
             }
         }
     }
-    return dst_data;
+    return dst_data;  // 返回
 }
 
 bool check_equal(const std::vector<float> & result, const std::vector<float> & expected) {
     if (result.size() != expected.size()) {
         printf("result.size() = %d, expected.size() = %d\n", (int)result.size(), (int)expected.size());
-        return false;
+        return false;  // 返回
     }
     for (int i = 0; i < result.size(); i++) {
         if(std::abs(result[i] - expected[i]) > 1e-5) {
             printf("result[%d] %f != %f expected[%d]\n", i, result[i], expected[i], i);
-            return false;
+            return false;  // 返回
         }
     }
-    return true;
+    return true;  // 返回
 }
 
 bool test_conv_2d_dw(
@@ -138,7 +138,7 @@ bool test_conv_2d_dw(
     printf("ggml_conv_2d_dw(channels=%d, kernel=%dx%d, stride=%d, pad=%d, dilation=%d, layout=%s): %s\n",
         channels, kernel_size, kernel_size, stride, pad, dilation, contiguous_channels ? "CWHN" : "WHCN",
         passed ? "\033[32mPASSED\033[0m" : "\033[31mFAILED\033[0m");
-    return passed;
+    return passed;  // 返回
 }
 
 int main(int argc, char ** argv) {
@@ -149,5 +149,5 @@ int main(int argc, char ** argv) {
     passed = test_conv_2d_dw(42, 3, 2, 1, 1, true) && passed;
     passed = test_conv_2d_dw(8, 5, 1, 2, 2, false) && passed;
     passed = test_conv_2d_dw(8, 5, 1, 2, 2, true) && passed;
-    return passed ? 0 : 1;
+    return passed ? 0 : 1;  // 返回
 }

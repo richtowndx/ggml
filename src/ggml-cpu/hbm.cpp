@@ -1,18 +1,18 @@
-#ifdef GGML_USE_CPU_HBM
+#ifdef GGML_USE_CPU_HBM  // 如果定义了 GGML_USE_CPU_HBM 则编译
 
-#include "ggml-backend.h"
-#include "ggml-backend-impl.h"
-#include "ggml-cpu.h"
-#include "ggml-impl.h"
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
 
-#include "hbm.h"
+#include "hbm.h"  // 引入 hbm.h 头文件
 
 // buffer type HBM
 
-#include <hbwmalloc.h>
+#include <hbwmalloc.h>  // 引入 hbwmalloc.h 头文件
 
 static const char * ggml_backend_cpu_hbm_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "CPU_HBM";
+    return "CPU_HBM";  // 返回
 
     GGML_UNUSED(buft);
 }
@@ -27,14 +27,14 @@ static ggml_backend_buffer_t ggml_backend_cpu_hbm_buffer_type_alloc_buffer(ggml_
     int    result = hbw_posix_memalign(&ptr, ggml_backend_cpu_buffer_type_get_alignment(buft), size);
     if (result != 0) {
         GGML_LOG_ERROR("failed to allocate HBM buffer of size %zu\n", size);
-        return NULL;
+        return NULL;  // 返回
     }
 
     ggml_backend_buffer_t buffer = ggml_backend_cpu_buffer_from_ptr(ptr, size);
     buffer->buft                 = buft;
     buffer->iface.free_buffer    = ggml_backend_cpu_hbm_buffer_free_buffer;
 
-    return buffer;
+    return buffer;  // 返回
 }
 
 ggml_backend_buffer_type_t ggml_backend_cpu_hbm_buffer_type(void) {
@@ -50,6 +50,6 @@ ggml_backend_buffer_type_t ggml_backend_cpu_hbm_buffer_type(void) {
         /* .context  = */ nullptr,
     };
 
-    return &ggml_backend_cpu_buffer_type_hbm;
+    return &ggml_backend_cpu_buffer_type_hbm;  // 返回
 }
-#endif
+#endif  // 条件编译结束

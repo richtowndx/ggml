@@ -1,21 +1,21 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "ggml-impl.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
 
-#include <cassert>
-#include <cstring>
+#include <cassert>  // 引入 cassert 头文件
+#include <cstring>  // 引入 cstring 头文件
 
-#define likely(x)   __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
+#define likely(x)   __builtin_expect(!!(x), 1)  // 宏定义 likely
+#define unlikely(x) __builtin_expect(!!(x), 0)  // 宏定义 unlikely
 
-struct apir_encoder {
+struct apir_encoder {  // 结构体定义
     char *       cur;
     const char * start;
     const char * end;
     bool         fatal;
 };
 
-struct apir_decoder {
+struct apir_decoder {  // 结构体定义
     const char * cur;
     const char * end;
     bool         fatal;
@@ -32,7 +32,7 @@ static apir_decoder apir_new_decoder(const char * ptr, size_t size) {
         .fatal = false,
     };
 
-    return dec;
+    return dec;  // 返回
 }
 
 static apir_encoder apir_new_encoder(char * ptr, size_t size) {
@@ -43,7 +43,7 @@ static apir_encoder apir_new_encoder(char * ptr, size_t size) {
         .fatal = false,
     };
 
-    return enc;
+    return enc;  // 返回
 }
 
 /*
@@ -59,7 +59,7 @@ static inline void apir_encoder_set_fatal(apir_encoder * enc) {
 }
 
 static inline bool apir_encoder_get_fatal(const apir_encoder * enc) {
-    return enc->fatal;
+    return enc->fatal;  // 返回
 }
 
 static inline void apir_decoder_reset_fatal(apir_decoder * dec) {
@@ -71,7 +71,7 @@ static inline void apir_decoder_set_fatal(apir_decoder * dec) {
 }
 
 static inline bool apir_decoder_get_fatal(const apir_decoder * dec) {
-    return dec->fatal;
+    return dec->fatal;  // 返回
 }
 
 /*
@@ -85,12 +85,12 @@ static inline bool apir_decoder_peek_internal(apir_decoder * dec, size_t size, v
         GGML_LOG_ERROR("%s: reading too much from the decoder ...\n", __func__);
         apir_decoder_set_fatal(dec);
         memset(val, 0, val_size);
-        return false;
+        return false;  // 返回
     }
 
     /* we should not rely on the compiler to optimize away memcpy... */
     memcpy(val, dec->cur, val_size);
-    return true;
+    return true;  // 返回
 }
 
 static inline void apir_decoder_peek(apir_decoder * dec, size_t size, void * val, size_t val_size) {
@@ -101,12 +101,12 @@ static inline const void * apir_decoder_use_inplace(apir_decoder * dec, size_t s
     if (unlikely(size > (size_t) (dec->end - dec->cur))) {
         GGML_LOG_ERROR("%s: reading too much from the decoder ...\n", __func__);
         apir_decoder_set_fatal(dec);
-        return NULL;
+        return NULL;  // 返回
     }
     const void * addr = dec->cur;
     dec->cur += size;
 
-    return addr;
+    return addr;  // 返回
 }
 
 /*
@@ -128,7 +128,7 @@ static inline char * apir_encoder_write(apir_encoder * enc, size_t size, const v
     memcpy(write_addr, val, val_size);
     enc->cur += size;
 
-    return write_addr;
+    return write_addr;  // 返回
 }
 
 /*
@@ -221,24 +221,24 @@ static inline uint64_t apir_decode_array_size(apir_decoder * dec, uint64_t expec
         apir_decoder_set_fatal(dec);
         size = 0;
     }
-    return size;
+    return size;  // 返回
 }
 
 static inline uint64_t apir_decode_array_size_unchecked(apir_decoder * dec) {
     uint64_t size;
     apir_decode_uint64_t(dec, &size);
-    return size;
+    return size;  // 返回
 }
 
 /* non-array pointer */
 
 static inline bool apir_encode_simple_pointer(apir_encoder * enc, const void * val) {
     apir_encode_array_size(enc, val ? 1 : 0);
-    return val;
+    return val;  // 返回
 }
 
 static inline bool apir_decode_simple_pointer(apir_decoder * dec) {
-    return apir_decode_array_size_unchecked(dec);
+    return apir_decode_array_size_unchecked(dec);  // apir_decode_array_size_unchecked
 }
 
 /* uint32_t */
@@ -329,10 +329,10 @@ static inline void * apir_decoder_alloc_array(size_t size, size_t count) {
     size_t alloc_size;
     if (unlikely(__builtin_mul_overflow(size, count, &alloc_size))) {
         GGML_LOG_ERROR("%s: overflow in array allocation of %zu * %zu bytes\n", __func__, size, count);
-        return NULL;
+        return NULL;  // 返回
     }
 
-    return malloc(alloc_size);
+    return malloc(alloc_size);  // malloc
 }
 
 /* bool */

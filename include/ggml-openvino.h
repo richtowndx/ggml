@@ -1,14 +1,14 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "ggml-backend.h"
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#include <cstring>
+#include <cstring>  // 引入 cstring 头文件
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
-#define GGML_OPENVINO_NAME "OPENVINO"
+#define GGML_OPENVINO_NAME "OPENVINO"  // 宏定义 GGML_OPENVINO_NAME
 
 // backend API
 GGML_BACKEND_API ggml_backend_t ggml_backend_openvino_init(int device);
@@ -32,6 +32,6 @@ GGML_BACKEND_API int ggml_backend_openvino_get_device_count(void);
 
 GGML_BACKEND_API ggml_backend_reg_t ggml_backend_openvino_reg(void);
 
-#ifdef __cplusplus
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束

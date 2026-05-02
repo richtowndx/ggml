@@ -1,20 +1,20 @@
-#include "ggml.h"
-#include "utils.hpp"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "utils.hpp"  // 引入 utils.hpp 头文件
 
 zdnn_data_types ggml_zdnn_type_mapping(ggml_type type) {
     switch (type) {
         case GGML_TYPE_F32:
-            return FP32;
+            return FP32;  // 返回
         case GGML_TYPE_F16:
-            return FP16;
+            return FP16;  // 返回
         case GGML_TYPE_BF16:
-            return BFLOAT;
+            return BFLOAT;  // 返回
         case GGML_TYPE_Q8_0:
-            return INT8;
+            return INT8;  // 返回
         case GGML_TYPE_I8:
-            return INT8;
+            return INT8;  // 返回
         case GGML_TYPE_I32:
-            return INT32;
+            return INT32;  // 返回
         default:
             GGML_ABORT("%s: fatal: unable to determine zTensor data type",
                        __func__);

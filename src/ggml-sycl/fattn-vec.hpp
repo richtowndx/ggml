@@ -1,37 +1,37 @@
-#ifndef GGML_SYCL_FATTN_VEC_HPP
-#define GGML_SYCL_FATTN_VEC_HPP
+#ifndef GGML_SYCL_FATTN_VEC_HPP  // 如果未定义 GGML_SYCL_FATTN_VEC_HPP 则编译
+#define GGML_SYCL_FATTN_VEC_HPP  // 宏定义 GGML_SYCL_FATTN_VEC_HPP
 
-#include <sycl/sycl.hpp>
-#include <sycl/ext/oneapi/work_group_static.hpp>
-#include <iostream>
-#include <iomanip>
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
+#include <sycl/ext/oneapi/work_group_static.hpp>  // 引入 sycl/ext/oneapi/work_group_static.hpp 头文件
+#include <iostream>  // 引入 iostream 头文件
+#include <iomanip>  // 引入 iomanip 头文件
 
-#include "dpct/helper.hpp"
-#include "common.hpp"
-#include "ggml.h"
-#include "fattn-common.hpp"
-#include <cmath>
-#include <float.h>
+#include "dpct/helper.hpp"  // 引入 dpct/helper.hpp 头文件
+#include "common.hpp"  // 引入 common.hpp 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "fattn-common.hpp"  // 引入 fattn-common.hpp 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <float.h>  // 引入 float.h 头文件
 
-namespace syclex = sycl::ext::oneapi::experimental;
+namespace syclex = sycl::ext::oneapi::experimental;  // 命名空间
 
 static int ggml_sycl_fattn_vec_get_nthreads_host(const int cc) {
-    return 128;
+    return 128;  // 返回
     GGML_UNUSED(cc);
 }
 
 static constexpr int ggml_sycl_fattn_vec_get_nthreads_device() {
-    return 128;
+    return 128;  // 返回
 }
 
 // Currenlty llvm with the amdgcn target dose not support unrolling loops
 // that contain a break that can not be resolved at compile time.
-#ifdef __clang__
+#ifdef __clang__  // 如果定义了 __clang__ 则编译
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpass-failed"
-#endif // __clang__
+#endif // __clang__  // 条件编译结束
 
-template <int D,
+template <int D,  // 模板
           int ncols,
           int type_K,
           int type_V,
@@ -74,7 +74,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
                         const int32_t nb31,
                         const int32_t nb32,
                         const int64_t nb33) {
-#ifdef SYCL_FLASH_ATTN
+#ifdef SYCL_FLASH_ATTN  // 如果定义了 SYCL_FLASH_ATTN 则编译
     // Skip unused kernel variants for faster compilation:
 
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
@@ -88,7 +88,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
                   nb21, nb22, nb23,
                   ne31, ne32, ne33,
                   nb31, nb32, nb33);
-        return;
+        return;  // 返回
     }
 
     //In this kernel Q, K, V are matrices while i, j, k are matrix indices.
@@ -111,11 +111,11 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
 
     constexpr vec_dot_KQ_t vec_dot_KQ = get_vec_dot_KQ<type_K, D, nthreads_KQ, warp_size>();
     constexpr bool Q_q8_1 = type_K != GGML_TYPE_F16;
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     constexpr dequantize_V_t dequantize_V = get_dequantize_V<type_V, sycl::half, V_rows_per_thread>();
-#else
+#else  // 否则
     constexpr dequantize_V_t dequantize_V = get_dequantize_V<type_V, float, V_rows_per_thread>();
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 
     const int ic0 = item_ct1.get_group(2) * ncols;  // Index of the Q/QKV column to work on.
 
@@ -140,7 +140,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
 
     constexpr size_t lsm_size1 = ncols * warp_size;
     constexpr size_t lsm_size2 = ncols * warp_size;
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     sycl::half2 VKQ[ncols][(D / 2) / nthreads_V] = { { { 0.0f, 0.0f } } };
     constexpr size_t lsm_size3 = (ne_KQ > ne_combine ? ne_KQ : ne_combine);
     constexpr size_t local_share_mem_size = (lsm_size1 + lsm_size2)*sizeof(float) + lsm_size3*sizeof(sycl::half);
@@ -152,7 +152,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
     sycl::half* KQ = (sycl::half*)(KQ_sum_shared + lsm_size2);
 
 
-#else
+#else  // 否则
     sycl::float2 VKQ[ncols][(D/2)/nthreads_V] = {{{0.0f, 0.0f}}};
 
     constexpr size_t lsm_size3 = (ne_KQ > ne_combine ? ne_KQ : ne_combine);
@@ -164,7 +164,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
     float *KQ_sum_shared = KQ_max_shared+lsm_size1;
     float* KQ = KQ_sum_shared + lsm_size2;
 
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 
     float KQ_max[ncols];
     float KQ_sum[ncols];
@@ -175,11 +175,11 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
     }
 
     // Convert Q to float2 (f16 K) or q8_1 (quantized K) and store in registers:
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     sycl::half2 Q_reg[ncols][(D / 2) / nthreads_KQ] = {{{0.0f, 0.0f}}};  // Will be initialized completely.
-#else
+#else  // 否则
     sycl::float2 Q_reg[ncols][(D/2)/nthreads_KQ] = {{{0.0f, 0.0f}}}; // May be only partially initialized.
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
     int    Q_i32[ncols][1 > D/(sizeof(int)*nthreads_KQ) ? 1 : D/(sizeof(int)*nthreads_KQ)];
     sycl::float2 Q_ds[ncols][1 > D / (sizeof(int) * nthreads_KQ) ? 1 : D / (sizeof(int) * nthreads_KQ)];
     if constexpr (Q_q8_1) {
@@ -240,7 +240,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
         item_ct1.barrier(sycl::access::fence_space::local_space);
 
     } else {
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
         const sycl::half2 scale_h2 = sycl::half2(scale, scale);
 #pragma unroll
         for (int j = 0; j < ncols; ++j) {
@@ -268,7 +268,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
                 Q_reg[j][k] *= scale_h2;
             }
         }
-#else
+#else  // 否则
 #pragma unroll
         for (int j = 0; j < ncols; ++j) {
             const sycl::float2 * Q_j = (const sycl::float2 *) (Q + j*nb01);
@@ -286,7 +286,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
                 Q_reg[j][k].y() *= scale;
             }
         }
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
     }
 
     const int k_VKQ_max = KV_max ? KV_max[sequence * item_ct1.get_group_range(2) + item_ct1.get_group(2)] : ne11;
@@ -355,19 +355,19 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
             KQ_sum[j] = KQ_sum[j]*KQ_max_scale + KQ_reg[j];
             KQ[j*nthreads + tid] = KQ_reg[j];
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
             const sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
 #pragma unroll
             for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
                 VKQ[j][i_VKQ_0/nthreads_V] *= KQ_max_scale_h2;
             }
-#else
+#else  // 否则
 #pragma unroll
             for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
                 VKQ[j][i_VKQ_0/nthreads_V].x() *= KQ_max_scale;
                 VKQ[j][i_VKQ_0/nthreads_V].y() *= KQ_max_scale;
             }
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
         }
 
         sycl::group_barrier(sycl::ext::oneapi::this_work_item::get_sub_group());
@@ -377,7 +377,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
             const int k = item_ct1.get_local_id(1) * warp_size + k0 +
                           (nthreads_V == warp_size ? 0 : item_ct1.get_local_id(2) / nthreads_V);
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
             sycl::half2 KQ_k[ncols];
 #pragma unroll
             for (int j = 0; j < ncols; ++j) {
@@ -398,7 +398,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
                     }
                 }
             }
-#else
+#else  // 否则
             float KQ_k[ncols];
 #pragma unroll
             for (int j = 0; j < ncols; ++j) {
@@ -418,7 +418,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
                     }
                 }
             }
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
         }
     }
 
@@ -438,19 +438,19 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
 
             KQ_sum[j] = KQ_sum[j] * KQ_max_scale +
                         (item_ct1.get_local_id(2) == 0 ? sycl::native::exp((float) (sink - KQ_max[j])) : 0.0f);
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
             const sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
 #pragma unroll
             for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
                 VKQ[j][i_VKQ_0/nthreads_V] *= KQ_max_scale_h2;
             }
-#else
+#else  // 否则
 #pragma unroll
             for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
                 VKQ[j][i_VKQ_0/nthreads_V].x() *= KQ_max_scale;
                 VKQ[j][i_VKQ_0/nthreads_V].y() *= KQ_max_scale;
             }
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
         }
     }
 
@@ -485,7 +485,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
         const float kqmax_scale = sycl::native::exp((float) (KQ_max[j_VKQ] - kqmax_new));
         KQ_max[j_VKQ] = kqmax_new;
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
         sycl::half2 * VKQ_tmp = (sycl::half2 *) KQ + item_ct1.get_local_id(1) * (V_cols_per_iter * D / 2) +
                                 (nthreads_V == warp_size ? 0 : item_ct1.get_local_id(2) / nthreads_V) * (D / 2);
 
@@ -503,7 +503,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
             ggml_sycl_memcpy_1<V_rows_per_thread * sizeof(sycl::half)>(VKQ_tmp + i_VKQ,
                                                                        &VKQ[j_VKQ][i_VKQ_0 / nthreads_V]);
         }
-#else
+#else  // 否则
         sycl::float2 * VKQ_tmp = (sycl::float2 *) KQ + item_ct1.get_local_id(1)*(V_cols_per_iter*D/2)
             + (nthreads_V == warp_size ? 0 : item_ct1.get_local_id(2) / nthreads_V)*(D/2);
 #pragma unroll
@@ -518,7 +518,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
             ggml_sycl_memcpy_1<V_rows_per_thread/2*sizeof(float)>(VKQ_tmp + i_VKQ,                       &VKQ[j_VKQ][i_VKQ_0/nthreads_V]);
             ggml_sycl_memcpy_1<V_rows_per_thread/2*sizeof(float)>(VKQ_tmp + i_VKQ + V_rows_per_thread/4, &VKQ[j_VKQ][i_VKQ_0/nthreads_V + V_rows_per_thread/4]);
         }
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 
         KQ_sum[j_VKQ] *= kqmax_scale;
         KQ_sum[j_VKQ] = warp_reduce_sum<warp_size>(KQ_sum[j_VKQ]);
@@ -563,7 +563,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
         dst_meta[((sequence * int(ne01.z()) + ic0 + tid) * ne02 + head) * item_ct1.get_group_range(1) +
                  item_ct1.get_group(1)] = make_float2(KQ_max[tid], KQ_sum[tid]);
     }
-#else
+#else  // 否则
     GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
         max_bias, m0, m1, n_head_log2, logit_softcap,
         ne00, ne01, ne02, ne03,
@@ -574,14 +574,14 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
               ne31, ne32, ne33,
               nb31, nb32, nb33);
 
-#endif // SYCL_FLASH_ATTN
+#endif // SYCL_FLASH_ATTN  // 条件编译结束
 }
-#ifdef __clang__
+#ifdef __clang__  // 如果定义了 __clang__ 则编译
 #pragma clang diagnostic pop
-#endif // __clang__
+#endif // __clang__  // 条件编译结束
 
 
-template <int D, int cols_per_block, int type_K, int type_V, bool use_logit_softcap>
+template <int D, int cols_per_block, int type_K, int type_V, bool use_logit_softcap>  // 模板
 void ggml_sycl_flash_attn_ext_vec_case_impl(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 
     const int warp_size = WARP_16_SIZE; //better performance than WARP_32_SIZE
@@ -601,7 +601,7 @@ void ggml_sycl_flash_attn_ext_vec_case_impl(ggml_backend_sycl_context & ctx, ggm
         ctx, dst, nwarps, nbytes_shared, D, need_f16_K, need_f16_V, false);
 }
 
-template <int D, int type_K, int type_V>
+template <int D, int type_K, int type_V>  // 模板
 void ggml_sycl_flash_attn_ext_vec_case(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     const ggml_tensor * KQV = dst;
     const ggml_tensor * Q   = dst->src[0];
@@ -618,7 +618,7 @@ void ggml_sycl_flash_attn_ext_vec_case(ggml_backend_sycl_context & ctx, ggml_ten
             constexpr bool use_logit_softcap = true;
             ggml_sycl_flash_attn_ext_vec_case_impl<D, cols_per_block, type_K, type_V, use_logit_softcap>(ctx, dst);
         }
-        return;
+        return;  // 返回
     }
 
     constexpr int cols_per_block = 2;
@@ -671,4 +671,4 @@ EXTERN_DECL_FATTN_VEC_CASES(512, GGML_TYPE_Q5_0)
 EXTERN_DECL_FATTN_VEC_CASES(512, GGML_TYPE_Q5_1)
 EXTERN_DECL_FATTN_VEC_CASES(512, GGML_TYPE_Q8_0)
 
-#endif // GGML_SYCL_FATTN_VEC_HPP
+#endif // GGML_SYCL_FATTN_VEC_HPP  // 条件编译结束

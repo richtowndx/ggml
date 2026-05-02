@@ -1,8 +1,8 @@
-#include "count-equal.hpp"
+#include "count-equal.hpp"  // 引入 count-equal.hpp 头文件
 
-#include <cstdint>
+#include <cstdint>  // 引入 cstdint 头文件
 
-template <typename T>
+template <typename T>  // 模板
 static void count_equal(const T *__restrict__ x, const T *__restrict__ y,
                         int64_t *__restrict__ dst, const int64_t dk,
                         const int64_t k) {
@@ -21,7 +21,7 @@ static void count_equal(const T *__restrict__ x, const T *__restrict__ y,
     nequal = warp_reduce_sum<WARP_SIZE>(nequal);
 
     if (item_ct1.get_local_id(2) != 0) {
-        return;
+        return;  // 返回
     }
 
     dpct::atomic_fetch_add<sycl::access::address_space::generic_space>(
@@ -29,7 +29,7 @@ static void count_equal(const T *__restrict__ x, const T *__restrict__ y,
 }
 
 void ggml_sycl_count_equal(ggml_backend_sycl_context &ctx, ggml_tensor *dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
 

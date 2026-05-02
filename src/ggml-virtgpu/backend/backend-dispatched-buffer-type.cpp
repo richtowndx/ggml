@@ -1,10 +1,10 @@
-#include "backend-dispatched.h"
-#include "backend-virgl-apir.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#include "backend-dispatched.h"  // 引入 backend-dispatched.h 头文件
+#include "backend-virgl-apir.h"  // 引入 backend-virgl-apir.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
 
-#include <cstdint>
+#include <cstdint>  // 引入 cstdint 头文件
 
 uint32_t backend_buffer_type_get_name(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
@@ -17,7 +17,7 @@ uint32_t backend_buffer_type_get_name(apir_encoder * enc, apir_decoder * dec, vi
     apir_encode_array_size(enc, string_size);
     apir_encode_char_array(enc, string, string_size);
 
-    return 0;
+    return 0;  // 返回
 }
 
 uint32_t backend_buffer_type_get_alignment(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -28,7 +28,7 @@ uint32_t backend_buffer_type_get_alignment(apir_encoder * enc, apir_decoder * de
     size_t value = buft->iface.get_alignment(buft);
     apir_encode_size_t(enc, &value);
 
-    return 0;
+    return 0;  // 返回
 }
 
 uint32_t backend_buffer_type_get_max_size(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -43,7 +43,7 @@ uint32_t backend_buffer_type_get_max_size(apir_encoder * enc, apir_decoder * dec
 
     apir_encode_size_t(enc, &value);
 
-    return 0;
+    return 0;  // 返回
 }
 
 /* APIR_COMMAND_TYPE_BUFFER_TYPE_IS_HOST is deprecated. Keeping the handler for backward compatibility. */
@@ -54,7 +54,7 @@ uint32_t backend_buffer_type_is_host(apir_encoder * enc, apir_decoder * dec, vir
 
     apir_encode_bool_t(enc, &is_host);
 
-    return 0;
+    return 0;  // 返回
 }
 
 uint32_t backend_buffer_type_alloc_buffer(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -75,7 +75,7 @@ uint32_t backend_buffer_type_alloc_buffer(apir_encoder * enc, apir_decoder * dec
         apir_track_backend_buffer(buffer);
     }
 
-    return 0;
+    return 0;  // 返回
 }
 
 uint32_t backend_buffer_type_get_alloc_size(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -89,7 +89,7 @@ uint32_t backend_buffer_type_get_alloc_size(apir_encoder * enc, apir_decoder * d
     if (op == nullptr) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Failed to decode tensor\n", __func__);
         apir_decoder_set_fatal(dec);
-        return 1;
+        return 1;  // 返回
     }
 
     size_t value;
@@ -101,5 +101,5 @@ uint32_t backend_buffer_type_get_alloc_size(apir_encoder * enc, apir_decoder * d
 
     apir_encode_size_t(enc, &value);
 
-    return 0;
+    return 0;  // 返回
 }

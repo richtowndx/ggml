@@ -1,17 +1,17 @@
-#include "ggml.h"
-#include "ggml-cpu.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
 
-#include <cassert>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <map>
-#include <string>
-#include <vector>
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <map>  // 引入 map 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
 
 // This is a simple model with two tensors a and b
-struct simple_model {
+struct simple_model {  // 结构体定义
     struct ggml_tensor * a;
     struct ggml_tensor * b;
 
@@ -30,7 +30,7 @@ void load_model(simple_model & model, float * a, float * b, int rows_A, int cols
         ctx_size += 1024; // some overhead
     }
 
-    struct ggml_init_params params {
+    struct ggml_init_params params {  // 结构体定义
             /*.mem_size   =*/ ctx_size,
             /*.mem_buffer =*/ NULL,
             /*.no_alloc   =*/ false, // NOTE: this should be false when using the legacy API
@@ -48,18 +48,18 @@ void load_model(simple_model & model, float * a, float * b, int rows_A, int cols
 }
 
 // build the compute graph to perform a matrix multiplication
-struct ggml_cgraph * build_graph(const simple_model& model) {
+struct ggml_cgraph * build_graph(const simple_model& model) {  // 结构体定义
     struct ggml_cgraph  * gf = ggml_new_graph(model.ctx);
 
     // result = a*b^T
     struct ggml_tensor * result = ggml_mul_mat(model.ctx, model.a, model.b);
 
     ggml_build_forward_expand(gf, result);
-    return gf;
+    return gf;  // 返回
 }
 
 // compute with backend
-struct ggml_tensor * compute(const simple_model & model) {
+struct ggml_tensor * compute(const simple_model & model) {  // 结构体定义
     struct ggml_cgraph * gf = build_graph(model);
 
     int n_threads = 1; // number of threads to perform some operations with multi-threading
@@ -67,7 +67,7 @@ struct ggml_tensor * compute(const simple_model & model) {
     ggml_graph_compute_with_ctx(model.ctx, gf, n_threads);
 
     // in this case, the output tensor is the last one in the graph
-    return ggml_graph_node(gf, -1);
+    return ggml_graph_node(gf, -1);  // ggml_graph_node
 }
 
 int main(void) {
@@ -123,5 +123,5 @@ int main(void) {
 
     // free memory
     ggml_free(model.ctx);
-    return 0;
+    return 0;  // 返回
 }

@@ -1,11 +1,11 @@
-#pragma once
+#pragma once  // 防止重复包含
 
 // clang-format off
-#include "virtgpu.h"
-#include "ggml-remoting.h"
-#include "backend/shared/apir_backend.h"
-#include "backend/shared/apir_cs_ggml.h"
-#include "ggml-backend-impl.h"
+#include "virtgpu.h"  // 引入 virtgpu.h 头文件
+#include "ggml-remoting.h"  // 引入 ggml-remoting.h 头文件
+#include "backend/shared/apir_backend.h"  // 引入 backend/shared/apir_backend.h 头文件
+#include "backend/shared/apir_cs_ggml.h"  // 引入 backend/shared/apir_cs_ggml.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
 // clang-format on
 
 #define REMOTE_CALL_PREPARE(gpu_dev_name, encoder_name, apir_command_type__)                                           \

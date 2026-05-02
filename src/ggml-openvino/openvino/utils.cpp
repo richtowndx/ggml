@@ -1,36 +1,36 @@
-#include "utils.h"
+#include "utils.h"  // 引入 utils.h 头文件
 
-#include "ggml-impl.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
 
-#include <cmath>
-#include <cstddef>
-#include <ctime>
-#include <memory>
-#include <openvino/op/add.hpp>
-#include <openvino/op/clamp.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/cos.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/maximum.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/sin.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/subtract.hpp>
-#include <openvino/op/transpose.hpp>
-#include <string>
+#include <cmath>  // 引入 cmath 头文件
+#include <cstddef>  // 引入 cstddef 头文件
+#include <ctime>  // 引入 ctime 头文件
+#include <memory>  // 引入 memory 头文件
+#include <openvino/op/add.hpp>  // 引入 openvino/op/add.hpp 头文件
+#include <openvino/op/clamp.hpp>  // 引入 openvino/op/clamp.hpp 头文件
+#include <openvino/op/convert.hpp>  // 引入 openvino/op/convert.hpp 头文件
+#include <openvino/op/cos.hpp>  // 引入 openvino/op/cos.hpp 头文件
+#include <openvino/op/divide.hpp>  // 引入 openvino/op/divide.hpp 头文件
+#include <openvino/op/gather.hpp>  // 引入 openvino/op/gather.hpp 头文件
+#include <openvino/op/maximum.hpp>  // 引入 openvino/op/maximum.hpp 头文件
+#include <openvino/op/multiply.hpp>  // 引入 openvino/op/multiply.hpp 头文件
+#include <openvino/op/reshape.hpp>  // 引入 openvino/op/reshape.hpp 头文件
+#include <openvino/op/shape_of.hpp>  // 引入 openvino/op/shape_of.hpp 头文件
+#include <openvino/op/sin.hpp>  // 引入 openvino/op/sin.hpp 头文件
+#include <openvino/op/squeeze.hpp>  // 引入 openvino/op/squeeze.hpp 头文件
+#include <openvino/op/subtract.hpp>  // 引入 openvino/op/subtract.hpp 头文件
+#include <openvino/op/transpose.hpp>  // 引入 openvino/op/transpose.hpp 头文件
+#include <string>  // 引入 string 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
 
 std::string getCurrentTime() {
     std::time_t now = std::time(nullptr);
     char buf[100];
     std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
-    return buf;
+    return buf;  // 返回
 }
 
 void num_inputs_check(const NodeContext & context, size_t min_inputs, size_t max_inputs) {
@@ -45,22 +45,22 @@ int non_cont_dim(std::vector<size_t> ne, std::vector<size_t> nb) {
     for (int i = dim; i > 0; i--) {
         bytes *= ne[i];
         if (bytes != nb[i - 1]) {
-            return i;
+            return i;  // 返回
         }
     }
-    return 0;
+    return 0;  // 返回
 }
 
 std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::op::v3::ShapeOf> & shape,
                                          const std::vector<int> & dims) {
-    using namespace ov::op;
+    using namespace ov::op;  // using 声明
     const auto zero = v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
     const auto dims_const = v0::Constant::create(ov::element::i32, ov::Shape{dims.size()}, dims);
     return std::make_shared<v8::Gather>(shape, dims_const, zero);
 }
 
 std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::Node> & node, const std::vector<int> & dims) {
-    return get_dimensions(std::make_shared<ov::op::v3::ShapeOf>(node), dims);
+    return get_dimensions(std::make_shared<ov::op::v3::ShapeOf>(node), dims);  // get_dimensions
 }
 
 OutputVector rename_outputs_with_suffix(const OutputVector & outputs, const std::string & suffix) {
@@ -72,10 +72,10 @@ OutputVector rename_outputs_with_suffix(const OutputVector & outputs, const std:
         node->set_friendly_name(name);
         // std::cout << name << "  " << output.get_partial_shape() << std::endl;
     }
-    return outputs;
+    return outputs;  // 返回
 }
 
-namespace {
+namespace {  // 命名空间
 ov::Output<ov::Node> rope_yarn_ramp_mix(int n_dims, const float corr_dims[2], float ext_factor) {
     int half_n_dims = n_dims / 2;
     std::vector<float> dim_ids_vec(half_n_dims);
@@ -94,13 +94,13 @@ ov::Output<ov::Node> rope_yarn_ramp_mix(int n_dims, const float corr_dims[2], fl
     auto ramp_inverted = std::make_shared<ov::op::v1::Subtract>(one, ramp_clamped);
     auto ext_factor_node = ov::op::v0::Constant::create(ov::element::f32, Shape{}, {ext_factor});
     auto ramp_mix = std::make_shared<ov::op::v1::Multiply>(ramp_inverted, ext_factor_node);
-    return ramp_mix;
+    return ramp_mix;  // 返回
 }
 
 float ggml_rope_yarn_corr_dim(int n_dims, int n_ctx_orig, float n_rot, float base) {
-#ifndef M_PI
-#    define M_PI 3.14159265358979323846
-#endif
+#ifndef M_PI  // 如果未定义 M_PI 则编译
+#    define M_PI 3.14159265358979323846  // 宏定义 M_PI
+#endif  // 条件编译结束
     return n_dims * logf(n_ctx_orig / (n_rot * 2 * (float) M_PI)) / (2 * logf(base));
 }
 
@@ -249,7 +249,7 @@ ov::Output<ov::Node> process_view_input(const NodeContext & context, int input_i
     auto stride = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
     auto axes = ov::op::v0::Constant::create(ov::element::i64, {1}, {context.is_stateful() ? 2 : 3});
     auto sliced = std::make_shared<ov::op::v8::Slice>(input, begin, end, stride, axes);
-    return sliced;
+    return sliced;  // 返回
 }
 
 }  // namespace ggml

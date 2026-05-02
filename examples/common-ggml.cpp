@@ -1,7 +1,7 @@
-#include "common-ggml.h"
+#include "common-ggml.h"  // 引入 common-ggml.h 头文件
 
-#include <regex>
-#include <map>
+#include <regex>  // 引入 regex 头文件
+#include <map>  // 引入 map 头文件
 
 static const std::map<std::string, enum ggml_ftype> GGML_FTYPE_MAP = {
     {"q4_0", GGML_FTYPE_MOSTLY_Q4_0},
@@ -22,20 +22,20 @@ void ggml_print_ftypes(FILE * fp) {
     }
 }
 
-enum ggml_ftype ggml_parse_ftype(const char * str) {
+enum ggml_ftype ggml_parse_ftype(const char * str) {  // 枚举定义
     enum ggml_ftype ftype;
     if (str[0] == 'q') {
         const auto it = GGML_FTYPE_MAP.find(str);
         if (it == GGML_FTYPE_MAP.end()) {
             fprintf(stderr, "%s: unknown ftype '%s'\n", __func__, str);
-            return GGML_FTYPE_UNKNOWN;
+            return GGML_FTYPE_UNKNOWN;  // 返回
         }
         ftype = it->second;
     } else {
         ftype = (enum ggml_ftype) atoi(str);
     }
 
-    return ftype;
+    return ftype;  // 返回
 }
 
 bool ggml_common_quantize_0(
@@ -77,13 +77,13 @@ bool ggml_common_quantize_0(
         case GGML_FTYPE_MOSTLY_Q1_0:
                 {
                     fprintf(stderr, "%s: invalid model type %d\n", __func__, ftype);
-                    return false;
+                    return false;  // 返回
                 }
     };
 
     if (!ggml_is_quantized(qtype)) {
         fprintf(stderr, "%s: invalid quantization type %d (%s)\n", __func__, qtype, ggml_type_name(qtype));
-        return false;
+        return false;  // 返回
     }
 
     size_t total_size_org = 0;
@@ -144,7 +144,7 @@ bool ggml_common_quantize_0(
         if (quantize) {
             if (ttype != GGML_TYPE_F32 && ttype != GGML_TYPE_F16) {
                 fprintf(stderr, "%s: unsupported ttype %d (%s) for integer quantization\n", __func__, ttype, ggml_type_name((ggml_type) ttype));
-                return false;
+                return false;  // 返回
             }
 
             if (ttype == GGML_TYPE_F16) {
@@ -220,7 +220,7 @@ bool ggml_common_quantize_0(
                 case GGML_TYPE_COUNT:
                     {
                         fprintf(stderr, "%s: unsupported quantization type %d (%s)\n", __func__, ttype, ggml_type_name((ggml_type) ttype));
-                        return false;
+                        return false;  // 返回
                     }
             }
 
@@ -240,5 +240,5 @@ bool ggml_common_quantize_0(
     printf("%s: model size  = %8.2f MB\n", __func__, total_size_org/1024.0/1024.0);
     printf("%s: quant size  = %8.2f MB | ftype = %d (%s)\n", __func__, total_size_new/1024.0/1024.0, ftype, ggml_type_name(qtype));
 
-    return true;
+    return true;  // 返回
 }

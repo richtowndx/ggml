@@ -1,16 +1,16 @@
-#include "ggml.h"
-#include "ggml-cpu.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <string.h>  // 引入 string.h 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
 
-struct ggml_context* make_ctx(void) {
-    struct ggml_init_params params = {
+struct ggml_context* make_ctx(void) {  // 结构体定义
+    struct ggml_init_params params = {  // 结构体定义
         .mem_size = 2 * 1024 * 1024,
     };
 
-    return ggml_init(params);
+    return ggml_init(params);  // ggml_init
 }
 
 void printf_tensor(struct ggml_tensor * t) {
@@ -244,5 +244,5 @@ void test_conv_transpose_2d(void) {
 int main(int argc, const char * argv[]) {
     test_conv_transpose_1d();
     test_conv_transpose_2d();
-    return 0;
+    return 0;  // 返回
 }

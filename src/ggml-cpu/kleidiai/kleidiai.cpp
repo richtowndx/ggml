@@ -1,61 +1,61 @@
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 // SPDX-License-Identifier: MIT
 //
-#include <arm_neon.h>
-#include <assert.h>
-#include <stdio.h>
-#include <atomic>
-#include <cfloat>
-#include <algorithm>
-#include <cmath>
-#include <stdexcept>
-#include <stdint.h>
-#include <string.h>
-#include <string>
-#include <vector>
-#include <array>
-#include <cstddef>
-#include <cstdint>
-#include <fstream>
-#include <set>
-#include <iostream>
-#include <climits>
-#if defined(__linux__)
-#include <asm/hwcap.h>
-#include <sys/auxv.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#elif defined(__APPLE__)
-#include <string_view>
-#include <sys/sysctl.h>
-#include <sys/types.h>
-#elif defined(_WIN32)
-#include <windows.h>
-#include <excpt.h>
-#endif
+#include <arm_neon.h>  // 引入 arm_neon.h 头文件
+#include <assert.h>  // 引入 assert.h 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <atomic>  // 引入 atomic 头文件
+#include <cfloat>  // 引入 cfloat 头文件
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <stdexcept>  // 引入 stdexcept 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
+#include <string.h>  // 引入 string.h 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
+#include <array>  // 引入 array 头文件
+#include <cstddef>  // 引入 cstddef 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <set>  // 引入 set 头文件
+#include <iostream>  // 引入 iostream 头文件
+#include <climits>  // 引入 climits 头文件
+#if defined(__linux__)  // 条件编译
+#include <asm/hwcap.h>  // 引入 asm/hwcap.h 头文件
+#include <sys/auxv.h>  // 引入 sys/auxv.h 头文件
+#include <sys/types.h>  // 引入 sys/types.h 头文件
+#include <sys/stat.h>  // 引入 sys/stat.h 头文件
+#include <unistd.h>  // 引入 unistd.h 头文件
+#elif defined(__APPLE__)  // 否则如果
+#include <string_view>  // 引入 string_view 头文件
+#include <sys/sysctl.h>  // 引入 sys/sysctl.h 头文件
+#include <sys/types.h>  // 引入 sys/types.h 头文件
+#elif defined(_WIN32)  // 否则如果
+#include <windows.h>  // 引入 windows.h 头文件
+#include <excpt.h>  // 引入 excpt.h 头文件
+#endif  // 条件编译结束
 
-#include "kleidiai.h"
+#include "kleidiai.h"  // 引入 kleidiai.h 头文件
 
-#include "ggml-cpu.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
-#include "ggml-threading.h"
-#include "traits.h"
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-threading.h"  // 引入 ggml-threading.h 头文件
+#include "traits.h"  // 引入 traits.h 头文件
 
-#include "kernels.h"
+#include "kernels.h"  // 引入 kernels.h 头文件
 
-#include "kai_common.h"
+#include "kai_common.h"  // 引入 kai_common.h 头文件
 
-#define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
+#define GGML_COMMON_DECL_CPP  // 宏定义 GGML_COMMON_DECL_CPP
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
 
 static constexpr int      GGML_KLEIDIAI_MAX_KERNEL_SLOTS = 2;
 static constexpr uint32_t GGML_KLEIDIAI_PACK_MAGIC       = 0x4b4c4149; // "KLAI"
 static constexpr uint16_t GGML_KLEIDIAI_PACK_VERSION     = 1;
 static constexpr size_t   GGML_KLEIDIAI_PACK_ALIGN       = 64;
 
-struct ggml_kleidiai_context {
+struct ggml_kleidiai_context {  // 结构体定义
     cpu_feature features;
     ggml_kleidiai_kernels * kernels_q4;
     ggml_kleidiai_kernels * kernels_q8;
@@ -65,28 +65,28 @@ struct ggml_kleidiai_context {
 
 static const char* cpu_feature_to_string(cpu_feature f) {
     if (f == CPU_FEATURE_NONE) {
-        return "NONE";
+        return "NONE";  // 返回
     } else if ((f & CPU_FEATURE_SME) == CPU_FEATURE_SME) {
-        return "SME";
+        return "SME";  // 返回
     } else if ((f & CPU_FEATURE_SVE) == CPU_FEATURE_SVE) {
-        return "SVE";
+        return "SVE";  // 返回
     }
     else if ((f & CPU_FEATURE_I8MM) == CPU_FEATURE_I8MM) {
-        return "I8MM";
+        return "I8MM";  // 返回
     } else if ((f & CPU_FEATURE_DOTPROD) == CPU_FEATURE_DOTPROD) {
-        return "DOTPROD";
+        return "DOTPROD";  // 返回
     }
     else {
-        return "UNKNOWN";
+        return "UNKNOWN";  // 返回
     }
 }
 
 static size_t detect_num_smcus() {
     if (!ggml_cpu_has_sme()) {
-        return 0;
+        return 0;  // 返回
     }
 
-#if defined(__linux__) && defined(__aarch64__)
+#if defined(__linux__) && defined(__aarch64__)  // 条件编译
     // Linux/aarch64: Best-effort count of Streaming Mode Compute Units (SMCUs) via SMIDR_EL1 sysfs.
     size_t num_private = 0;
     std::set<uint32_t> shared_ids;
@@ -132,7 +132,7 @@ static size_t detect_num_smcus() {
 
     return num_private + shared_ids.size();
 
-#elif defined(__APPLE__) && defined(__aarch64__)
+#elif defined(__APPLE__) && defined(__aarch64__)  // 否则如果
     // table for known M4 variants. Users can override via GGML_KLEIDIAI_SME=<n>.
     char chip_name[256] = {};
     size_t size = sizeof(chip_name);
@@ -140,7 +140,7 @@ static size_t detect_num_smcus() {
     if (sysctlbyname("machdep.cpu.brand_string", chip_name, &size, nullptr, 0) == 0) {
         const std::string brand(chip_name);
 
-        struct ModelSMCU { const char *match; size_t smcus; };
+        struct ModelSMCU { const char *match; size_t smcus; };  // 结构体定义
         static const ModelSMCU table[] = {
             { "M4 Ultra", 2 },
             { "M4 Max",   2 },
@@ -150,15 +150,15 @@ static size_t detect_num_smcus() {
 
         for (const auto &e : table) {
             if (brand.find(e.match) != std::string::npos) {
-                return e.smcus;
+                return e.smcus;  // 返回
             }
         }
     }
-    return 1;
+    return 1;  // 返回
 
-#else
-    return 1;
-#endif
+#else  // 否则
+    return 1;  // 返回
+#endif  // 条件编译结束
 }
 
 static int parse_uint_env(const char *s, const char *name, bool *ok) {
@@ -168,12 +168,12 @@ static int parse_uint_env(const char *s, const char *name, bool *ok) {
     if (end == s || *end != '\0') {
         GGML_LOG_WARN("kleidiai: invalid %s='%s' (expected integer)\n", name, s);
         *ok = false;
-        return 0;
+        return 0;  // 返回
     }
     if (v < 0 || v > INT_MAX) {
         GGML_LOG_WARN("kleidiai: out-of-range %s='%s'\n", name, s);
         *ok = false;
-        return 0;
+        return 0;  // 返回
     }
     *ok = true;
     return (int)v;
@@ -285,12 +285,12 @@ static void init_kleidiai_context(void) {
 }
 
 static inline int kleidiai_sme_thread_cap() {
-    return ctx.sme_thread_cap;
+    return ctx.sme_thread_cap;  // 返回
 }
 
 static inline size_t align_up(size_t value, size_t alignment) {
     if (alignment == 0) {
-        return value;
+        return value;  // 返回
     }
     const size_t remainder = value % alignment;
     return remainder == 0 ? value : value + (alignment - remainder);
@@ -298,15 +298,15 @@ static inline size_t align_up(size_t value, size_t alignment) {
 
 static inline bool kleidiai_pack_fallback_allowed() {
     if (ctx.sme_thread_cap <= 0) {
-        return false;
+        return false;  // 返回
     }
     if (ctx.thread_hint <= 0) {
-        return true;
+        return true;  // 返回
     }
-    return ctx.thread_hint > ctx.sme_thread_cap;
+    return ctx.thread_hint > ctx.sme_thread_cap;  // 返回
 }
 
-struct kleidiai_weight_header {
+struct kleidiai_weight_header {  // 结构体定义
     uint32_t magic;
     uint16_t version;
     uint16_t slot_count;
@@ -324,46 +324,46 @@ static inline const kleidiai_weight_header * kleidiai_weight_header_from_ptr(con
 
 static inline bool kleidiai_is_weight_header_valid(const kleidiai_weight_header * header) {
     if (!header) {
-        return false;
+        return false;  // 返回
     }
     if (header->magic != GGML_KLEIDIAI_PACK_MAGIC || header->version != GGML_KLEIDIAI_PACK_VERSION) {
-        return false;
+        return false;  // 返回
     }
     if (header->slot_count == 0 || header->slot_count > GGML_KLEIDIAI_MAX_KERNEL_SLOTS) {
-        return false;
+        return false;  // 返回
     }
-    return true;
+    return true;  // 返回
 }
 
 static inline uint8_t * kleidiai_weight_slot_ptr(kleidiai_weight_header * header, int slot) {
     if (!kleidiai_is_weight_header_valid(header)) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     if (slot < 0 || slot >= header->slot_count) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     return reinterpret_cast<uint8_t *>(header) + header->offsets[slot];
 }
 
 static inline const uint8_t * kleidiai_weight_slot_ptr(const kleidiai_weight_header * header, int slot) {
     if (!kleidiai_is_weight_header_valid(header)) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     if (slot < 0 || slot >= header->slot_count) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     return reinterpret_cast<const uint8_t *>(header) + header->offsets[slot];
 }
 
 static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_q4() {
-    return ctx.kernels_q4;
+    return ctx.kernels_q4;  // 返回
 }
 
 static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_q8() {
-    return ctx.kernels_q8;
+    return ctx.kernels_q8;  // 返回
 }
 
-template <typename SelectFallback>
+template <typename SelectFallback>  // 模板
 static int kleidiai_collect_kernel_chain_common(
         ggml_kleidiai_kernels * primary,
         cpu_feature features,
@@ -371,7 +371,7 @@ static int kleidiai_collect_kernel_chain_common(
         SelectFallback select_fallback) {
     int count = 0;
     if (!primary) {
-        return 0;
+        return 0;  // 返回
     }
     out[count++] = primary;
 
@@ -388,34 +388,34 @@ static int kleidiai_collect_kernel_chain_common(
         }
     }
 
-    return count;
+    return count;  // 返回
 }
 
 static int kleidiai_collect_kernel_chain(const struct ggml_tensor * op,
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
     ggml_kleidiai_kernels * primary = ggml_kleidiai_select_kernels(ctx.features, op);
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
+    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,  // 返回
         [&](cpu_feature mask) { return ggml_kleidiai_select_kernels(mask, op); });
 }
 
 static int kleidiai_collect_q4_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_q4();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
+    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,  // 返回
         [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_q4_0(mask); });
 }
 
 static int kleidiai_collect_q8_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_q8();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
+    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,  // 返回
         [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_q8_0(mask); });
 }
 
 static inline int64_t ggml_ne(const ggml_tensor * tensor, int dim) {
     GGML_ASSERT(dim >= 0 && dim < GGML_MAX_DIMS);
-    return tensor->ne[dim];
+    return tensor->ne[dim];  // 返回
 }
 
-namespace ggml::cpu::kleidiai {
+namespace ggml::cpu::kleidiai {  // 命名空间
 
 static size_t round_down(size_t x, size_t y) {
     return y == 0 ? x : x - (x % y);
@@ -433,16 +433,16 @@ static void transpose_f32kxn_f16nxk(size_t n, size_t k, float * dst, const uint1
     }
 }
 
-class tensor_traits : public ggml::cpu::tensor_traits {
+class tensor_traits : public ggml::cpu::tensor_traits {  // 类定义
     bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
         if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+            return false;  // 返回
         }
 
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
         const int slot_count = kleidiai_collect_kernel_chain(op, kernel_chain);
         if (slot_count == 0) {
-            return false;
+            return false;  // 返回
         }
 
         const bool is_gemv = op->src[1]->ne[1] == 1;
@@ -462,7 +462,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 kernel_info * kernel        = is_gemv ? &kernels->gemv : &kernels->gemm;
 
                 if (!lhs_info || !lhs_info->packed_size_ex || !kernel) {
-                    return false;
+                    return false;  // 返回
                 }
 
                 const size_t mr = kernel->get_mr();
@@ -477,11 +477,11 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             }
 
             if (!any_slot) {
-                return false;
+                return false;  // 返回
             }
 
             size = cursor;
-            return true;
+            return true;  // 返回
         }
 
         if (op->src[0]->type == GGML_TYPE_F16) {
@@ -498,7 +498,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 lhs_packing_info * lhs_info = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
                 kernel_info * kernel        = is_gemv ? &kernels->gemv : &kernels->gemm;
                 if (!lhs_info || !lhs_info->packed_size_ex || !kernels->rhs_info.packed_size_ex || !kernel) {
-                    return false;
+                    return false;  // 返回
                 }
 
                 const size_t mr = kernel->get_mr();
@@ -514,7 +514,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 ggml_kleidiai_kernels * kernels = kernel_chain[slot];
                 kernel_info * kernel = is_gemv ? &kernels->gemv : &kernels->gemm;
                 if (!kernel || !kernels->rhs_info.packed_size_ex) {
-                    return false;
+                    return false;  // 返回
                 }
                 cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
                 cursor += kernels->rhs_info.packed_size_ex(n, k, kernel->get_nr(), kernel->get_kr(), 0);
@@ -526,29 +526,29 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             cursor += n * sizeof(float);
 
             if (!any_slot) {
-                return false;
+                return false;  // 返回
             }
 
             size = cursor;
-            return true;
+            return true;  // 返回
         }
 
-        return false;
+        return false;  // 返回
     }
 
     bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * dst) override {
         if (dst->op == GGML_OP_MUL_MAT) {
             if (dst->src[0]->type == GGML_TYPE_Q4_0 || dst->src[0]->type == GGML_TYPE_Q8_0) {
-                return compute_forward_qx(params, dst);
+                return compute_forward_qx(params, dst);  // compute_forward_qx
             } else if (dst->src[0]->type == GGML_TYPE_F16) {
-                return compute_forward_fp16(params, dst);
+                return compute_forward_fp16(params, dst);  // compute_forward_fp16
             }
         } else if (dst->op == GGML_OP_GET_ROWS) {
             if (dst->src[0]->type == GGML_TYPE_Q4_0 || dst->src[0]->type == GGML_TYPE_Q8_0) {
-                return compute_forward_get_rows(params, dst);
+                return compute_forward_get_rows(params, dst);  // compute_forward_get_rows
             }
         }
-        return false;
+        return false;  // 返回
     }
 
     bool compute_forward_fp16(ggml_compute_params * params, struct ggml_tensor * dst) {
@@ -559,7 +559,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
 
         ggml_kleidiai_kernels *kernels = ggml_kleidiai_select_kernels(ctx.features, dst);
         if (!kernels) {
-            return false;
+            return false;  // 返回
         }
 
         const bool is_gemv = src1->ne[1] == 1;
@@ -568,7 +568,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
         GGML_ASSERT(kernel);
         if (!kernels->rhs_info.pack_func_ex ||
             !kernel->get_lhs_offset_ex || !kernel->get_rhs_packed_offset_ex || !kernel->run_kernel_ex) {
-            return false;
+            return false;  // 返回
         }
 
         const int nth = params->nth;
@@ -699,7 +699,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             }
         }
 
-        return true;
+        return true;  // 返回
     }
 
     bool compute_forward_qx(struct ggml_compute_params * params, struct ggml_tensor * dst) {
@@ -718,23 +718,23 @@ class tensor_traits : public ggml::cpu::tensor_traits {
 
         auto weight_for_slot = [&](int slot_index, size_t & size_out) -> const uint8_t * {
             if (slot_index < 0 || slot_index >= slot_total) {
-                return nullptr;
+                return nullptr;  // 返回
             }
             if (has_header) {
                 if (slot_index < header->slot_count) {
                     size_out = static_cast<size_t>(header->sizes[slot_index]);
-                    return kleidiai_weight_slot_ptr(header, slot_index);
+                    return kleidiai_weight_slot_ptr(header, slot_index);  // kleidiai_weight_slot_ptr
                 }
-                return nullptr;
+                return nullptr;  // 返回
             }
             if (slot_index == 0) {
                 size_out = ggml_nbytes(src0);
                 return static_cast<const uint8_t *>(src0->data);
             }
-            return nullptr;
+            return nullptr;  // 返回
         };
 
-        struct runtime_slot {
+        struct runtime_slot {  // 结构体定义
             int slot_index;
             ggml_kleidiai_kernels * kernels;
             kernel_info * kernel;
@@ -797,7 +797,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
         if (runtime_count == 0) {
             ggml_kleidiai_kernels * fallback = ggml_kleidiai_select_kernels(ctx.features, dst);
             if (!fallback) {
-                return false;
+                return false;  // 返回
             }
             kernel_info * kinfo      = is_gemv ? &fallback->gemv : &fallback->gemm;
             lhs_packing_info * linfo = is_gemv ? &fallback->gemv_lhs_info : &fallback->gemm_lhs_info;
@@ -805,7 +805,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             if (!kinfo || !linfo || !linfo->packed_size_ex || !linfo->pack_func_ex ||
                 !kinfo->get_rhs_packed_offset_ex || !kinfo->run_kernel_ex || !kinfo->get_dst_offset ||
                 !rinfo || !rinfo->pack_func_ex || !rinfo->packed_size_ex) {
-                return false;
+                return false;  // 返回
             }
             kernel_chain[0] = fallback;
             runtime[0] = {
@@ -943,7 +943,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             }
         }
         if (local_slot == -1) {
-            return false;
+            return false;  // 返回
         }
 
         const size_t k = ne00;
@@ -1107,7 +1107,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             }
         }
 
-        return true;
+        return true;  // 返回
     }
 
     bool compute_forward_get_rows(struct ggml_compute_params * params, struct ggml_tensor * dst) {
@@ -1153,13 +1153,13 @@ class tensor_traits : public ggml::cpu::tensor_traits {
         }
 
         if (!kernels) {
-            return false;
+            return false;  // 返回
         }
 
         rhs_packing_info * rhs_info = &kernels->rhs_info;
         kernel_info * kernel        = &kernels->gemm;
         if (!rhs_info->to_float || !kernel->get_nr) {
-            return false;
+            return false;  // 返回
         }
 
         const int64_t nc     = ne00;
@@ -1175,7 +1175,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             block_len = QK8_0;
             num_bytes_multiplier = sizeof(float);
         } else {
-            return false;
+            return false;  // 返回
         }
 
         const size_t block_rows = kernel->get_nr();
@@ -1199,7 +1199,7 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             rhs_info->to_float(packed_base, row_idx, nc, out, block_rows, packed_stride, kr, block_len, num_bytes_multiplier);
         }
 
-        return true;
+        return true;  // 返回
     }
 
 public:
@@ -1210,7 +1210,7 @@ public:
 
         kleidiai_weight_header * header = kleidiai_weight_header_from_ptr(tensor->data);
         if (!header) {
-            return -1;
+            return -1;  // 返回
         }
 
         header->magic      = GGML_KLEIDIAI_PACK_MAGIC;
@@ -1333,20 +1333,20 @@ public:
             memcpy(tensor->data, data, data_size);
         }
 
-        return 0;
+        return 0;  // 返回
     }
 };
 
 static ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_buffer_t, struct ggml_tensor *) {
     static tensor_traits traits;
-    return &traits;
+    return &traits;  // 返回
 }
 }  // namespace ggml::cpu::kleidiai
 
 static enum ggml_status ggml_backend_cpu_kleidiai_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
     tensor->extra = (void *) ggml::cpu::kleidiai::get_tensor_traits(buffer, tensor);
 
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
     GGML_UNUSED(buffer);
 }
 
@@ -1364,14 +1364,14 @@ static void ggml_backend_cpu_kleidiai_buffer_set_tensor(ggml_backend_buffer_t bu
 
 static const char * ggml_backend_cpu_kleidiai_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
     GGML_UNUSED(buft);
-    return "CPU_KLEIDIAI";
+    return "CPU_KLEIDIAI";  // 返回
 }
 
 static ggml_backend_buffer_t ggml_backend_cpu_kleidiai_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
     ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
 
     if (buffer == nullptr) {
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     buffer->buft              = buft;
@@ -1379,19 +1379,19 @@ static ggml_backend_buffer_t ggml_backend_cpu_kleidiai_buffer_type_alloc_buffer(
     buffer->iface.set_tensor  = ggml_backend_cpu_kleidiai_buffer_set_tensor;
     buffer->iface.get_tensor  = nullptr;
     buffer->iface.cpy_tensor  = nullptr;
-    return buffer;
+    return buffer;  // 返回
 }
 
 static size_t ggml_backend_cpu_kleidiai_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
     GGML_UNUSED(buft);
-    return TENSOR_ALIGNMENT;
+    return TENSOR_ALIGNMENT;  // 返回
 }
 
 static size_t ggml_backend_cpu_kleidiai_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const struct ggml_tensor * tensor) {
     GGML_UNUSED(buft);
 
     if (tensor->type != GGML_TYPE_Q4_0 && tensor->type != GGML_TYPE_Q8_0) {
-        return ggml_nbytes(tensor);
+        return ggml_nbytes(tensor);  // ggml_nbytes
     }
 
     const size_t n = tensor->ne[1];
@@ -1434,14 +1434,14 @@ static size_t ggml_backend_cpu_kleidiai_buffer_type_get_alloc_size(ggml_backend_
     }
 
     if (slot_count == 0) {
-        return ggml_nbytes(tensor);
+        return ggml_nbytes(tensor);  // ggml_nbytes
     }
 
     return std::max(cursor, ggml_nbytes(tensor));
 }
 
-namespace ggml::cpu::kleidiai {
-class extra_buffer_type : ggml::cpu::extra_buffer_type {
+namespace ggml::cpu::kleidiai {  // 命名空间
+class extra_buffer_type : ggml::cpu::extra_buffer_type {  // 类定义
     bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
         const int slot_total = kleidiai_collect_kernel_chain(op, kernel_chain);
@@ -1452,20 +1452,20 @@ class extra_buffer_type : ggml::cpu::extra_buffer_type {
             op->src[0]->buffer->buft == ggml_backend_cpu_kleidiai_buffer_type() &&
             slot_total > 0) {
             if (op->src[0]->type == GGML_TYPE_Q4_0 && ctx.kernels_q4 == nullptr) {
-                return false;
+                return false;  // 返回
             }
             if (op->src[0]->type == GGML_TYPE_Q8_0 && ctx.kernels_q8 == nullptr) {
-                return false;
+                return false;  // 返回
             }
             if (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {
-                return false;
+                return false;  // 返回
             }
             if ((op->src[1]->type == GGML_TYPE_F32 || op->src[1]->type == GGML_TYPE_I32) &&
                 ggml_ne(op->src[1], 3) == 1) {
-                return true;
+                return true;  // 返回
             }
         }
-        return false;
+        return false;  // 返回
     }
 
     ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
@@ -1474,20 +1474,20 @@ class extra_buffer_type : ggml::cpu::extra_buffer_type {
                 return (ggml::cpu::tensor_traits *) op->src[0]->extra;
             } else {
                 if (op->src[0]->type != GGML_TYPE_F16) {
-                    return nullptr;
+                    return nullptr;  // 返回
                 }
                 std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
                 const int slot_total = kleidiai_collect_kernel_chain(op, kernel_chain);
                 if (slot_total > 0 && op->src[1]->ne[1] > 1) {
                     if ((op->src[0]->nb[1] * op->src[0]->ne[1] != op->src[0]->nb[2]) ||
                         (op->src[1]->nb[1] * op->src[1]->ne[1] != op->src[1]->nb[2])) {
-                        return nullptr;
+                        return nullptr;  // 返回
                     }
                     return ggml::cpu::kleidiai::get_tensor_traits(NULL, NULL);
                 }
             }
         }
-        return nullptr;
+        return nullptr;  // 返回
     }
 };
 }  // namespace ggml::cpu::kleidiai
@@ -1509,5 +1509,5 @@ ggml_backend_buffer_type_t ggml_backend_cpu_kleidiai_buffer_type(void) {
 
     init_kleidiai_context();
 
-    return &ggml_backend_cpu_buffer_type_kleidiai;
+    return &ggml_backend_cpu_buffer_type_kleidiai;  // 返回
 }

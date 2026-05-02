@@ -1,31 +1,31 @@
-#include "ggml.h"
-#include "ggml-cpu.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <string.h>  // 引入 string.h 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
 
-#if defined(_WIN32)
-#include <windows.h>
-typedef volatile LONG atomic_int;
+#if defined(_WIN32)  // 条件编译
+#include <windows.h>  // 引入 windows.h 头文件
+typedef volatile LONG atomic_int;  // 类型定义
 static LONG atomic_fetch_add(atomic_int * ptr, LONG inc) {
-    return InterlockedExchangeAdd(ptr, inc);
+    return InterlockedExchangeAdd(ptr, inc);  // InterlockedExchangeAdd
 }
-#else
-#include <stdatomic.h>
-#endif
+#else  // 否则
+#include <stdatomic.h>  // 引入 stdatomic.h 头文件
+#endif  // 条件编译结束
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))  // 宏定义 MIN
+#define MAX(a, b) ((a) > (b) ? (a) : (b))  // 宏定义 MAX
 
-struct ggml_context * make_ctx(void) {
-    struct ggml_init_params params = {
+struct ggml_context * make_ctx(void) {  // 结构体定义
+    struct ggml_init_params params = {  // 结构体定义
         /*.mem_size   =*/ 1 * 1024 * 1024,
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ false,
     };
 
-    return ggml_init(params);
+    return ggml_init(params);  // ggml_init
 }
 
 char g_userdata[] = "ggml";
@@ -276,7 +276,7 @@ int main(int argc, const char** argv) {
         memcpy(t4->data, buf1_f32, ggml_nbytes(t4));
         memcpy(t5->data, buf2_f32, ggml_nbytes(t5));
 
-        struct ggml_tensor * args[] = {
+        struct ggml_tensor * args[] = {  // 结构体定义
             t1, t2, t3, t4, t5,
         };
 
@@ -296,5 +296,5 @@ int main(int argc, const char** argv) {
         ggml_free(ctx);
     }
 
-    return 0;
+    return 0;  // 返回
 }

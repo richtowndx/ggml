@@ -1,42 +1,42 @@
-#include "utils.h"
+#include "utils.h"  // 引入 utils.h 头文件
 
-#include "ggml-impl.h"
-#include "ggml-openvino-extra.h"
-#include "ggml-openvino/ggml-decoder.h"
-#include "ggml.h"
-#include "openvino/frontend.h"
-#include "openvino/input_model.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-openvino-extra.h"  // 引入 ggml-openvino-extra.h 头文件
+#include "ggml-openvino/ggml-decoder.h"  // 引入 ggml-openvino/ggml-decoder.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "openvino/frontend.h"  // 引入 openvino/frontend.h 头文件
+#include "openvino/input_model.h"  // 引入 openvino/input_model.h 头文件
 
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-#include <iomanip>
-#include <iostream>
-#include <memory>
-#include <openvino/core/any.hpp>
-#include <openvino/core/graph_util.hpp>
-#include <openvino/core/shape.hpp>
-#include <openvino/core/type/float16.hpp>
-#include <openvino/frontend/manager.hpp>
-#include <openvino/openvino.hpp>
-#include <openvino/runtime/compiled_model.hpp>
-#include <openvino/runtime/infer_request.hpp>
-#include <openvino/runtime/intel_npu/properties.hpp>
-#include <openvino/runtime/properties.hpp>
-#include <openvino/runtime/tensor.hpp>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstddef>  // 引入 cstddef 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <cstdlib>  // 引入 cstdlib 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <iomanip>  // 引入 iomanip 头文件
+#include <iostream>  // 引入 iostream 头文件
+#include <memory>  // 引入 memory 头文件
+#include <openvino/core/any.hpp>  // 引入 openvino/core/any.hpp 头文件
+#include <openvino/core/graph_util.hpp>  // 引入 openvino/core/graph_util.hpp 头文件
+#include <openvino/core/shape.hpp>  // 引入 openvino/core/shape.hpp 头文件
+#include <openvino/core/type/float16.hpp>  // 引入 openvino/core/type/float16.hpp 头文件
+#include <openvino/frontend/manager.hpp>  // 引入 openvino/frontend/manager.hpp 头文件
+#include <openvino/openvino.hpp>  // 引入 openvino/openvino.hpp 头文件
+#include <openvino/runtime/compiled_model.hpp>  // 引入 openvino/runtime/compiled_model.hpp 头文件
+#include <openvino/runtime/infer_request.hpp>  // 引入 openvino/runtime/infer_request.hpp 头文件
+#include <openvino/runtime/intel_npu/properties.hpp>  // 引入 openvino/runtime/intel_npu/properties.hpp 头文件
+#include <openvino/runtime/properties.hpp>  // 引入 openvino/runtime/properties.hpp 头文件
+#include <openvino/runtime/tensor.hpp>  // 引入 openvino/runtime/tensor.hpp 头文件
+#include <string>  // 引入 string 头文件
+#include <unordered_map>  // 引入 unordered_map 头文件
+#include <vector>  // 引入 vector 头文件
 
 // Suppress  deprecation warning for ov::Tensor::data()
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-enum ggml_status ov_graph_compute(ggml_cgraph * cgraph, ggml_backend_t backend) {
+enum ggml_status ov_graph_compute(ggml_cgraph * cgraph, ggml_backend_t backend) {  // 枚举定义
     ggml_backend_openvino_context * ctx = (ggml_backend_openvino_context *) backend->context;
     try {
         if (getenv("GGML_OPENVINO_DUMP_CGRAPH")) {
@@ -52,13 +52,13 @@ enum ggml_status ov_graph_compute(ggml_cgraph * cgraph, ggml_backend_t backend) 
         return is_static ? ov_graph_compute_static(cgraph, r_ctx) : ov_graph_compute_dynamic(cgraph, r_ctx);
     } catch (const ov::Exception & e) {
         GGML_LOG_ERROR("GGML OpenVINO backend ov::Exception: %s\n", e.what());
-        return GGML_STATUS_FAILED;
+        return GGML_STATUS_FAILED;  // 返回
     } catch (const std::exception & e) {
         GGML_LOG_ERROR("GGML OpenVINO backend std::exception: %s\n", e.what());
-        return GGML_STATUS_FAILED;
+        return GGML_STATUS_FAILED;  // 返回
     } catch (...) {
         GGML_LOG_ERROR("GGML OpenVINO backend unknown exception\n");
-        return GGML_STATUS_FAILED;
+        return GGML_STATUS_FAILED;  // 返回
     }
 }
 
@@ -75,10 +75,10 @@ ov::Tensor create_ov_output_tensor(std::shared_ptr<GgmlOvDecoder> ggml_decoder,
     }
 
     ov::Tensor output_tensor(output_type, output_shape, ggml_tensor->data);
-    return output_tensor;
+    return output_tensor;  // 返回
 }
 
-enum ggml_status ov_graph_compute_dynamic(ggml_cgraph * cgraph, std::shared_ptr<ov_runtime_context> r_ctx) {
+enum ggml_status ov_graph_compute_dynamic(ggml_cgraph * cgraph, std::shared_ptr<ov_runtime_context> r_ctx) {  // 枚举定义
     auto & core = ov_singleton_core();
     const auto & config = ggml_openvino_get_compile_config();
     const auto & device = r_ctx->device;
@@ -86,7 +86,7 @@ enum ggml_status ov_graph_compute_dynamic(ggml_cgraph * cgraph, std::shared_ptr<
     static auto is_static = false;
 
     if (is_naive(cgraph)) {
-        return naive_compute(cgraph, core, device, config);
+        return naive_compute(cgraph, core, device, config);  // naive_compute
     }
 
     auto start_time = ggml_time_us();
@@ -97,7 +97,7 @@ enum ggml_status ov_graph_compute_dynamic(ggml_cgraph * cgraph, std::shared_ptr<
     ComputeParams c_params;
     std::tie(m_params, c_params) = GgmlOvDecoder::compute_llm_params(cgraph, is_static);
 
-    graph_key key(cgraph);
+    graph_key key(cgraph);  // key
     bool cache_hit;
 
     int64_t decoder_end_time;
@@ -163,7 +163,7 @@ enum ggml_status ov_graph_compute_dynamic(ggml_cgraph * cgraph, std::shared_ptr<
                                 state_name = r_ctx->kv_state_input_name_map.at(state.get_name());
                             } catch (...) {
                                 GGML_LOG_ERROR("GGML OpenVINO backend stateful inference failed: no input found for the state\n");
-                                return GGML_STATUS_FAILED;
+                                return GGML_STATUS_FAILED;  // 返回
                             }
                             auto kv_tensor = get_ov_input_tensor(ggml_decoder, state_name);
                             kv_tensor.set_shape({state_tensor_shape[0], kv_tensor.get_shape()[2],
@@ -291,18 +291,18 @@ enum ggml_status ov_graph_compute_dynamic(ggml_cgraph * cgraph, std::shared_ptr<
         }
     }
 
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
-enum ggml_status ov_graph_compute_static(ggml_cgraph * cgraph, std::shared_ptr<ov_runtime_context> r_ctx) {
+enum ggml_status ov_graph_compute_static(ggml_cgraph * cgraph, std::shared_ptr<ov_runtime_context> r_ctx) {  // 枚举定义
     auto & core = ov_singleton_core();
 
     auto get_prefill_chunk_size = [] {
         const char * chunk_size_str = getenv("GGML_OPENVINO_PREFILL_CHUNK_SIZE");
         if (chunk_size_str && atoi(chunk_size_str) > 0) {
-            return atoi(chunk_size_str);
+            return atoi(chunk_size_str);  // atoi
         }
-        return 256;
+        return 256;  // 返回
     };
 
     static std::string device = "NPU";
@@ -312,7 +312,7 @@ enum ggml_status ov_graph_compute_static(ggml_cgraph * cgraph, std::shared_ptr<o
     const auto & config = ggml_openvino_get_compile_config();
 
     if (is_naive(cgraph)) {
-        return naive_compute(cgraph, core, device, config);
+        return naive_compute(cgraph, core, device, config);  // naive_compute
     }
 
     auto start_time = ggml_time_us();
@@ -325,7 +325,7 @@ enum ggml_status ov_graph_compute_static(ggml_cgraph * cgraph, std::shared_ptr<o
 
     const auto * inp_pos = get_inp_pos_tensor(cgraph);
     const auto is_prefill = get_is_prefill(inp_pos);
-    graph_key key(cgraph);
+    graph_key key(cgraph);  // key
     bool cache_hit;
 
     int64_t decoder_end_time;
@@ -524,7 +524,7 @@ enum ggml_status ov_graph_compute_static(ggml_cgraph * cgraph, std::shared_ptr<o
         GGML_LOG_INFO("  - Graph inference time: %ld ms \n", (infer_end_time - compile_end_time) / 1000);
     }
 
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 bool is_naive(ggml_cgraph * cgraph) {
@@ -535,7 +535,7 @@ bool is_naive(ggml_cgraph * cgraph) {
             count++;
         }
     }
-    return count < naive_graph_size_threshold;
+    return count < naive_graph_size_threshold;  // 返回
 }
 
 enum ggml_status naive_compute(ggml_cgraph * cgraph,
@@ -543,7 +543,7 @@ enum ggml_status naive_compute(ggml_cgraph * cgraph,
                                const std::string & device,
                                const ov::AnyMap & config) {
     if (cgraph->n_nodes == 1 && (cgraph->nodes[0]->op == GGML_OP_NONE || cgraph->nodes[0]->op == GGML_OP_VIEW)) {
-        return GGML_STATUS_SUCCESS;
+        return GGML_STATUS_SUCCESS;  // 返回
     }
 
     bool naive = true;
@@ -586,10 +586,10 @@ enum ggml_status naive_compute(ggml_cgraph * cgraph,
     }
 
     infer_request->infer();
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
-namespace {
+namespace {  // 命名空间
 ov::Tensor convert_ggml_input_to_ov(std::shared_ptr<GgmlOvDecoder> ggml_decoder, const std::string & name) {
     const auto * ggml_tensor = ggml_decoder->get_input_ggml_tensor(name);
 
@@ -600,7 +600,7 @@ ov::Tensor convert_ggml_input_to_ov(std::shared_ptr<GgmlOvDecoder> ggml_decoder,
             throw std::runtime_error("ggml tensor extra is not of type TENSOR for input: " + name);
         }
         auto * tensor_extra = static_cast<ggml_openvino_tensor_extra *>(extra_base);
-        return *tensor_extra->tensor;
+        return *tensor_extra->tensor;  // 返回
     }
 
     // GGML_LOG_DEBUG("Converting ggml tensor to ov::Tensor for input: %s\n", name.c_str());
@@ -613,7 +613,7 @@ ov::Tensor convert_ggml_input_to_ov(std::shared_ptr<GgmlOvDecoder> ggml_decoder,
         input_shape = ggml_decoder->get_shape(ggml_tensor);
     }
     auto input_tensor = ov::Tensor(ggml_decoder->get_ov_type(ggml_tensor), input_shape, input_data);
-    return input_tensor;
+    return input_tensor;  // 返回
 }
 }  // namespace
 
@@ -624,7 +624,7 @@ ov::Tensor get_ov_input_tensor(std::shared_ptr<GgmlOvDecoder> ggml_decoder, cons
     } else {
         input_tensor = convert_ggml_input_to_ov(ggml_decoder, param_name);
     }
-    return input_tensor;
+    return input_tensor;  // 返回
 }
 
 ov::Tensor get_ov_input_tensor_static_decode(std::shared_ptr<GgmlOvDecoder> ggml_decoder,
@@ -645,7 +645,7 @@ ov::Tensor get_ov_input_tensor_static_decode(std::shared_ptr<GgmlOvDecoder> ggml
         } else {
             throw std::runtime_error("Unexpected tensor type for " + param_name);
         }
-        return input_tensor;
+        return input_tensor;  // 返回
     }
 
     if (GgmlOvDecoder::is_output_idx(ggml_tensor, op)) {
@@ -655,7 +655,7 @@ ov::Tensor get_ov_input_tensor_static_decode(std::shared_ptr<GgmlOvDecoder> ggml
         assert(ggml_tensor->ne[0] == 1);
         assert(inp_out_id == 0);
         *input_tensor.data<int32_t>() = inp_out_id;
-        return input_tensor;
+        return input_tensor;  // 返回
     }
 
     if (GgmlOvDecoder::is_inp_mask(ggml_tensor, op)) {
@@ -664,10 +664,10 @@ ov::Tensor get_ov_input_tensor_static_decode(std::shared_ptr<GgmlOvDecoder> ggml
         ov::Tensor input_tensor(ov::element::f32, ov::Shape{1, 1, 1, context_size});
         auto * data_ptr = input_tensor.data<float>();
         std::copy(padded_data.begin(), padded_data.begin() + context_size, data_ptr);
-        return input_tensor;
+        return input_tensor;  // 返回
     }
 
-    return get_ov_input_tensor(ggml_decoder, param_name);
+    return get_ov_input_tensor(ggml_decoder, param_name);  // get_ov_input_tensor
 }
 
 ov::Tensor get_ov_input_tensor_static_prefill(std::shared_ptr<GgmlOvDecoder> ggml_decoder,
@@ -707,7 +707,7 @@ ov::Tensor get_ov_input_tensor_static_prefill(std::shared_ptr<GgmlOvDecoder> ggm
                 throw std::runtime_error("Unexpected tensor type for " + param_name);
             }
         }
-        return input_tensor;
+        return input_tensor;  // 返回
     }
 
     if (GgmlOvDecoder::is_output_idx(ggml_tensor, op)) {
@@ -722,7 +722,7 @@ ov::Tensor get_ov_input_tensor_static_prefill(std::shared_ptr<GgmlOvDecoder> ggm
                 data_addr[i] = ((int32_t *) ggml_tensor->data)[i] % chunk_size;
             }
         }
-        return input_tensor;
+        return input_tensor;  // 返回
     }
 
     if (GgmlOvDecoder::is_inp_mask(ggml_tensor, op)) {
@@ -737,10 +737,10 @@ ov::Tensor get_ov_input_tensor_static_prefill(std::shared_ptr<GgmlOvDecoder> ggm
         ov::Tensor input_tensor(ov::element::f32, ov::Shape{1, 1, chunk_size, context_size});
         auto * data_ptr = input_tensor.data<float>();
         std::copy(padded_data.begin(), padded_data.begin() + chunk_size * context_size, data_ptr);
-        return input_tensor;
+        return input_tensor;  // 返回
     }
 
-    return get_ov_input_tensor(ggml_decoder, param_name);
+    return get_ov_input_tensor(ggml_decoder, param_name);  // get_ov_input_tensor
 }
 
 size_t checksum(const void * data, size_t size) {
@@ -750,7 +750,7 @@ size_t checksum(const void * data, size_t size) {
         sum += (uint8_t) i;
         sum += bytes[i];
     }
-    return sum;
+    return sum;  // 返回
 }
 
 void print_input_tensor_info(const std::string & name, const ov::Tensor & tensor) {
@@ -805,7 +805,7 @@ void print_output_tensor_info(const std::string & name, const ov::Tensor & tenso
 
     auto print_float_stats = [](const std::string & type_name, size_t size, auto get_value) {
         if (size == 0) {
-            return;
+            return;  // 返回
         }
 
         float first = get_value(0);
@@ -865,7 +865,7 @@ const ggml_tensor * get_inp_pos_tensor(ggml_cgraph * cgraph) {
                 break;
             }
             if (GgmlOvDecoder::is_inp_pos(src, op)) {
-                return src;
+                return src;  // 返回
             }
         }
     }
@@ -874,7 +874,7 @@ const ggml_tensor * get_inp_pos_tensor(ggml_cgraph * cgraph) {
 }
 
 bool get_is_prefill(const ggml_tensor * inp_pos) {
-    return inp_pos->ne[0] > 1;
+    return inp_pos->ne[0] > 1;  // 返回
 }
 
 #pragma GCC diagnostic pop

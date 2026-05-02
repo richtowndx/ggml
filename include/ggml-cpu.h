@@ -1,15 +1,15 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "ggml.h"
-#include "ggml-backend.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
     // the compute plan that needs to be prepared for ggml_graph_compute()
     // since https://github.com/ggml-org/ggml/issues/287
-    struct ggml_cplan {
+    struct ggml_cplan {  // 结构体定义
         size_t    work_size; // size of work buffer, calculated by `ggml_graph_plan()`
         uint8_t * work_data; // work buffer, to be allocated by caller before calling to `ggml_graph_compute()`
 
@@ -25,7 +25,7 @@ extern "C" {
     };
 
     // numa strategies
-    enum ggml_numa_strategy {
+    enum ggml_numa_strategy {  // 枚举定义
         GGML_NUMA_STRATEGY_DISABLED   = 0,
         GGML_NUMA_STRATEGY_DISTRIBUTE = 1,
         GGML_NUMA_STRATEGY_ISOLATE    = 2,
@@ -110,10 +110,10 @@ extern "C" {
 
     // Internal types and functions exposed for tests and benchmarks
 
-    typedef void (*ggml_vec_dot_t)  (int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT x, size_t bx,
+    typedef void (*ggml_vec_dot_t)  (int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT x, size_t bx,  // 类型定义
                                        const void * GGML_RESTRICT y, size_t by, int nrc);
 
-    struct ggml_type_traits_cpu {
+    struct ggml_type_traits_cpu {  // 结构体定义
         ggml_from_float_t        from_float;
         ggml_vec_dot_t           vec_dot;
         enum ggml_type           vec_dot_type;
@@ -146,6 +146,6 @@ extern "C" {
     GGML_BACKEND_API void ggml_cpu_fp32_to_bf16(const float *, ggml_bf16_t *, int64_t);
     GGML_BACKEND_API void ggml_cpu_bf16_to_fp32(const ggml_bf16_t *, float *, int64_t);
 
-#ifdef __cplusplus
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束

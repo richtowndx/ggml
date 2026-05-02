@@ -1,10 +1,10 @@
-#include "ggml-remoting.h"
-#include "ggml-virtgpu.h"
+#include "ggml-remoting.h"  // 引入 ggml-remoting.h 头文件
+#include "ggml-virtgpu.h"  // 引入 ggml-virtgpu.h 头文件
 
-#include <iostream>
-#include <mutex>
+#include <iostream>  // 引入 iostream 头文件
+#include <mutex>  // 引入 mutex 头文件
 
-void ggml_virtgpu_cleanup(virtgpu * gpu);
+void ggml_virtgpu_cleanup(virtgpu * gpu);  // ggml_virtgpu_cleanup
 
 static virtgpu * apir_initialize() {
     static virtgpu *         gpu         = NULL;
@@ -12,7 +12,7 @@ static virtgpu * apir_initialize() {
 
     if (initialized) {
         // fast track
-        return gpu;
+        return gpu;  // 返回
     }
 
     {
@@ -21,13 +21,13 @@ static virtgpu * apir_initialize() {
 
         if (initialized) {
             // thread safe
-            return gpu;
+            return gpu;  // 返回
         }
 
         gpu = create_virtgpu();
         if (!gpu) {
             initialized = true;
-            return NULL;
+            return NULL;  // 返回
         }
 
         // Pre-fetch and cache all device information, it will not change
@@ -82,41 +82,41 @@ static virtgpu * apir_initialize() {
         initialized = true;
     }
 
-    return gpu;
+    return gpu;  // 返回
 }
 
 static int ggml_backend_remoting_get_device_count() {
     virtgpu * gpu = apir_initialize();
     if (!gpu) {
-        return 0;
+        return 0;  // 返回
     }
 
-    return gpu->cached_device_info.device_count;
+    return gpu->cached_device_info.device_count;  // 返回
 }
 
 static size_t ggml_backend_remoting_reg_get_device_count(ggml_backend_reg_t reg) {
     UNUSED(reg);
 
-    return ggml_backend_remoting_get_device_count();
+    return ggml_backend_remoting_get_device_count();  // ggml_backend_remoting_get_device_count
 }
 
 static std::vector<ggml_backend_dev_t> devices;
 
 ggml_backend_dev_t ggml_backend_remoting_get_device(size_t device) {
     GGML_ASSERT(device < devices.size());
-    return devices[device];
+    return devices[device];  // 返回
 }
 
 static void ggml_backend_remoting_reg_init_devices(ggml_backend_reg_t reg) {
     if (devices.size() > 0) {
         GGML_LOG_INFO(GGML_VIRTGPU "%s: already initialized\n", __func__);
-        return;
+        return;  // 返回
     }
 
     virtgpu * gpu = apir_initialize();
     if (!gpu) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: apir_initialize failed\n", __func__);
-        return;
+        return;  // 返回
     }
 
     static std::atomic<bool> initialized = false;
@@ -153,13 +153,13 @@ static void ggml_backend_remoting_reg_init_devices(ggml_backend_reg_t reg) {
 static ggml_backend_dev_t ggml_backend_remoting_reg_get_device(ggml_backend_reg_t reg, size_t device) {
     UNUSED(reg);
 
-    return ggml_backend_remoting_get_device(device);
+    return ggml_backend_remoting_get_device(device);  // ggml_backend_remoting_get_device
 }
 
 static const char * ggml_backend_remoting_reg_get_name(ggml_backend_reg_t reg) {
     UNUSED(reg);
 
-    return GGML_VIRTGPU_NAME;
+    return GGML_VIRTGPU_NAME;  // 返回
 }
 
 static const ggml_backend_reg_i ggml_backend_remoting_reg_i = {
@@ -183,13 +183,13 @@ ggml_backend_reg_t ggml_backend_virtgpu_reg() {
 
     static bool initialized = false;
     if (initialized) {
-        return &reg;
+        return &reg;  // 返回
     }
     initialized = true;
 
     ggml_backend_remoting_reg_init_devices(&reg);
 
-    return &reg;
+    return &reg;  // 返回
 }
 
 // public function, not exposed in the GGML interface at the moment

@@ -1,6 +1,6 @@
-#include "sycl_hw.hpp"
+#include "sycl_hw.hpp"  // 引入 sycl_hw.hpp 头文件
 
-using namespace std;
+using namespace std;  // using 声明
 
 /*defined in
 * /opt/intel/oneapi/compiler/latest/include/sycl/ext/oneapi/experimental/device_architecture.def
@@ -63,5 +63,5 @@ sycl_hw_info get_device_hw_info(sycl::device* device_ptr) {
         res.gpu_family = GPU_FAMILY_UKNOWN;
     }
 
-    return res;
+    return res;  // 返回
 }

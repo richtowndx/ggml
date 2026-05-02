@@ -4,7 +4,7 @@
 
    Before #including,
 
-       #define STB_IMAGE_WRITE_IMPLEMENTATION
+       #define STB_IMAGE_WRITE_IMPLEMENTATION  // 宏定义 STB_IMAGE_WRITE_IMPLEMENTATION
 
    in the file that you want to have the implementation.
 
@@ -28,7 +28,7 @@ BUILDING:
    You can #define STBIW_MEMMOVE() to replace memmove()
    You can #define STBIW_ZLIB_COMPRESS to use a custom zlib-style compress function
    for PNG compression (instead of the builtin one), it must have the following signature:
-   unsigned char * my_compress(unsigned char *data, int data_len, int *out_len, int quality);
+   unsigned char * my_compress(unsigned char *data, int data_len, int *out_len, int quality);  // my_compress
    The returned data will be freed with STBIW_FREE() (free() by default),
    so it must be heap allocated with STBIW_MALLOC() (malloc() by default),
 
@@ -36,7 +36,7 @@ UNICODE:
 
    If compiling for Windows and you wish to use Unicode filenames, compile
    with
-       #define STBIW_WINDOWS_UTF8
+       #define STBIW_WINDOWS_UTF8  // 宏定义 STBIW_WINDOWS_UTF8
    and pass utf8-encoded filenames. Call stbiw_convert_wchar_to_utf8 to convert
    Windows wchar_t filenames to utf8.
 
@@ -44,25 +44,25 @@ USAGE:
 
    There are five functions, one for each image file format:
 
-     int stbi_write_png(char const *filename, int w, int h, int comp, const void *data, int stride_in_bytes);
-     int stbi_write_bmp(char const *filename, int w, int h, int comp, const void *data);
-     int stbi_write_tga(char const *filename, int w, int h, int comp, const void *data);
-     int stbi_write_jpg(char const *filename, int w, int h, int comp, const void *data, int quality);
-     int stbi_write_hdr(char const *filename, int w, int h, int comp, const float *data);
+     int stbi_write_png(char const *filename, int w, int h, int comp, const void *data, int stride_in_bytes);  // stbi_write_png
+     int stbi_write_bmp(char const *filename, int w, int h, int comp, const void *data);  // stbi_write_bmp
+     int stbi_write_tga(char const *filename, int w, int h, int comp, const void *data);  // stbi_write_tga
+     int stbi_write_jpg(char const *filename, int w, int h, int comp, const void *data, int quality);  // stbi_write_jpg
+     int stbi_write_hdr(char const *filename, int w, int h, int comp, const float *data);  // stbi_write_hdr
 
-     void stbi_flip_vertically_on_write(int flag); // flag is non-zero to flip data vertically
+     void stbi_flip_vertically_on_write(int flag); // flag is non-zero to flip data vertically  // stbi_flip_vertically_on_write
 
    There are also five equivalent functions that use an arbitrary write function. You are
    expected to open/close your file-equivalent before and after calling these:
 
-     int stbi_write_png_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data, int stride_in_bytes);
-     int stbi_write_bmp_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data);
-     int stbi_write_tga_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data);
-     int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const float *data);
-     int stbi_write_jpg_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void *data, int quality);
+     int stbi_write_png_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data, int stride_in_bytes);  // stbi_write_png_to_func
+     int stbi_write_bmp_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data);  // stbi_write_bmp_to_func
+     int stbi_write_tga_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data);  // stbi_write_tga_to_func
+     int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const float *data);  // stbi_write_hdr_to_func
+     int stbi_write_jpg_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void *data, int quality);  // stbi_write_jpg_to_func
 
    where the callback is:
-      void stbi_write_func(void *context, void *data, int size);
+      void stbi_write_func(void *context, void *data, int size);  // stbi_write_func
 
    You can configure it with these global variables:
       int stbi_write_tga_with_rle;             // defaults to true; set to 0 to disable RLE
@@ -108,7 +108,7 @@ USAGE:
 
    JPEG does ignore alpha channels in input data; quality is between 1 and 100.
    Higher quality looks better but results in a bigger image.
-   JPEG baseline (no JPEG progressive).
+   JPEG baseline (no JPEG progressive).  // baseline
 
 CREDITS:
 
@@ -148,43 +148,43 @@ LICENSE
 
 */
 
-#ifndef INCLUDE_STB_IMAGE_WRITE_H
-#define INCLUDE_STB_IMAGE_WRITE_H
+#ifndef INCLUDE_STB_IMAGE_WRITE_H  // 如果未定义 INCLUDE_STB_IMAGE_WRITE_H 则编译
+#define INCLUDE_STB_IMAGE_WRITE_H  // 宏定义 INCLUDE_STB_IMAGE_WRITE_H
 
-#include <stdlib.h>
+#include <stdlib.h>  // 引入 stdlib.h 头文件
 
 // if STB_IMAGE_WRITE_STATIC causes problems, try defining STBIWDEF to 'inline' or 'static inline'
-#ifndef STBIWDEF
-#ifdef STB_IMAGE_WRITE_STATIC
-#define STBIWDEF  static
-#else
-#ifdef __cplusplus
-#define STBIWDEF  extern "C"
-#else
-#define STBIWDEF  extern
-#endif
-#endif
-#endif
+#ifndef STBIWDEF  // 如果未定义 STBIWDEF 则编译
+#ifdef STB_IMAGE_WRITE_STATIC  // 如果定义了 STB_IMAGE_WRITE_STATIC 则编译
+#define STBIWDEF  static  // 宏定义 STBIWDEF
+#else  // 否则
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+#define STBIWDEF  extern "C"  // 宏定义 STBIWDEF
+#else  // 否则
+#define STBIWDEF  extern  // 宏定义 STBIWDEF
+#endif  // 条件编译结束
+#endif  // 条件编译结束
+#endif  // 条件编译结束
 
-#ifndef STB_IMAGE_WRITE_STATIC  // C++ forbids static forward declarations
+#ifndef STB_IMAGE_WRITE_STATIC  // C++ forbids static forward declarations  // 如果未定义 STB_IMAGE_WRITE_STATIC 则编译
 STBIWDEF int stbi_write_tga_with_rle;
 STBIWDEF int stbi_write_png_compression_level;
 STBIWDEF int stbi_write_force_png_filter;
-#endif
+#endif  // 条件编译结束
 
-#ifndef STBI_WRITE_NO_STDIO
+#ifndef STBI_WRITE_NO_STDIO  // 如果未定义 STBI_WRITE_NO_STDIO 则编译
 STBIWDEF int stbi_write_png(char const *filename, int w, int h, int comp, const void  *data, int stride_in_bytes);
 STBIWDEF int stbi_write_bmp(char const *filename, int w, int h, int comp, const void  *data);
 STBIWDEF int stbi_write_tga(char const *filename, int w, int h, int comp, const void  *data);
 STBIWDEF int stbi_write_hdr(char const *filename, int w, int h, int comp, const float *data);
 STBIWDEF int stbi_write_jpg(char const *filename, int x, int y, int comp, const void  *data, int quality);
 
-#ifdef STBIW_WINDOWS_UTF8
+#ifdef STBIW_WINDOWS_UTF8  // 如果定义了 STBIW_WINDOWS_UTF8 则编译
 STBIWDEF int stbiw_convert_wchar_to_utf8(char *buffer, size_t bufferlen, const wchar_t* input);
-#endif
-#endif
+#endif  // 条件编译结束
+#endif  // 条件编译结束
 
-typedef void stbi_write_func(void *context, void *data, int size);
+typedef void stbi_write_func(void *context, void *data, int size);  // 类型定义
 
 STBIWDEF int stbi_write_png_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data, int stride_in_bytes);
 STBIWDEF int stbi_write_bmp_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data);
@@ -196,66 +196,66 @@ STBIWDEF void stbi_flip_vertically_on_write(int flip_boolean);
 
 #endif//INCLUDE_STB_IMAGE_WRITE_H
 
-#ifdef STB_IMAGE_WRITE_IMPLEMENTATION
+#ifdef STB_IMAGE_WRITE_IMPLEMENTATION  // 如果定义了 STB_IMAGE_WRITE_IMPLEMENTATION 则编译
 
-#ifdef _WIN32
-   #ifndef _CRT_SECURE_NO_WARNINGS
-   #define _CRT_SECURE_NO_WARNINGS
-   #endif
-   #ifndef _CRT_NONSTDC_NO_DEPRECATE
-   #define _CRT_NONSTDC_NO_DEPRECATE
-   #endif
-#endif
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
+   #ifndef _CRT_SECURE_NO_WARNINGS  // 如果未定义 _CRT_SECURE_NO_WARNINGS 则编译
+   #define _CRT_SECURE_NO_WARNINGS  // 宏定义 _CRT_SECURE_NO_WARNINGS
+   #endif  // 条件编译结束
+   #ifndef _CRT_NONSTDC_NO_DEPRECATE  // 如果未定义 _CRT_NONSTDC_NO_DEPRECATE 则编译
+   #define _CRT_NONSTDC_NO_DEPRECATE  // 宏定义 _CRT_NONSTDC_NO_DEPRECATE
+   #endif  // 条件编译结束
+#endif  // 条件编译结束
 
-#ifndef STBI_WRITE_NO_STDIO
-#include <stdio.h>
-#endif // STBI_WRITE_NO_STDIO
+#ifndef STBI_WRITE_NO_STDIO  // 如果未定义 STBI_WRITE_NO_STDIO 则编译
+#include <stdio.h>  // 引入 stdio.h 头文件
+#endif // STBI_WRITE_NO_STDIO  // 条件编译结束
 
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+#include <stdarg.h>  // 引入 stdarg.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
+#include <string.h>  // 引入 string.h 头文件
+#include <math.h>  // 引入 math.h 头文件
 
-#if defined(STBIW_MALLOC) && defined(STBIW_FREE) && (defined(STBIW_REALLOC) || defined(STBIW_REALLOC_SIZED))
+#if defined(STBIW_MALLOC) && defined(STBIW_FREE) && (defined(STBIW_REALLOC) || defined(STBIW_REALLOC_SIZED))  // 条件编译
 // ok
-#elif !defined(STBIW_MALLOC) && !defined(STBIW_FREE) && !defined(STBIW_REALLOC) && !defined(STBIW_REALLOC_SIZED)
+#elif !defined(STBIW_MALLOC) && !defined(STBIW_FREE) && !defined(STBIW_REALLOC) && !defined(STBIW_REALLOC_SIZED)  // 否则如果
 // ok
-#else
+#else  // 否则
 #error "Must define all or none of STBIW_MALLOC, STBIW_FREE, and STBIW_REALLOC (or STBIW_REALLOC_SIZED)."
-#endif
+#endif  // 条件编译结束
 
-#ifndef STBIW_MALLOC
-#define STBIW_MALLOC(sz)        malloc(sz)
-#define STBIW_REALLOC(p,newsz)  realloc(p,newsz)
-#define STBIW_FREE(p)           free(p)
-#endif
+#ifndef STBIW_MALLOC  // 如果未定义 STBIW_MALLOC 则编译
+#define STBIW_MALLOC(sz)        malloc(sz)  // 宏定义 STBIW_MALLOC
+#define STBIW_REALLOC(p,newsz)  realloc(p,newsz)  // 宏定义 STBIW_REALLOC
+#define STBIW_FREE(p)           free(p)  // 宏定义 STBIW_FREE
+#endif  // 条件编译结束
 
-#ifndef STBIW_REALLOC_SIZED
-#define STBIW_REALLOC_SIZED(p,oldsz,newsz) STBIW_REALLOC(p,newsz)
-#endif
-
-
-#ifndef STBIW_MEMMOVE
-#define STBIW_MEMMOVE(a,b,sz) memmove(a,b,sz)
-#endif
+#ifndef STBIW_REALLOC_SIZED  // 如果未定义 STBIW_REALLOC_SIZED 则编译
+#define STBIW_REALLOC_SIZED(p,oldsz,newsz) STBIW_REALLOC(p,newsz)  // 宏定义 STBIW_REALLOC_SIZED
+#endif  // 条件编译结束
 
 
-#ifndef STBIW_ASSERT
-#include <assert.h>
-#define STBIW_ASSERT(x) assert(x)
-#endif
+#ifndef STBIW_MEMMOVE  // 如果未定义 STBIW_MEMMOVE 则编译
+#define STBIW_MEMMOVE(a,b,sz) memmove(a,b,sz)  // 宏定义 STBIW_MEMMOVE
+#endif  // 条件编译结束
 
-#define STBIW_UCHAR(x) (unsigned char) ((x) & 0xff)
 
-#ifdef STB_IMAGE_WRITE_STATIC
+#ifndef STBIW_ASSERT  // 如果未定义 STBIW_ASSERT 则编译
+#include <assert.h>  // 引入 assert.h 头文件
+#define STBIW_ASSERT(x) assert(x)  // 宏定义 STBIW_ASSERT
+#endif  // 条件编译结束
+
+#define STBIW_UCHAR(x) (unsigned char) ((x) & 0xff)  // 宏定义 STBIW_UCHAR
+
+#ifdef STB_IMAGE_WRITE_STATIC  // 如果定义了 STB_IMAGE_WRITE_STATIC 则编译
 static int stbi_write_png_compression_level = 8;
 static int stbi_write_tga_with_rle = 1;
 static int stbi_write_force_png_filter = -1;
-#else
+#else  // 否则
 int stbi_write_png_compression_level = 8;
 int stbi_write_tga_with_rle = 1;
 int stbi_write_force_png_filter = -1;
-#endif
+#endif  // 条件编译结束
 
 static int stbi__flip_vertically_on_write = 0;
 
@@ -264,7 +264,7 @@ STBIWDEF void stbi_flip_vertically_on_write(int flag)
    stbi__flip_vertically_on_write = flag;
 }
 
-typedef struct
+typedef struct  // 类型定义
 {
    stbi_write_func *func;
    void *context;
@@ -273,80 +273,80 @@ typedef struct
 } stbi__write_context;
 
 // initialize a callback-based context
-static void stbi__start_write_callbacks(stbi__write_context *s, stbi_write_func *c, void *context)
+static void stbi__start_write_callbacks(stbi__write_context *s, stbi_write_func *c, void *context)  // stbi__start_write_callbacks
 {
    s->func    = c;
    s->context = context;
 }
 
-#ifndef STBI_WRITE_NO_STDIO
+#ifndef STBI_WRITE_NO_STDIO  // 如果未定义 STBI_WRITE_NO_STDIO 则编译
 
-static void stbi__stdio_write(void *context, void *data, int size)
+static void stbi__stdio_write(void *context, void *data, int size)  // stbi__stdio_write
 {
    fwrite(data,1,size,(FILE*) context);
 }
 
-#if defined(_WIN32) && defined(STBIW_WINDOWS_UTF8)
-#ifdef __cplusplus
-#define STBIW_EXTERN extern "C"
-#else
-#define STBIW_EXTERN extern
-#endif
-STBIW_EXTERN __declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int cp, unsigned long flags, const char *str, int cbmb, wchar_t *widestr, int cchwide);
-STBIW_EXTERN __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, const wchar_t *widestr, int cchwide, char *str, int cbmb, const char *defchar, int *used_default);
+#if defined(_WIN32) && defined(STBIW_WINDOWS_UTF8)  // 条件编译
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+#define STBIW_EXTERN extern "C"  // 宏定义 STBIW_EXTERN
+#else  // 否则
+#define STBIW_EXTERN extern  // 宏定义 STBIW_EXTERN
+#endif  // 条件编译结束
+STBIW_EXTERN __declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int cp, unsigned long flags, const char *str, int cbmb, wchar_t *widestr, int cchwide);  // __declspec
+STBIW_EXTERN __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, const wchar_t *widestr, int cchwide, char *str, int cbmb, const char *defchar, int *used_default);  // __declspec
 
 STBIWDEF int stbiw_convert_wchar_to_utf8(char *buffer, size_t bufferlen, const wchar_t* input)
 {
-   return WideCharToMultiByte(65001 /* UTF8 */, 0, input, -1, buffer, (int) bufferlen, NULL, NULL);
+   return WideCharToMultiByte(65001 /* UTF8 */, 0, input, -1, buffer, (int) bufferlen, NULL, NULL);  // WideCharToMultiByte
 }
-#endif
+#endif  // 条件编译结束
 
-static FILE *stbiw__fopen(char const *filename, char const *mode)
+static FILE *stbiw__fopen(char const *filename, char const *mode)  // stbiw__fopen
 {
    FILE *f;
-#if defined(_WIN32) && defined(STBIW_WINDOWS_UTF8)
+#if defined(_WIN32) && defined(STBIW_WINDOWS_UTF8)  // 条件编译
    wchar_t wMode[64];
    wchar_t wFilename[1024];
    if (0 == MultiByteToWideChar(65001 /* UTF8 */, 0, filename, -1, wFilename, sizeof(wFilename)/sizeof(*wFilename)))
-      return 0;
+      return 0;  // 返回
 
    if (0 == MultiByteToWideChar(65001 /* UTF8 */, 0, mode, -1, wMode, sizeof(wMode)/sizeof(*wMode)))
-      return 0;
+      return 0;  // 返回
 
-#if defined(_MSC_VER) && _MSC_VER >= 1400
+#if defined(_MSC_VER) && _MSC_VER >= 1400  // 条件编译
    if (0 != _wfopen_s(&f, wFilename, wMode))
       f = 0;
-#else
+#else  // 否则
    f = _wfopen(wFilename, wMode);
-#endif
+#endif  // 条件编译结束
 
-#elif defined(_MSC_VER) && _MSC_VER >= 1400
+#elif defined(_MSC_VER) && _MSC_VER >= 1400  // 否则如果
    if (0 != fopen_s(&f, filename, mode))
       f=0;
-#else
+#else  // 否则
    f = fopen(filename, mode);
-#endif
-   return f;
+#endif  // 条件编译结束
+   return f;  // 返回
 }
 
-static int stbi__start_write_file(stbi__write_context *s, const char *filename)
+static int stbi__start_write_file(stbi__write_context *s, const char *filename)  // stbi__start_write_file
 {
    FILE *f = stbiw__fopen(filename, "wb");
    stbi__start_write_callbacks(s, stbi__stdio_write, (void *) f);
-   return f != NULL;
+   return f != NULL;  // 返回
 }
 
-static void stbi__end_write_file(stbi__write_context *s)
+static void stbi__end_write_file(stbi__write_context *s)  // stbi__end_write_file
 {
    fclose((FILE *)s->context);
 }
 
-#endif // !STBI_WRITE_NO_STDIO
+#endif // !STBI_WRITE_NO_STDIO  // 条件编译结束
 
-typedef unsigned int stbiw_uint32;
-typedef int stb_image_write_test[sizeof(stbiw_uint32)==4 ? 1 : -1];
+typedef unsigned int stbiw_uint32;  // 类型定义
+typedef int stb_image_write_test[sizeof(stbiw_uint32)==4 ? 1 : -1];  // 类型定义
 
-static void stbiw__writefv(stbi__write_context *s, const char *fmt, va_list v)
+static void stbiw__writefv(stbi__write_context *s, const char *fmt, va_list v)  // stbiw__writefv
 {
    while (*fmt) {
       switch (*fmt++) {
@@ -370,12 +370,12 @@ static void stbiw__writefv(stbi__write_context *s, const char *fmt, va_list v)
                      break; }
          default:
             STBIW_ASSERT(0);
-            return;
+            return;  // 返回
       }
    }
 }
 
-static void stbiw__writef(stbi__write_context *s, const char *fmt, ...)
+static void stbiw__writef(stbi__write_context *s, const char *fmt, ...)  // stbiw__writef
 {
    va_list v;
    va_start(v, fmt);
@@ -383,7 +383,7 @@ static void stbiw__writef(stbi__write_context *s, const char *fmt, ...)
    va_end(v);
 }
 
-static void stbiw__write_flush(stbi__write_context *s)
+static void stbiw__write_flush(stbi__write_context *s)  // stbiw__write_flush
 {
    if (s->buf_used) {
       s->func(s->context, &s->buffer, s->buf_used);
@@ -391,19 +391,19 @@ static void stbiw__write_flush(stbi__write_context *s)
    }
 }
 
-static void stbiw__putc(stbi__write_context *s, unsigned char c)
+static void stbiw__putc(stbi__write_context *s, unsigned char c)  // stbiw__putc
 {
    s->func(s->context, &c, 1);
 }
 
-static void stbiw__write1(stbi__write_context *s, unsigned char a)
+static void stbiw__write1(stbi__write_context *s, unsigned char a)  // stbiw__write1
 {
    if ((size_t)s->buf_used + 1 > sizeof(s->buffer))
       stbiw__write_flush(s);
    s->buffer[s->buf_used++] = a;
 }
 
-static void stbiw__write3(stbi__write_context *s, unsigned char a, unsigned char b, unsigned char c)
+static void stbiw__write3(stbi__write_context *s, unsigned char a, unsigned char b, unsigned char c)  // stbiw__write3
 {
    int n;
    if ((size_t)s->buf_used + 3 > sizeof(s->buffer))
@@ -415,7 +415,7 @@ static void stbiw__write3(stbi__write_context *s, unsigned char a, unsigned char
    s->buffer[n+2] = c;
 }
 
-static void stbiw__write_pixel(stbi__write_context *s, int rgb_dir, int comp, int write_alpha, int expand_mono, unsigned char *d)
+static void stbiw__write_pixel(stbi__write_context *s, int rgb_dir, int comp, int write_alpha, int expand_mono, unsigned char *d)  // stbiw__write_pixel
 {
    unsigned char bg[3] = { 255, 0, 255}, px[3];
    int k;
@@ -448,13 +448,13 @@ static void stbiw__write_pixel(stbi__write_context *s, int rgb_dir, int comp, in
       stbiw__write1(s, d[comp - 1]);
 }
 
-static void stbiw__write_pixels(stbi__write_context *s, int rgb_dir, int vdir, int x, int y, int comp, void *data, int write_alpha, int scanline_pad, int expand_mono)
+static void stbiw__write_pixels(stbi__write_context *s, int rgb_dir, int vdir, int x, int y, int comp, void *data, int write_alpha, int scanline_pad, int expand_mono)  // stbiw__write_pixels
 {
    stbiw_uint32 zero = 0;
    int i,j, j_end;
 
    if (y <= 0)
-      return;
+      return;  // 返回
 
    if (stbi__flip_vertically_on_write)
       vdir *= -1;
@@ -475,26 +475,26 @@ static void stbiw__write_pixels(stbi__write_context *s, int rgb_dir, int vdir, i
    }
 }
 
-static int stbiw__outfile(stbi__write_context *s, int rgb_dir, int vdir, int x, int y, int comp, int expand_mono, void *data, int alpha, int pad, const char *fmt, ...)
+static int stbiw__outfile(stbi__write_context *s, int rgb_dir, int vdir, int x, int y, int comp, int expand_mono, void *data, int alpha, int pad, const char *fmt, ...)  // stbiw__outfile
 {
    if (y < 0 || x < 0) {
-      return 0;
+      return 0;  // 返回
    } else {
       va_list v;
       va_start(v, fmt);
       stbiw__writefv(s, fmt, v);
       va_end(v);
       stbiw__write_pixels(s,rgb_dir,vdir,x,y,comp,data,alpha,pad, expand_mono);
-      return 1;
+      return 1;  // 返回
    }
 }
 
-static int stbi_write_bmp_core(stbi__write_context *s, int x, int y, int comp, const void *data)
+static int stbi_write_bmp_core(stbi__write_context *s, int x, int y, int comp, const void *data)  // stbi_write_bmp_core
 {
    if (comp != 4) {
       // write RGB bitmap
       int pad = (-x*3) & 3;
-      return stbiw__outfile(s,-1,-1,x,y,comp,1,(void *) data,0,pad,
+      return stbiw__outfile(s,-1,-1,x,y,comp,1,(void *) data,0,pad,  // stbiw__outfile
               "11 4 22 4" "4 44 22 444444",
               'B', 'M', 14+40+(x*3+pad)*y, 0,0, 14+40,  // file header
                40, x,y, 1,24, 0,0,0,0,0,0);             // bitmap header
@@ -502,7 +502,7 @@ static int stbi_write_bmp_core(stbi__write_context *s, int x, int y, int comp, c
       // RGBA bitmaps need a v4 header
       // use BI_BITFIELDS mode with 32bpp and alpha mask
       // (straight BI_RGB with alpha mask doesn't work in most readers)
-      return stbiw__outfile(s,-1,-1,x,y,comp,1,(void *)data,1,0,
+      return stbiw__outfile(s,-1,-1,x,y,comp,1,(void *)data,1,0,  // stbiw__outfile
          "11 4 22 4" "4 44 22 444444 4444 4 444 444 444 444",
          'B', 'M', 14+108+x*y*4, 0, 0, 14+108, // file header
          108, x,y, 1,32, 3,0,0,0,0,0, 0xff0000,0xff00,0xff,0xff000000u, 0, 0,0,0, 0,0,0, 0,0,0, 0,0,0); // bitmap V4 header
@@ -513,33 +513,33 @@ STBIWDEF int stbi_write_bmp_to_func(stbi_write_func *func, void *context, int x,
 {
    stbi__write_context s = { 0 };
    stbi__start_write_callbacks(&s, func, context);
-   return stbi_write_bmp_core(&s, x, y, comp, data);
+   return stbi_write_bmp_core(&s, x, y, comp, data);  // stbi_write_bmp_core
 }
 
-#ifndef STBI_WRITE_NO_STDIO
+#ifndef STBI_WRITE_NO_STDIO  // 如果未定义 STBI_WRITE_NO_STDIO 则编译
 STBIWDEF int stbi_write_bmp(char const *filename, int x, int y, int comp, const void *data)
 {
    stbi__write_context s = { 0 };
    if (stbi__start_write_file(&s,filename)) {
       int r = stbi_write_bmp_core(&s, x, y, comp, data);
       stbi__end_write_file(&s);
-      return r;
+      return r;  // 返回
    } else
-      return 0;
+      return 0;  // 返回
 }
-#endif //!STBI_WRITE_NO_STDIO
+#endif //!STBI_WRITE_NO_STDIO  // 条件编译结束
 
-static int stbi_write_tga_core(stbi__write_context *s, int x, int y, int comp, void *data)
+static int stbi_write_tga_core(stbi__write_context *s, int x, int y, int comp, void *data)  // stbi_write_tga_core
 {
    int has_alpha = (comp == 2 || comp == 4);
    int colorbytes = has_alpha ? comp-1 : comp;
    int format = colorbytes < 2 ? 3 : 2; // 3 color channels (RGB/RGBA) = 2, 1 color channel (Y/YA) = 3
 
    if (y < 0 || x < 0)
-      return 0;
+      return 0;  // 返回
 
    if (!stbi_write_tga_with_rle) {
-      return stbiw__outfile(s, -1, -1, x, y, comp, 0, (void *) data, has_alpha, 0,
+      return stbiw__outfile(s, -1, -1, x, y, comp, 0, (void *) data, has_alpha, 0,  // stbiw__outfile
          "111 221 2222 11", 0, 0, format, 0, 0, 0, 0, 0, x, y, (colorbytes + has_alpha) * 8, has_alpha * 8);
    } else {
       int i,j,k;
@@ -605,38 +605,38 @@ static int stbi_write_tga_core(stbi__write_context *s, int x, int y, int comp, v
       }
       stbiw__write_flush(s);
    }
-   return 1;
+   return 1;  // 返回
 }
 
 STBIWDEF int stbi_write_tga_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void *data)
 {
    stbi__write_context s = { 0 };
    stbi__start_write_callbacks(&s, func, context);
-   return stbi_write_tga_core(&s, x, y, comp, (void *) data);
+   return stbi_write_tga_core(&s, x, y, comp, (void *) data);  // stbi_write_tga_core
 }
 
-#ifndef STBI_WRITE_NO_STDIO
+#ifndef STBI_WRITE_NO_STDIO  // 如果未定义 STBI_WRITE_NO_STDIO 则编译
 STBIWDEF int stbi_write_tga(char const *filename, int x, int y, int comp, const void *data)
 {
    stbi__write_context s = { 0 };
    if (stbi__start_write_file(&s,filename)) {
       int r = stbi_write_tga_core(&s, x, y, comp, (void *) data);
       stbi__end_write_file(&s);
-      return r;
+      return r;  // 返回
    } else
-      return 0;
+      return 0;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 // *************************************************************************************************
 // Radiance RGBE HDR writer
 // by Baldur Karlsson
 
-#define stbiw__max(a, b)  ((a) > (b) ? (a) : (b))
+#define stbiw__max(a, b)  ((a) > (b) ? (a) : (b))  // 宏定义 stbiw__max
 
-#ifndef STBI_WRITE_NO_STDIO
+#ifndef STBI_WRITE_NO_STDIO  // 如果未定义 STBI_WRITE_NO_STDIO 则编译
 
-static void stbiw__linear_to_rgbe(unsigned char *rgbe, float *linear)
+static void stbiw__linear_to_rgbe(unsigned char *rgbe, float *linear)  // stbiw__linear_to_rgbe
 {
    int exponent;
    float maxcomp = stbiw__max(linear[0], stbiw__max(linear[1], linear[2]));
@@ -653,7 +653,7 @@ static void stbiw__linear_to_rgbe(unsigned char *rgbe, float *linear)
    }
 }
 
-static void stbiw__write_run_data(stbi__write_context *s, int length, unsigned char databyte)
+static void stbiw__write_run_data(stbi__write_context *s, int length, unsigned char databyte)  // stbiw__write_run_data
 {
    unsigned char lengthbyte = STBIW_UCHAR(length+128);
    STBIW_ASSERT(length+128 <= 255);
@@ -661,7 +661,7 @@ static void stbiw__write_run_data(stbi__write_context *s, int length, unsigned c
    s->func(s->context, &databyte, 1);
 }
 
-static void stbiw__write_dump_data(stbi__write_context *s, int length, unsigned char *data)
+static void stbiw__write_dump_data(stbi__write_context *s, int length, unsigned char *data)  // stbiw__write_dump_data
 {
    unsigned char lengthbyte = STBIW_UCHAR(length);
    STBIW_ASSERT(length <= 128); // inconsistent with spec but consistent with official code
@@ -669,7 +669,7 @@ static void stbiw__write_dump_data(stbi__write_context *s, int length, unsigned 
    s->func(s->context, data, length);
 }
 
-static void stbiw__write_hdr_scanline(stbi__write_context *s, int width, int ncomp, unsigned char *scratch, float *scanline)
+static void stbiw__write_hdr_scanline(stbi__write_context *s, int width, int ncomp, unsigned char *scratch, float *scanline)  // stbiw__write_hdr_scanline
 {
    unsigned char scanlineheader[4] = { 2, 2, 0, 0 };
    unsigned char rgbe[4];
@@ -758,10 +758,10 @@ static void stbiw__write_hdr_scanline(stbi__write_context *s, int width, int nco
    }
 }
 
-static int stbi_write_hdr_core(stbi__write_context *s, int x, int y, int comp, float *data)
+static int stbi_write_hdr_core(stbi__write_context *s, int x, int y, int comp, float *data)  // stbi_write_hdr_core
 {
    if (y <= 0 || x <= 0 || data == NULL)
-      return 0;
+      return 0;  // 返回
    else {
       // Each component is stored separately. Allocate scratch space for full output scanline.
       unsigned char *scratch = (unsigned char *) STBIW_MALLOC(x*4);
@@ -770,17 +770,17 @@ static int stbi_write_hdr_core(stbi__write_context *s, int x, int y, int comp, f
       char header[] = "#?RADIANCE\n# Written by stb_image_write.h\nFORMAT=32-bit_rle_rgbe\n";
       s->func(s->context, header, sizeof(header)-1);
 
-#ifdef __STDC_LIB_EXT1__
+#ifdef __STDC_LIB_EXT1__  // 如果定义了 __STDC_LIB_EXT1__ 则编译
       len = sprintf_s(buffer, sizeof(buffer), "EXPOSURE=          1.0000000000000\n\n-Y %d +X %d\n", y, x);
-#else
+#else  // 否则
       len = sprintf(buffer, "EXPOSURE=          1.0000000000000\n\n-Y %d +X %d\n", y, x);
-#endif
+#endif  // 条件编译结束
       s->func(s->context, buffer, len);
 
       for(i=0; i < y; i++)
          stbiw__write_hdr_scanline(s, x, comp, scratch, data + comp*x*(stbi__flip_vertically_on_write ? y-1-i : i));
       STBIW_FREE(scratch);
-      return 1;
+      return 1;  // 返回
    }
 }
 
@@ -788,7 +788,7 @@ STBIWDEF int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int x,
 {
    stbi__write_context s = { 0 };
    stbi__start_write_callbacks(&s, func, context);
-   return stbi_write_hdr_core(&s, x, y, comp, (float *) data);
+   return stbi_write_hdr_core(&s, x, y, comp, (float *) data);  // stbi_write_hdr_core
 }
 
 STBIWDEF int stbi_write_hdr(char const *filename, int x, int y, int comp, const float *data)
@@ -797,11 +797,11 @@ STBIWDEF int stbi_write_hdr(char const *filename, int x, int y, int comp, const 
    if (stbi__start_write_file(&s,filename)) {
       int r = stbi_write_hdr_core(&s, x, y, comp, (float *) data);
       stbi__end_write_file(&s);
-      return r;
+      return r;  // 返回
    } else
-      return 0;
+      return 0;  // 返回
 }
-#endif // STBI_WRITE_NO_STDIO
+#endif // STBI_WRITE_NO_STDIO  // 条件编译结束
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -809,21 +809,21 @@ STBIWDEF int stbi_write_hdr(char const *filename, int x, int y, int comp, const 
 // PNG writer
 //
 
-#ifndef STBIW_ZLIB_COMPRESS
+#ifndef STBIW_ZLIB_COMPRESS  // 如果未定义 STBIW_ZLIB_COMPRESS 则编译
 // stretchy buffer; stbiw__sbpush() == vector<>::push_back() -- stbiw__sbcount() == vector<>::size()
-#define stbiw__sbraw(a) ((int *) (void *) (a) - 2)
-#define stbiw__sbm(a)   stbiw__sbraw(a)[0]
-#define stbiw__sbn(a)   stbiw__sbraw(a)[1]
+#define stbiw__sbraw(a) ((int *) (void *) (a) - 2)  // 宏定义 stbiw__sbraw
+#define stbiw__sbm(a)   stbiw__sbraw(a)[0]  // 宏定义 stbiw__sbm
+#define stbiw__sbn(a)   stbiw__sbraw(a)[1]  // 宏定义 stbiw__sbn
 
-#define stbiw__sbneedgrow(a,n)  ((a)==0 || stbiw__sbn(a)+n >= stbiw__sbm(a))
-#define stbiw__sbmaybegrow(a,n) (stbiw__sbneedgrow(a,(n)) ? stbiw__sbgrow(a,n) : 0)
-#define stbiw__sbgrow(a,n)  stbiw__sbgrowf((void **) &(a), (n), sizeof(*(a)))
+#define stbiw__sbneedgrow(a,n)  ((a)==0 || stbiw__sbn(a)+n >= stbiw__sbm(a))  // 宏定义 stbiw__sbneedgrow
+#define stbiw__sbmaybegrow(a,n) (stbiw__sbneedgrow(a,(n)) ? stbiw__sbgrow(a,n) : 0)  // 宏定义 stbiw__sbmaybegrow
+#define stbiw__sbgrow(a,n)  stbiw__sbgrowf((void **) &(a), (n), sizeof(*(a)))  // 宏定义 stbiw__sbgrow
 
-#define stbiw__sbpush(a, v)      (stbiw__sbmaybegrow(a,1), (a)[stbiw__sbn(a)++] = (v))
-#define stbiw__sbcount(a)        ((a) ? stbiw__sbn(a) : 0)
-#define stbiw__sbfree(a)         ((a) ? STBIW_FREE(stbiw__sbraw(a)),0 : 0)
+#define stbiw__sbpush(a, v)      (stbiw__sbmaybegrow(a,1), (a)[stbiw__sbn(a)++] = (v))  // 宏定义 stbiw__sbpush
+#define stbiw__sbcount(a)        ((a) ? stbiw__sbn(a) : 0)  // 宏定义 stbiw__sbcount
+#define stbiw__sbfree(a)         ((a) ? STBIW_FREE(stbiw__sbraw(a)),0 : 0)  // 宏定义 stbiw__sbfree
 
-static void *stbiw__sbgrowf(void **arr, int increment, int itemsize)
+static void *stbiw__sbgrowf(void **arr, int increment, int itemsize)  // stbiw__sbgrowf
 {
    int m = *arr ? 2*stbiw__sbm(*arr)+increment : increment+1;
    void *p = STBIW_REALLOC_SIZED(*arr ? stbiw__sbraw(*arr) : 0, *arr ? (stbiw__sbm(*arr)*itemsize + sizeof(int)*2) : 0, itemsize * m + sizeof(int)*2);
@@ -833,38 +833,38 @@ static void *stbiw__sbgrowf(void **arr, int increment, int itemsize)
       *arr = (void *) ((int *) p + 2);
       stbiw__sbm(*arr) = m;
    }
-   return *arr;
+   return *arr;  // 返回
 }
 
-static unsigned char *stbiw__zlib_flushf(unsigned char *data, unsigned int *bitbuffer, int *bitcount)
+static unsigned char *stbiw__zlib_flushf(unsigned char *data, unsigned int *bitbuffer, int *bitcount)  // stbiw__zlib_flushf
 {
    while (*bitcount >= 8) {
       stbiw__sbpush(data, STBIW_UCHAR(*bitbuffer));
       *bitbuffer >>= 8;
       *bitcount -= 8;
    }
-   return data;
+   return data;  // 返回
 }
 
-static int stbiw__zlib_bitrev(int code, int codebits)
+static int stbiw__zlib_bitrev(int code, int codebits)  // stbiw__zlib_bitrev
 {
    int res=0;
    while (codebits--) {
       res = (res << 1) | (code & 1);
       code >>= 1;
    }
-   return res;
+   return res;  // 返回
 }
 
-static unsigned int stbiw__zlib_countm(unsigned char *a, unsigned char *b, int limit)
+static unsigned int stbiw__zlib_countm(unsigned char *a, unsigned char *b, int limit)  // stbiw__zlib_countm
 {
    int i;
    for (i=0; i < limit && i < 258; ++i)
       if (a[i] != b[i]) break;
-   return i;
+   return i;  // 返回
 }
 
-static unsigned int stbiw__zhash(unsigned char *data)
+static unsigned int stbiw__zhash(unsigned char *data)  // stbiw__zhash
 {
    stbiw_uint32 hash = data[0] + (data[1] << 8) + (data[2] << 16);
    hash ^= hash << 3;
@@ -873,31 +873,31 @@ static unsigned int stbiw__zhash(unsigned char *data)
    hash += hash >> 17;
    hash ^= hash << 25;
    hash += hash >> 6;
-   return hash;
+   return hash;  // 返回
 }
 
-#define stbiw__zlib_flush() (out = stbiw__zlib_flushf(out, &bitbuf, &bitcount))
+#define stbiw__zlib_flush() (out = stbiw__zlib_flushf(out, &bitbuf, &bitcount))  // 宏定义 stbiw__zlib_flush
 #define stbiw__zlib_add(code,codebits) \
       (bitbuf |= (code) << bitcount, bitcount += (codebits), stbiw__zlib_flush())
-#define stbiw__zlib_huffa(b,c)  stbiw__zlib_add(stbiw__zlib_bitrev(b,c),c)
+#define stbiw__zlib_huffa(b,c)  stbiw__zlib_add(stbiw__zlib_bitrev(b,c),c)  // 宏定义 stbiw__zlib_huffa
 // default huffman tables
-#define stbiw__zlib_huff1(n)  stbiw__zlib_huffa(0x30 + (n), 8)
-#define stbiw__zlib_huff2(n)  stbiw__zlib_huffa(0x190 + (n)-144, 9)
-#define stbiw__zlib_huff3(n)  stbiw__zlib_huffa(0 + (n)-256,7)
-#define stbiw__zlib_huff4(n)  stbiw__zlib_huffa(0xc0 + (n)-280,8)
-#define stbiw__zlib_huff(n)  ((n) <= 143 ? stbiw__zlib_huff1(n) : (n) <= 255 ? stbiw__zlib_huff2(n) : (n) <= 279 ? stbiw__zlib_huff3(n) : stbiw__zlib_huff4(n))
-#define stbiw__zlib_huffb(n) ((n) <= 143 ? stbiw__zlib_huff1(n) : stbiw__zlib_huff2(n))
+#define stbiw__zlib_huff1(n)  stbiw__zlib_huffa(0x30 + (n), 8)  // 宏定义 stbiw__zlib_huff1
+#define stbiw__zlib_huff2(n)  stbiw__zlib_huffa(0x190 + (n)-144, 9)  // 宏定义 stbiw__zlib_huff2
+#define stbiw__zlib_huff3(n)  stbiw__zlib_huffa(0 + (n)-256,7)  // 宏定义 stbiw__zlib_huff3
+#define stbiw__zlib_huff4(n)  stbiw__zlib_huffa(0xc0 + (n)-280,8)  // 宏定义 stbiw__zlib_huff4
+#define stbiw__zlib_huff(n)  ((n) <= 143 ? stbiw__zlib_huff1(n) : (n) <= 255 ? stbiw__zlib_huff2(n) : (n) <= 279 ? stbiw__zlib_huff3(n) : stbiw__zlib_huff4(n))  // 宏定义 stbiw__zlib_huff
+#define stbiw__zlib_huffb(n) ((n) <= 143 ? stbiw__zlib_huff1(n) : stbiw__zlib_huff2(n))  // 宏定义 stbiw__zlib_huffb
 
-#define stbiw__ZHASH   16384
+#define stbiw__ZHASH   16384  // 宏定义 stbiw__ZHASH
 
-#endif // STBIW_ZLIB_COMPRESS
+#endif // STBIW_ZLIB_COMPRESS  // 条件编译结束
 
 STBIWDEF unsigned char * stbi_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality)
 {
-#ifdef STBIW_ZLIB_COMPRESS
+#ifdef STBIW_ZLIB_COMPRESS  // 如果定义了 STBIW_ZLIB_COMPRESS 则编译
    // user provided a zlib compress implementation, use that
-   return STBIW_ZLIB_COMPRESS(data, data_len, out_len, quality);
-#else // use builtin
+   return STBIW_ZLIB_COMPRESS(data, data_len, out_len, quality);  // STBIW_ZLIB_COMPRESS
+#else // use builtin  // 否则
    static unsigned short lengthc[] = { 3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258, 259 };
    static unsigned char  lengtheb[]= { 0,0,0,0,0,0,0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4,  4,  5,  5,  5,  5,  0 };
    static unsigned short distc[]   = { 1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577, 32768 };
@@ -907,7 +907,7 @@ STBIWDEF unsigned char * stbi_zlib_compress(unsigned char *data, int data_len, i
    unsigned char *out = NULL;
    unsigned char ***hash_table = (unsigned char***) STBIW_MALLOC(stbiw__ZHASH * sizeof(unsigned char**));
    if (hash_table == NULL)
-      return NULL;
+      return NULL;  // 返回
    if (quality < 5) quality = 5;
 
    stbiw__sbpush(out, 0x78);   // DEFLATE 32K window
@@ -1018,14 +1018,14 @@ STBIWDEF unsigned char * stbi_zlib_compress(unsigned char *data, int data_len, i
    // make returned pointer freeable
    STBIW_MEMMOVE(stbiw__sbraw(out), out, *out_len);
    return (unsigned char *) stbiw__sbraw(out);
-#endif // STBIW_ZLIB_COMPRESS
+#endif // STBIW_ZLIB_COMPRESS  // 条件编译结束
 }
 
-static unsigned int stbiw__crc32(unsigned char *buffer, int len)
+static unsigned int stbiw__crc32(unsigned char *buffer, int len)  // stbiw__crc32
 {
-#ifdef STBIW_CRC32
-    return STBIW_CRC32(buffer, len);
-#else
+#ifdef STBIW_CRC32  // 如果定义了 STBIW_CRC32 则编译
+    return STBIW_CRC32(buffer, len);  // STBIW_CRC32
+#else  // 否则
    static unsigned int crc_table[256] =
    {
       0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA, 0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
@@ -1066,30 +1066,30 @@ static unsigned int stbiw__crc32(unsigned char *buffer, int len)
    int i;
    for (i=0; i < len; ++i)
       crc = (crc >> 8) ^ crc_table[buffer[i] ^ (crc & 0xff)];
-   return ~crc;
-#endif
+   return ~crc;  // 返回
+#endif  // 条件编译结束
 }
 
-#define stbiw__wpng4(o,a,b,c,d) ((o)[0]=STBIW_UCHAR(a),(o)[1]=STBIW_UCHAR(b),(o)[2]=STBIW_UCHAR(c),(o)[3]=STBIW_UCHAR(d),(o)+=4)
-#define stbiw__wp32(data,v) stbiw__wpng4(data, (v)>>24,(v)>>16,(v)>>8,(v));
-#define stbiw__wptag(data,s) stbiw__wpng4(data, s[0],s[1],s[2],s[3])
+#define stbiw__wpng4(o,a,b,c,d) ((o)[0]=STBIW_UCHAR(a),(o)[1]=STBIW_UCHAR(b),(o)[2]=STBIW_UCHAR(c),(o)[3]=STBIW_UCHAR(d),(o)+=4)  // 宏定义 stbiw__wpng4
+#define stbiw__wp32(data,v) stbiw__wpng4(data, (v)>>24,(v)>>16,(v)>>8,(v));  // 宏定义 stbiw__wp32
+#define stbiw__wptag(data,s) stbiw__wpng4(data, s[0],s[1],s[2],s[3])  // 宏定义 stbiw__wptag
 
-static void stbiw__wpcrc(unsigned char **data, int len)
+static void stbiw__wpcrc(unsigned char **data, int len)  // stbiw__wpcrc
 {
    unsigned int crc = stbiw__crc32(*data - len - 4, len+4);
    stbiw__wp32(*data, crc);
 }
 
-static unsigned char stbiw__paeth(int a, int b, int c)
+static unsigned char stbiw__paeth(int a, int b, int c)  // stbiw__paeth
 {
    int p = a + b - c, pa = abs(p-a), pb = abs(p-b), pc = abs(p-c);
    if (pa <= pb && pa <= pc) return STBIW_UCHAR(a);
    if (pb <= pc) return STBIW_UCHAR(b);
-   return STBIW_UCHAR(c);
+   return STBIW_UCHAR(c);  // STBIW_UCHAR
 }
 
 // @OPTIMIZE: provide an option that always forces left-predict or paeth predict
-static void stbiw__encode_png_line(unsigned char *pixels, int stride_bytes, int width, int height, int y, int n, int filter_type, signed char *line_buffer)
+static void stbiw__encode_png_line(unsigned char *pixels, int stride_bytes, int width, int height, int y, int n, int filter_type, signed char *line_buffer)  // stbiw__encode_png_line
 {
    static int mapping[] = { 0,1,2,3,4 };
    static int firstmap[] = { 0,1,0,5,6 };
@@ -1101,7 +1101,7 @@ static void stbiw__encode_png_line(unsigned char *pixels, int stride_bytes, int 
 
    if (type==0) {
       memcpy(line_buffer, z, width*n);
-      return;
+      return;  // 返回
    }
 
    // first loop isn't optimized since it's just one pixel
@@ -1208,10 +1208,10 @@ STBIWDEF unsigned char *stbi_write_png_to_mem(const unsigned char *pixels, int s
 
    STBIW_ASSERT(o == out + *out_len);
 
-   return out;
+   return out;  // 返回
 }
 
-#ifndef STBI_WRITE_NO_STDIO
+#ifndef STBI_WRITE_NO_STDIO  // 如果未定义 STBI_WRITE_NO_STDIO 则编译
 STBIWDEF int stbi_write_png(char const *filename, int x, int y, int comp, const void *data, int stride_bytes)
 {
    FILE *f;
@@ -1224,9 +1224,9 @@ STBIWDEF int stbi_write_png(char const *filename, int x, int y, int comp, const 
    fwrite(png, 1, len, f);
    fclose(f);
    STBIW_FREE(png);
-   return 1;
+   return 1;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 STBIWDEF int stbi_write_png_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void *data, int stride_bytes)
 {
@@ -1235,7 +1235,7 @@ STBIWDEF int stbi_write_png_to_func(stbi_write_func *func, void *context, int x,
    if (png == NULL) return 0;
    func(context, png, len);
    STBIW_FREE(png);
-   return 1;
+   return 1;  // 返回
 }
 
 
@@ -1369,7 +1369,7 @@ static int stbiw__jpg_processDU(stbi__write_context *s, int *bitBuf, int *bitCnt
    // end0pos = first element in reverse order !=0
    if(end0pos == 0) {
       stbiw__jpg_writeBits(s, bitBuf, bitCnt, EOB);
-      return DU[0];
+      return DU[0];  // 返回
    }
    for(i = 1; i <= end0pos; ++i) {
       int startpos = i;
@@ -1392,7 +1392,7 @@ static int stbiw__jpg_processDU(stbi__write_context *s, int *bitBuf, int *bitCnt
    if(end0pos != 63) {
       stbiw__jpg_writeBits(s, bitBuf, bitCnt, EOB);
    }
-   return DU[0];
+   return DU[0];  // 返回
 }
 
 static int stbi_write_jpg_core(stbi__write_context *s, int width, int height, int comp, const void* data, int quality) {
@@ -1472,7 +1472,7 @@ static int stbi_write_jpg_core(stbi__write_context *s, int width, int height, in
    unsigned char YTable[64], UVTable[64];
 
    if(!data || !width || !height || comp > 4 || comp < 1) {
-      return 0;
+      return 0;  // 返回
    }
 
    quality = quality ? quality : 90;
@@ -1601,31 +1601,31 @@ static int stbi_write_jpg_core(stbi__write_context *s, int width, int height, in
    stbiw__putc(s, 0xFF);
    stbiw__putc(s, 0xD9);
 
-   return 1;
+   return 1;  // 返回
 }
 
 STBIWDEF int stbi_write_jpg_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void *data, int quality)
 {
    stbi__write_context s = { 0 };
    stbi__start_write_callbacks(&s, func, context);
-   return stbi_write_jpg_core(&s, x, y, comp, (void *) data, quality);
+   return stbi_write_jpg_core(&s, x, y, comp, (void *) data, quality);  // stbi_write_jpg_core
 }
 
 
-#ifndef STBI_WRITE_NO_STDIO
+#ifndef STBI_WRITE_NO_STDIO  // 如果未定义 STBI_WRITE_NO_STDIO 则编译
 STBIWDEF int stbi_write_jpg(char const *filename, int x, int y, int comp, const void *data, int quality)
 {
    stbi__write_context s = { 0 };
    if (stbi__start_write_file(&s,filename)) {
       int r = stbi_write_jpg_core(&s, x, y, comp, data, quality);
       stbi__end_write_file(&s);
-      return r;
+      return r;  // 返回
    } else
-      return 0;
+      return 0;  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
-#endif // STB_IMAGE_WRITE_IMPLEMENTATION
+#endif // STB_IMAGE_WRITE_IMPLEMENTATION  // 条件编译结束
 
 /* Revision history
       1.16  (2021-07-11)
@@ -1646,7 +1646,7 @@ STBIWDEF int stbi_write_jpg(char const *filename, int x, int y, int comp, const 
       1.07  (2017-07-24)
              doc fix
       1.06 (2017-07-23)
-             writing JPEG (using Jon Olick's code)
+             writing JPEG (using Jon Olick's code)  // JPEG
       1.05   ???
       1.04 (2017-03-03)
              monochrome BMP expansion

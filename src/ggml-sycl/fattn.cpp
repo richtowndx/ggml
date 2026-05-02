@@ -11,13 +11,13 @@
 //
 
 
-#include <sycl/sycl.hpp>
-#include "dpct/helper.hpp"
-#include "common.hpp"
-#include "fattn-common.hpp"
-#include "fattn-tile.hpp"
-#include "fattn-vec.hpp"
-#include "fattn.hpp"
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
+#include "dpct/helper.hpp"  // 引入 dpct/helper.hpp 头文件
+#include "common.hpp"  // 引入 common.hpp 头文件
+#include "fattn-common.hpp"  // 引入 fattn-common.hpp 头文件
+#include "fattn-tile.hpp"  // 引入 fattn-tile.hpp 头文件
+#include "fattn-vec.hpp"  // 引入 fattn-vec.hpp 头文件
+#include "fattn.hpp"  // 引入 fattn.hpp 头文件
 
 
 #define FATTN_VEC_CASE(D, type_K, type_V)                                                                        \
@@ -41,7 +41,7 @@ static void ggml_sycl_flash_attn_ext_vec(ggml_backend_sycl_context & ctx, ggml_t
     ggml_tensor * K = dst->src[1];
     ggml_tensor * V = dst->src[2];
 
-#ifdef GGML_SYCL_FA_ALL_QUANTS
+#ifdef GGML_SYCL_FA_ALL_QUANTS  // 如果定义了 GGML_SYCL_FA_ALL_QUANTS 则编译
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_F16,  GGML_TYPE_F16)
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_Q4_0, GGML_TYPE_F16)
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_Q4_1, GGML_TYPE_F16)
@@ -83,17 +83,17 @@ static void ggml_sycl_flash_attn_ext_vec(ggml_backend_sycl_context & ctx, ggml_t
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_Q5_0, GGML_TYPE_Q8_0)
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_Q5_1, GGML_TYPE_Q8_0)
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_Q8_0, GGML_TYPE_Q8_0)
-#else
+#else  // 否则
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_F16,  GGML_TYPE_F16)
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_Q4_0, GGML_TYPE_Q4_0)
     FATTN_VEC_CASES_ALL_D(GGML_TYPE_Q8_0, GGML_TYPE_Q8_0)
-#endif // GGML_SYCL_FA_ALL_QUANTS
+#endif // GGML_SYCL_FA_ALL_QUANTS  // 条件编译结束
 
     GGML_ABORT("Not match KV type in vec");
 }
 
 // Best FlashAttention kernel for a specific GPU:
-enum best_fattn_kernel {
+enum best_fattn_kernel {  // 枚举定义
     BEST_FATTN_KERNEL_NONE     =   0,
     BEST_FATTN_KERNEL_VEC      = 100,
     BEST_FATTN_KERNEL_TILE     = 200,
@@ -101,9 +101,9 @@ enum best_fattn_kernel {
 
 static best_fattn_kernel ggml_sycl_get_best_fattn_kernel(const int device, const ggml_tensor * dst) {
     GGML_UNUSED(device);
-#ifndef SYCL_FLASH_ATTN
+#ifndef SYCL_FLASH_ATTN  // 如果未定义 SYCL_FLASH_ATTN 则编译
     GGML_UNUSED(dst);
-    return BEST_FATTN_KERNEL_NONE;
+    return BEST_FATTN_KERNEL_NONE;  // 返回
 #endif// SYCL_FLASH_ATTN
 
     if(!g_ggml_sycl_enable_flash_attention) return BEST_FATTN_KERNEL_NONE;
@@ -144,26 +144,26 @@ static best_fattn_kernel ggml_sycl_get_best_fattn_kernel(const int device, const
         case 256:
         case 512:
             if (V->ne[0] != K->ne[0]) {
-                return BEST_FATTN_KERNEL_NONE;
+                return BEST_FATTN_KERNEL_NONE;  // 返回
             }
             break;
         case 576:
             if (V->ne[0] != 512) {
-                return BEST_FATTN_KERNEL_NONE;
+                return BEST_FATTN_KERNEL_NONE;  // 返回
             }
             if (!gqa_opt_applies) {
-                return BEST_FATTN_KERNEL_NONE;
+                return BEST_FATTN_KERNEL_NONE;  // 返回
             }
             break;
         default:
-            return BEST_FATTN_KERNEL_NONE;
+            return BEST_FATTN_KERNEL_NONE;  // 返回
     }
 
-#ifndef GGML_SYCL_FA_ALL_QUANTS
+#ifndef GGML_SYCL_FA_ALL_QUANTS  // 如果未定义 GGML_SYCL_FA_ALL_QUANTS 则编译
     if (K->type != V->type) {
-        return BEST_FATTN_KERNEL_NONE;
+        return BEST_FATTN_KERNEL_NONE;  // 返回
     }
-#endif // GGML_SYCL_FA_ALL_QUANTS
+#endif // GGML_SYCL_FA_ALL_QUANTS  // 条件编译结束
 
     switch (K->type) {
         case GGML_TYPE_F32:
@@ -172,18 +172,18 @@ static best_fattn_kernel ggml_sycl_get_best_fattn_kernel(const int device, const
         case GGML_TYPE_Q4_1:
         case GGML_TYPE_Q5_0:
         case GGML_TYPE_Q5_1:
-#ifndef GGML_SYCL_FA_ALL_QUANTS
-            return BEST_FATTN_KERNEL_NONE;
-#endif // GGML_SYCL_FA_ALL_QUANTS
+#ifndef GGML_SYCL_FA_ALL_QUANTS  // 如果未定义 GGML_SYCL_FA_ALL_QUANTS 则编译
+            return BEST_FATTN_KERNEL_NONE;  // 返回
+#endif // GGML_SYCL_FA_ALL_QUANTS  // 条件编译结束
         case GGML_TYPE_Q4_0:
         case GGML_TYPE_Q8_0:
             break;
         default:
-            return BEST_FATTN_KERNEL_NONE;
+            return BEST_FATTN_KERNEL_NONE;  // 返回
     }
 
     if (mask && mask->ne[2] != 1) {
-        return BEST_FATTN_KERNEL_NONE;
+        return BEST_FATTN_KERNEL_NONE;  // 返回
     }
 
     // For small batch sizes the vector kernel may be preferable over the kernels optimized for large batch sizes:
@@ -196,16 +196,16 @@ static best_fattn_kernel ggml_sycl_get_best_fattn_kernel(const int device, const
         if (!ggml_is_quantized(K->type) && !ggml_is_quantized(V->type)) {
             if (Q->ne[1] == 1) {
                 if (!gqa_opt_applies) {
-                    return BEST_FATTN_KERNEL_VEC;
+                    return BEST_FATTN_KERNEL_VEC;  // 返回
                 }
             }
         } else {
             if (Q->ne[1] <= 2) {
-                return BEST_FATTN_KERNEL_VEC;
+                return BEST_FATTN_KERNEL_VEC;  // 返回
             }
         }
     }
-    return BEST_FATTN_KERNEL_TILE;
+    return BEST_FATTN_KERNEL_TILE;  // 返回
 }
 
 void ggml_sycl_flash_attn_ext(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
@@ -223,5 +223,5 @@ void ggml_sycl_flash_attn_ext(ggml_backend_sycl_context & ctx, ggml_tensor * dst
 }
 
 bool ggml_sycl_flash_attn_ext_supported(int device, const ggml_tensor * dst) {
-    return ggml_sycl_get_best_fattn_kernel(device, dst) != BEST_FATTN_KERNEL_NONE;
+    return ggml_sycl_get_best_fattn_kernel(device, dst) != BEST_FATTN_KERNEL_NONE;  // ggml_sycl_get_best_fattn_kernel
 }

@@ -1,42 +1,42 @@
-#include "ggml-decoder.h"
+#include "ggml-decoder.h"  // 引入 ggml-decoder.h 头文件
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-openvino-extra.h"
-#include "ggml-openvino.h"
-#include "ggml-quants.h"
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-openvino-extra.h"  // 引入 ggml-openvino-extra.h 头文件
+#include "ggml-openvino.h"  // 引入 ggml-openvino.h 头文件
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
 
-#include <ggml-impl.h>
-#include <ggml.h>
+#include <ggml-impl.h>  // 引入 ggml-impl.h 头文件
+#include <ggml.h>  // 引入 ggml.h 头文件
 
-#include <algorithm>
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <execution>
-#include <fstream>
-#include <iomanip>
-#include <map>
-#include <memory>
-#include <openvino/core/dimension.hpp>
-#include <openvino/core/except.hpp>
-#include <openvino/core/node.hpp>
-#include <openvino/core/partial_shape.hpp>
-#include <openvino/core/type/bfloat16.hpp>
-#include <openvino/core/type/element_type.hpp>
-#include <openvino/core/type/float16.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/parameter.hpp>
-#include <openvino/runtime/tensor.hpp>
-#include <optional>
-#include <ostream>
-#include <set>
-#include <stdexcept>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cassert>  // 引入 cassert 头文件
+#include <cstddef>  // 引入 cstddef 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <cstdlib>  // 引入 cstdlib 头文件
+#include <execution>  // 引入 execution 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <iomanip>  // 引入 iomanip 头文件
+#include <map>  // 引入 map 头文件
+#include <memory>  // 引入 memory 头文件
+#include <openvino/core/dimension.hpp>  // 引入 openvino/core/dimension.hpp 头文件
+#include <openvino/core/except.hpp>  // 引入 openvino/core/except.hpp 头文件
+#include <openvino/core/node.hpp>  // 引入 openvino/core/node.hpp 头文件
+#include <openvino/core/partial_shape.hpp>  // 引入 openvino/core/partial_shape.hpp 头文件
+#include <openvino/core/type/bfloat16.hpp>  // 引入 openvino/core/type/bfloat16.hpp 头文件
+#include <openvino/core/type/element_type.hpp>  // 引入 openvino/core/type/element_type.hpp 头文件
+#include <openvino/core/type/float16.hpp>  // 引入 openvino/core/type/float16.hpp 头文件
+#include <openvino/op/constant.hpp>  // 引入 openvino/op/constant.hpp 头文件
+#include <openvino/op/convert.hpp>  // 引入 openvino/op/convert.hpp 头文件
+#include <openvino/op/parameter.hpp>  // 引入 openvino/op/parameter.hpp 头文件
+#include <openvino/runtime/tensor.hpp>  // 引入 openvino/runtime/tensor.hpp 头文件
+#include <optional>  // 引入 optional 头文件
+#include <ostream>  // 引入 ostream 头文件
+#include <set>  // 引入 set 头文件
+#include <stdexcept>  // 引入 stdexcept 头文件
+#include <string>  // 引入 string 头文件
+#include <unordered_map>  // 引入 unordered_map 头文件
+#include <vector>  // 引入 vector 头文件
 
 GgmlOvDecoder::GgmlOvDecoder(ggml_cgraph * cgraph,
                              ModelParams & model_params,
@@ -56,11 +56,11 @@ GgmlOvDecoder::GgmlOvDecoder(ggml_cgraph * cgraph,
     m_model_params(model_params),
     m_compute_params(compute_params) {
     if (auto * env = getenv("GGML_OPENVINO_PRINT_CGRAPH_TENSOR_ADDRESS"); env && std::string(env) != "0") {
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
         _putenv_s("GGML_OPENVINO_PRINT_CGRAPH_TENSOR_ADDRESS", "");
-#else
+#else  // 否则
         unsetenv("GGML_OPENVINO_PRINT_CGRAPH_TENSOR_ADDRESS");
-#endif
+#endif  // 条件编译结束
         print_tensor_address_map(cgraph);
     }
 
@@ -253,7 +253,7 @@ int GgmlOvDecoder::compute_op_case(const ggml_tensor * node) const {
     default:
         break;
     }
-    return op_case;
+    return op_case;  // 返回
 }
 
 int extract_layer_from_name(const std::string & name) {
@@ -266,7 +266,7 @@ int extract_layer_from_name(const std::string & name) {
     }
     std::string layer_str = name.substr(pos1, pos2 - pos1);
     int layer = std::stoi(layer_str);
-    return layer;
+    return layer;  // 返回
 }
 
 std::pair<ModelParams, ComputeParams> GgmlOvDecoder::compute_llm_params(ggml_cgraph * cgraph, bool is_static) {
@@ -334,7 +334,7 @@ std::pair<ModelParams, ComputeParams> GgmlOvDecoder::compute_llm_params(ggml_cgr
     }
     model_params.ctx = model_params.ctx_per_seq * model_params.n_seq;
     model_params.ctx_swa = model_params.ctx_per_seq_swa * model_params.n_seq;
-    return {model_params, compute_params};
+    return {model_params, compute_params};  // 返回
 }
 
 void GgmlOvDecoder::validate_cgraph() const {
@@ -345,7 +345,7 @@ void GgmlOvDecoder::validate_cgraph() const {
 
 ov::PartialShape GgmlOvDecoder::get_graph_input_shape(const ggml_tensor * op, const ggml_tensor * input) const {
     if (m_naive) {
-        return input!= nullptr ? ov::PartialShape{get_shape(input)} : ov::PartialShape{get_shape(op)};
+        return input!= nullptr ? ov::PartialShape{get_shape(input)} : ov::PartialShape{get_shape(op)};  // 返回
     }
     auto name = std::string(input->name);
     ov::PartialShape input_shape;
@@ -394,7 +394,7 @@ ov::PartialShape GgmlOvDecoder::get_graph_input_shape(const ggml_tensor * op, co
     } else {
         input_shape = ov::PartialShape{get_shape(input)};
     }
-    return input_shape;
+    return input_shape;  // 返回
 }
 
 void GgmlOvDecoder::add_extra_inputs() {
@@ -438,11 +438,11 @@ bool GgmlOvDecoder::node_is_used_as_src(const int node_idx) {
         ggml_tensor * other_node = m_cgraph->nodes[i];
         for (int j = 0; j < GGML_MAX_SRC; j++) {
             if (other_node->src[j] == node) {
-                return true;
+                return true;  // 返回
             }
         }
     }
-    return false;
+    return false;  // 返回
 }
 
 void GgmlOvDecoder::compute_model_inputs() {
@@ -548,17 +548,17 @@ void GgmlOvDecoder::compute_model_outputs() {
 
 const ggml_tensor * GgmlOvDecoder::get_tensor_used_op(const ggml_tensor * tensor) const {
     if (tensor == nullptr) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     for (int i = 0; i < m_cgraph->n_nodes; i++) {
         const auto * node = m_cgraph->nodes[i];
         for (int j = 0; j < GGML_MAX_SRC; j++) {
             if (node->src[j] == tensor) {
-                return node;
+                return node;  // 返回
             }
         }
     }
-    return nullptr;
+    return nullptr;  // 返回
 }
 
 const ggml_tensor * GgmlOvDecoder::get_tensor_from_name(const std::string & name) const {
@@ -570,11 +570,11 @@ const ggml_tensor * GgmlOvDecoder::get_tensor_from_name(const std::string & name
                 break;
             }
             if (std::string(src->name) == name) {
-                return src;
+                return src;  // 返回
             }
         }
     }
-    return nullptr;
+    return nullptr;  // 返回
 }
 
 std::map<std::string, std::string> GgmlOvDecoder::get_kv_param_res_names() const {
@@ -582,7 +582,7 @@ std::map<std::string, std::string> GgmlOvDecoder::get_kv_param_res_names() const
     for (const auto & name : m_model_params.kv_names) {
         kv_param_res_names[name] = name;
     }
-    return kv_param_res_names;
+    return kv_param_res_names;  // 返回
 }
 
 std::map<std::string, std::shared_ptr<ov::Node>> GgmlOvDecoder::create_weight_nodes(ggml_cgraph * cgraph, bool naive) {
@@ -613,7 +613,7 @@ std::map<std::string, std::shared_ptr<ov::Node>> GgmlOvDecoder::create_weight_no
             }
         }
     }
-    return model_weights;
+    return model_weights;  // 返回
 }
 
 std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_node(ggml_tensor * tensor, bool naive) {
@@ -632,14 +632,14 @@ std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_node(ggml_tensor * tensor
             auto * weight_extra = static_cast<ggml_openvino_weight_extra *>(tensor->extra);
             if (weight_extra->weight_node) {
                 // GGML_LOG_DEBUG("%s: using pre-built weight node for %s\n", __func__, tensor->name);
-                return weight_extra->weight_node;
+                return weight_extra->weight_node;  // 返回
             }
         } else if (extra_base->type == ggml_openvino_extra_base::Type::QUANTIZED_WEIGHT) {
             // Quantized weight with pre-extracted data
             auto * quant_extra = static_cast<ggml_openvino_quantized_weight_extra *>(tensor->extra);
             if (quant_extra->weight_node) {
                 // GGML_LOG_DEBUG("%s: using pre-extracted quantized weight node for %s\n", __func__, tensor->name);
-                return quant_extra->weight_node;
+                return quant_extra->weight_node;  // 返回
             }
         }
     }
@@ -681,7 +681,7 @@ std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_node(ggml_tensor * tensor
 
     ov_weight.weight_node->set_friendly_name(tensor->name);
     if (!is_ov_buffer) {
-        return ov_weight.weight_node;
+        return ov_weight.weight_node;  // 返回
     }
 
     ggml_openvino_extra_base * extra;
@@ -693,14 +693,14 @@ std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_node(ggml_tensor * tensor
     }
     ggml_openvino_buffer_register_extra(tensor, extra);
 
-    return ov_weight.weight_node;
+    return ov_weight.weight_node;  // 返回
 }
 
 void GgmlOvDecoder::dump_cgraph(const ggml_cgraph * cgraph, std::string & filename) {
     std::ofstream file(filename);
     if (!file.is_open()) {
         std::cerr << "Failed to open file" << std::endl;
-        return;
+        return;  // 返回
     }
 
     file << "=== GRAPH ===\n";
@@ -818,7 +818,7 @@ ov::Shape GgmlOvDecoder::get_shape(const ggml_tensor * tensor) {
     for (int i = GGML_MAX_DIMS - 1; i >= 0; --i) {
         shape.push_back(static_cast<size_t>(tensor->ne[i]));
     }
-    return shape;
+    return shape;  // 返回
 }
 
 std::vector<size_t> GgmlOvDecoder::get_stride(const ggml_tensor * tensor) {
@@ -826,29 +826,29 @@ std::vector<size_t> GgmlOvDecoder::get_stride(const ggml_tensor * tensor) {
     for (int i = GGML_MAX_DIMS - 1; i >= 0; --i) {
         stride.push_back(static_cast<size_t>(tensor->nb[i]));
     }
-    return stride;
+    return stride;  // 返回
 }
 
 ov::element::Type GgmlOvDecoder::get_ov_type(const ggml_tensor * tensor) {
     switch (tensor->type) {
     case GGML_TYPE_F64:
-        return ov::element::f64;
+        return ov::element::f64;  // 返回
     case GGML_TYPE_F32:
-        return ov::element::f32;
+        return ov::element::f32;  // 返回
     case GGML_TYPE_F16:
-        return ov::element::f16;
+        return ov::element::f16;  // 返回
     case GGML_TYPE_BF16:
-        return ov::element::bf16;
+        return ov::element::bf16;  // 返回
     case GGML_TYPE_I8:
-        return ov::element::i8;
+        return ov::element::i8;  // 返回
     case GGML_TYPE_I16:
-        return ov::element::i16;
+        return ov::element::i16;  // 返回
     case GGML_TYPE_I32:
-        return ov::element::i32;
+        return ov::element::i32;  // 返回
     case GGML_TYPE_I64:
-        return ov::element::i64;
+        return ov::element::i64;  // 返回
     default:
-        return ov::element::dynamic;
+        return ov::element::dynamic;  // 返回
     }
 }
 
@@ -857,11 +857,11 @@ ov::PartialShape GgmlOvDecoder::get_input_shape(int node_idx, const std::string 
 }
 
 std::vector<size_t> GgmlOvDecoder::get_input_stride(int node_idx, const std::string & name) const {
-    return get_stride(m_node_info_list[node_idx].node_inputs.at(name));
+    return get_stride(m_node_info_list[node_idx].node_inputs.at(name));  // get_stride
 }
 
 ov::element::Type GgmlOvDecoder::get_input_type(int node_idx, const std::string & name) const {
-    return get_ov_type(m_node_info_list[node_idx].node_inputs.at(name));
+    return get_ov_type(m_node_info_list[node_idx].node_inputs.at(name));  // get_ov_type
 }
 
 size_t GgmlOvDecoder::get_input_size() const {
@@ -873,7 +873,7 @@ size_t GgmlOvDecoder::get_input_size(int node_idx) const {
 }
 
 std::vector<std::string> GgmlOvDecoder::get_input_names(int node_idx) const {
-    return m_node_info_list[node_idx].node_inputs_names;
+    return m_node_info_list[node_idx].node_inputs_names;  // 返回
 }
 
 ov::PartialShape GgmlOvDecoder::get_output_shape(int node_idx) const {
@@ -882,20 +882,20 @@ ov::PartialShape GgmlOvDecoder::get_output_shape(int node_idx) const {
 }
 
 ov::element::Type GgmlOvDecoder::get_output_type(const int node_idx) const {
-    return get_ov_type(m_node_info_list[node_idx].node);
+    return get_ov_type(m_node_info_list[node_idx].node);  // get_ov_type
 }
 
 std::vector<std::string> GgmlOvDecoder::get_output_names(int node_idx) const {
-    return {m_node_info_list[node_idx].node_output_name};
+    return {m_node_info_list[node_idx].node_output_name};  // 返回
 }
 
 const std::string & GgmlOvDecoder::get_op_name() const {
     static const std::string unknown_name = "UNKNOWN_OP_NAME";
-    return unknown_name;
+    return unknown_name;  // 返回
 }
 
 const std::string & GgmlOvDecoder::get_op_name(int node_idx) const {
-    return m_node_info_list[node_idx].node_name;
+    return m_node_info_list[node_idx].node_name;  // 返回
 }
 
 int32_t * GgmlOvDecoder::get_input_op_params(int node_idx, const std::string & name) const {
@@ -903,7 +903,7 @@ int32_t * GgmlOvDecoder::get_input_op_params(int node_idx, const std::string & n
 }
 
 int32_t * GgmlOvDecoder::get_output_op_params(int node_idx) const {
-    return m_node_info_list[node_idx].node->op_params;
+    return m_node_info_list[node_idx].node->op_params;  // 返回
 }
 
 void GgmlOvDecoder::visit_subgraph(std::function<void(std::shared_ptr<GgmlDecoder>, int node_idx)> node_visitor) const {
@@ -972,14 +972,14 @@ std::string GgmlOvDecoder::compute_op_type(const ggml_tensor * node) {
         return ops.at(node->op);
     }
     static const std::string unknown_op = "UNKNOWN_GGML_OP";
-    return unknown_op;
+    return unknown_op;  // 返回
 }
 
 const std::string & GgmlOvDecoder::get_op_type(int node_idx) const {
-    return m_node_info_list[node_idx].node_op_type;
+    return m_node_info_list[node_idx].node_op_type;  // 返回
 }
 
 const std::string & GgmlOvDecoder::get_op_type() const {
     static const std::string unknown_op = "UNKNOWN_GGML_OP";
-    return unknown_op;
+    return unknown_op;  // 返回
 }

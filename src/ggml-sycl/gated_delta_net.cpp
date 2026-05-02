@@ -1,12 +1,12 @@
-#include <sycl/sycl.hpp>
-#include "dpct/helper.hpp"
-#include "common.hpp"
-#include "ggml.h"
-#include "gated_delta_net.hpp"
-#include <cmath>
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
+#include "dpct/helper.hpp"  // 引入 dpct/helper.hpp 头文件
+#include "common.hpp"  // 引入 common.hpp 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "gated_delta_net.hpp"  // 引入 gated_delta_net.hpp 头文件
+#include <cmath>  // 引入 cmath 头文件
 
 
-template <int S_v, bool KDA>
+template <int S_v, bool KDA>  // 模板
 void gated_delta_net_sycl(const float *     q,
                           const float *     k,
                           const float *     v,
@@ -141,7 +141,7 @@ void gated_delta_net_sycl(const float *     q,
     }
 }
 
-template <bool KDA>
+template <bool KDA>  // 模板
 static void launch_gated_delta_net(const float *   q_d,
                                    const float *   k_d,
                                    const float *   v_d,
@@ -302,6 +302,6 @@ void ggml_sycl_op_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor *
 }
 
 void ggml_sycl_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/6);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/6);  // scope_dbg_print
     ggml_sycl_op_gated_delta_net(ctx, dst);
 }

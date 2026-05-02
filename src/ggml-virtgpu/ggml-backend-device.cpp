@@ -1,17 +1,17 @@
-#include "ggml-remoting.h"
+#include "ggml-remoting.h"  // 引入 ggml-remoting.h 头文件
 
 static const char * ggml_backend_remoting_device_get_name(ggml_backend_dev_t dev) {
     virtgpu * gpu = DEV_TO_GPU(dev);
 
     // Return the prefixed name that was built once during initialization
-    return gpu->cached_device_info.name;
+    return gpu->cached_device_info.name;  // 返回
 }
 
 static const char * ggml_backend_remoting_device_get_description(ggml_backend_dev_t dev) {
     virtgpu * gpu = DEV_TO_GPU(dev);
 
     // Return the pre-cached description from the virtgpu structure
-    return gpu->cached_device_info.description;
+    return gpu->cached_device_info.description;  // 返回
 }
 
 static enum ggml_backend_dev_type ggml_backend_remoting_device_get_type(ggml_backend_dev_t dev) {
@@ -28,31 +28,31 @@ static void ggml_backend_remoting_device_get_memory(ggml_backend_dev_t dev, size
 }
 
 static bool ggml_backend_remoting_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
-#if USE_ALWAYS_TRUE_SUPPORTS_OP == 1
+#if USE_ALWAYS_TRUE_SUPPORTS_OP == 1  // 条件编译
     /* ggml-rpc cheats it like this */
     /* with the current implementation of serialize_tensor, the src/view aren't properly passed */
     UNUSED(dev);
     UNUSED(op);
 
-    return true;
-#else
+    return true;  // 返回
+#else  // 否则
     virtgpu * gpu = DEV_TO_GPU(dev);
 
-    return apir_device_supports_op(gpu, op);
-#endif
+    return apir_device_supports_op(gpu, op);  // apir_device_supports_op
+#endif  // 条件编译结束
 }
 
 static bool ggml_backend_remoting_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
     bool supported = buft->device == dev;
 
-    return supported;
+    return supported;  // 返回
 }
 
 static bool ggml_backend_remoting_device_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
     UNUSED(dev);
     UNUSED(op);
 
-    return false;
+    return false;  // 返回
 }
 
 static void ggml_backend_remoting_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
@@ -90,7 +90,7 @@ ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_type(ggml_bac
         }
     }
 
-    return &buft;
+    return &buft;  // 返回
 }
 
 static ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_from_ptr_type(ggml_backend_dev_t dev) {
@@ -113,7 +113,7 @@ static ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_from_p
         }
     }
 
-    return &buft;
+    return &buft;  // 返回
 }
 
 static ggml_backend_buffer_t ggml_backend_remoting_device_buffer_from_ptr(ggml_backend_dev_t dev,
@@ -136,7 +136,7 @@ static ggml_backend_buffer_t ggml_backend_remoting_device_buffer_from_ptr(ggml_b
         ggml_backend_buffer_init(ggml_backend_remoting_device_get_buffer_from_ptr_type(dev),
                                  ggml_backend_remoting_buffer_from_ptr_interface, (void *) context, size);
 
-    return buffer;
+    return buffer;  // 返回
 }
 
 const ggml_backend_device_i ggml_backend_remoting_device_interface = {

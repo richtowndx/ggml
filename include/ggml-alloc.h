@@ -1,17 +1,17 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "ggml.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
-typedef struct ggml_backend_buffer_type * ggml_backend_buffer_type_t;
-typedef struct      ggml_backend_buffer * ggml_backend_buffer_t;
-typedef struct             ggml_backend * ggml_backend_t;
+typedef struct ggml_backend_buffer_type * ggml_backend_buffer_type_t;  // 类型定义
+typedef struct      ggml_backend_buffer * ggml_backend_buffer_t;  // 类型定义
+typedef struct             ggml_backend * ggml_backend_t;  // 类型定义
 
 // Tensor allocator
-struct ggml_tallocr {
+struct ggml_tallocr {  // 结构体定义
     ggml_backend_buffer_t buffer;
     void * base;
     size_t alignment;
@@ -43,7 +43,7 @@ GGML_API enum ggml_status    ggml_tallocr_alloc(struct ggml_tallocr * talloc, st
 //   ggml_set_input(): all input tensors are allocated at the beginning of the graph in non-overlapping addresses
 //   ggml_set_output(): output tensors are never freed and never overwritten
 
-typedef struct ggml_gallocr * ggml_gallocr_t;
+typedef struct ggml_gallocr * ggml_gallocr_t;  // 类型定义
 
 GGML_API ggml_gallocr_t ggml_gallocr_new(ggml_backend_buffer_type_t buft);
 GGML_API ggml_gallocr_t ggml_gallocr_new_n(ggml_backend_buffer_type_t * bufts, int n_bufs);
@@ -80,6 +80,6 @@ GGML_API size_t                       ggml_backend_alloc_ctx_tensors_from_buft_s
 GGML_API struct ggml_backend_buffer * ggml_backend_alloc_ctx_tensors_from_buft(struct ggml_context * ctx, ggml_backend_buffer_type_t buft);
 GGML_API struct ggml_backend_buffer * ggml_backend_alloc_ctx_tensors(struct ggml_context * ctx, ggml_backend_t backend);
 
-#ifdef  __cplusplus
+#ifdef  __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束

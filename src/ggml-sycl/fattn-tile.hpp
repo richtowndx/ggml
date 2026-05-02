@@ -1,13 +1,13 @@
-#include <sycl/sycl.hpp>
-#include <sycl/ext/oneapi/work_group_static.hpp>
-#include "dpct/helper.hpp"
-#include "common.hpp"
-#include "fattn-common.hpp"
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
+#include <sycl/ext/oneapi/work_group_static.hpp>  // 引入 sycl/ext/oneapi/work_group_static.hpp 头文件
+#include "dpct/helper.hpp"  // 引入 dpct/helper.hpp 头文件
+#include "common.hpp"  // 引入 common.hpp 头文件
+#include "fattn-common.hpp"  // 引入 fattn-common.hpp 头文件
 
-#include <cmath>
-#include <float.h>
+#include <cmath>  // 引入 cmath 头文件
+#include <float.h>  // 引入 float.h 头文件
 
-namespace syclex = sycl::ext::oneapi::experimental;
+namespace syclex = sycl::ext::oneapi::experimental;  // 命名空间
 
 #define GGML_SYCL_FATTN_TILE_CONFIG_CASE(DKQ_, DV_, ncols_, nthreads, occupancy, nbatch_fa, nbatch_K) \
     if (DKQ == (DKQ_) && DV == (DV_) && ncols == (ncols_)) {                                          \
@@ -78,7 +78,7 @@ static constexpr uint32_t ggml_sycl_fattn_tile_get_config_fp16(const int DKQ, co
     GGML_SYCL_FATTN_TILE_CONFIG_CASE(576, 512, 16, 256, 2,  64,  64)
     GGML_SYCL_FATTN_TILE_CONFIG_CASE(576, 512, 32, 256, 2,  64,  64)
 
-    return 0;
+    return 0;  // 返回
 }
 
 static constexpr uint32_t ggml_sycl_fattn_tile_get_config_fp32(const int DKQ, const int DV, const int ncols) {
@@ -140,22 +140,22 @@ static constexpr uint32_t ggml_sycl_fattn_tile_get_config_fp32(const int DKQ, co
     GGML_SYCL_FATTN_TILE_CONFIG_CASE(576, 512,  8, 256, 2,  32,  64)
     GGML_SYCL_FATTN_TILE_CONFIG_CASE(576, 512, 16, 256, 2,  32,  64)
 
-    return 0;
+    return 0;  // 返回
 }
 
 static constexpr uint32_t ggml_sycl_fattn_tile_get_config(const int DKQ, const int DV, const int ncols, const int cc) {
     if(fast_fp16_available(cc))
-        return ggml_sycl_fattn_tile_get_config_fp16(DKQ, DV, ncols);
+        return ggml_sycl_fattn_tile_get_config_fp16(DKQ, DV, ncols);  // ggml_sycl_fattn_tile_get_config_fp16
     else
-        return ggml_sycl_fattn_tile_get_config_fp32(DKQ, DV, ncols);
+        return ggml_sycl_fattn_tile_get_config_fp32(DKQ, DV, ncols);  // ggml_sycl_fattn_tile_get_config_fp32
 }
 
 static constexpr uint32_t ggml_sycl_fattn_tile_get_config(const int DKQ, const int DV, const int ncols) {
-#ifdef SYCL_FAST_FP16
-    return ggml_sycl_fattn_tile_get_config_fp16(DKQ, DV, ncols);
-#else
-    return ggml_sycl_fattn_tile_get_config_fp32(DKQ, DV, ncols);
-#endif // SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
+    return ggml_sycl_fattn_tile_get_config_fp16(DKQ, DV, ncols);  // ggml_sycl_fattn_tile_get_config_fp16
+#else  // 否则
+    return ggml_sycl_fattn_tile_get_config_fp32(DKQ, DV, ncols);  // ggml_sycl_fattn_tile_get_config_fp32
+#endif // SYCL_FAST_FP16  // 条件编译结束
 }
 
 static int ggml_sycl_fattn_tile_get_nthreads(const int DKQ, const int DV, const int ncols, const int cc) {
@@ -190,7 +190,7 @@ static constexpr int ggml_sycl_fattn_tile_get_nbatch_K(const int DKQ, const int 
     return (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols) >> 23) & ((1 << 9) - 1);
 }
 
-template <int warp_size, int nwarps, int I, int J, int J_padding, bool oob_check>
+template <int warp_size, int nwarps, int I, int J, int J_padding, bool oob_check>  // 模板
 static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const __restrict__ KV,
                                                       sycl::half2 * const __restrict__ tile_KV,
                                                       const int stride_KV,
@@ -203,7 +203,7 @@ static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const 
         const int stride_j = warp_size >> n;
 
         if (stride_j == 0) {
-            return;
+            return;  // 返回
         }
 
         const int j0_start = stride_j == warp_size ? 0 : ((J/2)/cpy_ne) - ((J/2)/cpy_ne) % (2*stride_j);
@@ -211,7 +211,7 @@ static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const 
         const int stride_i = warp_size / stride_j;
 
         if (j0_start == j0_stop) {
-            return;
+            return;  // 返回
         }
 
 #pragma unroll
@@ -248,7 +248,7 @@ static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const 
     ggml_sycl_unroll<7>{}(load);
 }
 
-template <int warp_size, int nwarps, int I, int J, int J_padding, bool oob_check>
+template <int warp_size, int nwarps, int I, int J, int J_padding, bool oob_check>  // 模板
 static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const __restrict__ KV,
                                                       float * const __restrict__ tile_KV,
                                                       const int stride_KV,
@@ -261,7 +261,7 @@ static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const 
         const int stride_j = warp_size >> n;
 
         if (stride_j == 0) {
-            return;
+            return;  // 返回
         }
 
         const int j0_start = stride_j == warp_size ? 0 : (J/cpy_ne) - (J/cpy_ne) % (2*stride_j);
@@ -269,7 +269,7 @@ static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const 
         const int stride_i = warp_size / stride_j;
 
         if (j0_start == j0_stop) {
-            return;
+            return;  // 返回
         }
 
 #pragma unroll
@@ -312,7 +312,7 @@ static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const 
 }
 
 // Function that performs a single iteration in for the KQ matrix multiplication:
-template <int  warp_size,
+template <int  warp_size,  // 模板
           int  nwarps,
           int  ncols1,
           int  ncols2,
@@ -342,39 +342,39 @@ static __dpct_inline__ void flash_attn_tile_iter_KQ(T_vec_dot * const Q_tmp,
         (K_h2 + int64_t(k_VKQ_0)*stride_K2 + k_KQ_0/2, KV_tmp, stride_K2, k_VKQ_sup);
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
     static_assert((nbatch_K/2) % cpy_ne == 0, "bad nbatch_K");
 #pragma unroll
     for (int k_KQ_1 = 0; k_KQ_1 < nbatch_K/2; k_KQ_1 += cpy_ne) {
         __dpct_align__(16) sycl::half2 K_k[nbatch_fa / (np * warp_size)][cpy_ne];
         __dpct_align__(16) sycl::half2 Q_k[cpw][cpy_ne];
-#else
+#else  // 否则
     static_assert(nbatch_K % cpy_ne == 0, "bad nbatch_K");
 #pragma unroll
     for (int k_KQ_1 = 0; k_KQ_1 < nbatch_K; k_KQ_1 += cpy_ne) {
         __dpct_align__(16) float K_k[nbatch_fa/(np*warp_size)][cpy_ne];
         __dpct_align__(16) float Q_k[cpw][cpy_ne];
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
 
 #pragma unroll
         for (int i_KQ_0 = 0; i_KQ_0 < nbatch_fa; i_KQ_0 += np*warp_size) {
             const int i_KQ = i_KQ_0 + (item_ct1.get_local_id(1) % np) * warp_size + item_ct1.get_local_id(2);
 
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
             ggml_sycl_memcpy_1<cpy_nb>(&K_k[i_KQ_0/(np*warp_size)], &KV_tmp[i_KQ*(nbatch_K/2 + cpy_ne) + k_KQ_1]);
-#else
+#else  // 否则
             ggml_sycl_memcpy_1<cpy_nb>(&K_k[i_KQ_0/(np*warp_size)], &KV_tmp[i_KQ*(nbatch_K   + cpy_ne) + k_KQ_1]);
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
         }
 #pragma unroll
         for (int jc0 = 0; jc0 < cpw; ++jc0) {
             const int jc = jc0 + (item_ct1.get_local_id(1) / np) * cpw;
 
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
             ggml_sycl_memcpy_1<cpy_nb>(&Q_k[jc0], &Q_tmp[jc*(DKQ/2) + k_KQ_0/2 + k_KQ_1]);
-#else
+#else  // 否则
             ggml_sycl_memcpy_1<cpy_nb>(&Q_k[jc0], &Q_tmp[jc* DKQ    + k_KQ_0   + k_KQ_1]);
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
         }
 
 #pragma unroll
@@ -395,7 +395,7 @@ static __dpct_inline__ void flash_attn_tile_iter_KQ(T_vec_dot * const Q_tmp,
 }
 
 // Function that performs a single iteration of the main loop over up to nbatch_fa tokens.
-template <int  warp_size,
+template <int  warp_size,  // 模板
           int  nwarps,
           int  ncols1,
           int  ncols2,
@@ -440,11 +440,11 @@ static __dpct_inline__ void flash_attn_tile_iter(T_vec_dot * const Q_tmp,
 
     constexpr int DVp = (DV + 2*warp_size - 1) & ~(2*warp_size - 1); // DV padded to multiple of 2*warp_size.
 
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
     constexpr int KQ_cs = cpw < 2*cpy_ne ? cpw : 2*cpy_ne;
-#else
+#else  // 否则
     constexpr int KQ_cs = cpw < 1*cpy_ne ? cpw : 1*cpy_ne;
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
     static_assert(cpw % KQ_cs == 0, "bad KQ_cs");
     const int k_VKQ_sup = k_VKQ_max - k_VKQ_0; // k supremum, only smaller k values have valid KV data
 
@@ -478,11 +478,11 @@ static __dpct_inline__ void flash_attn_tile_iter(T_vec_dot * const Q_tmp,
         for (int i_KQ_0 = 0; i_KQ_0 < nbatch_fa; i_KQ_0 += np*warp_size) {
             const int i_KQ = i_KQ_0 + (item_ct1.get_local_id(1) % np) * warp_size + item_ct1.get_local_id(2);
 
-#if defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)
+#if defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)  // 条件编译
             // Without the v_dot2_f32_f16 instruction there is a higher risk of numerical overflow in the KQ calculation.
             // Therefore, scale down Q values and apply the inverse scale the FP32 KQ values afterwards again.
             KQ_acc[i_KQ_0/(np*warp_size)*cpw + jc0] *= 4.0f;
-#endif // defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)
+#endif // defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)  // 条件编译结束
 
             if (use_logit_softcap) {
                 KQ_acc[(i_KQ_0 / (np * warp_size)) * cpw + jc0] =
@@ -520,11 +520,11 @@ static __dpct_inline__ void flash_attn_tile_iter(T_vec_dot * const Q_tmp,
     // Calculate KQ softmax, write to shared KQ buffer, re-scale VKQ accumulators:
 #pragma unroll
     for (int jc0 = 0; jc0 < cpw; jc0 += KQ_cs) {
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
         __dpct_align__(16) sycl::half tmp[nbatch_fa / (np * warp_size)][KQ_cs];
-#else
+#else  // 否则
         __dpct_align__(16) float tmp[nbatch_fa/(np*warp_size)][KQ_cs];
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
 
 #pragma unroll
         for (int jc1 = 0; jc1 < KQ_cs; ++jc1) {
@@ -546,20 +546,20 @@ static __dpct_inline__ void flash_attn_tile_iter(T_vec_dot * const Q_tmp,
             }
             KQ_sum[jc] = KQ_sum[jc]*KQ_max_scale + KQ_sum_add;
 
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
             const sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
 #pragma unroll
             for (int i0 = 0; i0 < DVp/2; i0 += warp_size) {
                 VKQ[jc*((DVp/2)/warp_size) + i0/warp_size].x() *= KQ_max_scale_h2.x();
                 VKQ[jc*((DVp/2)/warp_size) + i0/warp_size].y() *= KQ_max_scale_h2.y();
             }
-#else
+#else  // 否则
 #pragma unroll
             for (int i0 = 0; i0 < DVp/2; i0 += warp_size) {
                 VKQ[jc*((DVp/2)/warp_size) + i0/warp_size].x() *= KQ_max_scale;
                 VKQ[jc*((DVp/2)/warp_size) + i0/warp_size].y() *= KQ_max_scale;
             }
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
         }
 
 #pragma unroll
@@ -584,7 +584,7 @@ static __dpct_inline__ void flash_attn_tile_iter(T_vec_dot * const Q_tmp,
             (V_h2 + int64_t(k_VKQ_0 + k0)*stride_V2, KV_tmp, stride_V2, k_VKQ_sup - k0);
         item_ct1.barrier(sycl::access::fence_space::local_space);
 
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
 #pragma unroll
         for (int k1 = 0; k1 < nbatch_V; k1 += np) {
             __dpct_align__(16) sycl::half2 V_k[(DVp / 2) / warp_size];
@@ -621,7 +621,7 @@ static __dpct_inline__ void flash_attn_tile_iter(T_vec_dot * const Q_tmp,
                 }
             }
         }
-#else
+#else  // 否则
 #pragma unroll
         for (int k1 = 0; k1 < nbatch_V; k1 += np) {
             __dpct_align__(16) sycl::float2 V_k[(DVp/2)/warp_size];
@@ -649,12 +649,12 @@ static __dpct_inline__ void flash_attn_tile_iter(T_vec_dot * const Q_tmp,
                 }
             }
         }
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
         item_ct1.barrier(sycl::access::fence_space::local_space);
     }
 }
 
-template <int DKQ, int DV, int ncols1, int ncols2, bool use_logit_softcap, int warp_size>  // D == head size
+template <int DKQ, int DV, int ncols1, int ncols2, bool use_logit_softcap, int warp_size>  // D == head size  // 模板
 /*
 The total declared local variable size in device function flash_attn_tile exceeds 128 bytes and may cause high register pressure. Consult with your hardware vendor to find the total register size available and adjust the code, or use smaller sub-group size to avoid high register pressure.
 */
@@ -695,7 +695,7 @@ static void flash_attn_tile(const char *  Q,
                             const int32_t        nb31,
                             const int32_t        nb32,
                             const int64_t        nb33) {
-#ifdef SYCL_FLASH_ATTN
+#ifdef SYCL_FLASH_ATTN  // 如果定义了 SYCL_FLASH_ATTN 则编译
     // Skip unused kernel variants for faster compilation:
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
     if ((use_logit_softcap && !(DV == 128 || DV == 256))) {
@@ -708,7 +708,7 @@ static void flash_attn_tile(const char *  Q,
                   nb21, nb22, nb23,
                   ne31, ne32, ne33,
                   nb31, nb32, nb33);
-        return;
+        return;  // 返回
     }
 
     static_assert(ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols1*ncols2) != 0, "kernel config not defined");
@@ -758,16 +758,16 @@ static void flash_attn_tile(const char *  Q,
     // VKQ == Accumulators in registers for the final VKQ result.
 
 
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
     constexpr size_t lsm_size1 = ncols * DKQ/2 ;
     constexpr size_t lsm_size2 = nbatch_fa * (nbatch_K/2 + cpy_ne) + DVp-DV ;
     constexpr size_t lsm_size3 = ncols * nbatch_fa;
     constexpr size_t lsm_size4 = nwarps;
 
     constexpr size_t local_share_mem_size = lsm_size1 * sizeof(sycl::half2) +
-                                            lsm_size2 * sizeof(sycl::half2) +
-                                            lsm_size3 * sizeof(sycl::half) +
-                                            lsm_size4 * sizeof(float);
+                                            lsm_size2 * sizeof(sycl::half2) +  // sizeof
+                                            lsm_size3 * sizeof(sycl::half) +  // sizeof
+                                            lsm_size4 * sizeof(float);  // sizeof
 
     syclex::work_group_static<char[local_share_mem_size]> lsm;
 
@@ -779,7 +779,7 @@ static void flash_attn_tile(const char *  Q,
     __dpct_align__(16) sycl::half2 VKQ[cpw * ((DVp / 2) / warp_size)] = {
         { 0.0f, 0.0f }
     };
-#else
+#else  // 否则
     constexpr size_t lsm_size1 = ncols * DKQ ;
     constexpr size_t lsm_size2 = nbatch_fa * (nbatch_K + cpy_ne) + DVp-DV;
     constexpr size_t lsm_size3 = ncols * nbatch_fa;
@@ -797,7 +797,7 @@ static void flash_attn_tile(const char *  Q,
     __dpct_align__(16) sycl::float2 VKQ[cpw * ((DVp/2)/warp_size)] = {{0.0f, 0.0f}};
 
 
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
 
     float KQ_max[cpw] = {};
 
@@ -833,26 +833,26 @@ static void flash_attn_tile(const char *  Q,
                     tmp_f[i1] *= scale;
                 }
 
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
                 __dpct_align__(16) sycl::half2 tmp_h2[cpy_ne_D / 2];
 #pragma unroll
                 for (int i1 = 0; i1 < cpy_ne_D; i1 += 2) {
                     tmp_h2[i1/2] = make_half2(tmp_f[i1 + 0], tmp_f[i1 + 1]);
-#if defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)
+#if defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)  // 条件编译
                     // Without the v_dot2_f32_f16 instruction there is a higher risk of numerical overflow in the KQ calculation.
                     // Therefore, scale down Q values and apply the inverse scale the FP32 KQ values afterwards again.
                     tmp_h2[i1 / 2] *= sycl::half2(0.25f, 0.25f);
-#endif // defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)
+#endif // defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)  // 条件编译结束
                 }
                 ggml_sycl_memcpy_1<sizeof(tmp_h2)>(
                     &Q_tmp[jc * (DKQ / 2) + i0 / 2 + (item_ct1.get_local_id(1) % np) * (warp_size * cpy_ne_D / 2) +
                            item_ct1.get_local_id(2) * (cpy_ne_D / 2)],
                     tmp_h2);
-#else
+#else  // 否则
                 ggml_sycl_memcpy_1<sizeof(tmp_f)>(
                     &Q_tmp[jc* DKQ    + i0   + (item_ct1.get_local_id(1) % np)*(warp_size*cpy_ne_D)   + item_ct1.get_local_id(2)* cpy_ne_D],
                     tmp_f);
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
             }
         }
     }
@@ -901,17 +901,17 @@ static void flash_attn_tile(const char *  Q,
         static_assert(cpw == 1, "bad cpw");
         static_assert(nbatch_fa*nbatch_K >= nwarps*DVp, "KV_tmp too small");
 
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
         sycl::half2 * VKQ_combine = (sycl::half2 *) KV_tmp;
-#else
+#else  // 否则
         float * VKQ_combine    = (float *) KV_tmp;
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
 
         float * KQ_sum_combine = (float *) Q_tmp;
 
         if (item_ct1.get_local_id(1) % np != 0) {
 
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
             constexpr int cpy_ne_D = cpy_ne < (DVp/2)/warp_size ? cpy_ne : (DVp/2)/warp_size;
 #pragma unroll
             for (int i0 = 0; i0 < DVp/2; i0 += warp_size*cpy_ne_D) {
@@ -919,7 +919,7 @@ static void flash_attn_tile(const char *  Q,
                     &VKQ_combine[item_ct1.get_local_id(1) * (DVp / 2) + i0 + item_ct1.get_local_id(2) * cpy_ne_D],
                     &VKQ[i0 / warp_size]);
             }
-#else
+#else  // 否则
 
             constexpr int cpy_ne_D = cpy_ne < DVp/warp_size ? cpy_ne : DVp/warp_size;
 
@@ -928,19 +928,19 @@ static void flash_attn_tile(const char *  Q,
                 ggml_sycl_memcpy_1<cpy_ne_D*4>(
                     &VKQ_combine[item_ct1.get_local_id(1)*DVp + i0 + item_ct1.get_local_id(2)*cpy_ne_D], ((const float *) VKQ) + i0/warp_size);
             }
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
 
             if (item_ct1.get_local_id(2) == 0) {
                 KQ_sum_combine[item_ct1.get_local_id(1)] = KQ_sum[0];
             }
-            return;
+            return;  // 返回
         }
 
         item_ct1.barrier(sycl::access::fence_space::local_space);
 
 #pragma unroll
         for (int ip = 1; ip < np; ++ip) {
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
             constexpr int cpy_ne_D = cpy_ne < (DVp/2)/warp_size ? cpy_ne : (DVp/2)/warp_size;
 #pragma unroll
             for (int i0 = 0; i0 < DVp/2; i0 += warp_size*cpy_ne_D) {
@@ -952,7 +952,7 @@ static void flash_attn_tile(const char *  Q,
                     VKQ[i0/warp_size + i1] += tmp[i1];
                 }
             }
-#else
+#else  // 否则
             constexpr int cpy_ne_D = cpy_ne < DVp/warp_size ? cpy_ne : DVp/warp_size;
 #pragma unroll
             for (int i0 = 0; i0 < DVp; i0 += warp_size*cpy_ne_D) {
@@ -963,7 +963,7 @@ static void flash_attn_tile(const char *  Q,
                     ((float *)VKQ)[i0/warp_size + i1] += tmp[i1];
                 }
             }
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
 
             KQ_sum[0] += KQ_sum_combine[item_ct1.get_local_id(1) + ip];
         }
@@ -983,19 +983,19 @@ static void flash_attn_tile(const char *  Q,
             const float val = sycl::native::exp((float) (sink - KQ_max[jc0]));
             KQ_sum[jc0] = KQ_sum[jc0]*KQ_max_scale + val;
 
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
             const sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
 #pragma unroll
             for (int i0 = 0; i0 < DVp/2; i0 += warp_size) {
                 VKQ[jc0*((DVp/2)/warp_size) + i0/warp_size] *= KQ_max_scale_h2;
             }
-#else
+#else  // 否则
 #pragma unroll
             for (int i0 = 0; i0 < DVp/2; i0 += warp_size) {
                 VKQ[jc0*((DVp/2)/warp_size) + i0/warp_size].x() *= KQ_max_scale;
                 VKQ[jc0*((DVp/2)/warp_size) + i0/warp_size].y() *= KQ_max_scale;
             }
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
         }
     }
 
@@ -1008,7 +1008,7 @@ static void flash_attn_tile(const char *  Q,
         const int c = jc % ncols2;
 
         if (ncols1 > 1 && col_Q_0 + j >= int(ne01.z())) {
-            return;
+            return;  // 返回
         }
 
         const float scale = item_ct1.get_group_range(1) == 1 ? 1.0f / KQ_sum[jc0] : 1.0f;
@@ -1017,7 +1017,7 @@ static void flash_attn_tile(const char *  Q,
             ((sequence * int(ne01.z()) + col_Q_0 + j) * ne02 + head0 + c) * item_ct1.get_group_range(1) +
             item_ct1.get_group(1);
 
-#ifdef SYCL_FAST_FP16
+#ifdef SYCL_FAST_FP16  // 如果定义了 SYCL_FAST_FP16 则编译
         constexpr int cpy_ne_D = cpy_ne/2 < (DVp/2)/warp_size ? cpy_ne/2 : (DVp/2)/warp_size;
 #pragma unroll
         for (int i0 = 0; i0 < DVp/2; i0 += warp_size*cpy_ne_D) {
@@ -1034,7 +1034,7 @@ static void flash_attn_tile(const char *  Q,
                     &dst[j_dst_unrolled * DV + 2 * i0 + item_ct1.get_local_id(2) * (2 * cpy_ne_D)], tmp);
             }
         }
-#else
+#else  // 否则
         constexpr int cpy_ne_D = cpy_ne < DVp/warp_size ? cpy_ne : DVp/warp_size;
 #pragma unroll
         for (int i0 = 0; i0 < DVp; i0 += warp_size*cpy_ne_D) {
@@ -1049,13 +1049,13 @@ static void flash_attn_tile(const char *  Q,
                     &VKQ[jc0*((DVp/2)/warp_size) + i0/(2*warp_size)]);
             }
         }
-#endif // SYCL_FAST_FP16
+#endif // SYCL_FAST_FP16  // 条件编译结束
 
         if (item_ct1.get_group_range(1) != 1 && item_ct1.get_local_id(2) == 0) {
             dst_meta[j_dst_unrolled] = make_float2(KQ_max[jc0], KQ_sum[jc0]);
         }
     }
-#else
+#else  // 否则
     GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
         max_bias, m0, m1, n_head_log2, logit_softcap,
         ne00, ne01, ne02, ne03,
@@ -1065,10 +1065,10 @@ static void flash_attn_tile(const char *  Q,
               nb21, nb22, nb23,
               ne31, ne32, ne33,
               nb31, nb32, nb33);
-#endif // SYCL_FLASH_ATTN
+#endif // SYCL_FLASH_ATTN  // 条件编译结束
 }
 
-template <int DKQ, int DV, int ncols2, bool use_logit_softcap>
+template <int DKQ, int DV, int ncols2, bool use_logit_softcap>  // 模板
 static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     const ggml_tensor * Q = dst->src[0];
 
@@ -1087,7 +1087,7 @@ static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggm
                 launch_fattn<DV, cols_per_block/ncols2, ncols2,
                     flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
                     (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
-                return;
+                return;  // 返回
             }
         }
         if constexpr (ncols2 <= 16) {
@@ -1098,7 +1098,7 @@ static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggm
                 launch_fattn<DV, cols_per_block/ncols2, ncols2,
                     flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
                     (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
-                return;
+                return;  // 返回
             }
         }
         if constexpr (ncols2 <= 8) {
@@ -1109,7 +1109,7 @@ static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggm
                 launch_fattn<DV, cols_per_block/ncols2, ncols2,
                     flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
                     (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
-                return;
+                return;  // 返回
             }
         }
     }
@@ -1122,7 +1122,7 @@ static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggm
             launch_fattn<DV, cols_per_block/ncols2, ncols2,
                 flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
                 (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
-            return;
+            return;  // 返回
         }
     }
 
@@ -1133,7 +1133,7 @@ static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggm
         launch_fattn<DV, cols_per_block/ncols2, ncols2,
             flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
             (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
-        return;
+        return;  // 返回
     }
 
     {
@@ -1143,13 +1143,13 @@ static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggm
         launch_fattn<DV, cols_per_block/ncols2, ncols2,
             flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
             (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
-        return;
+        return;  // 返回
     }
 
     GGML_ABORT("fatal error");
 }
 
-template <int DKQ, int DV, bool use_logit_softcap>
+template <int DKQ, int DV, bool use_logit_softcap>  // 模板
 static void launch_fattn_tile_switch_ncols2(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     const ggml_tensor * KQV  = dst;
     const ggml_tensor * Q    = dst->src[0];
@@ -1171,47 +1171,47 @@ static void launch_fattn_tile_switch_ncols2(ggml_backend_sycl_context & ctx, ggm
     if constexpr (DV == 512) {
         if (use_gqa_opt && gqa_ratio % 16 == 0) {
             launch_fattn_tile_switch_ncols1<DKQ, DV, 16, use_logit_softcap>(ctx, dst);
-            return;
+            return;  // 返回
         }
         if (use_gqa_opt && gqa_ratio % 4 == 0) {
             launch_fattn_tile_switch_ncols1<DKQ, DV, 4, use_logit_softcap>(ctx, dst);
-            return;
+            return;  // 返回
         }
         // ncols2=2 and ncols2=1 fallbacks only for cases where ncols=2 config exists (DKQ == DV).
         // For DKQ == 576, DV == 512 only GQA-optimized variants are implemented.
         if constexpr (DKQ == DV) {
             if (use_gqa_opt && gqa_ratio % 2 == 0) {
                 launch_fattn_tile_switch_ncols1<DKQ, DV, 2, use_logit_softcap>(ctx, dst);
-                return;
+                return;  // 返回
             }
             launch_fattn_tile_switch_ncols1<DKQ, DV, 1, use_logit_softcap>(ctx, dst);
-            return;
+            return;  // 返回
         }
     }
 
     if constexpr (DV <= 256) {
         if (use_gqa_opt && gqa_ratio % 8 == 0) {
             launch_fattn_tile_switch_ncols1<DKQ, DV, 8, use_logit_softcap>(ctx, dst);
-            return;
+            return;  // 返回
         }
 
         if (use_gqa_opt && gqa_ratio % 4 == 0) {
             launch_fattn_tile_switch_ncols1<DKQ, DV, 4, use_logit_softcap>(ctx, dst);
-            return;
+            return;  // 返回
         }
 
         if (use_gqa_opt && gqa_ratio % 2 == 0) {
             launch_fattn_tile_switch_ncols1<DKQ, DV, 2, use_logit_softcap>(ctx, dst);
-            return;
+            return;  // 返回
         }
 
         launch_fattn_tile_switch_ncols1<DKQ, DV, 1, use_logit_softcap>(ctx, dst);
-        return;
+        return;  // 返回
     }
     GGML_ABORT("fatal error");
 }
 
-template <int DKQ, int DV>
+template <int DKQ, int DV>  // 模板
 void ggml_sycl_flash_attn_ext_tile_case(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     const ggml_tensor * KQV = dst;
 
@@ -1227,20 +1227,20 @@ void ggml_sycl_flash_attn_ext_tile_case(ggml_backend_sycl_context & ctx, ggml_te
     }
 }
 
-void ggml_sycl_flash_attn_ext_tile(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+void ggml_sycl_flash_attn_ext_tile(ggml_backend_sycl_context & ctx, ggml_tensor * dst);  // ggml_sycl_flash_attn_ext_tile
 
 #define DECL_FATTN_TILE_CASE(DKQ, DV)                             \
     template void ggml_sycl_flash_attn_ext_tile_case              \
     <DKQ, DV>(ggml_backend_sycl_context & ctx, ggml_tensor * dst) \
 
-extern DECL_FATTN_TILE_CASE( 40,  40);
-extern DECL_FATTN_TILE_CASE( 64,  64);
-extern DECL_FATTN_TILE_CASE( 72,  72);
-extern DECL_FATTN_TILE_CASE( 80,  80);
-extern DECL_FATTN_TILE_CASE( 96,  96);
-extern DECL_FATTN_TILE_CASE(112, 112);
-extern DECL_FATTN_TILE_CASE(128, 128);
-extern DECL_FATTN_TILE_CASE(256, 256);
-extern DECL_FATTN_TILE_CASE(512, 512);
-extern DECL_FATTN_TILE_CASE(576, 512);
+extern DECL_FATTN_TILE_CASE( 40,  40);  // DECL_FATTN_TILE_CASE
+extern DECL_FATTN_TILE_CASE( 64,  64);  // DECL_FATTN_TILE_CASE
+extern DECL_FATTN_TILE_CASE( 72,  72);  // DECL_FATTN_TILE_CASE
+extern DECL_FATTN_TILE_CASE( 80,  80);  // DECL_FATTN_TILE_CASE
+extern DECL_FATTN_TILE_CASE( 96,  96);  // DECL_FATTN_TILE_CASE
+extern DECL_FATTN_TILE_CASE(112, 112);  // DECL_FATTN_TILE_CASE
+extern DECL_FATTN_TILE_CASE(128, 128);  // DECL_FATTN_TILE_CASE
+extern DECL_FATTN_TILE_CASE(256, 256);  // DECL_FATTN_TILE_CASE
+extern DECL_FATTN_TILE_CASE(512, 512);  // DECL_FATTN_TILE_CASE
+extern DECL_FATTN_TILE_CASE(576, 512);  // DECL_FATTN_TILE_CASE
 

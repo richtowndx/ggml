@@ -1,20 +1,20 @@
-#pragma once
+#pragma once  // 防止重复包含
 
-#include <cstdint>
-#include <openvino/frontend/node_context.hpp>
-#include <string>
+#include <cstdint>  // 引入 cstdint 头文件
+#include <openvino/frontend/node_context.hpp>  // 引入 openvino/frontend/node_context.hpp 头文件
+#include <string>  // 引入 string 头文件
 
-#include "decoder.h"
+#include "decoder.h"  // 引入 decoder.h 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
 
-class TranslateSession;
+class TranslateSession;  // 类定义
 
-typedef std::map<std::string, Output<Node>> TensorMap;
+typedef std::map<std::string, Output<Node>> TensorMap;  // 类型定义
 
-class NodeContext : public frontend::NodeContext {
+class NodeContext : public frontend::NodeContext {  // 类定义
 public:
     NodeContext(const std::shared_ptr<GgmlDecoder>& decoder,
                 std::shared_ptr<TensorMap>& tensor_map,
@@ -30,7 +30,7 @@ public:
     }
 
     TranslateSession* get_translate_session() const {
-        return m_translate_session;
+        return m_translate_session;  // 返回
     }
 
     const std::vector<std::string>& get_input_names() const { return m_input_names; }

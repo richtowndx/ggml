@@ -1,4 +1,4 @@
-#include "virtgpu-forward-impl.h"
+#include "virtgpu-forward-impl.h"  // 引入 virtgpu-forward-impl.h 头文件
 
 static long long current_time_ms() {
     timespec ts;
@@ -54,5 +54,5 @@ ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
         virtgpu_shmem_destroy(gpu, shmem);
     }
 
-    return status;
+    return status;  // 返回
 }

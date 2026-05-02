@@ -1,4 +1,4 @@
-#include "ggml-remoting.h"
+#include "ggml-remoting.h"  // 引入 ggml-remoting.h 头文件
 
 static ggml_backend_buffer_t ggml_backend_remoting_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
                                                                             size_t                     size) {
@@ -28,26 +28,26 @@ static ggml_backend_buffer_t ggml_backend_remoting_buffer_type_alloc_buffer(ggml
     ggml_backend_buffer_t buffer =
         ggml_backend_buffer_init(buft, ggml_backend_remoting_buffer_interface, (void *) context, size);
 
-    return buffer;
+    return buffer;  // 返回
 }
 
 static const char * ggml_backend_remoting_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
     virtgpu * gpu = BUFT_TO_GPU(buft);
 
     // Return the prefixed name that was built once during initialization
-    return gpu->cached_buffer_type.name;
+    return gpu->cached_buffer_type.name;  // 返回
 }
 
 static size_t ggml_backend_remoting_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
     virtgpu * gpu = BUFT_TO_GPU(buft);
 
-    return gpu->cached_buffer_type.alignment;
+    return gpu->cached_buffer_type.alignment;  // 返回
 }
 
 static size_t ggml_backend_remoting_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
     virtgpu * gpu = BUFT_TO_GPU(buft);
 
-    return gpu->cached_buffer_type.max_size;
+    return gpu->cached_buffer_type.max_size;  // 返回
 }
 
 static size_t ggml_backend_remoting_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft,
@@ -56,10 +56,10 @@ static size_t ggml_backend_remoting_buffer_type_get_alloc_size(ggml_backend_buff
 
     if (tensor->buffer == NULL || !tensor->buffer->context ||
         !buft->device->iface.supports_buft(buft->device, tensor->buffer->buft)) {
-        return ggml_nbytes(tensor);
+        return ggml_nbytes(tensor);  // ggml_nbytes
     }
 
-    return apir_buffer_type_get_alloc_size(gpu, gpu->cached_buffer_type.host_handle, tensor);
+    return apir_buffer_type_get_alloc_size(gpu, gpu->cached_buffer_type.host_handle, tensor);  // apir_buffer_type_get_alloc_size
 }
 
 const ggml_backend_buffer_type_i ggml_backend_remoting_buffer_type_interface = {

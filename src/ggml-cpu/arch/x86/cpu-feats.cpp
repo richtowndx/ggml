@@ -1,19 +1,19 @@
-#include "ggml-backend-impl.h"
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
 
-#if defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))
+#if defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))  // 条件编译
 
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
+#ifdef _MSC_VER  // 如果定义了 _MSC_VER 则编译
+#include <intrin.h>  // 引入 intrin.h 头文件
+#endif  // 条件编译结束
 
-#include <cstring>
-#include <vector>
-#include <bitset>
-#include <array>
-#include <string>
+#include <cstring>  // 引入 cstring 头文件
+#include <vector>  // 引入 vector 头文件
+#include <bitset>  // 引入 bitset 头文件
+#include <array>  // 引入 array 头文件
+#include <string>  // 引入 string 头文件
 
 // ref: https://cdrdv2-public.intel.com/782156/325383-sdm-vol-2abcd.pdf
-struct cpuid_x86 {
+struct cpuid_x86 {  // 结构体定义
     bool SSE3(void) { return f_1_ecx[0]; }
     bool PCLMULQDQ(void) { return f_1_ecx[1]; }
     bool MONITOR(void) { return f_1_ecx[3]; }
@@ -87,14 +87,14 @@ struct cpuid_x86 {
     bool AMX_FP16(void) { return f_7_1_eax[21]; }
     bool AMX_BF16(void) { return f_7_edx[22]; }
 
-#ifdef _MSC_VER
+#ifdef _MSC_VER  // 如果定义了 _MSC_VER 则编译
     static void cpuid(int cpu_info[4], int eax) {
         __cpuid(cpu_info, eax);
     }
     static void cpuidex(int cpu_info[4], int eax, int ecx) {
         __cpuidex(cpu_info, eax, ecx);
     }
-#else
+#else  // 否则
     static void cpuid(int cpu_info[4], int eax) {
         __asm__ __volatile__(
             "cpuid"
@@ -107,7 +107,7 @@ struct cpuid_x86 {
             : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
             : "a"(eax), "c"(ecx));
     }
-#endif
+#endif  // 条件编译结束
 
     cpuid_x86() {
         std::array<int, 4> cpui;
@@ -191,7 +191,7 @@ struct cpuid_x86 {
     std::bitset<32> f_81_edx;
 };
 
-#if 0
+#if 0  // 条件编译
 void test_x86_is() {
     cpuid_x86 is;
     printf("CPU Vendor: %s\n", is.vendor.c_str());
@@ -258,7 +258,7 @@ void test_x86_is() {
     printf("amx_fp16: %d\n", is.AMX_FP16());
     printf("amx_bf16: %d\n", is.AMX_BF16());
 }
-#endif
+#endif  // 条件编译结束
 
 static int ggml_backend_cpu_x86_score() {
     // FIXME: this does not check for OS support
@@ -266,62 +266,62 @@ static int ggml_backend_cpu_x86_score() {
     int score = 1;
     cpuid_x86 is;
 
-#ifdef GGML_FMA
+#ifdef GGML_FMA  // 如果定义了 GGML_FMA 则编译
     if (!is.FMA()) { return 0; }
     score += 1;
-#endif
-#ifdef GGML_F16C
+#endif  // 条件编译结束
+#ifdef GGML_F16C  // 如果定义了 GGML_F16C 则编译
     if (!is.F16C()) { return 0; }
     score += 1<<1;
-#endif
-#ifdef GGML_SSE42
+#endif  // 条件编译结束
+#ifdef GGML_SSE42  // 如果定义了 GGML_SSE42 则编译
     if (!is.SSE42()) { return 0; }
     score += 1<<2;
-#endif
-#ifdef GGML_BMI2
+#endif  // 条件编译结束
+#ifdef GGML_BMI2  // 如果定义了 GGML_BMI2 则编译
     if (!is.BMI2()) { return 0; }
     score += 1<<3;
-#endif
-#ifdef GGML_AVX
+#endif  // 条件编译结束
+#ifdef GGML_AVX  // 如果定义了 GGML_AVX 则编译
     if (!is.AVX()) { return 0; }
     score += 1<<4;
-#endif
-#ifdef GGML_AVX2
+#endif  // 条件编译结束
+#ifdef GGML_AVX2  // 如果定义了 GGML_AVX2 则编译
     if (!is.AVX2()) { return 0; }
     score += 1<<5;
-#endif
-#ifdef GGML_AVX_VNNI
+#endif  // 条件编译结束
+#ifdef GGML_AVX_VNNI  // 如果定义了 GGML_AVX_VNNI 则编译
     if (!is.AVX_VNNI()) { return 0; }
     score += 1<<6;
-#endif
-#ifdef GGML_AVX512
+#endif  // 条件编译结束
+#ifdef GGML_AVX512  // 如果定义了 GGML_AVX512 则编译
     if (!is.AVX512F()) { return 0; }
     if (!is.AVX512CD()) { return 0; }
     if (!is.AVX512VL()) { return 0; }
     if (!is.AVX512DQ()) { return 0; }
     if (!is.AVX512BW()) { return 0; }
     score += 1<<7;
-#endif
-#ifdef GGML_AVX512_VBMI
+#endif  // 条件编译结束
+#ifdef GGML_AVX512_VBMI  // 如果定义了 GGML_AVX512_VBMI 则编译
     if (!is.AVX512_VBMI()) { return 0; }
     score += 1<<8;
-#endif
-#ifdef GGML_AVX512_BF16
+#endif  // 条件编译结束
+#ifdef GGML_AVX512_BF16  // 如果定义了 GGML_AVX512_BF16 则编译
     if (!is.AVX512_BF16()) { return 0; }
     score += 1<<9;
-#endif
-#ifdef GGML_AVX512_VNNI
+#endif  // 条件编译结束
+#ifdef GGML_AVX512_VNNI  // 如果定义了 GGML_AVX512_VNNI 则编译
     if (!is.AVX512_VNNI()) { return 0; }
     score += 1<<10;
-#endif
-#ifdef GGML_AMX_INT8
+#endif  // 条件编译结束
+#ifdef GGML_AMX_INT8  // 如果定义了 GGML_AMX_INT8 则编译
     if (!is.AMX_INT8()) { return 0; }
     score += 1<<11;
-#endif
+#endif  // 条件编译结束
 
-    return score;
+    return score;  // 返回
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_x86_score)
 
-#endif // defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))
+#endif // defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))  // 条件编译结束

@@ -17,13 +17,13 @@
  *     Sycl backend specific quantization functions
  **************************************************************************/
 
-#pragma once
+#pragma once  // 防止重复包含
 
-#include <sycl/nd_item.hpp>
+#include <sycl/nd_item.hpp>  // 引入 sycl/nd_item.hpp 头文件
 
-#include "ggml-sycl/dpct/helper.hpp"
+#include "ggml-sycl/dpct/helper.hpp"  // 引入 ggml-sycl/dpct/helper.hpp 头文件
 
-template <int ElementsPerWI>
+template <int ElementsPerWI>  // 模板
 __dpct_inline__ static void quantize_q8_1_impl(const float * __restrict__ x,
                                                sycl::vec<int8_t, ElementsPerWI> & quantized_values, float & d,
                                                float & sum, const sycl::nd_item<1> & it) {
@@ -56,11 +56,11 @@ __dpct_inline__ static void quantize_q8_1_impl(const float * __restrict__ x,
 }
 
 // No op to control codepath in ggml_sycl_op_mul_mat
-template <int ElementsPerWI> struct no_quantize_q8_1 {
+template <int ElementsPerWI> struct no_quantize_q8_1 {  // 模板
     void operator()(const float *, void *, int, int, const sycl::nd_item<1> &) const {}
 };
 
-template <int ElementsPerWI> struct quantize_and_reorder_q8_1_soa {
+template <int ElementsPerWI> struct quantize_and_reorder_q8_1_soa {  // 模板
     __dpct_inline__ void operator()(const float * __restrict__ x, void * reordered_q8_tensor, const int kx,
                                     const int kx_padded, const sycl::nd_item<1> & it) const {
         /*
@@ -91,7 +91,7 @@ template <int ElementsPerWI> struct quantize_and_reorder_q8_1_soa {
     }
 };
 
-template <int ElementsPerWI> struct quantize_q8_1 {
+template <int ElementsPerWI> struct quantize_q8_1 {  // 模板
     __dpct_inline__ void operator()(const float * __restrict__ x, void * q8_tensor, const int kx, const int kx_padded,
                                     const sycl::nd_item<1> & it) const {
         auto subgroup_id = it.get_group(0);
@@ -117,7 +117,7 @@ template <int ElementsPerWI> struct quantize_q8_1 {
     }
 };
 
-template <template <int> typename quantize_f>
+template <template <int> typename quantize_f>  // 模板
 void quantize_row_q8_1_sycl(const float * x, void * vy, const int kx, const int ky, const int kx_padded,
                             dpct::queue_ptr stream) {
     static_assert(QK8_1 % WARP_SIZE == 0);

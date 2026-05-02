@@ -1,24 +1,24 @@
-#ifndef HVX_EXP_H
-#define HVX_EXP_H
+#ifndef HVX_EXP_H  // 如果未定义 HVX_EXP_H 则编译
+#define HVX_EXP_H  // 宏定义 HVX_EXP_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <math.h>
+#include <stdbool.h>  // 引入 stdbool.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
+#include <math.h>  // 引入 math.h 头文件
 
-#include "hvx-base.h"
-#include "hvx-floor.h"
+#include "hvx-base.h"  // 引入 hvx-base.h 头文件
+#include "hvx-floor.h"  // 引入 hvx-floor.h 头文件
 
-#define EXP_COEFF_5 (0x39506967)  // 0.000198757 = 1/(7!)
-#define EXP_COEFF_4 (0x3AB743CE)  // 0.0013982   = 1/(6!)
-#define EXP_COEFF_3 (0x3C088908)  // 0.00833345  = 1/(5!)
-#define EXP_COEFF_2 (0x3D2AA9C1)  // 0.416658    = 1/(4!)
-#define EXP_COEFF_1 (0x3E2AAAAA)  // 0.16666667  = 1/(3!)
-#define EXP_COEFF_0 (0x3F000000)  // 0.5         = 1/(2!)
-#define EXP_LOGN2   (0x3F317218)  // ln(2)   = 0.6931471805
-#define EXP_LOG2E   (0x3FB8AA3B)  // log2(e) = 1/ln(2) = 1.4426950408
-#define EXP_ONE     (0x3f800000)  // 1.0
-#define EXP_RANGE_R (0x42B17218)  // ln(FLT_MAX) approx = 88.7228
-#define EXP_RANGE_L (0xC2B00000)  // -88.0 (approx log(FLT_MIN))
+#define EXP_COEFF_5 (0x39506967)  // 0.000198757 = 1/(7!)  // 宏定义 EXP_COEFF_5
+#define EXP_COEFF_4 (0x3AB743CE)  // 0.0013982   = 1/(6!)  // 宏定义 EXP_COEFF_4
+#define EXP_COEFF_3 (0x3C088908)  // 0.00833345  = 1/(5!)  // 宏定义 EXP_COEFF_3
+#define EXP_COEFF_2 (0x3D2AA9C1)  // 0.416658    = 1/(4!)  // 宏定义 EXP_COEFF_2
+#define EXP_COEFF_1 (0x3E2AAAAA)  // 0.16666667  = 1/(3!)  // 宏定义 EXP_COEFF_1
+#define EXP_COEFF_0 (0x3F000000)  // 0.5         = 1/(2!)  // 宏定义 EXP_COEFF_0
+#define EXP_LOGN2   (0x3F317218)  // ln(2)   = 0.6931471805  // 宏定义 EXP_LOGN2
+#define EXP_LOG2E   (0x3FB8AA3B)  // log2(e) = 1/ln(2) = 1.4426950408  // 宏定义 EXP_LOG2E
+#define EXP_ONE     (0x3f800000)  // 1.0  // 宏定义 EXP_ONE
+#define EXP_RANGE_R (0x42B17218)  // ln(FLT_MAX) approx = 88.7228  // 宏定义 EXP_RANGE_R
+#define EXP_RANGE_L (0xC2B00000)  // -88.0 (approx log(FLT_MIN))  // 宏定义 EXP_RANGE_L
 
 static inline HVX_Vector hvx_vec_exp_f32(HVX_Vector in_vec) {
     HVX_Vector z_qf32_v;
@@ -135,7 +135,7 @@ static inline HVX_Vector hvx_vec_exp_f32(HVX_Vector in_vec) {
 
     y_v = Q6_V_vmux_QVV(qy_v_negative_exponent, zero_v, y_v);
 
-    return y_v;
+    return y_v;  // 返回
 }
 
 static inline HVX_Vector hvx_vec_exp_f32_guard(HVX_Vector in_vec, HVX_Vector max_exp, HVX_Vector inf) {
@@ -143,7 +143,7 @@ static inline HVX_Vector hvx_vec_exp_f32_guard(HVX_Vector in_vec, HVX_Vector max
 
     HVX_Vector out = hvx_vec_exp_f32(in_vec);
 
-    return Q6_V_vmux_QVV(pred0, inf, out);
+    return Q6_V_vmux_QVV(pred0, inf, out);  // Q6_V_vmux_QVV
 }
 
 static inline void hvx_exp_f32(uint8_t * restrict dst, const uint8_t * restrict src, const int num_elems, bool negate) {
@@ -213,4 +213,4 @@ static inline void hvx_exp_f32(uint8_t * restrict dst, const uint8_t * restrict 
     }
 }
 
-#endif /* HVX_EXP_H */
+#endif /* HVX_EXP_H */  // 条件编译结束

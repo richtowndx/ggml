@@ -1,76 +1,76 @@
-#define _CRT_SECURE_NO_DEPRECATE // Disables "unsafe" warnings on Windows
-#define _USE_MATH_DEFINES // For M_PI on MSVC
+#define _CRT_SECURE_NO_DEPRECATE // Disables "unsafe" warnings on Windows  // 宏定义 _CRT_SECURE_NO_DEPRECATE
+#define _USE_MATH_DEFINES // For M_PI on MSVC  // 宏定义 _USE_MATH_DEFINES
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "traits.h"
-#include "ggml-cpu-impl.h"
-#include "ggml-impl.h"
-#include "quants.h"
-#include "ggml-threading.h"
-#include "unary-ops.h"
-#include "binary-ops.h"
-#include "vec.h"
-#include "ops.h"
-#include "ggml.h"
-#include "common.h"
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "traits.h"  // 引入 traits.h 头文件
+#include "ggml-cpu-impl.h"  // 引入 ggml-cpu-impl.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "quants.h"  // 引入 quants.h 头文件
+#include "ggml-threading.h"  // 引入 ggml-threading.h 头文件
+#include "unary-ops.h"  // 引入 unary-ops.h 头文件
+#include "binary-ops.h"  // 引入 binary-ops.h 头文件
+#include "vec.h"  // 引入 vec.h 头文件
+#include "ops.h"  // 引入 ops.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "common.h"  // 引入 common.h 头文件
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#include <malloc.h> // using malloc.h with MSC/MINGW
-#elif !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__)
-#include <alloca.h>
-#endif
+#if defined(_MSC_VER) || defined(__MINGW32__)  // 条件编译
+#include <malloc.h> // using malloc.h with MSC/MINGW  // 引入 malloc.h 头文件
+#elif !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__)  // 否则如果
+#include <alloca.h>  // 引入 alloca.h 头文件
+#endif  // 条件编译结束
 
-#include <assert.h>
-#include <errno.h>
-#include <time.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <float.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <signal.h>
-#if defined(__gnu_linux__)
-#include <syscall.h>
-#endif
+#include <assert.h>  // 引入 assert.h 头文件
+#include <errno.h>  // 引入 errno.h 头文件
+#include <time.h>  // 引入 time.h 头文件
+#include <math.h>  // 引入 math.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
+#include <string.h>  // 引入 string.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
+#include <inttypes.h>  // 引入 inttypes.h 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <float.h>  // 引入 float.h 头文件
+#include <limits.h>  // 引入 limits.h 头文件
+#include <stdarg.h>  // 引入 stdarg.h 头文件
+#include <signal.h>  // 引入 signal.h 头文件
+#if defined(__gnu_linux__)  // 条件编译
+#include <syscall.h>  // 引入 syscall.h 头文件
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_OPENMP
-#include <omp.h>
-#endif
+#ifdef GGML_USE_OPENMP  // 如果定义了 GGML_USE_OPENMP 则编译
+#include <omp.h>  // 引入 omp.h 头文件
+#endif  // 条件编译结束
 
-#if defined(__ARM_FEATURE_SVE) || defined(__ARM_FEATURE_MATMUL_INT8)
+#if defined(__ARM_FEATURE_SVE) || defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
 #undef GGML_USE_LLAMAFILE
-#endif
+#endif  // 条件编译结束
 
-#ifdef GGML_USE_LLAMAFILE
-#include "llamafile/sgemm.h"
-#endif
+#ifdef GGML_USE_LLAMAFILE  // 如果定义了 GGML_USE_LLAMAFILE 则编译
+#include "llamafile/sgemm.h"  // 引入 llamafile/sgemm.h 头文件
+#endif  // 条件编译结束
 
 // Note: once we move threading into a separate C++ file
 // will use std::hardware_destructive_interference_size instead of hardcoding it here
 // and we'll use C++ attribute syntax.
-#define GGML_CACHE_LINE  64
+#define GGML_CACHE_LINE  64  // 宏定义 GGML_CACHE_LINE
 
-#if defined(__clang__) || defined(__GNUC__)
-#define GGML_CACHE_ALIGN __attribute__((aligned(GGML_CACHE_LINE)))
-#endif
+#if defined(__clang__) || defined(__GNUC__)  // 条件编译
+#define GGML_CACHE_ALIGN __attribute__((aligned(GGML_CACHE_LINE)))  // 宏定义 GGML_CACHE_ALIGN
+#endif  // 条件编译结束
 
-#if defined(__has_feature)
-#if __has_feature(thread_sanitizer)
-#define GGML_TSAN_ENABLED 1
-#endif
-#else  // __has_feature
-#if defined(__SANITIZE_THREAD__)
-#define GGML_TSAN_ENABLED 1
-#endif
-#endif // __has_feature
+#if defined(__has_feature)  // 条件编译
+#if __has_feature(thread_sanitizer)  // 条件编译
+#define GGML_TSAN_ENABLED 1  // 宏定义 GGML_TSAN_ENABLED
+#endif  // 条件编译结束
+#else  // __has_feature  // 否则
+#if defined(__SANITIZE_THREAD__)  // 条件编译
+#define GGML_TSAN_ENABLED 1  // 宏定义 GGML_TSAN_ENABLED
+#endif  // 条件编译结束
+#endif // __has_feature  // 条件编译结束
 
-#define UNUSED GGML_UNUSED
-#define SWAP(x, y, T) do { T SWAP = x; (x) = y; (y) = SWAP; } while (0)
+#define UNUSED GGML_UNUSED  // 宏定义 UNUSED
+#define SWAP(x, y, T) do { T SWAP = x; (x) = y; (y) = SWAP; } while (0)  // 宏定义 SWAP
 
 // precomputed f32 table for f16 (256 KB) (simd-mappings.h)
 float ggml_table_f32_f16[1 << 16];
@@ -78,36 +78,36 @@ float ggml_table_f32_f16[1 << 16];
 // precomputed f32 table for e8m0 half (1 KB) (simd-mappings.h)
 float ggml_table_f32_e8m0_half[1 << 8];
 
-#if defined(__ARM_ARCH)
-struct ggml_arm_arch_features_type {
+#if defined(__ARM_ARCH)  // 条件编译
+struct ggml_arm_arch_features_type {  // 结构体定义
     int sve_cnt;
 } ggml_arm_arch_features = { 0 };
-#endif
+#endif  // 条件编译结束
 
-#if defined(__riscv)
-struct ggml_riscv_arch_features_type {
+#if defined(__riscv)  // 条件编译
+struct ggml_riscv_arch_features_type {  // 结构体定义
     int rvv_vlen;
 } ggml_riscv_arch_features = { 0 };
-#endif
+#endif  // 条件编译结束
 
-#if defined(_WIN32)
+#if defined(_WIN32)  // 条件编译
 
-#define WIN32_LEAN_AND_MEAN
-#ifndef NOMINMAX
-    #define NOMINMAX
-#endif
-#include <windows.h>
+#define WIN32_LEAN_AND_MEAN  // 宏定义 WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX  // 如果未定义 NOMINMAX 则编译
+    #define NOMINMAX  // 宏定义 NOMINMAX
+#endif  // 条件编译结束
+#include <windows.h>  // 引入 windows.h 头文件
 
-#if defined(_MSC_VER) && !defined(__clang__)
-#define GGML_CACHE_ALIGN __declspec(align(GGML_CACHE_LINE))
+#if defined(_MSC_VER) && !defined(__clang__)  // 条件编译
+#define GGML_CACHE_ALIGN __declspec(align(GGML_CACHE_LINE))  // 宏定义 GGML_CACHE_ALIGN
 
-typedef volatile LONG atomic_int;
-typedef atomic_int atomic_bool;
-typedef atomic_int atomic_flag;
+typedef volatile LONG atomic_int;  // 类型定义
+typedef atomic_int atomic_bool;  // 类型定义
+typedef atomic_int atomic_flag;  // 类型定义
 
-#define ATOMIC_FLAG_INIT 0
+#define ATOMIC_FLAG_INIT 0  // 宏定义 ATOMIC_FLAG_INIT
 
-typedef enum {
+typedef enum {  // 类型定义
     memory_order_relaxed,
     memory_order_consume,
     memory_order_acquire,
@@ -124,21 +124,21 @@ static void atomic_store_explicit(atomic_int * ptr, LONG val, memory_order mo) {
     InterlockedExchange(ptr, val);
 }
 static LONG atomic_load(atomic_int * ptr) {
-    return InterlockedCompareExchange(ptr, 0, 0);
+    return InterlockedCompareExchange(ptr, 0, 0);  // InterlockedCompareExchange
 }
 static LONG atomic_load_explicit(atomic_int * ptr, memory_order mo) {
     // TODO: add support for explicit memory order
-    return InterlockedCompareExchange(ptr, 0, 0);
+    return InterlockedCompareExchange(ptr, 0, 0);  // InterlockedCompareExchange
 }
 static LONG atomic_fetch_add(atomic_int * ptr, LONG inc) {
-    return InterlockedExchangeAdd(ptr, inc);
+    return InterlockedExchangeAdd(ptr, inc);  // InterlockedExchangeAdd
 }
 static LONG atomic_fetch_add_explicit(atomic_int * ptr, LONG inc, memory_order mo) {
     // TODO: add support for explicit memory order
-    return InterlockedExchangeAdd(ptr, inc);
+    return InterlockedExchangeAdd(ptr, inc);  // InterlockedExchangeAdd
 }
 static atomic_bool atomic_flag_test_and_set(atomic_flag * ptr) {
-    return InterlockedExchange(ptr, 1);
+    return InterlockedExchange(ptr, 1);  // InterlockedExchange
 }
 static void atomic_flag_clear(atomic_flag * ptr) {
     InterlockedExchange(ptr, 0);
@@ -146,63 +146,63 @@ static void atomic_flag_clear(atomic_flag * ptr) {
 static void atomic_thread_fence(memory_order mo) {
     MemoryBarrier();
 }
-#else // clang
-#include <stdatomic.h>
-#endif
+#else // clang  // 否则
+#include <stdatomic.h>  // 引入 stdatomic.h 头文件
+#endif  // 条件编译结束
 
-typedef HANDLE pthread_t;
+typedef HANDLE pthread_t;  // 类型定义
 
-typedef DWORD thread_ret_t;
+typedef DWORD thread_ret_t;  // 类型定义
 static int pthread_create(pthread_t * out, void * unused, thread_ret_t(*func)(void *), void * arg) {
     (void) unused;
     HANDLE handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) func, arg, 0, NULL);
     if (handle == NULL)
     {
-        return EAGAIN;
+        return EAGAIN;  // 返回
     }
 
     *out = handle;
-    return 0;
+    return 0;  // 返回
 }
 
 static int pthread_join(pthread_t thread, void * unused) {
     (void) unused;
     int ret = (int) WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
-    return ret;
+    return ret;  // 返回
 }
 
 static int sched_yield (void) {
     Sleep (0);
-    return 0;
+    return 0;  // 返回
 }
-#else
+#else  // 否则
 
-#include <pthread.h>
-#include <stdatomic.h>
-#include <sched.h>
-#if defined(__FreeBSD__)
-#include <pthread_np.h>
-#endif
+#include <pthread.h>  // 引入 pthread.h 头文件
+#include <stdatomic.h>  // 引入 stdatomic.h 头文件
+#include <sched.h>  // 引入 sched.h 头文件
+#if defined(__FreeBSD__)  // 条件编译
+#include <pthread_np.h>  // 引入 pthread_np.h 头文件
+#endif  // 条件编译结束
 
-typedef void * thread_ret_t;
+typedef void * thread_ret_t;  // 类型定义
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include <sys/types.h>  // 引入 sys/types.h 头文件
+#include <sys/stat.h>  // 引入 sys/stat.h 头文件
+#include <unistd.h>  // 引入 unistd.h 头文件
 
-#endif
+#endif  // 条件编译结束
 
-typedef pthread_t ggml_thread_t;
+typedef pthread_t ggml_thread_t;  // 类型定义
 
-#define GGML_THREADPOOL_N_THREADS_MASK (0xffffU)
-#define GGML_THREADPOOL_N_THREADS_BITS (16)
+#define GGML_THREADPOOL_N_THREADS_MASK (0xffffU)  // 宏定义 GGML_THREADPOOL_N_THREADS_MASK
+#define GGML_THREADPOOL_N_THREADS_BITS (16)  // 宏定义 GGML_THREADPOOL_N_THREADS_BITS
 
-#if defined(__APPLE__)
-#include <unistd.h>
-#include <mach/mach.h>
-#include <TargetConditionals.h>
-#endif
+#if defined(__APPLE__)  // 条件编译
+#include <unistd.h>  // 引入 unistd.h 头文件
+#include <mach/mach.h>  // 引入 mach/mach.h 头文件
+#include <TargetConditionals.h>  // 引入 TargetConditionals.h 头文件
+#endif  // 条件编译结束
 
 static const struct ggml_type_traits_cpu type_traits_cpu[GGML_TYPE_COUNT] = {
     [GGML_TYPE_F32] = {
@@ -227,21 +227,21 @@ static const struct ggml_type_traits_cpu type_traits_cpu[GGML_TYPE_COUNT] = {
         .from_float               = quantize_row_q4_0,
         .vec_dot                  = ggml_vec_dot_q4_0_q8_0,
         .vec_dot_type             = GGML_TYPE_Q8_0,
-#if defined (__ARM_FEATURE_MATMUL_INT8)
+#if defined (__ARM_FEATURE_MATMUL_INT8)  // 条件编译
         .nrows                    = 2,
-#else
+#else  // 否则
         .nrows                    = 1,
-#endif
+#endif  // 条件编译结束
     },
     [GGML_TYPE_Q4_1] = {
         .from_float               = quantize_row_q4_1,
         .vec_dot                  = ggml_vec_dot_q4_1_q8_1,
         .vec_dot_type             = GGML_TYPE_Q8_1,
-#if defined (__ARM_FEATURE_MATMUL_INT8)
+#if defined (__ARM_FEATURE_MATMUL_INT8)  // 条件编译
         .nrows                    = 2,
-#else
+#else  // 否则
         .nrows                    = 1,
-#endif
+#endif  // 条件编译结束
     },
     [GGML_TYPE_Q5_0] = {
         .from_float               = quantize_row_q5_0,
@@ -259,11 +259,11 @@ static const struct ggml_type_traits_cpu type_traits_cpu[GGML_TYPE_COUNT] = {
         .from_float               = quantize_row_q8_0,
         .vec_dot                  = ggml_vec_dot_q8_0_q8_0,
         .vec_dot_type             = GGML_TYPE_Q8_0,
-#if defined (__ARM_FEATURE_MATMUL_INT8)
+#if defined (__ARM_FEATURE_MATMUL_INT8)  // 条件编译
         .nrows                    = 2,
-#else
+#else  // 否则
         .nrows                    = 1,
-#endif
+#endif  // 条件编译结束
     },
     [GGML_TYPE_Q8_1] = {
         .from_float               = quantize_row_q8_1,
@@ -298,11 +298,11 @@ static const struct ggml_type_traits_cpu type_traits_cpu[GGML_TYPE_COUNT] = {
         .from_float               = quantize_row_q4_K,
         .vec_dot                  = ggml_vec_dot_q4_K_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
-#if defined (__ARM_FEATURE_MATMUL_INT8)
+#if defined (__ARM_FEATURE_MATMUL_INT8)  // 条件编译
         .nrows                    = 2,
-#else
+#else  // 否则
         .nrows                    = 1,
-#endif
+#endif  // 条件编译结束
     },
     [GGML_TYPE_Q5_K] = {
         .from_float               = quantize_row_q5_K,
@@ -314,11 +314,11 @@ static const struct ggml_type_traits_cpu type_traits_cpu[GGML_TYPE_COUNT] = {
         .from_float               = quantize_row_q6_K,
         .vec_dot                  = ggml_vec_dot_q6_K_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
-#if defined (__ARM_FEATURE_MATMUL_INT8)
+#if defined (__ARM_FEATURE_MATMUL_INT8)  // 条件编译
         .nrows                    = 2,
-#else
+#else  // 否则
         .nrows                    = 1,
-#endif
+#endif  // 条件编译结束
     },
     [GGML_TYPE_IQ2_XXS] = {
         .from_float               = NULL,
@@ -402,69 +402,69 @@ static const struct ggml_type_traits_cpu type_traits_cpu[GGML_TYPE_COUNT] = {
 };
 
 const struct ggml_type_traits_cpu * ggml_get_type_traits_cpu(enum ggml_type type) {
-    return &type_traits_cpu[type];
+    return &type_traits_cpu[type];  // 返回
 }
 
 //
 // Threading defs
 //
 
-typedef pthread_t          ggml_thread_t;
+typedef pthread_t          ggml_thread_t;  // 类型定义
 
-#if defined(_WIN32)
+#if defined(_WIN32)  // 条件编译
 
-typedef CONDITION_VARIABLE ggml_cond_t;
-typedef SRWLOCK            ggml_mutex_t;
+typedef CONDITION_VARIABLE ggml_cond_t;  // 类型定义
+typedef SRWLOCK            ggml_mutex_t;  // 类型定义
 
-#define ggml_mutex_init(m)   InitializeSRWLock(m)
-#define ggml_mutex_destroy(m)
-#define ggml_mutex_lock(m)   AcquireSRWLockExclusive(m)
-#define ggml_mutex_unlock(m) ReleaseSRWLockExclusive(m)
-#define ggml_mutex_lock_shared(m)   AcquireSRWLockShared(m)
-#define ggml_mutex_unlock_shared(m) ReleaseSRWLockShared(m)
+#define ggml_mutex_init(m)   InitializeSRWLock(m)  // 宏定义 ggml_mutex_init
+#define ggml_mutex_destroy(m)  // 宏定义 ggml_mutex_destroy
+#define ggml_mutex_lock(m)   AcquireSRWLockExclusive(m)  // 宏定义 ggml_mutex_lock
+#define ggml_mutex_unlock(m) ReleaseSRWLockExclusive(m)  // 宏定义 ggml_mutex_unlock
+#define ggml_mutex_lock_shared(m)   AcquireSRWLockShared(m)  // 宏定义 ggml_mutex_lock_shared
+#define ggml_mutex_unlock_shared(m) ReleaseSRWLockShared(m)  // 宏定义 ggml_mutex_unlock_shared
 
-#define ggml_cond_init(c)    InitializeConditionVariable(c)
-#define ggml_cond_destroy(c)
-#define ggml_cond_wait(c, m) SleepConditionVariableSRW(c, m, INFINITE, CONDITION_VARIABLE_LOCKMODE_SHARED)
-#define ggml_cond_broadcast(c) WakeAllConditionVariable(c)
+#define ggml_cond_init(c)    InitializeConditionVariable(c)  // 宏定义 ggml_cond_init
+#define ggml_cond_destroy(c)  // 宏定义 ggml_cond_destroy
+#define ggml_cond_wait(c, m) SleepConditionVariableSRW(c, m, INFINITE, CONDITION_VARIABLE_LOCKMODE_SHARED)  // 宏定义 ggml_cond_wait
+#define ggml_cond_broadcast(c) WakeAllConditionVariable(c)  // 宏定义 ggml_cond_broadcast
 
-#define ggml_thread_create pthread_create
-#define ggml_thread_join   pthread_join
+#define ggml_thread_create pthread_create  // 宏定义 ggml_thread_create
+#define ggml_thread_join   pthread_join  // 宏定义 ggml_thread_join
 
-#else
+#else  // 否则
 
-typedef pthread_cond_t     ggml_cond_t;
-typedef pthread_mutex_t    ggml_mutex_t;
+typedef pthread_cond_t     ggml_cond_t;  // 类型定义
+typedef pthread_mutex_t    ggml_mutex_t;  // 类型定义
 
-#define ggml_mutex_init(m)          pthread_mutex_init(m, NULL)
-#define ggml_mutex_destroy(m)       pthread_mutex_destroy(m)
-#define ggml_mutex_lock(m)          pthread_mutex_lock(m)
-#define ggml_mutex_unlock(m)        pthread_mutex_unlock(m)
-#define ggml_mutex_lock_shared(m)   pthread_mutex_lock(m)
-#define ggml_mutex_unlock_shared(m) pthread_mutex_unlock(m)
+#define ggml_mutex_init(m)          pthread_mutex_init(m, NULL)  // 宏定义 ggml_mutex_init
+#define ggml_mutex_destroy(m)       pthread_mutex_destroy(m)  // 宏定义 ggml_mutex_destroy
+#define ggml_mutex_lock(m)          pthread_mutex_lock(m)  // 宏定义 ggml_mutex_lock
+#define ggml_mutex_unlock(m)        pthread_mutex_unlock(m)  // 宏定义 ggml_mutex_unlock
+#define ggml_mutex_lock_shared(m)   pthread_mutex_lock(m)  // 宏定义 ggml_mutex_lock_shared
+#define ggml_mutex_unlock_shared(m) pthread_mutex_unlock(m)  // 宏定义 ggml_mutex_unlock_shared
 
-#define ggml_lock_init(x)    UNUSED(x)
-#define ggml_lock_destroy(x) UNUSED(x)
-#if defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))
-#define ggml_lock_lock(x)    _mm_pause()
-#else
-#define ggml_lock_lock(x)    UNUSED(x)
-#endif
-#define ggml_lock_unlock(x)  UNUSED(x)
+#define ggml_lock_init(x)    UNUSED(x)  // 宏定义 ggml_lock_init
+#define ggml_lock_destroy(x) UNUSED(x)  // 宏定义 ggml_lock_destroy
+#if defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))  // 条件编译
+#define ggml_lock_lock(x)    _mm_pause()  // 宏定义 ggml_lock_lock
+#else  // 否则
+#define ggml_lock_lock(x)    UNUSED(x)  // 宏定义 ggml_lock_lock
+#endif  // 条件编译结束
+#define ggml_lock_unlock(x)  UNUSED(x)  // 宏定义 ggml_lock_unlock
 
-#define GGML_LOCK_INITIALIZER 0
-#define ggml_cond_init(c)      pthread_cond_init(c, NULL)
-#define ggml_cond_destroy(c)   pthread_cond_destroy(c)
-#define ggml_cond_wait(c, m)   pthread_cond_wait(c, m)
-#define ggml_cond_broadcast(c) pthread_cond_broadcast(c)
+#define GGML_LOCK_INITIALIZER 0  // 宏定义 GGML_LOCK_INITIALIZER
+#define ggml_cond_init(c)      pthread_cond_init(c, NULL)  // 宏定义 ggml_cond_init
+#define ggml_cond_destroy(c)   pthread_cond_destroy(c)  // 宏定义 ggml_cond_destroy
+#define ggml_cond_wait(c, m)   pthread_cond_wait(c, m)  // 宏定义 ggml_cond_wait
+#define ggml_cond_broadcast(c) pthread_cond_broadcast(c)  // 宏定义 ggml_cond_broadcast
 
-#define ggml_thread_create pthread_create
-#define ggml_thread_join   pthread_join
+#define ggml_thread_create pthread_create  // 宏定义 ggml_thread_create
+#define ggml_thread_join   pthread_join  // 宏定义 ggml_thread_join
 
-#endif
+#endif  // 条件编译结束
 
 // Threadpool def
-struct ggml_threadpool {
+struct ggml_threadpool {  // 结构体定义
     ggml_mutex_t mutex;       // mutex for cond.var
     ggml_cond_t  cond;        // cond.var for waiting for new work
 
@@ -491,69 +491,69 @@ struct ggml_threadpool {
 };
 
 // Per-thread state
-struct ggml_compute_state {
-#ifndef GGML_USE_OPENMP
+struct ggml_compute_state {  // 结构体定义
+#ifndef GGML_USE_OPENMP  // 如果未定义 GGML_USE_OPENMP 则编译
     ggml_thread_t thrd;
     int  last_graph;
     bool pending;
-#endif
+#endif  // 条件编译结束
     bool cpumask[GGML_MAX_N_THREADS];
     struct ggml_threadpool * threadpool;
     int ith;
 };
 
 // Helpers for polling loops
-#if defined(__aarch64__) && ( defined(__clang__) || defined(__GNUC__) )
+#if defined(__aarch64__) && ( defined(__clang__) || defined(__GNUC__) )  // 条件编译
 static inline void ggml_thread_cpu_relax(void) {
-    __asm__ volatile("yield" ::: "memory");
+    __asm__ volatile("yield" ::: "memory");  // volatile
 }
-#elif defined(__x86_64__)
+#elif defined(__x86_64__)  // 否则如果
 static inline void ggml_thread_cpu_relax(void) {
     _mm_pause();
 }
-#elif defined(__riscv)
+#elif defined(__riscv)  // 否则如果
 static inline void ggml_thread_cpu_relax(void) {
-    #ifdef __riscv_zihintpause
-        __asm__ __volatile__ ("pause");
-    #else
+    #ifdef __riscv_zihintpause  // 如果定义了 __riscv_zihintpause 则编译
+        __asm__ __volatile__ ("pause");  // __volatile__
+    #else  // 否则
         /* Encoding of the pause instruction */
-        __asm__ __volatile__ (".4byte 0x100000F");
-    #endif
+        __asm__ __volatile__ (".4byte 0x100000F");  // __volatile__
+    #endif  // 条件编译结束
 }
-#else
+#else  // 否则
 static inline void ggml_thread_cpu_relax(void) {;}
-#endif
+#endif  // 条件编译结束
 
 //
 // NUMA support
 //
 
-#define GGML_NUMA_MAX_NODES 8
-#define GGML_NUMA_MAX_CPUS 512
+#define GGML_NUMA_MAX_NODES 8  // 宏定义 GGML_NUMA_MAX_NODES
+#define GGML_NUMA_MAX_CPUS 512  // 宏定义 GGML_NUMA_MAX_CPUS
 
-struct ggml_numa_node {
+struct ggml_numa_node {  // 结构体定义
     uint32_t cpus[GGML_NUMA_MAX_CPUS]; // hardware threads on this node
     uint32_t n_cpus;
 };
 
-struct ggml_numa_nodes {
+struct ggml_numa_nodes {  // 结构体定义
     enum ggml_numa_strategy numa_strategy;
     struct ggml_numa_node nodes[GGML_NUMA_MAX_NODES];
     uint32_t n_nodes;
     uint32_t total_cpus; // hardware threads on system
     uint32_t current_node; // node on which main process is execting
-#if defined(__gnu_linux__)
+#if defined(__gnu_linux__)  // 条件编译
     cpu_set_t cpuset; // cpuset from numactl
-#else
+#else  // 否则
     uint32_t cpuset; // no NUMA support outside of Linux at this time. Use a portable datatype
-#endif
+#endif  // 条件编译结束
 };
 
 //
 // ggml state
 //
 
-struct ggml_state {
+struct ggml_state {  // 结构体定义
     struct ggml_numa_nodes numa;
 };
 
@@ -562,12 +562,12 @@ static struct ggml_state g_state = {0};
 void ggml_barrier(struct ggml_threadpool * tp) {
     int n_threads = atomic_load_explicit(&tp->n_graph, memory_order_relaxed) & GGML_THREADPOOL_N_THREADS_MASK;
     if (n_threads == 1) {
-        return;
+        return;  // 返回
     }
 
-#ifdef GGML_USE_OPENMP
+#ifdef GGML_USE_OPENMP  // 如果定义了 GGML_USE_OPENMP 则编译
     #pragma omp barrier
-#else
+#else  // 否则
     int n_passed = atomic_load_explicit(&tp->n_barrier_passed, memory_order_relaxed);
 
     // enter barrier (full seq-cst fence)
@@ -579,7 +579,7 @@ void ggml_barrier(struct ggml_threadpool * tp) {
 
         // exit barrier (full seq-cst fence)
         atomic_fetch_add_explicit(&tp->n_barrier_passed, 1, memory_order_seq_cst);
-        return;
+        return;  // 返回
     }
 
     // wait for other threads
@@ -589,12 +589,12 @@ void ggml_barrier(struct ggml_threadpool * tp) {
 
     // exit barrier (full seq-cst fence)
     // TSAN doesn't support standalone fence yet, we use a dummy read-modify-write instead
-    #ifdef GGML_TSAN_ENABLED
+    #ifdef GGML_TSAN_ENABLED  // 如果定义了 GGML_TSAN_ENABLED 则编译
     atomic_fetch_add_explicit(&tp->n_barrier_passed, 0, memory_order_seq_cst);
-    #else
+    #else  // 否则
     atomic_thread_fence(memory_order_seq_cst);
-    #endif
-#endif
+    #endif  // 条件编译结束
+#endif  // 条件编译结束
 }
 
 void ggml_threadpool_chunk_set(struct ggml_threadpool * tp, int value) {
@@ -602,32 +602,32 @@ void ggml_threadpool_chunk_set(struct ggml_threadpool * tp, int value) {
 }
 
 int ggml_threadpool_chunk_add(struct ggml_threadpool * tp, int value) {
-    return atomic_fetch_add_explicit(&tp->current_chunk, value, memory_order_relaxed);
+    return atomic_fetch_add_explicit(&tp->current_chunk, value, memory_order_relaxed);  // atomic_fetch_add_explicit
 }
 
-#if defined(__gnu_linux__)
+#if defined(__gnu_linux__)  // 条件编译
 static cpu_set_t ggml_get_numa_affinity(void) {
     cpu_set_t cpuset;
     pthread_t thread;
     thread = pthread_self();
     CPU_ZERO(&cpuset);
     pthread_getaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
-    return cpuset;
+    return cpuset;  // 返回
 }
-#else
+#else  // 否则
 static uint32_t ggml_get_numa_affinity(void) {
-    return 0; // no NUMA support
+    return 0; // no NUMA support  // 返回
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_numa_init(enum ggml_numa_strategy numa_flag) {
     if (g_state.numa.n_nodes > 0) {
         fprintf(stderr, "ggml_numa_init: NUMA already initialized\n");
 
-        return;
+        return;  // 返回
     }
 
-#if defined(__gnu_linux__)
+#if defined(__gnu_linux__)  // 条件编译
     struct stat st;
     char path[256];
     int rv;
@@ -660,19 +660,19 @@ void ggml_numa_init(enum ggml_numa_strategy numa_flag) {
     // figure out which node we're on
     uint current_cpu;
     int getcpu_ret = 0;
-#if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 33) || defined(__COSMOPOLITAN__)
+#if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 33) || defined(__COSMOPOLITAN__)  // 条件编译
     getcpu_ret = getcpu(&current_cpu, &g_state.numa.current_node);
-#else
+#else  // 否则
     // old glibc doesn't have a wrapper for this call. Fall back on direct syscall
 #   if !defined(SYS_getcpu) && defined(SYS_get_cpu)
-#       define SYS_getcpu SYS_get_cpu // some older glibc versions use this name
+#       define SYS_getcpu SYS_get_cpu // some older glibc versions use this name  // 宏定义 SYS_getcpu
 #   endif
     getcpu_ret = syscall(SYS_getcpu, &current_cpu, &g_state.numa.current_node);
-#endif
+#endif  // 条件编译结束
 
     if (g_state.numa.n_nodes < 1 || g_state.numa.total_cpus < 1 || getcpu_ret != 0) {
         g_state.numa.n_nodes = 0;
-        return;
+        return;  // 返回
     }
 
     GGML_PRINT_DEBUG("found our process on numa node %u, CPU %u\n", g_state.numa.current_node, current_cpu);
@@ -702,57 +702,57 @@ void ggml_numa_init(enum ggml_numa_strategy numa_flag) {
             fclose(fptr);
         }
     }
-#else
+#else  // 否则
     UNUSED(numa_flag);
     // TODO
-#endif
+#endif  // 条件编译结束
 }
 
 bool ggml_is_numa(void) {
-    return g_state.numa.n_nodes > 1;
+    return g_state.numa.n_nodes > 1;  // 返回
 }
 
-#if defined(__ARM_ARCH)
-#if defined(__aarch64__) && defined(__ARM_FEATURE_SVE)
-#include <arm_sve.h>
+#if defined(__ARM_ARCH)  // 条件编译
+#if defined(__aarch64__) && defined(__ARM_FEATURE_SVE)  // 条件编译
+#include <arm_sve.h>  // 引入 arm_sve.h 头文件
 static void ggml_init_arm_arch_features(void) {
     ggml_arm_arch_features.sve_cnt = svcntb();
 }
-#else
+#else  // 否则
 static void ggml_init_arm_arch_features(void) {}
-#endif
-#endif // __ARM_ARCH
+#endif  // 条件编译结束
+#endif // __ARM_ARCH  // 条件编译结束
 
-#if defined(__riscv) && defined(__riscv_v_intrinsic)
-#include <riscv_vector.h>
+#if defined(__riscv) && defined(__riscv_v_intrinsic)  // 条件编译
+#include <riscv_vector.h>  // 引入 riscv_vector.h 头文件
 static void ggml_init_riscv_arch_features(void) {
     ggml_riscv_arch_features.rvv_vlen = __riscv_vlenb();
 }
-#else
+#else  // 否则
 static void ggml_init_riscv_arch_features(void) {}
-#endif
+#endif  // 条件编译结束
 
-struct ggml_tensor * ggml_new_i32(struct ggml_context * ctx, int32_t value) {
+struct ggml_tensor * ggml_new_i32(struct ggml_context * ctx, int32_t value) {  // 结构体定义
     GGML_ASSERT(!ggml_get_no_alloc(ctx));
 
     struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, 1);
 
     ggml_set_i32(result, value);
 
-    return result;
+    return result;  // 返回
 }
 
-struct ggml_tensor * ggml_new_f32(struct ggml_context * ctx, float value) {
+struct ggml_tensor * ggml_new_f32(struct ggml_context * ctx, float value) {  // 结构体定义
     GGML_ASSERT(!ggml_get_no_alloc(ctx));
 
     struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 1);
 
     ggml_set_f32(result, value);
 
-    return result;
+    return result;  // 返回
 }
 
-struct ggml_tensor * ggml_set_i32 (struct ggml_tensor * tensor, int32_t value) {
+struct ggml_tensor * ggml_set_i32 (struct ggml_tensor * tensor, int32_t value) {  // 结构体定义
     const int n     = ggml_nrows(tensor);
     const int nc    = tensor->ne[0];
     const size_t n1 = tensor->nb[1];
@@ -808,10 +808,10 @@ struct ggml_tensor * ggml_set_i32 (struct ggml_tensor * tensor, int32_t value) {
             }
     }
 
-    return tensor;
+    return tensor;  // 返回
 }
 
-struct ggml_tensor * ggml_set_f32(struct ggml_tensor * tensor, float value) {
+struct ggml_tensor * ggml_set_f32(struct ggml_tensor * tensor, float value) {  // 结构体定义
     const int n     = ggml_nrows(tensor);
     const int nc    = tensor->ne[0];
     const size_t n1 = tensor->nb[1];
@@ -867,14 +867,14 @@ struct ggml_tensor * ggml_set_f32(struct ggml_tensor * tensor, float value) {
             }
     }
 
-    return tensor;
+    return tensor;  // 返回
 }
 
 int32_t ggml_get_i32_1d(const struct ggml_tensor * tensor, int i) {
     if (!ggml_is_contiguous(tensor)) {
         int64_t id[4] = { 0, 0, 0, 0 };
         ggml_unravel_index(tensor, i, &id[0], &id[1], &id[2], &id[3]);
-        return ggml_get_i32_nd(tensor, id[0], id[1], id[2], id[3]);
+        return ggml_get_i32_nd(tensor, id[0], id[1], id[2], id[3]);  // ggml_get_i32_nd
     }
     switch (tensor->type) {
         case GGML_TYPE_I8:
@@ -895,12 +895,12 @@ int32_t ggml_get_i32_1d(const struct ggml_tensor * tensor, int i) {
         case GGML_TYPE_F16:
             {
                 GGML_ASSERT(tensor->nb[0] == sizeof(ggml_fp16_t));
-                return GGML_CPU_FP16_TO_FP32(((ggml_fp16_t *)(tensor->data))[i]);
+                return GGML_CPU_FP16_TO_FP32(((ggml_fp16_t *)(tensor->data))[i]);  // GGML_CPU_FP16_TO_FP32
             }
         case GGML_TYPE_BF16:
             {
                 GGML_ASSERT(tensor->nb[0] == sizeof(ggml_bf16_t));
-                return GGML_BF16_TO_FP32(((ggml_bf16_t *)(tensor->data))[i]);
+                return GGML_BF16_TO_FP32(((ggml_bf16_t *)(tensor->data))[i]);  // GGML_BF16_TO_FP32
             }
         case GGML_TYPE_F32:
             {
@@ -919,7 +919,7 @@ void ggml_set_i32_1d(const struct ggml_tensor * tensor, int i, int32_t value) {
         int64_t id[4] = { 0, 0, 0, 0 };
         ggml_unravel_index(tensor, i, &id[0], &id[1], &id[2], &id[3]);
         ggml_set_i32_nd(tensor, id[0], id[1], id[2], id[3], value);
-        return;
+        return;  // 返回
     }
     switch (tensor->type) {
         case GGML_TYPE_I8:
@@ -969,9 +969,9 @@ int32_t ggml_get_i32_nd(const struct ggml_tensor * tensor, int i0, int i1, int i
         case GGML_TYPE_I32:
             return ((int32_t *) data)[0];
         case GGML_TYPE_F16:
-            return GGML_CPU_FP16_TO_FP32(((ggml_fp16_t *) data)[0]);
+            return GGML_CPU_FP16_TO_FP32(((ggml_fp16_t *) data)[0]);  // GGML_CPU_FP16_TO_FP32
         case GGML_TYPE_BF16:
-            return GGML_BF16_TO_FP32(((ggml_bf16_t *) data)[0]);
+            return GGML_BF16_TO_FP32(((ggml_bf16_t *) data)[0]);  // GGML_BF16_TO_FP32
         case GGML_TYPE_F32:
             return ((float *) data)[0];
         default:
@@ -1017,7 +1017,7 @@ float ggml_get_f32_1d(const struct ggml_tensor * tensor, int i) {
     if (!ggml_is_contiguous(tensor)) {
         int64_t id[4] = { 0, 0, 0, 0 };
         ggml_unravel_index(tensor, i, &id[0], &id[1], &id[2], &id[3]);
-        return ggml_get_f32_nd(tensor, id[0], id[1], id[2], id[3]);
+        return ggml_get_f32_nd(tensor, id[0], id[1], id[2], id[3]);  // ggml_get_f32_nd
     }
     switch (tensor->type) {
         case GGML_TYPE_I8:
@@ -1034,11 +1034,11 @@ float ggml_get_f32_1d(const struct ggml_tensor * tensor, int i) {
             }
         case GGML_TYPE_F16:
             {
-                return GGML_CPU_FP16_TO_FP32(((ggml_fp16_t *)(tensor->data))[i]);
+                return GGML_CPU_FP16_TO_FP32(((ggml_fp16_t *)(tensor->data))[i]);  // GGML_CPU_FP16_TO_FP32
             }
         case GGML_TYPE_BF16:
             {
-                return GGML_BF16_TO_FP32(((ggml_bf16_t *)(tensor->data))[i]);
+                return GGML_BF16_TO_FP32(((ggml_bf16_t *)(tensor->data))[i]);  // GGML_BF16_TO_FP32
             }
         case GGML_TYPE_F32:
             {
@@ -1056,7 +1056,7 @@ void ggml_set_f32_1d(const struct ggml_tensor * tensor, int i, float value) {
         int64_t id[4] = { 0, 0, 0, 0 };
         ggml_unravel_index(tensor, i, &id[0], &id[1], &id[2], &id[3]);
         ggml_set_f32_nd(tensor, id[0], id[1], id[2], id[3], value);
-        return;
+        return;  // 返回
     }
     switch (tensor->type) {
         case GGML_TYPE_I8:
@@ -1100,9 +1100,9 @@ float ggml_get_f32_nd(const struct ggml_tensor * tensor, int i0, int i1, int i2,
         case GGML_TYPE_I32:
             return ((int32_t *) data)[0];
         case GGML_TYPE_F16:
-            return GGML_CPU_FP16_TO_FP32(((ggml_fp16_t *) data)[0]);
+            return GGML_CPU_FP16_TO_FP32(((ggml_fp16_t *) data)[0]);  // GGML_CPU_FP16_TO_FP32
         case GGML_TYPE_BF16:
-            return GGML_BF16_TO_FP32(((ggml_bf16_t *) data)[0]);
+            return GGML_BF16_TO_FP32(((ggml_bf16_t *) data)[0]);  // GGML_BF16_TO_FP32
         case GGML_TYPE_F32:
             return ((float *) data)[0];
         default:
@@ -1176,7 +1176,7 @@ static void ggml_compute_forward_mul_mat_one_chunk(
 
     // threads with no work simply yield (not sure if it helps)
     if (ir0_start >= ir0_end || ir1_start >= ir1_end) {
-        return;
+        return;  // 返回
     }
 
     const void * wdata = (src1->type == vec_dot_type) ? src1->data : params->wdata;
@@ -1240,7 +1240,7 @@ static void ggml_compute_forward_mul_mat_one_chunk(
 
 void ggml_compute_forward_mul_mat(
         const struct ggml_compute_params * params,
-              struct ggml_tensor * dst) {
+              struct ggml_tensor * dst) {  // 结构体定义
 
     const struct ggml_tensor * src0 = dst->src[0];
     const struct ggml_tensor * src1 = dst->src[1];
@@ -1273,7 +1273,7 @@ void ggml_compute_forward_mul_mat(
     //   compute by src0 rows
 
     // TODO: extract to "extra_op"
-#if GGML_USE_LLAMAFILE
+#if GGML_USE_LLAMAFILE  // 条件编译
     // broadcast factors
     const int64_t r2 = ne12 / ne02;
     const int64_t r3 = ne13 / ne03;
@@ -1295,10 +1295,10 @@ void ggml_compute_forward_mul_mat(
                                      src1->type,
                                      dst->type))
                     goto UseGgmlGemm1;
-        return;
+        return;  // 返回
     }
 UseGgmlGemm1:;
-#endif
+#endif  // 条件编译结束
 
     if (src1->type != vec_dot_type) {
         char * wdata = params->wdata;
@@ -1311,7 +1311,7 @@ UseGgmlGemm1:;
         assert(params->wsize >= ne13*nbw3);
         GGML_ASSERT(src1->type == GGML_TYPE_F32);
 
-    #if 0
+    #if 0  // 条件编译
         for (int64_t i13 = 0; i13 < ne13; ++i13) {
             for (int64_t i12 = 0; i12 < ne12; ++i12) {
                 for (int64_t i11 = ith; i11 < ne11; i11 += nth) {
@@ -1321,7 +1321,7 @@ UseGgmlGemm1:;
                 }
             }
         }
-    #else
+    #else  // 否则
         for (int64_t i13 = 0; i13 < ne13; ++i13) {
             for (int64_t i12 = 0; i12 < ne12; ++i12) {
                 for (int64_t i11 = 0; i11 < ne11; ++i11) {
@@ -1334,7 +1334,7 @@ UseGgmlGemm1:;
                 }
             }
         }
-    #endif
+    #endif  // 条件编译结束
     }
 
     if (ith == 0) {
@@ -1344,7 +1344,7 @@ UseGgmlGemm1:;
 
     ggml_barrier(params->threadpool);
 
-#if GGML_USE_LLAMAFILE
+#if GGML_USE_LLAMAFILE  // 条件编译
     if (src1->type != vec_dot_type) {
         const void* wdata = (src1->type == vec_dot_type) ? src1->data : params->wdata;
         const size_t row_size = ggml_row_size(vec_dot_type, ne10);
@@ -1363,10 +1363,10 @@ UseGgmlGemm1:;
                                      vec_dot_type,
                                      dst->type))
                     goto UseGgmlGemm2;
-        return;
+        return;  // 返回
     }
 UseGgmlGemm2:;
-#endif
+#endif  // 条件编译结束
 
     // This is the size of the first dimension of the result, so we can iterate that way. (see the ASSERT above, these are the same numbers)
     const int64_t nr0 = ne0;
@@ -1434,9 +1434,9 @@ UseGgmlGemm2:;
 
 // ggml_compute_forward_mul_mat_id
 
-#define MMID_MATRIX_ROW(row_id, i1) matrix_rows[(row_id)*ids->ne[0]*ids->ne[1] + (i1)]
+#define MMID_MATRIX_ROW(row_id, i1) matrix_rows[(row_id)*ids->ne[0]*ids->ne[1] + (i1)]  // 宏定义 MMID_MATRIX_ROW
 
-struct mmid_row_mapping {
+struct mmid_row_mapping {  // 结构体定义
     int32_t i1;
     int32_t i2;
 };
@@ -1509,12 +1509,12 @@ static void * incr_ptr_aligned(void ** p, size_t size, size_t align) {
     void * ptr = *p;
     ptr = (void *) GGML_PAD((uintptr_t) ptr, align);
     *p = (void *) ((char *) ptr + size);
-    return ptr;
+    return ptr;  // 返回
 }
 
 static void ggml_compute_forward_mul_mat_id(
         const struct ggml_compute_params * params,
-              struct ggml_tensor * dst) {
+              struct ggml_tensor * dst) {  // 结构体定义
 
     const struct ggml_tensor * src0 = dst->src[0];
     const struct ggml_tensor * src1 = dst->src[1];
@@ -1574,7 +1574,7 @@ static void ggml_compute_forward_mul_mat_id(
         assert(params->wsize >= ne13*nbw3);
         GGML_ASSERT(src1->type == GGML_TYPE_F32);
 
-#if 0
+#if 0  // 条件编译
         for (int64_t i13 = 0; i13 < ne13; ++i13) {
             for (int64_t i12 = ith; i12 < ne12; i12 += nth) {
                 for (int64_t i11 = 0; i11 < ne11; ++i11) {
@@ -1584,7 +1584,7 @@ static void ggml_compute_forward_mul_mat_id(
                 }
             }
         }
-#else
+#else  // 否则
         for (int64_t i13 = 0; i13 < ne13; ++i13) {
             for (int64_t i12 = 0; i12 < ne12; ++i12) {
                 for (int64_t i11 = 0; i11 < ne11; ++i11) {
@@ -1597,7 +1597,7 @@ static void ggml_compute_forward_mul_mat_id(
                 }
             }
         }
-#endif
+#endif  // 条件编译结束
     }
 
     if (ith == 0) {
@@ -1693,12 +1693,12 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
     GGML_ASSERT(params);
 
     if (tensor->op == GGML_OP_NONE || ggml_is_empty(tensor)) {
-        return;
+        return;  // 返回
     }
 
     // extra_buffer op?
     if (ggml_cpu_extra_compute_forward(params, tensor)) {
-        return;
+        return;  // 返回
     }
 
     switch (tensor->op) {
@@ -2105,10 +2105,10 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
 }
 
 // Android's libc implementation "bionic" does not support setting affinity
-#if defined(__gnu_linux__)
+#if defined(__gnu_linux__)  // 条件编译
 static void set_numa_thread_affinity(int thread_n) {
     if (!ggml_is_numa()) {
-        return;
+        return;  // 返回
     }
 
     int node_num;
@@ -2130,9 +2130,9 @@ static void set_numa_thread_affinity(int thread_n) {
             if (rv) {
                 fprintf(stderr, "warning: pthread_setaffinity_np() failed: %s\n",strerror(rv));
             }
-            return;
+            return;  // 返回
         default:
-            return;
+            return;  // 返回
     }
 
     struct ggml_numa_node * node = &g_state.numa.nodes[node_num];
@@ -2153,7 +2153,7 @@ static void set_numa_thread_affinity(int thread_n) {
 
 static void clear_numa_thread_affinity(void) {
     if (!ggml_is_numa()) {
-        return;
+        return;  // 返回
     }
 
     size_t setsize = CPU_ALLOC_SIZE(g_state.numa.total_cpus);
@@ -2171,12 +2171,12 @@ static void clear_numa_thread_affinity(void) {
 
     CPU_FREE(cpus);
 }
-#else
+#else  // 否则
 // TODO: Windows etc.
 // (the linux implementation may also work on BSD, someone should test)
 static void set_numa_thread_affinity(int thread_n) { UNUSED(thread_n);  }
 static void clear_numa_thread_affinity(void) {}
-#endif
+#endif  // 条件编译结束
 
 static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
     int n_tasks = 0;
@@ -2184,7 +2184,7 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
     if (ggml_is_empty(node)) {
         // no need to multi-thread a no-op
         n_tasks = 1;
-        return n_tasks;
+        return n_tasks;  // 返回
     }
 
     switch (node->op) {
@@ -2441,13 +2441,13 @@ static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
 
     assert(n_tasks > 0);
 
-    return n_tasks;
+    return n_tasks;  // 返回
 }
 
-static thread_ret_t ggml_graph_compute_secondary_thread(void* data);
+static thread_ret_t ggml_graph_compute_secondary_thread(void* data);  // ggml_graph_compute_secondary_thread
 
-#if defined(_WIN32)
-#include "windows.h"
+#if defined(_WIN32)  // 条件编译
+#include "windows.h"  // 引入 windows.h 头文件
 
 // TODO: support > 64 CPUs
 static bool ggml_thread_apply_affinity(bool * mask) {
@@ -2481,7 +2481,7 @@ static bool ggml_thread_apply_affinity(bool * mask) {
 
     m = SetThreadAffinityMask(h, m);
 
-    return m != 0;
+    return m != 0;  // 返回
 }
 
 static bool ggml_thread_apply_priority(int32_t prio) {
@@ -2501,7 +2501,7 @@ static bool ggml_thread_apply_priority(int32_t prio) {
         // Newer Windows 11 versions aggressively park (offline) CPU cores and often place
         // all our threads onto the first 4 cores which results in terrible performance with
         // n_threads > 4
-        #if _WIN32_WINNT >= 0x0602
+        #if _WIN32_WINNT >= 0x0602  // 条件编译
         THREAD_POWER_THROTTLING_STATE t;
         ZeroMemory(&t, sizeof(t));
         t.Version     = THREAD_POWER_THROTTLING_CURRENT_VERSION;
@@ -2510,32 +2510,32 @@ static bool ggml_thread_apply_priority(int32_t prio) {
 
         if (!SetThreadInformation(GetCurrentThread(), ThreadPowerThrottling, &t, sizeof(t))) {
             GGML_LOG_DEBUG("failed to disable thread power throttling %d : (%d)\n", prio, (int) GetLastError());
-            return false;
+            return false;  // 返回
         }
-        #endif
+        #endif  // 条件编译结束
     }
 
     if (prio == GGML_SCHED_PRIO_NORMAL) {
         // Keep inherited policy/priority
-        return true;
+        return true;  // 返回
     }
 
     if (!SetThreadPriority(GetCurrentThread(), p)) {
         fprintf(stderr, "warn: failed to set thread priority %d : (%d)\n", prio, (int) GetLastError());
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
-#elif defined(__APPLE__)
-#include <sys/types.h>
-#include <sys/resource.h>
+#elif defined(__APPLE__)  // 否则如果
+#include <sys/types.h>  // 引入 sys/types.h 头文件
+#include <sys/resource.h>  // 引入 sys/resource.h 头文件
 
 static bool ggml_thread_apply_affinity(const bool * mask) {
     // Not supported on Apple platforms
     UNUSED(mask);
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_thread_apply_priority(int32_t prio) {
@@ -2552,19 +2552,19 @@ static bool ggml_thread_apply_priority(int32_t prio) {
 
     if (prio == GGML_SCHED_PRIO_NORMAL) {
         // Keep inherited policy/priority
-        return true;
+        return true;  // 返回
     }
 
     int32_t err = pthread_setschedparam(pthread_self(), policy, &p);
     if (err != 0) {
         fprintf(stderr, "warn: failed to set thread priority %d : %s (%d)\n", prio, strerror(err), err);
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
-#elif defined(__gnu_linux__)
+#elif defined(__gnu_linux__)  // 否则如果
 // TODO: this may not work on BSD, to be verified
 
 static bool ggml_thread_apply_affinity(const bool * mask) {
@@ -2580,20 +2580,20 @@ static bool ggml_thread_apply_affinity(const bool * mask) {
         }
     }
 
-#ifdef __ANDROID__
+#ifdef __ANDROID__  // 如果定义了 __ANDROID__ 则编译
     err = sched_setaffinity(0, sizeof(cpuset), &cpuset);
     if (err < 0) {
         err = errno;
     }
-#else
+#else  // 否则
     err = pthread_setaffinity_np(pthread_self(), sizeof(cpuset), &cpuset);
-#endif
+#endif  // 条件编译结束
     if (err != 0) {
         fprintf(stderr, "warn: failed to set affinity mask 0x%llx : %s (%d)\n", (unsigned long long)mask, strerror(err), err);
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_thread_apply_priority(int32_t prio) {
@@ -2609,43 +2609,43 @@ static bool ggml_thread_apply_priority(int32_t prio) {
 
     if (prio == GGML_SCHED_PRIO_NORMAL) {
         // Keep inherited policy/priority
-        return true;
+        return true;  // 返回
     }
 
     int32_t err = pthread_setschedparam(pthread_self(), policy, &p);
     if (err != 0) {
         fprintf(stderr, "warn: failed to set thread priority %d : %s (%d)\n", prio, strerror(err), err);
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
-#else // unsupported platforms
+#else // unsupported platforms  // 否则
 
 static bool ggml_thread_apply_affinity(const bool * mask) {
     UNUSED(mask);
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_thread_apply_priority(int32_t prio) {
     UNUSED(prio);
-    return true;
+    return true;  // 返回
 }
 
-#endif
+#endif  // 条件编译结束
 
 static bool ggml_thread_cpumask_is_valid(const bool * mask) {
     for (int i = 0; i < GGML_MAX_N_THREADS; i++) {
         if (mask[i]) { return true; }
     }
-    return false;
+    return false;  // 返回
 }
 
 static void ggml_thread_cpumask_next(const bool * global_mask, bool * local_mask, bool strict, int32_t* iter) {
     if (!strict) {
         memcpy(local_mask, global_mask, GGML_MAX_N_THREADS);
-        return;
+        return;  // 返回
     } else {
         memset(local_mask, 0, GGML_MAX_N_THREADS);
         int32_t base_idx = *iter;
@@ -2658,7 +2658,7 @@ static void ggml_thread_cpumask_next(const bool * global_mask, bool * local_mask
             if (global_mask[idx]) {
                 local_mask[idx] = 1;
                 *iter = idx + 1;
-                return;
+                return;  // 返回
             }
         }
     }
@@ -2669,7 +2669,7 @@ void ggml_threadpool_free(struct ggml_threadpool* threadpool) {
 
     const int n_threads = threadpool->n_threads;
 
-#ifndef GGML_USE_OPENMP
+#ifndef GGML_USE_OPENMP  // 如果未定义 GGML_USE_OPENMP 则编译
     struct ggml_compute_state* workers = threadpool->workers;
 
     ggml_mutex_lock(&threadpool->mutex);
@@ -2688,14 +2688,14 @@ void ggml_threadpool_free(struct ggml_threadpool* threadpool) {
 
     ggml_mutex_destroy(&threadpool->mutex);
     ggml_cond_destroy(&threadpool->cond);
-#endif // GGML_USE_OPENMP
+#endif // GGML_USE_OPENMP  // 条件编译结束
 
     const size_t workers_size = sizeof(struct ggml_compute_state) * n_threads;
     ggml_aligned_free(threadpool->workers, workers_size);
     ggml_aligned_free(threadpool, sizeof(struct ggml_threadpool));
 }
 
-#ifndef GGML_USE_OPENMP
+#ifndef GGML_USE_OPENMP  // 如果未定义 GGML_USE_OPENMP 则编译
 // pause/resume must be called under mutex
 static void ggml_threadpool_pause_locked(struct ggml_threadpool * threadpool) {
     GGML_PRINT_DEBUG("Pausing threadpool\n");
@@ -2708,36 +2708,36 @@ static void ggml_threadpool_resume_locked(struct ggml_threadpool * threadpool) {
     threadpool->pause = false;
     ggml_cond_broadcast(&threadpool->cond);
 }
-#endif
+#endif  // 条件编译结束
 
 void ggml_threadpool_pause(struct ggml_threadpool * threadpool) {
-#ifndef GGML_USE_OPENMP
+#ifndef GGML_USE_OPENMP  // 如果未定义 GGML_USE_OPENMP 则编译
     ggml_mutex_lock(&threadpool->mutex);
     if (!threadpool->pause) {
        ggml_threadpool_pause_locked(threadpool);
     }
     ggml_mutex_unlock(&threadpool->mutex);
-#else
+#else  // 否则
     UNUSED(threadpool);
-#endif
+#endif  // 条件编译结束
 }
 
 void ggml_threadpool_resume(struct ggml_threadpool * threadpool) {
-#ifndef GGML_USE_OPENMP
+#ifndef GGML_USE_OPENMP  // 如果未定义 GGML_USE_OPENMP 则编译
     ggml_mutex_lock(&threadpool->mutex);
     if (threadpool->pause) {
        ggml_threadpool_resume_locked(threadpool);
     }
     ggml_mutex_unlock(&threadpool->mutex);
-#else
+#else  // 否则
     UNUSED(threadpool);
-#endif
+#endif  // 条件编译结束
 }
 
 struct ggml_cplan ggml_graph_plan(
           const struct ggml_cgraph * cgraph,
                                int   n_threads,
-            struct ggml_threadpool * threadpool) {
+            struct ggml_threadpool * threadpool) {  // 结构体定义
 
     if (threadpool == NULL) {
         //GGML_PRINT_DEBUG("Threadpool is not specified. Will create a disposable threadpool : n_threads %d\n", n_threads);
@@ -2746,10 +2746,10 @@ struct ggml_cplan ggml_graph_plan(
         n_threads = threadpool ? threadpool->n_threads : GGML_DEFAULT_N_THREADS;
     }
 
-#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)  // 条件编译
     // Emscripten without pthreads support can only use a single thread
     n_threads = 1;
-#endif
+#endif  // 条件编译结束
 
     size_t work_size = 0;
 
@@ -2956,7 +2956,7 @@ struct ggml_cplan ggml_graph_plan(
     cplan.work_size  = work_size;
     cplan.work_data  = NULL;
 
-    return cplan;
+    return cplan;  // 返回
 }
 
 static thread_ret_t ggml_graph_compute_thread(void * data) {
@@ -2968,7 +2968,7 @@ static thread_ret_t ggml_graph_compute_thread(void * data) {
 
     set_numa_thread_affinity(state->ith);
 
-    struct ggml_compute_params params = {
+    struct ggml_compute_params params = {  // 结构体定义
         /*.ith        =*/ state->ith,
         /*.nth        =*/ atomic_load_explicit(&tp->n_graph, memory_order_relaxed) & GGML_THREADPOOL_N_THREADS_MASK,
         /*.wsize      =*/ cplan->work_size,
@@ -2977,11 +2977,11 @@ static thread_ret_t ggml_graph_compute_thread(void * data) {
         /*.use_ref    =*/ cplan->use_ref,
     };
 
-#ifdef GGML_USE_OPENMP
+#ifdef GGML_USE_OPENMP  // 如果定义了 GGML_USE_OPENMP 则编译
     GGML_PRINT_DEBUG("thread #%d compute-start cplan %p\n", state->ith, (const void *)cplan);
-#else
+#else  // 否则
     GGML_PRINT_DEBUG("thread #%d compute-start cplan %p last-graph %d\n", state->ith, (const void *)cplan, state->last_graph);
-#endif
+#endif  // 条件编译结束
 
     for (int node_n = 0; node_n < cgraph->n_nodes && atomic_load_explicit(&tp->abort, memory_order_relaxed) != node_n; node_n++) {
         struct ggml_tensor * node = cgraph->nodes[node_n];
@@ -3008,18 +3008,18 @@ static thread_ret_t ggml_graph_compute_thread(void * data) {
         }
     }
 
-#ifdef GGML_USE_OPENMP
+#ifdef GGML_USE_OPENMP  // 如果定义了 GGML_USE_OPENMP 则编译
     GGML_PRINT_DEBUG("thread #%d compute-done cplan %p\n", state->ith, (const void *)cplan);
-#else
+#else  // 否则
     GGML_PRINT_DEBUG("thread #%d compute-done cplan %p last-graph %d\n", state->ith, (const void *)cplan, state->last_graph);
-#endif
+#endif  // 条件编译结束
 
     ggml_barrier(state->threadpool);
 
-    return 0;
+    return 0;  // 返回
 }
 
-#ifndef GGML_USE_OPENMP
+#ifndef GGML_USE_OPENMP  // 如果未定义 GGML_USE_OPENMP 则编译
 
 // check if thread is ready to proceed (exit from polling or sleeping)
 // returns true if loops should exit, sets state->pending to indicate new work
@@ -3034,20 +3034,20 @@ static inline bool ggml_graph_compute_thread_ready(struct ggml_compute_state * s
     if (n_graph != state->last_graph) {
         state->pending    = (state->ith < n_threads);
         state->last_graph = n_graph;
-        return true;
+        return true;  // 返回
     }
 
-    return false;
+    return false;  // 返回
 }
 
 // sync thread state after polling
 static inline void ggml_graph_compute_thread_sync(struct ggml_compute_state * state) {
     // TSAN doesn't support standalone fence yet, we use a dummy read-modify-write instead
-    #ifdef GGML_TSAN_ENABLED
+    #ifdef GGML_TSAN_ENABLED  // 如果定义了 GGML_TSAN_ENABLED 则编译
     atomic_fetch_add_explicit(&state->threadpool->n_graph, 0, memory_order_seq_cst);
-    #else
+    #else  // 否则
     atomic_thread_fence(memory_order_seq_cst);
-    #endif
+    #endif  // 条件编译结束
     UNUSED(state);
 }
 
@@ -3063,7 +3063,7 @@ static inline bool ggml_graph_compute_poll_for_work(struct ggml_compute_state * 
         ggml_thread_cpu_relax();
     }
 
-    return state->pending;
+    return state->pending;  // 返回
 }
 
 static inline bool ggml_graph_compute_check_for_work(struct ggml_compute_state * state) {
@@ -3071,7 +3071,7 @@ static inline bool ggml_graph_compute_check_for_work(struct ggml_compute_state *
 
     if (ggml_graph_compute_poll_for_work(state)) {
         ggml_graph_compute_thread_sync(state);
-        return state->pending;
+        return state->pending;  // 返回
     }
 
     ggml_mutex_lock_shared(&threadpool->mutex);
@@ -3082,7 +3082,7 @@ static inline bool ggml_graph_compute_check_for_work(struct ggml_compute_state *
     }
     ggml_mutex_unlock_shared(&threadpool->mutex);
 
-    return state->pending;
+    return state->pending;  // 返回
 }
 
 static thread_ret_t ggml_graph_compute_secondary_thread(void* data) {
@@ -3123,7 +3123,7 @@ static thread_ret_t ggml_graph_compute_secondary_thread(void* data) {
 }
 
 // Start processing new graph
-static void ggml_graph_compute_kickoff(struct ggml_threadpool * threadpool, int n_threads)
+static void ggml_graph_compute_kickoff(struct ggml_threadpool * threadpool, int n_threads)  // ggml_graph_compute_kickoff
 {
     // Always take the mutex here because the worker threads are doing hybrid poll/wait
 
@@ -3155,12 +3155,12 @@ static void ggml_graph_compute_kickoff(struct ggml_threadpool * threadpool, int 
     ggml_mutex_unlock(&threadpool->mutex);
 }
 
-#endif // GGML_USE_OPENMP
+#endif // GGML_USE_OPENMP  // 条件编译结束
 
 static struct ggml_threadpool * ggml_threadpool_new_impl(
     struct ggml_threadpool_params * tpp,
                struct ggml_cgraph * cgraph,
-                struct ggml_cplan * cplan) {
+                struct ggml_cplan * cplan) {  // 结构体定义
 
     struct ggml_threadpool * threadpool =
         ggml_aligned_malloc(sizeof(struct ggml_threadpool));
@@ -3193,14 +3193,14 @@ static struct ggml_threadpool * ggml_threadpool_new_impl(
 
     threadpool->workers = workers;
 
-#ifdef GGML_USE_OPENMP
+#ifdef GGML_USE_OPENMP  // 如果定义了 GGML_USE_OPENMP 则编译
     int32_t cpumask_iter = 0;
 
     // Compute CPU masks for each thread
     for (int j = 0; j < tpp->n_threads; j++) {
         ggml_thread_cpumask_next(tpp->cpumask, workers[j].cpumask, tpp->strict_cpu, &cpumask_iter);
     }
-#else // GGML_USE_OPENMP
+#else // GGML_USE_OPENMP  // 否则
     ggml_mutex_init(&threadpool->mutex);
     ggml_cond_init(&threadpool->cond);
 
@@ -3225,16 +3225,16 @@ static struct ggml_threadpool * ggml_threadpool_new_impl(
             ggml_thread_apply_affinity(threadpool->workers[0].cpumask);
         }
     }
-#endif // GGML_USE_OPENMP
+#endif // GGML_USE_OPENMP  // 条件编译结束
 
-    return threadpool;
+    return threadpool;  // 返回
 }
 
-struct ggml_threadpool * ggml_threadpool_new(struct ggml_threadpool_params * tpp) {
-    return ggml_threadpool_new_impl(tpp, NULL, NULL);
+struct ggml_threadpool * ggml_threadpool_new(struct ggml_threadpool_params * tpp) {  // 结构体定义
+    return ggml_threadpool_new_impl(tpp, NULL, NULL);  // ggml_threadpool_new_impl
 }
 
-enum ggml_status ggml_graph_compute(struct ggml_cgraph * cgraph, struct ggml_cplan * cplan) {
+enum ggml_status ggml_graph_compute(struct ggml_cgraph * cgraph, struct ggml_cplan * cplan) {  // 枚举定义
     ggml_cpu_init();
 
     GGML_ASSERT(cplan);
@@ -3262,7 +3262,7 @@ enum ggml_status ggml_graph_compute(struct ggml_cgraph * cgraph, struct ggml_cpl
         threadpool->ec               = GGML_STATUS_SUCCESS;
     }
 
-#ifdef GGML_USE_OPENMP
+#ifdef GGML_USE_OPENMP  // 如果定义了 GGML_USE_OPENMP 则编译
     if (n_threads > 1) {
         #pragma omp parallel num_threads(n_threads)
         {
@@ -3286,7 +3286,7 @@ enum ggml_status ggml_graph_compute(struct ggml_cgraph * cgraph, struct ggml_cpl
         atomic_store_explicit(&threadpool->n_graph, 1, memory_order_relaxed);
         ggml_graph_compute_thread(&threadpool->workers[0]);
     }
-#else
+#else  // 否则
     if (n_threads > threadpool->n_threads) {
         GGML_LOG_WARN("cplan requested more threads (%d) than available (%d)\n", n_threads, threadpool->n_threads);
         n_threads = threadpool->n_threads;
@@ -3297,7 +3297,7 @@ enum ggml_status ggml_graph_compute(struct ggml_cgraph * cgraph, struct ggml_cpl
 
     // This is a work thread too
     ggml_graph_compute_thread(&threadpool->workers[0]);
-#endif
+#endif  // 条件编译结束
 
     // don't leave affinity set on the main thread
     clear_numa_thread_affinity();
@@ -3308,15 +3308,15 @@ enum ggml_status ggml_graph_compute(struct ggml_cgraph * cgraph, struct ggml_cpl
         ggml_threadpool_free(threadpool);
     }
 
-    return ret;
+    return ret;  // 返回
 }
 
-enum ggml_status ggml_graph_compute_with_ctx(struct ggml_context * ctx, struct ggml_cgraph * cgraph, int n_threads) {
+enum ggml_status ggml_graph_compute_with_ctx(struct ggml_context * ctx, struct ggml_cgraph * cgraph, int n_threads) {  // 枚举定义
     struct ggml_cplan cplan = ggml_graph_plan(cgraph, n_threads, NULL);
 
     cplan.work_data = (uint8_t *)ggml_new_buffer(ctx, cplan.work_size);
 
-    return ggml_graph_compute(cgraph, &cplan);
+    return ggml_graph_compute(cgraph, &cplan);  // ggml_graph_compute
 }
 
 void ggml_cpu_fp32_to_fp32(const float * x, float * y, int64_t n) {
@@ -3325,14 +3325,14 @@ void ggml_cpu_fp32_to_fp32(const float * x, float * y, int64_t n) {
 
 void ggml_cpu_fp32_to_fp16(const float * x, ggml_fp16_t * y, int64_t n) {
     int64_t i = 0;
-#if defined(__F16C__)
-#if defined(__AVX512F__)
+#if defined(__F16C__)  // 条件编译
+#if defined(__AVX512F__)  // 条件编译
     for (; i + 15 < n; i += 16) {
         __m512 x_vec = _mm512_loadu_ps(x + i);
         __m256i y_vec = _mm512_cvtps_ph(x_vec, _MM_FROUND_TO_NEAREST_INT);
         _mm256_storeu_si256((__m256i *)(y + i), y_vec);
     }
-#endif
+#endif  // 条件编译结束
     for (; i + 7 < n; i += 8) {
         __m256 x_vec = _mm256_loadu_ps(x + i);
         __m128i y_vec = _mm256_cvtps_ph(x_vec, _MM_FROUND_TO_NEAREST_INT);
@@ -3343,14 +3343,14 @@ void ggml_cpu_fp32_to_fp16(const float * x, ggml_fp16_t * y, int64_t n) {
         __m128i y_vec = _mm_cvtps_ph(x_vec, _MM_FROUND_TO_NEAREST_INT);
         _mm_storel_epi64((__m128i *)(y + i), y_vec);
     }
-#elif defined(__riscv_zvfh)
+#elif defined(__riscv_zvfh)  // 否则如果
     for (int vl; i < n; i += vl) {
         vl = __riscv_vsetvl_e32m2(n - i);
         vfloat32m2_t vx = __riscv_vle32_v_f32m2(&x[i], vl);
         vfloat16m1_t vy = __riscv_vfncvt_f_f_w_f16m1(vx, vl);
         __riscv_vse16_v_f16m1((_Float16 *)&y[i], vy, vl);
     }
-#endif
+#endif  // 条件编译结束
     for (; i < n; ++i) {
         y[i] = GGML_CPU_FP32_TO_FP16(x[i]);
     }
@@ -3358,14 +3358,14 @@ void ggml_cpu_fp32_to_fp16(const float * x, ggml_fp16_t * y, int64_t n) {
 
 void ggml_cpu_fp16_to_fp32(const ggml_fp16_t * x, float * y, int64_t n) {
     int64_t i = 0;
-#if defined(__F16C__)
-#if defined(__AVX512F__)
+#if defined(__F16C__)  // 条件编译
+#if defined(__AVX512F__)  // 条件编译
     for (; i + 15 < n; i += 16) {
         __m256i x_vec = _mm256_loadu_si256((const __m256i *)(x + i));
         __m512 y_vec = _mm512_cvtph_ps(x_vec);
         _mm512_storeu_ps(y + i, y_vec);
     }
-#endif
+#endif  // 条件编译结束
     for (; i + 7 < n; i += 8) {
         __m128i x_vec = _mm_loadu_si128((const __m128i *)(x + i));
         __m256 y_vec = _mm256_cvtph_ps(x_vec);
@@ -3377,7 +3377,7 @@ void ggml_cpu_fp16_to_fp32(const ggml_fp16_t * x, float * y, int64_t n) {
         _mm_storeu_ps(y + i, y_vec);
     }
 
-#elif defined(__riscv_v_intrinsic) && defined(__riscv_zvfhmin)
+#elif defined(__riscv_v_intrinsic) && defined(__riscv_zvfhmin)  // 否则如果
     // calculate step size
     const int epr = __riscv_vsetvlmax_e16m2();
     const int step = epr * 2;
@@ -3403,7 +3403,7 @@ void ggml_cpu_fp16_to_fp32(const ggml_fp16_t * x, float * y, int64_t n) {
         __riscv_vse32_v_f32m4(y + i, ay0, vl);
     }
 
-#endif
+#endif  // 条件编译结束
 
     for (; i < n; ++i) {
         y[i] = GGML_CPU_FP16_TO_FP32(x[i]);
@@ -3426,8 +3426,8 @@ void ggml_cpu_fp32_to_i32(const float * x, int32_t * y, int64_t n) {
 
 void ggml_cpu_bf16_to_fp32(const ggml_bf16_t * x, float * y, int64_t n) {
     int64_t i = 0;
-#if defined(__AVX2__)
-#if defined(__AVX512F__)
+#if defined(__AVX2__)  // 条件编译
+#if defined(__AVX512F__)  // 条件编译
     for (; i + 15 < n; i += 16) {
         _mm512_storeu_ps(y + i,
                         _mm512_castsi512_ps(
@@ -3437,7 +3437,7 @@ void ggml_cpu_bf16_to_fp32(const ggml_bf16_t * x, float * y, int64_t n) {
                                         (const __m256i *)(x + i))),
                                 16)));
     }
-#endif
+#endif  // 条件编译结束
     for (; i + 7 < n; i += 8) {
         _mm256_storeu_ps(y + i,
                         _mm256_castsi256_ps(
@@ -3447,7 +3447,7 @@ void ggml_cpu_bf16_to_fp32(const ggml_bf16_t * x, float * y, int64_t n) {
                                         (const __m128i *)(x + i))),
                                 16)));
     }
-#elif defined(__riscv_v_intrinsic) && defined(__riscv_zvfbfmin)
+#elif defined(__riscv_v_intrinsic) && defined(__riscv_zvfbfmin)  // 否则如果
     // calculate step size
     const int epr = __riscv_vsetvlmax_e16m2();
     const int step = epr * 2;
@@ -3472,232 +3472,232 @@ void ggml_cpu_bf16_to_fp32(const ggml_bf16_t * x, float * y, int64_t n) {
         vfloat32m4_t ay0 = __riscv_vfwcvtbf16_f_f_v_f32m4(ax0, vl);
         __riscv_vse32_v_f32m4(y + i, ay0, vl);
     }
-#endif
+#endif  // 条件编译结束
     for (; i < n; i++) {
         y[i] = GGML_BF16_TO_FP32(x[i]);
     }
 }
 
 int ggml_cpu_has_avx(void) {
-#if defined(__AVX__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__AVX__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_avx_vnni(void) {
-#if defined(__AVXVNNI__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__AVXVNNI__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_avx2(void) {
-#if defined(__AVX2__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__AVX2__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_avx512(void) {
-#if defined(__AVX512F__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__AVX512F__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_avx512_vbmi(void) {
-#if defined(__AVX512VBMI__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__AVX512VBMI__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_avx512_vnni(void) {
-#if defined(__AVX512VNNI__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__AVX512VNNI__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_avx512_bf16(void) {
-#if defined(__AVX512BF16__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__AVX512BF16__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_amx_int8(void) {
-#if defined(__AMX_INT8__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__AMX_INT8__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_bmi2(void) {
-#if defined(__BMI2__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__BMI2__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_fma(void) {
-#if defined(__FMA__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__FMA__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_arm_fma(void) {
-#if defined(__ARM_FEATURE_FMA)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__ARM_FEATURE_FMA)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_riscv_v(void) {
-#if defined(__riscv_v_intrinsic)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__riscv_v_intrinsic)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_get_rvv_vlen(void) {
-#if defined(__riscv) && defined(__riscv_v_intrinsic)
-    return ggml_riscv_arch_features.rvv_vlen;
-#else
-    return 0;
-#endif
+#if defined(__riscv) && defined(__riscv_v_intrinsic)  // 条件编译
+    return ggml_riscv_arch_features.rvv_vlen;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_f16c(void) {
-#if defined(__F16C__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__F16C__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_fp16_va(void) {
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_wasm_simd(void) {
-#if defined(__wasm_simd128__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__wasm_simd128__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_llamafile(void) {
-#if defined(GGML_USE_LLAMAFILE)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(GGML_USE_LLAMAFILE)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_sse3(void) {
-#if defined(__SSE3__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__SSE3__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_ssse3(void) {
-#if defined(__SSSE3__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__SSSE3__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_vsx(void) {
-#if defined(__POWER9_VECTOR__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__POWER9_VECTOR__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_vxe(void) {
-#if defined(__VXE__) || defined(__VXE2__)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__VXE__) || defined(__VXE2__)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_neon(void) {
-#if defined(__ARM_ARCH) && defined(__ARM_NEON)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__ARM_ARCH) && defined(__ARM_NEON)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_dotprod(void) {
-#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_DOTPROD)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_DOTPROD)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_sve(void) {
-#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_SVE)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_SVE)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_matmul_int8(void) {
-#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_MATMUL_INT8)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_MATMUL_INT8)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_get_sve_cnt(void) {
-#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_SVE)
-    return ggml_arm_arch_features.sve_cnt;
-#else
-    return 0;
-#endif
+#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_SVE)  // 条件编译
+    return ggml_arm_arch_features.sve_cnt;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 int ggml_cpu_has_sme(void) {
-#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_SME)
-    return 1;
-#else
-    return 0;
-#endif
+#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_SME)  // 条件编译
+    return 1;  // 返回
+#else  // 否则
+    return 0;  // 返回
+#endif  // 条件编译结束
 }
 
 void ggml_cpu_init(void) {
     // needed to initialize ggml_time
     {
-        struct ggml_init_params params = { 0, NULL, false };
+        struct ggml_init_params params = { 0, NULL, false };  // 结构体定义
         struct ggml_context * ctx = ggml_init(params);
         ggml_free(ctx);
     }
@@ -3731,7 +3731,7 @@ void ggml_cpu_init(void) {
 
             GGML_PRINT_DEBUG("%s: GELU, Quick GELU, SILU and EXP tables initialized in %f ms\n", __func__, (t_end - t_start)/1000.0);
 
-#ifdef GGML_USE_OPENMP
+#ifdef GGML_USE_OPENMP  // 如果定义了 GGML_USE_OPENMP 则编译
             //if (!getenv("OMP_WAIT_POLICY")) {
             //    // set the wait policy to active, so that OpenMP threads don't sleep
             //    setenv("OMP_WAIT_POLICY", "active", 0)
@@ -3740,22 +3740,22 @@ void ggml_cpu_init(void) {
             if (!getenv("KMP_BLOCKTIME")) {
                 // set the time to wait before sleeping a thread
                 // this is less aggressive than setting the wait policy to active, but should achieve similar results in most cases
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
                 _putenv_s("KMP_BLOCKTIME", "200"); // 200ms
-#else
+#else  // 否则
                 setenv("KMP_BLOCKTIME", "200", 0); // 200ms
-#endif
+#endif  // 条件编译结束
             }
-#endif
+#endif  // 条件编译结束
         }
 
-#if defined(__ARM_ARCH)
+#if defined(__ARM_ARCH)  // 条件编译
         ggml_init_arm_arch_features();
-#endif
+#endif  // 条件编译结束
 
-#if defined(__riscv)
+#if defined(__riscv)  // 条件编译
         ggml_init_riscv_arch_features();
-#endif
+#endif  // 条件编译结束
 
         is_first_call = false;
     }

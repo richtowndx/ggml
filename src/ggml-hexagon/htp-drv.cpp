@@ -4,37 +4,37 @@
 #pragma clang diagnostic ignored "-Wmissing-prototypes"
 #pragma clang diagnostic ignored "-Wsign-compare"
 
-#include <filesystem>
-#include <set>
-#include <sstream>
-#include <string>
-#ifdef _WIN32
-#   define WIN32_LEAN_AND_MEAN
-#   ifndef NOMINMAX
-#       define NOMINMAX
+#include <filesystem>  // 引入 filesystem 头文件
+#include <set>  // 引入 set 头文件
+#include <sstream>  // 引入 sstream 头文件
+#include <string>  // 引入 string 头文件
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
+#   define WIN32_LEAN_AND_MEAN  // 宏定义 WIN32_LEAN_AND_MEAN
+#   ifndef NOMINMAX  // 如果未定义 NOMINMAX 则编译
+#       define NOMINMAX  // 宏定义 NOMINMAX
 #   endif
-#   include <windows.h>
-#   include <winevt.h>
-#else
-#    include <dlfcn.h>
-#    include <unistd.h>
-#endif
-#include "ggml-impl.h"
-#include "htp-drv.h"
-#include "libdl.h"
+#   include <windows.h>  // 引入 windows.h 头文件
+#   include <winevt.h>  // 引入 winevt.h 头文件
+#else  // 否则
+#    include <dlfcn.h>  // 引入 dlfcn.h 头文件
+#    include <unistd.h>  // 引入 unistd.h 头文件
+#endif  // 条件编译结束
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "htp-drv.h"  // 引入 htp-drv.h 头文件
+#include "libdl.h"  // 引入 libdl.h 头文件
 
-#include <domain.h>
+#include <domain.h>  // 引入 domain.h 头文件
 
 //
 // Driver API types
 //
 
-typedef void * (*rpcmem_alloc_pfn_t)(int heapid, uint32_t flags, int size);
-typedef void * (*rpcmem_alloc2_pfn_t)(int heapid, uint32_t flags, size_t size);
-typedef void   (*rpcmem_free_pfn_t)(void * po);
-typedef int    (*rpcmem_to_fd_pfn_t)(void * po);
+typedef void * (*rpcmem_alloc_pfn_t)(int heapid, uint32_t flags, int size);  // 类型定义
+typedef void * (*rpcmem_alloc2_pfn_t)(int heapid, uint32_t flags, size_t size);  // 类型定义
+typedef void   (*rpcmem_free_pfn_t)(void * po);  // 类型定义
+typedef int    (*rpcmem_to_fd_pfn_t)(void * po);  // 类型定义
 
-typedef AEEResult (*dspqueue_create_pfn_t)(int                 domain,
+typedef AEEResult (*dspqueue_create_pfn_t)(int                 domain,  // 类型定义
                                            uint32_t            flags,
                                            uint32_t            req_queue_size,
                                            uint32_t            resp_queue_size,
@@ -42,30 +42,30 @@ typedef AEEResult (*dspqueue_create_pfn_t)(int                 domain,
                                            dspqueue_callback_t error_callback,
                                            void *              callback_context,
                                            dspqueue_t *        queue);
-typedef AEEResult (*dspqueue_close_pfn_t)(dspqueue_t queue);
-typedef AEEResult (*dspqueue_export_pfn_t)(dspqueue_t queue, uint64_t *queue_id);
-typedef AEEResult (*dspqueue_write_pfn_t)(dspqueue_t queue, uint32_t flags,
+typedef AEEResult (*dspqueue_close_pfn_t)(dspqueue_t queue);  // 类型定义
+typedef AEEResult (*dspqueue_export_pfn_t)(dspqueue_t queue, uint64_t *queue_id);  // 类型定义
+typedef AEEResult (*dspqueue_write_pfn_t)(dspqueue_t queue, uint32_t flags,  // 类型定义
                                           uint32_t num_buffers,
                                           struct dspqueue_buffer *buffers,
                                           uint32_t message_length,
                                           const uint8_t *message,
                                           uint32_t timeout_us);
-typedef AEEResult (*dspqueue_read_pfn_t)(dspqueue_t queue, uint32_t *flags,
+typedef AEEResult (*dspqueue_read_pfn_t)(dspqueue_t queue, uint32_t *flags,  // 类型定义
                                          uint32_t max_buffers, uint32_t *num_buffers,
                                          struct dspqueue_buffer *buffers,
                                          uint32_t max_message_length,
                                          uint32_t *message_length, uint8_t *message,
                                          uint32_t timeout_us);
 
-typedef int (*fastrpc_mmap_pfn_t)(int domain, int fd, void *addr, int offset, size_t length, enum fastrpc_map_flags flags);
-typedef int (*fastrpc_munmap_pfn_t)(int domain, int fd, void *addr, size_t length);
+typedef int (*fastrpc_mmap_pfn_t)(int domain, int fd, void *addr, int offset, size_t length, enum fastrpc_map_flags flags);  // 类型定义
+typedef int (*fastrpc_munmap_pfn_t)(int domain, int fd, void *addr, size_t length);  // 类型定义
 
-typedef int (*remote_handle64_open_pfn_t)(const char* name, remote_handle64 *ph);
-typedef int (*remote_handle64_invoke_pfn_t)(remote_handle64 h, uint32_t dwScalars, remote_arg *pra);
-typedef int (*remote_handle64_close_pfn_t)(remote_handle h);
-typedef int (*remote_handle_control_pfn_t)(uint32_t req, void* data, uint32_t datalen);
-typedef int (*remote_handle64_control_pfn_t)(remote_handle64 h, uint32_t req, void* data, uint32_t datalen);
-typedef int (*remote_session_control_pfn_t)(uint32_t req, void *data, uint32_t datalen);
+typedef int (*remote_handle64_open_pfn_t)(const char* name, remote_handle64 *ph);  // 类型定义
+typedef int (*remote_handle64_invoke_pfn_t)(remote_handle64 h, uint32_t dwScalars, remote_arg *pra);  // 类型定义
+typedef int (*remote_handle64_close_pfn_t)(remote_handle h);  // 类型定义
+typedef int (*remote_handle_control_pfn_t)(uint32_t req, void* data, uint32_t datalen);  // 类型定义
+typedef int (*remote_handle64_control_pfn_t)(remote_handle64 h, uint32_t req, void* data, uint32_t datalen);  // 类型定义
+typedef int (*remote_session_control_pfn_t)(uint32_t req, void *data, uint32_t datalen);  // 类型定义
 
 //
 // Driver API pfns
@@ -97,32 +97,32 @@ remote_session_control_pfn_t  remote_session_control_pfn  = nullptr;
 //
 
 void * rpcmem_alloc(int heapid, uint32_t flags, int size) {
-    return rpcmem_alloc_pfn(heapid, flags, size);
+    return rpcmem_alloc_pfn(heapid, flags, size);  // rpcmem_alloc_pfn
 }
 
 void * rpcmem_alloc2(int heapid, uint32_t flags, size_t size) {
     if (rpcmem_alloc2_pfn) {
-        return rpcmem_alloc2_pfn(heapid, flags, size);
+        return rpcmem_alloc2_pfn(heapid, flags, size);  // rpcmem_alloc2_pfn
     } else {
         GGML_LOG_INFO("ggml-hex: rpcmem_alloc2 not found, falling back to rpcmem_alloc\n");
-        return rpcmem_alloc_pfn(heapid, flags, size);
+        return rpcmem_alloc_pfn(heapid, flags, size);  // rpcmem_alloc_pfn
     }
 }
 
 void rpcmem_free(void * po) {
-    return rpcmem_free_pfn(po);
+    return rpcmem_free_pfn(po);  // rpcmem_free_pfn
 }
 
 int rpcmem_to_fd(void * po) {
-    return rpcmem_to_fd_pfn(po);
+    return rpcmem_to_fd_pfn(po);  // rpcmem_to_fd_pfn
 }
 
 HTPDRV_API int fastrpc_mmap(int domain, int fd, void * addr, int offset, size_t length, enum fastrpc_map_flags flags) {
-    return fastrpc_mmap_pfn(domain, fd, addr, offset, length, flags);
+    return fastrpc_mmap_pfn(domain, fd, addr, offset, length, flags);  // fastrpc_mmap_pfn
 }
 
 HTPDRV_API int fastrpc_munmap(int domain, int fd, void * addr, size_t length) {
-    return fastrpc_munmap_pfn(domain, fd, addr, length);
+    return fastrpc_munmap_pfn(domain, fd, addr, length);  // fastrpc_munmap_pfn
 }
 
 AEEResult dspqueue_create(int                 domain,
@@ -133,16 +133,16 @@ AEEResult dspqueue_create(int                 domain,
                           dspqueue_callback_t error_callback,
                           void *              callback_context,
                           dspqueue_t *        queue) {
-    return dspqueue_create_pfn(domain, flags, req_queue_size, resp_queue_size, packet_callback, error_callback,
+    return dspqueue_create_pfn(domain, flags, req_queue_size, resp_queue_size, packet_callback, error_callback,  // 返回
                                callback_context, queue);
 }
 
 AEEResult dspqueue_close(dspqueue_t queue) {
-    return dspqueue_close_pfn(queue);
+    return dspqueue_close_pfn(queue);  // dspqueue_close_pfn
 }
 
 AEEResult dspqueue_export(dspqueue_t queue, uint64_t * queue_id) {
-    return dspqueue_export_pfn(queue, queue_id);
+    return dspqueue_export_pfn(queue, queue_id);  // dspqueue_export_pfn
 }
 
 AEEResult dspqueue_write(dspqueue_t               queue,
@@ -152,7 +152,7 @@ AEEResult dspqueue_write(dspqueue_t               queue,
                          uint32_t                 message_length,
                          const uint8_t *          message,
                          uint32_t                 timeout_us) {
-    return dspqueue_write_pfn(queue, flags, num_buffers, buffers, message_length, message, timeout_us);
+    return dspqueue_write_pfn(queue, flags, num_buffers, buffers, message_length, message, timeout_us);  // dspqueue_write_pfn
 }
 
 AEEResult dspqueue_read(dspqueue_t               queue,
@@ -164,40 +164,40 @@ AEEResult dspqueue_read(dspqueue_t               queue,
                         uint32_t *               message_length,
                         uint8_t *                message,
                         uint32_t                 timeout_us) {
-    return dspqueue_read_pfn(queue, flags, max_buffers, num_buffers, buffers, max_message_length, message_length,
+    return dspqueue_read_pfn(queue, flags, max_buffers, num_buffers, buffers, max_message_length, message_length,  // 返回
                              message, timeout_us);
 }
 
 HTPDRV_API int remote_handle64_open(const char * name, remote_handle64 * ph) {
-    return remote_handle64_open_pfn(name, ph);
+    return remote_handle64_open_pfn(name, ph);  // remote_handle64_open_pfn
 }
 
 HTPDRV_API int remote_handle64_invoke(remote_handle64 h, uint32_t dwScalars, remote_arg * pra) {
-    return remote_handle64_invoke_pfn(h, dwScalars, pra);
+    return remote_handle64_invoke_pfn(h, dwScalars, pra);  // remote_handle64_invoke_pfn
 }
 
 HTPDRV_API int remote_handle64_close(remote_handle64 h) {
-    return remote_handle64_close_pfn(h);
+    return remote_handle64_close_pfn(h);  // remote_handle64_close_pfn
 }
 
 HTPDRV_API int remote_handle_control(uint32_t req, void * data, uint32_t datalen) {
-    return remote_handle_control_pfn(req, data, datalen);
+    return remote_handle_control_pfn(req, data, datalen);  // remote_handle_control_pfn
 }
 
 HTPDRV_API int remote_handle64_control(remote_handle64 h, uint32_t req, void * data, uint32_t datalen) {
-    return remote_handle64_control_pfn(h, req, data, datalen);
+    return remote_handle64_control_pfn(h, req, data, datalen);  // remote_handle64_control_pfn
 }
 
 HTPDRV_API int remote_session_control(uint32_t req, void * data, uint32_t datalen) {
-    return remote_session_control_pfn(req, data, datalen);
+    return remote_session_control_pfn(req, data, datalen);  // remote_session_control_pfn
 }
 
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
 
 static std::string wstr_to_str(std::wstring_view wstr) {
     std::string result;
     if (wstr.empty()) {
-        return result;
+        return result;  // 返回
     }
     auto bytes_needed = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS,
                                             wstr.data(), (int) wstr.size(),
@@ -216,7 +216,7 @@ static std::string wstr_to_str(std::wstring_view wstr) {
         GGML_LOG_ERROR("ggml-hex: WideCharToMultiByte failed. Error %lu\n", GetLastError());
         throw std::runtime_error("Wstring conversion failed");
     }
-    return result;
+    return result;  // 返回
 }
 
 static std::string get_driver_path() {
@@ -227,7 +227,7 @@ static std::string get_driver_path() {
     SC_HANDLE schSCManager = OpenSCManagerW(NULL, NULL, STANDARD_RIGHTS_READ);
     if (nullptr == schSCManager) {
         GGML_LOG_ERROR("ggml-hex: Failed to open SCManager. Error: %lu\n", GetLastError());
-        return result;
+        return result;  // 返回
     }
 
     // Get a handle to the service.
@@ -238,7 +238,7 @@ static std::string get_driver_path() {
     if (nullptr == schService) {
         GGML_LOG_ERROR("ggml-hex: Failed to open qcnspmcdm service. Error: %lu\n", GetLastError());
         CloseServiceHandle(schSCManager);
-        return result;
+        return result;  // 返回
     }
 
     // Store the size of buffer used as an output.
@@ -248,7 +248,7 @@ static std::string get_driver_path() {
         GGML_LOG_ERROR("ggml-hex: Failed to query service config. Error: %lu\n", GetLastError());
         CloseServiceHandle(schService);
         CloseServiceHandle(schSCManager);
-        return result;
+        return result;  // 返回
     }
     // Get the configuration of the service.
     LPQUERY_SERVICE_CONFIGW serviceConfig =
@@ -258,7 +258,7 @@ static std::string get_driver_path() {
         LocalFree(serviceConfig);
         CloseServiceHandle(schService);
         CloseServiceHandle(schSCManager);
-        return result;
+        return result;  // 返回
     }
 
     // Read the driver file path get its parent directory
@@ -276,7 +276,7 @@ static std::string get_driver_path() {
     const std::wstring systemRootPlaceholder = L"\\SystemRoot";
     if (0 != driverPath.compare(0, systemRootPlaceholder.length(), systemRootPlaceholder)) {
         GGML_LOG_ERROR("ggml-hex: String pattern not found in driver path.\n");
-        return result;
+        return result;  // 返回
     }
 
     // Replace \SystemRoot with an absolute path from system ENV windir
@@ -286,7 +286,7 @@ static std::string get_driver_path() {
     DWORD numWords = GetEnvironmentVariableW(systemRootEnv.c_str(), NULL, 0);
     if (numWords == 0) {
         GGML_LOG_ERROR("ggml-hex: Failed get systemRoot environment variable\n");
-        return result;
+        return result;  // 返回
     }
 
     // Query the actual system root name from environment variable
@@ -294,28 +294,28 @@ static std::string get_driver_path() {
     numWords = GetEnvironmentVariableW(systemRootEnv.c_str(), systemRoot.data(), numWords + 1);
     if (numWords == 0) {
         GGML_LOG_ERROR("ggml-hex: Failed to read windir environment variable\n");
-        return result;
+        return result;  // 返回
     }
     driverPath.replace(0, systemRootPlaceholder.length(), std::wstring(systemRoot.data()));
 
-    return wstr_to_str(driverPath);
+    return wstr_to_str(driverPath);  // wstr_to_str
 }
 
-#endif
+#endif  // 条件编译结束
 
-using dl_handle_ptr = std::unique_ptr<dl_handle, dl_handle_deleter>;
+using dl_handle_ptr = std::unique_ptr<dl_handle, dl_handle_deleter>;  // using 声明
 
 int htpdrv_init() {
     static dl_handle_ptr lib_cdsp_rpc_handle = nullptr;
     static bool initialized = false;
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
     std::string drv_path = get_driver_path() + "\\" + "libcdsprpc.dll";
-#else
+#else  // 否则
     std::string drv_path = "libcdsprpc.so";
-#endif
+#endif  // 条件编译结束
     if (initialized) {
         GGML_LOG_INFO("ggml-hex: Driver already loaded\n");
-        return AEE_SUCCESS;
+        return AEE_SUCCESS;  // 返回
     }
     GGML_LOG_INFO("ggml-hex: Loading driver %s\n", drv_path.c_str());
 
@@ -323,7 +323,7 @@ int htpdrv_init() {
     dl_handle_ptr handle { dl_load_library(path) };
     if (!handle) {
         GGML_LOG_ERROR("ggml-hex: failed to load %s: %s\n", path.u8string().c_str(), dl_error());
-        return AEE_EUNABLETOLOAD;
+        return AEE_EUNABLETOLOAD;  // 返回
     }
 
 #define dlsym(drv, type, pfn, symbol, ignore)                               \
@@ -356,7 +356,7 @@ int htpdrv_init() {
     lib_cdsp_rpc_handle = std::move(handle);
     initialized         = true;
 
-    return AEE_SUCCESS;
+    return AEE_SUCCESS;  // 返回
 }
 
 domain * get_domain(int domain_id) {
@@ -365,17 +365,17 @@ domain * get_domain(int domain_id) {
 
     for (i = 0; i < size; i++) {
         if (supported_domains[i].id == domain_id) {
-            return &supported_domains[i];
+            return &supported_domains[i];  // 返回
         }
     }
 
-    return NULL;
+    return NULL;  // 返回
 }
 
 int get_hex_arch_ver(int domain, int * arch) {
     if (!remote_handle_control_pfn) {
         GGML_LOG_ERROR("ggml-hex: remote_handle_control is not supported on this device\n");
-        return AEE_EUNSUPPORTEDAPI;
+        return AEE_EUNSUPPORTEDAPI;  // 返回
     }
 
     struct remote_dsp_capability arch_ver;
@@ -386,33 +386,33 @@ int get_hex_arch_ver(int domain, int * arch) {
     int err = remote_handle_control(DSPRPC_GET_DSP_INFO, &arch_ver, sizeof(arch_ver));
     if ((err & 0xff) == (AEE_EUNSUPPORTEDAPI & 0xff)) {
         GGML_LOG_ERROR("ggml-hex: FastRPC capability API is not supported on this device\n");
-        return AEE_EUNSUPPORTEDAPI;
+        return AEE_EUNSUPPORTEDAPI;  // 返回
     }
 
     if (err != AEE_SUCCESS) {
         GGML_LOG_ERROR("ggml-hex: FastRPC capability query failed (err %d)\n", err);
-        return err;
+        return err;  // 返回
     }
 
     switch (arch_ver.capability & 0xff) {
         case 0x68:
             *arch = 68;
-            return 0;
+            return 0;  // 返回
         case 0x69:
             *arch = 69;
-            return 0;
+            return 0;  // 返回
         case 0x73:
             *arch = 73;
-            return 0;
+            return 0;  // 返回
         case 0x75:
             *arch = 75;
-            return 0;
+            return 0;  // 返回
         case 0x79:
             *arch = 79;
-            return 0;
+            return 0;  // 返回
         case 0x81:
             *arch = 81;
-            return 0;
+            return 0;  // 返回
     }
-    return -1;
+    return -1;  // 返回
 }

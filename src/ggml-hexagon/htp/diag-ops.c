@@ -1,16 +1,16 @@
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "hvx-types.h"
-#include "hex-utils.h"
-#include "hvx-copy.h"
-#include "hex-dma.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "hvx-types.h"  // 引入 hvx-types.h 头文件
+#include "hex-utils.h"  // 引入 hex-utils.h 头文件
+#include "hvx-copy.h"  // 引入 hvx-copy.h 头文件
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
 
 #define htp_diag_tensors_preamble                           \
     const struct htp_tensor * restrict src0 = octx->src[0]; \
@@ -28,7 +28,7 @@
     const uint32_t nb2 = dst->nb[2];                 \
     const uint32_t nb3 = dst->nb[3];
 
-struct htp_diag_context {
+struct htp_diag_context {  // 结构体定义
     struct htp_ops_context * octx;
     size_t          src_batch_size;
     size_t          dst_row_size;
@@ -64,7 +64,7 @@ static void diag_thread_f32_dma(unsigned int nth, unsigned int ith, void * data)
     const uint32_t ib1 = MIN(ib0 + dctx->batches_per_thread, dctx->total_batches);
 
     if (ib0 >= ib1) {
-        return;
+        return;  // 返回
     }
 
     const size_t src_batch_size         = dctx->src_batch_size;
@@ -156,7 +156,7 @@ int op_diag_f32(struct htp_ops_context * octx) {
     const struct htp_tensor * dst  = octx->dst;
 
     if (octx->flags & HTP_OPFLAGS_SKIP_COMPUTE) {
-        return HTP_STATUS_OK;
+        return HTP_STATUS_OK;  // 返回
     }
 
     const uint32_t total_batches = src0->ne[2] * src0->ne[3];
@@ -179,7 +179,7 @@ int op_diag_f32(struct htp_ops_context * octx) {
     octx->src0_spad.data = octx->ctx->vtcm_base;                        octx->src0_spad.src = NULL;
     octx->dst_spad.data  = octx->src0_spad.data + octx->src0_spad.size; octx->dst_spad.src  = NULL;
 
-    struct htp_diag_context dctx = {
+    struct htp_diag_context dctx = {  // 结构体定义
         .octx                   = octx,
         .src_batch_size         = src_batch_size,
         .dst_row_size           = dst_row_size,
@@ -195,7 +195,7 @@ int op_diag_f32(struct htp_ops_context * octx) {
         worker_pool_run_func(octx->ctx->worker_pool, diag_thread_f32_dma, &dctx, n_threads);
     }
 
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }
 
 int op_diag(struct htp_ops_context * octx) {
@@ -212,5 +212,5 @@ int op_diag(struct htp_ops_context * octx) {
             break;
     }
 
-    return err;
+    return err;  // 返回
 }

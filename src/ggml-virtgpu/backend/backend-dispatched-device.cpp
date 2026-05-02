@@ -1,10 +1,10 @@
-#include "backend-dispatched.h"
-#include "backend-virgl-apir.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#include "backend-dispatched.h"  // 引入 backend-dispatched.h 头文件
+#include "backend-virgl-apir.h"  // 引入 backend-virgl-apir.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
 
-#include <cstdint>
+#include <cstdint>  // 引入 cstdint 头文件
 
 uint32_t backend_device_get_device_count(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
@@ -14,7 +14,7 @@ uint32_t backend_device_get_device_count(apir_encoder * enc, apir_decoder * dec,
     int32_t dev_count = reg->iface.get_device_count(reg);
     apir_encode_int32_t(enc, &dev_count);
 
-    return 0;
+    return 0;  // 返回
 }
 
 uint32_t backend_device_get_count(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -25,7 +25,7 @@ uint32_t backend_device_get_count(apir_encoder * enc, apir_decoder * dec, virgl_
     int32_t dev_count = reg->iface.get_device_count(reg);
     apir_encode_int32_t(enc, &dev_count);
 
-    return 0;
+    return 0;  // 返回
 }
 
 uint32_t backend_device_get_name(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -38,7 +38,7 @@ uint32_t backend_device_get_name(apir_encoder * enc, apir_decoder * dec, virgl_a
     apir_encode_array_size(enc, string_size);
     apir_encode_char_array(enc, string, string_size);
 
-    return 0;
+    return 0;  // 返回
 }
 
 uint32_t backend_device_get_description(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -51,7 +51,7 @@ uint32_t backend_device_get_description(apir_encoder * enc, apir_decoder * dec, 
     apir_encode_array_size(enc, string_size);
     apir_encode_char_array(enc, string, string_size);
 
-    return 0;
+    return 0;  // 返回
 }
 
 uint32_t backend_device_get_type(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -61,7 +61,7 @@ uint32_t backend_device_get_type(apir_encoder * enc, apir_decoder * dec, virgl_a
     uint32_t type = dev->iface.get_type(dev);
     apir_encode_uint32_t(enc, &type);
 
-    return 0;
+    return 0;  // 返回
 }
 
 uint32_t backend_device_get_memory(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -74,7 +74,7 @@ uint32_t backend_device_get_memory(apir_encoder * enc, apir_decoder * dec, virgl
     apir_encode_size_t(enc, &free);
     apir_encode_size_t(enc, &total);
 
-    return 0;
+    return 0;  // 返回
 }
 
 uint32_t backend_device_supports_op(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -86,7 +86,7 @@ uint32_t backend_device_supports_op(apir_encoder * enc, apir_decoder * dec, virg
 
     apir_encode_bool_t(enc, &supports_op);
 
-    return 0;
+    return 0;  // 返回
 }
 
 uint32_t backend_device_get_buffer_type(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -97,7 +97,7 @@ uint32_t backend_device_get_buffer_type(apir_encoder * enc, apir_decoder * dec, 
 
     apir_encode_ggml_buffer_type(enc, bufft);
 
-    return 0;
+    return 0;  // 返回
 }
 
 uint32_t backend_device_get_props(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -112,7 +112,7 @@ uint32_t backend_device_get_props(apir_encoder * enc, apir_decoder * dec, virgl_
     apir_encode_bool_t(enc, &props.caps.buffer_from_host_ptr);
     apir_encode_bool_t(enc, &props.caps.events);
 
-    return 0;
+    return 0;  // 返回
 }
 
 uint32_t backend_device_buffer_from_ptr(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -126,7 +126,7 @@ uint32_t backend_device_buffer_from_ptr(apir_encoder * enc, apir_decoder * dec, 
     if (!shmem_ptr) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Couldn't get the shmem addr from virgl\n", __func__);
         apir_decoder_set_fatal(dec);
-        return 1;
+        return 1;  // 返回
     }
 
     size_t size;
@@ -144,5 +144,5 @@ uint32_t backend_device_buffer_from_ptr(apir_encoder * enc, apir_decoder * dec, 
         apir_track_backend_buffer(buffer);
     }
 
-    return 0;
+    return 0;  // 返回
 }

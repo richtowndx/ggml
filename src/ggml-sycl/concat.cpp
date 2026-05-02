@@ -10,20 +10,20 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "concat.hpp"
+#include "concat.hpp"  // 引入 concat.hpp 头文件
 
 static inline size_t elem_size(ggml_type t) {
-    return ggml_type_size(t) / ggml_blck_size(t);
+    return ggml_type_size(t) / ggml_blck_size(t);  // ggml_type_size
 }
 
-template <typename T>
+template <typename T>  // 模板
 static void concat_T_dim0(const T *x, const T *y, T *dst,
                             const int ne0, const int ne00,
                             const sycl::nd_item<3> &item_ct1) {
   int nidx = item_ct1.get_local_id(2) +
              item_ct1.get_group(2) * item_ct1.get_local_range(2);
   if (nidx >= ne0) {
-    return;
+    return;  // 返回
   }
   // operation
   int offset_dst = nidx + item_ct1.get_group(1) * ne0 +
@@ -40,14 +40,14 @@ static void concat_T_dim0(const T *x, const T *y, T *dst,
   }
 }
 
-template <typename T>
+template <typename T>  // 模板
 static void concat_T_dim1(const T *x, const T *y, T *dst,
                             const int ne0, const int ne01,
                             const sycl::nd_item<3> &item_ct1) {
   int nidx = item_ct1.get_local_id(2) +
              item_ct1.get_group(2) * item_ct1.get_local_range(2);
   if (nidx >= ne0) {
-    return;
+    return;  // 返回
   }
   // operation
   int offset_dst = nidx + item_ct1.get_group(1) * ne0 +
@@ -64,14 +64,14 @@ static void concat_T_dim1(const T *x, const T *y, T *dst,
   }
 }
 
-template <typename T>
+template <typename T>  // 模板
 static void concat_T_dim2(const T *x, const T *y, T *dst,
                             const int ne0, const int ne02,
                             const sycl::nd_item<3> &item_ct1) {
   int nidx = item_ct1.get_local_id(2) +
              item_ct1.get_group(2) * item_ct1.get_local_range(2);
   if (nidx >= ne0) {
-    return;
+    return;  // 返回
   }
   // operation
   int offset_dst = nidx + item_ct1.get_group(1) * ne0 +
@@ -88,7 +88,7 @@ static void concat_T_dim2(const T *x, const T *y, T *dst,
   }
 }
 
-template <typename T>
+template <typename T>  // 模板
 static void concat_T_sycl(const T *x, const T *y, T *dst,
                             int ne00, int ne01, int ne02, int ne0, int ne1,
                             int ne2, int dim, queue_ptr stream) {
@@ -115,7 +115,7 @@ static void concat_T_sycl(const T *x, const T *y, T *dst,
 }
 
 // non-contiguous kernel (slow)
-template<typename T>
+template<typename T>  // 模板
 static void concat_T_sycl_non_cont(
     queue_ptr stream, const char *src0, const char *src1, char *dst,
     int64_t ne00, int64_t ne01, int64_t ne02, int64_t ne03, uint64_t nb00,
@@ -150,9 +150,9 @@ static void concat_T_sycl_non_cont(
   });
 }
 
-template <typename T>
+template <typename T>  // 模板
 void concat_impl_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     const ggml_tensor *  src0   = dst->src[0];
     const ggml_tensor *  src1   = dst->src[1];
     queue_ptr            stream = ctx.stream();

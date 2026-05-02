@@ -1,34 +1,34 @@
-#include "ggml-quants.h"
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
 
-#include "ggml-common.h"
-#include "ggml-impl.h"
-#include "ggml.h"
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <limits>
-#include <memory>
-#include <openvino/core/except.hpp>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/core/parallel.hpp>
-#include <openvino/core/shape.hpp>
-#include <openvino/core/type/element_type.hpp>
-#include <openvino/core/type/element_type_traits.hpp>
-#include <openvino/core/type/float16.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/subtract.hpp>
-#include <openvino/op/util/attr_types.hpp>
-#include <openvino/runtime/tensor.hpp>
-#include <string>
-#include <vector>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstddef>  // 引入 cstddef 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <limits>  // 引入 limits 头文件
+#include <memory>  // 引入 memory 头文件
+#include <openvino/core/except.hpp>  // 引入 openvino/core/except.hpp 头文件
+#include <openvino/core/node.hpp>  // 引入 openvino/core/node.hpp 头文件
+#include <openvino/core/node_output.hpp>  // 引入 openvino/core/node_output.hpp 头文件
+#include <openvino/core/parallel.hpp>  // 引入 openvino/core/parallel.hpp 头文件
+#include <openvino/core/shape.hpp>  // 引入 openvino/core/shape.hpp 头文件
+#include <openvino/core/type/element_type.hpp>  // 引入 openvino/core/type/element_type.hpp 头文件
+#include <openvino/core/type/element_type_traits.hpp>  // 引入 openvino/core/type/element_type_traits.hpp 头文件
+#include <openvino/core/type/float16.hpp>  // 引入 openvino/core/type/float16.hpp 头文件
+#include <openvino/op/add.hpp>  // 引入 openvino/op/add.hpp 头文件
+#include <openvino/op/constant.hpp>  // 引入 openvino/op/constant.hpp 头文件
+#include <openvino/op/convert.hpp>  // 引入 openvino/op/convert.hpp 头文件
+#include <openvino/op/multiply.hpp>  // 引入 openvino/op/multiply.hpp 头文件
+#include <openvino/op/reshape.hpp>  // 引入 openvino/op/reshape.hpp 头文件
+#include <openvino/op/subtract.hpp>  // 引入 openvino/op/subtract.hpp 头文件
+#include <openvino/op/util/attr_types.hpp>  // 引入 openvino/op/util/attr_types.hpp 头文件
+#include <openvino/runtime/tensor.hpp>  // 引入 openvino/runtime/tensor.hpp 头文件
+#include <string>  // 引入 string 头文件
+#include <vector>  // 引入 vector 头文件
 
 void unpack_32_4(const uint8_t * data, uint8_t * dst) {
     std::fill_n(dst, 16, 0);
@@ -624,7 +624,7 @@ std::shared_ptr<ov::Node> extract_quantized_weights(const ggml_tensor * tensor,
 
     auto result = weight_node.get_node_shared_ptr();
     result->set_friendly_name(tensor->name);
-    return result;
+    return result;  // 返回
 }
 
 // Requantize weights to target format, writing to provided buffers
@@ -646,7 +646,7 @@ std::shared_ptr<ov::Node> requantize_to_buffers(const ggml_tensor * tensor,
         ggml_get_type_traits(GGML_TYPE_F16)->from_float_ref(weights_f32.data(), weights.data(), n_elements);
         auto result = std::make_shared<ov::op::v0::Constant>(weights);
         result->set_friendly_name(tensor->name);
-        return result;
+        return result;  // 返回
     }
 
     // Requantize to target quantized format
@@ -670,7 +670,7 @@ std::shared_ptr<ov::Node> requantize_to_buffers(const ggml_tensor * tensor,
 
     auto result = weight_node.get_node_shared_ptr();
     result->set_friendly_name(tensor->name);
-    return result;
+    return result;  // 返回
 }
 
 OvWeight process_weight_tensor(const ggml_tensor * tensor, const void * data, void * output_base_ptr, bool use_bias) {
@@ -708,7 +708,7 @@ OvWeight process_weight_tensor(const ggml_tensor * tensor, const void * data, vo
             result.weights = ov::Tensor(element_type, node_shape, data);
         }
         result.weight_node = std::make_shared<ov::op::v0::Constant>(result.weights);
-        return result;
+        return result;  // 返回
     }
 
     // Handle quantized weights
@@ -740,7 +740,7 @@ OvWeight process_weight_tensor(const ggml_tensor * tensor, const void * data, vo
         ov::Tensor dummy_scales, dummy_zp;  // Not used for F16
         result.weight_node =
             requantize_to_buffers(tensor, data, ExtraQuantType::F16, 0, result.weights, dummy_scales, dummy_zp);
-        return result;
+        return result;  // 返回
     }
 
     // Quantized path (normal extraction or quantized requant)
@@ -781,7 +781,7 @@ OvWeight process_weight_tensor(const ggml_tensor * tensor, const void * data, vo
             extract_quantized_weights(tensor, data, result.weights, result.scales, result.zp, use_bias);
     }
 
-    return result;
+    return result;  // 返回
 }
 
 void quantize_q4_0(const float * x,

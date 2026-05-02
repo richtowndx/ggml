@@ -1,23 +1,23 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#include "../node_context.h"  // 引入 ../node_context.h 头文件
+#include "../op_table.h"  // 引入 ../op_table.h 头文件
+#include "../utils.h"  // 引入 ../utils.h 头文件
 
-#include <cstdint>
-#include <memory>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/scaled_dot_product_attention.hpp>
-#include <openvino/op/transpose.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <string>
+#include <cstdint>  // 引入 cstdint 头文件
+#include <memory>  // 引入 memory 头文件
+#include <openvino/op/broadcast.hpp>  // 引入 openvino/op/broadcast.hpp 头文件
+#include <openvino/op/concat.hpp>  // 引入 openvino/op/concat.hpp 头文件
+#include <openvino/op/constant.hpp>  // 引入 openvino/op/constant.hpp 头文件
+#include <openvino/op/convert.hpp>  // 引入 openvino/op/convert.hpp 头文件
+#include <openvino/op/reshape.hpp>  // 引入 openvino/op/reshape.hpp 头文件
+#include <openvino/op/scaled_dot_product_attention.hpp>  // 引入 openvino/op/scaled_dot_product_attention.hpp 头文件
+#include <openvino/op/transpose.hpp>  // 引入 openvino/op/transpose.hpp 头文件
+#include <openvino/op/unsqueeze.hpp>  // 引入 openvino/op/unsqueeze.hpp 头文件
+#include <string>  // 引入 string 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
+namespace op {  // 命名空间
 
 OutputVector translate_flash_attn_ext(const NodeContext & context) {
     num_inputs_check(context, 4, 4);
@@ -69,7 +69,7 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
                                                          ov::op::BroadcastType::BIDIRECTIONAL);
             kv = std::make_shared<ov::op::v1::Reshape>(kv, new_kv_shape, true);
         }
-        return kv;
+        return kv;  // 返回
     };
 
     auto q_shape = context.get_input_shape(0).to_shape();
@@ -81,7 +81,7 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
     res = std::make_shared<ov::op::v1::Transpose>(sdpa,
                                                   ov::op::v0::Constant::create(ov::element::i64, {4}, {0, 2, 1, 3}));
     res = std::make_shared<ov::op::v0::Convert>(res, ov::element::f32);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    return rename_outputs_with_suffix({res}, context.get_name());  // 返回
 }
 
 }  // namespace op

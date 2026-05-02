@@ -1,27 +1,27 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#include "../node_context.h"  // 引入 ../node_context.h 头文件
+#include "../op_table.h"  // 引入 ../op_table.h 头文件
+#include "../utils.h"  // 引入 ../utils.h 头文件
 
-#include <cstdint>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/frontend/exception.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/reshape.hpp>
-#include <stdexcept>
-#include <vector>
+#include <cstdint>  // 引入 cstdint 头文件
+#include <memory>  // 引入 memory 头文件
+#include <openvino/core/node.hpp>  // 引入 openvino/core/node.hpp 头文件
+#include <openvino/core/node_output.hpp>  // 引入 openvino/core/node_output.hpp 头文件
+#include <openvino/frontend/exception.hpp>  // 引入 openvino/frontend/exception.hpp 头文件
+#include <openvino/op/concat.hpp>  // 引入 openvino/op/concat.hpp 头文件
+#include <openvino/op/constant.hpp>  // 引入 openvino/op/constant.hpp 头文件
+#include <openvino/op/reshape.hpp>  // 引入 openvino/op/reshape.hpp 头文件
+#include <stdexcept>  // 引入 stdexcept 头文件
+#include <vector>  // 引入 vector 头文件
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
+namespace op {  // 命名空间
 
 OutputVector translate_reshape(const NodeContext & context) {
     num_inputs_check(context, 1, 1);
     if (context.get_input_shape(0) == context.get_output_shape()) {
-        return {context.get_input(0)};
+        return {context.get_input(0)};  // 返回
     }
 
     int op_case = context.get_op_case();
@@ -52,7 +52,7 @@ OutputVector translate_reshape(const NodeContext & context) {
             ov::element::i64, {4}, std::vector<int64_t>{(int64_t) output_shape[0], (int64_t) output_shape[1], -1, 1});
 
     } else if (op_case == 4) {
-        return {context.get_input(0).get_node_shared_ptr()->input_value(0)};
+        return {context.get_input(0).get_node_shared_ptr()->input_value(0)};  // 返回
 
     } else if (op_case == 5) {
         if (context.is_stateful()) {
@@ -74,7 +74,7 @@ OutputVector translate_reshape(const NodeContext & context) {
         new_shape_node = ov::op::v0::Constant::create(ov::element::i64, {4}, context.get_output_shape().to_shape());
     }
     auto res = std::make_shared<ov::op::v1::Reshape>(context.get_input(0), new_shape_node, false);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    return rename_outputs_with_suffix({res}, context.get_name());  // 返回
 }
 
 }  // namespace op

@@ -1,19 +1,19 @@
 // HMX tile-level inline helpers (FP16 32x32 tile operations).
 // Ported from htp-ops-lib/include/dsp/hmx_utils.h. (https://github.com/haozixu/htp-ops-lib)
 
-#ifndef HMX_UTILS_H
-#define HMX_UTILS_H
+#ifndef HMX_UTILS_H  // 如果未定义 HMX_UTILS_H 则编译
+#define HMX_UTILS_H  // 宏定义 HMX_UTILS_H
 
-#include "hvx-base.h"
+#include "hvx-base.h"  // 引入 hvx-base.h 头文件
 
-#include <assert.h>
-#include <hexagon_types.h>
-#include <stddef.h>
+#include <assert.h>  // 引入 assert.h 头文件
+#include <hexagon_types.h>  // 引入 hexagon_types.h 头文件
+#include <stddef.h>  // 引入 stddef.h 头文件
 
-#define HMX_FP16_TILE_N_ROWS 32
-#define HMX_FP16_TILE_N_COLS 32
-#define HMX_FP16_TILE_N_ELMS 1024
-#define HMX_FP16_TILE_SIZE   2048
+#define HMX_FP16_TILE_N_ROWS 32  // 宏定义 HMX_FP16_TILE_N_ROWS
+#define HMX_FP16_TILE_N_COLS 32  // 宏定义 HMX_FP16_TILE_N_COLS
+#define HMX_FP16_TILE_N_ELMS 1024  // 宏定义 HMX_FP16_TILE_N_ELMS
+#define HMX_FP16_TILE_SIZE   2048  // 宏定义 HMX_FP16_TILE_SIZE
 
 // Initialise aligned 256-byte area with scale vector + zero padding.
 static inline void hmx_init_column_scales(void *out_scales, HVX_Vector v_scale) {
@@ -199,4 +199,4 @@ static inline void hmx_interleave_cols_to_tiles(__fp16 * restrict tiles_out,
     }
 }
 
-#endif // HMX_UTILS_H
+#endif // HMX_UTILS_H  // 条件编译结束

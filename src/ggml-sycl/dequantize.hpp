@@ -10,14 +10,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_DEQUANTIZE_HPP
-#define GGML_SYCL_DEQUANTIZE_HPP
+#ifndef GGML_SYCL_DEQUANTIZE_HPP  // 如果未定义 GGML_SYCL_DEQUANTIZE_HPP 则编译
+#define GGML_SYCL_DEQUANTIZE_HPP  // 宏定义 GGML_SYCL_DEQUANTIZE_HPP
 
-#include "common.hpp"
-#include "convert.hpp"
+#include "common.hpp"  // 引入 common.hpp 头文件
+#include "convert.hpp"  // 引入 convert.hpp 头文件
 
-typedef void (*dequantize_kernel_t)(const void * vx, const int64_t ib, const int iqs, dfloat2 & v);
-typedef void (*dequantize_kernel_t_reorder)(const void *d, const int64_t ib, const void *qs,
+typedef void (*dequantize_kernel_t)(const void * vx, const int64_t ib, const int iqs, dfloat2 & v);  // 类型定义
+typedef void (*dequantize_kernel_t_reorder)(const void *d, const int64_t ib, const void *qs,  // 类型定义
                                             const int iqs, dfloat2 &v);
 
 static __dpct_inline__ void dequantize_q4_0(const void *vx, const int64_t ib,
@@ -31,16 +31,16 @@ static __dpct_inline__ void dequantize_q4_0(const void *vx, const int64_t ib,
     v.x() = vui & 0xF;
     v.y() = vui >> 4;
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     // v = v - {8.0f, 8.0f};
     // v = v * {d, d};
     v.s0() = (v.s0() - 8.0f) * d;
     v.s1() = (v.s1() - 8.0f) * d;
 
-#else
+#else  // 否则
     v.x() = (v.x() - 8.0f) * d;
     v.y() = (v.y() - 8.0f) * d;
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 }
 
 static __dpct_inline__ void dequantize_q4_0_reorder(const void *d_ptr, const int64_t ib, const void *qs,
@@ -54,16 +54,16 @@ static __dpct_inline__ void dequantize_q4_0_reorder(const void *d_ptr, const int
     v.x() = vui & 0xF;
     v.y() = vui >> 4;
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     // v = v - {8.0f, 8.0f};
     // v = v * {d, d};
     v.s0() = (v.s0() - 8.0f) * d;
     v.s1() = (v.s1() - 8.0f) * d;
 
-#else
+#else  // 否则
     v.x() = (v.x() - 8.0f) * d;
     v.y() = (v.y() - 8.0f) * d;
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 }
 
 static __dpct_inline__ void dequantize_q4_1(const void *vx, const int64_t ib,
@@ -78,16 +78,16 @@ static __dpct_inline__ void dequantize_q4_1(const void *vx, const int64_t ib,
     v.x() = vui & 0xF;
     v.y() = vui >> 4;
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     // v = v * {d, d};
     // v = v + {m, m};
     v.s0() = sycl::fma(v.s0(), d, m);
     v.s1() = sycl::fma(v.s1(), d, m);
 
-#else
+#else  // 否则
     v.x() = sycl::fma(v.x(), d, m);
     v.y() = sycl::fma(v.y(), d, m);
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 }
 
 static __dpct_inline__ void dequantize_q5_0(const void *vx, const int64_t ib,
@@ -105,16 +105,16 @@ static __dpct_inline__ void dequantize_q5_0(const void *vx, const int64_t ib,
     v.x() = ((x[ib].qs[iqs] & 0xf) | xh_0);
     v.y() = ((x[ib].qs[iqs] >> 4) | xh_1);
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     // v = v - {16.0f, 16.0f};
     // v = v * {d, d};
     v.s0() = (v.s0() - 16.0f) * d;
     v.s1() = (v.s1() - 16.0f) * d;
 
-#else
+#else  // 否则
     v.x() = (v.x() - 16.0f) * d;
     v.y() = (v.y() - 16.0f) * d;
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 }
 
 static __dpct_inline__ void dequantize_q5_1(const void *vx, const int64_t ib,
@@ -133,15 +133,15 @@ static __dpct_inline__ void dequantize_q5_1(const void *vx, const int64_t ib,
     v.x() = ((x[ib].qs[iqs] & 0xf) | xh_0);
     v.y() = ((x[ib].qs[iqs] >> 4) | xh_1);
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     // v = v * {d, d};
     // v = v + {m, m};
     v.s0() = sycl::fma(v.s0(), d, m);
     v.s1() = sycl::fma(v.s1(), d, m);
-#else
+#else  // 否则
     v.x() = sycl::fma(v.x(), d, m);
     v.y() = sycl::fma(v.y(), d, m);
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 }
 
 static __dpct_inline__ void dequantize_q8_0_reorder(const void *d_ptr, const int64_t ib, const void *qs,
@@ -151,13 +151,13 @@ static __dpct_inline__ void dequantize_q8_0_reorder(const void *d_ptr, const int
     v.x() = ((const int8_t *)qs)[iqs + 0];
     v.y() = ((const int8_t *)qs)[iqs + 1];
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     v.s0() *= d;
     v.s1() *= d;
-#else
+#else  // 否则
     v.x() *= d;
     v.y() *= d;
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 }
 
 static __dpct_inline__ void dequantize_q8_0(const void *vx, const int64_t ib,
@@ -169,17 +169,17 @@ static __dpct_inline__ void dequantize_q8_0(const void *vx, const int64_t ib,
     v.x() = x[ib].qs[iqs + 0];
     v.y() = x[ib].qs[iqs + 1];
 
-#ifdef GGML_SYCL_F16
+#ifdef GGML_SYCL_F16  // 如果定义了 GGML_SYCL_F16 则编译
     // v = v * {d, d};
     v.s0() *= d;
     v.s1() *= d;
-#else
+#else  // 否则
     v.x() *= d;
     v.y() *= d;
-#endif // GGML_SYCL_F16
+#endif // GGML_SYCL_F16  // 条件编译结束
 }
 
-template<typename dst_t>
+template<typename dst_t>  // 模板
 static void dequantize_block_q4_0(const void * __restrict__ vx, dst_t * __restrict__ yy, int64_t nb32,
                                   const sycl::nd_item<3> &item_ct1) {
 
@@ -191,7 +191,7 @@ static void dequantize_block_q4_0(const void * __restrict__ vx, dst_t * __restri
     const int64_t ir  = tid%8;
     const int64_t ib = 8*i + ir;
     if (ib >= nb32) {
-        return;
+        return;  // 返回
     }
 
     dst_t * y = yy + 256*i + 32*ir + 4*il;
@@ -209,7 +209,7 @@ static void dequantize_block_q4_0(const void * __restrict__ vx, dst_t * __restri
     }
 }
 
-template<typename dst_t>
+template<typename dst_t>  // 模板
 static void dequantize_block_q4_0_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy, int64_t nb32,
                                   const sycl::nd_item<3> &item_ct1) {
 
@@ -220,7 +220,7 @@ static void dequantize_block_q4_0_reorder(const void * __restrict__ vx, dst_t * 
     const int lane_ib = i * WARP_SIZE + tid;
 
     if (lane_ib >= k / QK4_0) {
-        return;
+        return;  // 返回
     }
 
     dst_t * y_ptr = yy + lane_ib * QK4_0;
@@ -241,7 +241,7 @@ static void dequantize_block_q4_0_reorder(const void * __restrict__ vx, dst_t * 
 
 // Dequantize Q8_0 from reorder layout: [all qs (k bytes)][all d values]
 // Each thread handles one block of QK8_0 elements.
-template<typename dst_t>
+template<typename dst_t>  // 模板
 static void dequantize_block_q8_0_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy, int64_t k,
                                   const sycl::nd_item<3> &item_ct1) {
 
@@ -250,7 +250,7 @@ static void dequantize_block_q8_0_reorder(const void * __restrict__ vx, dst_t * 
     const int lane_ib = i * WARP_SIZE + tid;
 
     if (lane_ib >= k / QK8_0) {
-        return;
+        return;  // 返回
     }
 
     dst_t * y_ptr = yy + lane_ib * QK8_0;
@@ -267,7 +267,7 @@ static void dequantize_block_q8_0_reorder(const void * __restrict__ vx, dst_t * 
 
 }
 
-template<typename dst_t>
+template<typename dst_t>  // 模板
 static void dequantize_block_q4_1(const void * __restrict__ vx, dst_t * __restrict__ yy, int64_t nb32,
                                   const sycl::nd_item<3> &item_ct1) {
 
@@ -279,7 +279,7 @@ static void dequantize_block_q4_1(const void * __restrict__ vx, dst_t * __restri
     const int64_t ir  = tid%8;
     const int64_t ib = 8*i + ir;
     if (ib >= nb32) {
-        return;
+        return;  // 返回
     }
 
     dst_t * y = yy + 256*i + 32*ir + 4*il;
@@ -299,7 +299,7 @@ static void dequantize_block_q4_1(const void * __restrict__ vx, dst_t * __restri
 
 //================================== k-quants
 
-template<typename dst_t>
+template<typename dst_t>  // 模板
 static void dequantize_block_q2_K(const void * __restrict__ vx, dst_t * __restrict__ yy,
                                   const sycl::nd_item<3> &item_ct1) {
 
@@ -307,7 +307,7 @@ static void dequantize_block_q2_K(const void * __restrict__ vx, dst_t * __restri
     const block_q2_K * x = (const block_q2_K *) vx;
 
     const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const int64_t n   = tid/32;
     const int64_t l   = tid - 32*n;
     const int64_t is  = 8*n + l/16;
@@ -321,7 +321,7 @@ static void dequantize_block_q2_K(const void * __restrict__ vx, dst_t * __restri
     y[l+32] = dall * (x[i].scales[is+2] & 0xF) * ((q >> 2) & 3) - dmin * (x[i].scales[is+2] >> 4);
     y[l+64] = dall * (x[i].scales[is+4] & 0xF) * ((q >> 4) & 3) - dmin * (x[i].scales[is+4] >> 4);
     y[l+96] = dall * (x[i].scales[is+6] & 0xF) * ((q >> 6) & 3) - dmin * (x[i].scales[is+6] >> 4);
-#else
+#else  // 否则
     const int64_t is = tid/16;  // 0 or 1
     const int64_t il = tid%16;  // 0...15
     const uint8_t q = x[i].qs[il] >> (2*is);
@@ -331,18 +331,18 @@ static void dequantize_block_q2_K(const void * __restrict__ vx, dst_t * __restri
     float dmin = x[i].dm[1];
     y[ 0] = dall * (x[i].scales[is+0] & 0xF) * ((q >> 0) & 3) - dmin * (x[i].scales[is+0] >> 4);
     y[32] = dall * (x[i].scales[is+2] & 0xF) * ((q >> 4) & 3) - dmin * (x[i].scales[is+2] >> 4);
-#endif
+#endif  // 条件编译结束
 
 }
 
-template<typename dst_t>
+template<typename dst_t>  // 模板
 static void dequantize_block_q3_K(const void * __restrict__ vx, dst_t * __restrict__ yy,
                                   const sycl::nd_item<3> &item_ct1) {
 
     const int64_t i = item_ct1.get_group(2);
     const block_q3_K * x = (const block_q3_K *) vx;
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const int64_t r = item_ct1.get_local_id(2) / 4;
     const int64_t tid = r/2;
     const int64_t is0 = r%2;
@@ -366,7 +366,7 @@ static void dequantize_block_q3_K(const void * __restrict__ vx, dst_t * __restri
     const uint8_t * hm = x[i].hmask;
 
     for (int l = l0; l < l0+4; ++l) y[l] = dl * ((int8_t)((q[l] >> shift) & 3) - ((hm[l] & m) ? 0 : 4));
-#else
+#else  // 否则
     const int64_t tid = item_ct1.get_local_id(2);
     const int64_t is  = tid/16;  // 0 or 1
     const int64_t il  = tid%16;  // 0...15
@@ -386,11 +386,11 @@ static void dequantize_block_q3_K(const void * __restrict__ vx, dst_t * __restri
         y[ 0] = d * ((x[i].scales[0] >>  4) - 8) * ((int8_t)((q >> 0) & 3) - ((h >> 0) & 1 ? 0 : 4));
         y[32] = d * ((x[i].scales[1] >>  4) - 8) * ((int8_t)((q >> 4) & 3) - ((h >> 4) & 1 ? 0 : 4));
     }
-#endif
+#endif  // 条件编译结束
 
 }
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
 static inline void get_scale_min_k4(int j, const uint8_t * q, uint8_t & d, uint8_t & m) {
     if (j < 4) {
         d = q[j] & 63;
@@ -400,9 +400,9 @@ static inline void get_scale_min_k4(int j, const uint8_t * q, uint8_t & d, uint8
         m = (q[j+4] >>  4) | ((q[j-0] >> 6) << 4);
     }
 }
-#endif
+#endif  // 条件编译结束
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 inline void dequantize_q4_K_common(dst_t * __restrict__ y, const uint8_t * __restrict__ qs_ptr, const float dall,
                                    const float dmin, uint8_t * __restrict__ scales_local, int il, int ir) {
     const int is = 2 * il;
@@ -424,14 +424,14 @@ inline void dequantize_q4_K_common(dst_t * __restrict__ y, const uint8_t * __res
     }
 }
 
-template<typename dst_t>
+template<typename dst_t>  // 模板
 static void dequantize_block_q4_K(const void * __restrict__ vx, dst_t * __restrict__ yy,
                                   uint8_t* scales_local, const sycl::nd_item<3> &item_ct1) {
     const block_q4_K * x = (const block_q4_K *) vx;
 
     const int64_t i = item_ct1.get_group(2);
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const int64_t tid = item_ct1.get_local_id(2);
     const int64_t il  = tid / 8;
     const int64_t ir  = tid % 8;
@@ -448,7 +448,7 @@ static void dequantize_block_q4_K(const void * __restrict__ vx, dst_t * __restri
 
     item_ct1.barrier(sycl::access::fence_space::local_space);
     dequantize_q4_K_common(y, x[i].qs, dall, dmin, scales_local, il, ir);
-#else
+#else  // 否则
     const int64_t tid = item_ct1.get_local_id(2);
     const uint8_t * q = x[i].qs;
     dst_t * y = yy + i*QK_K;
@@ -456,10 +456,10 @@ static void dequantize_block_q4_K(const void * __restrict__ vx, dst_t * __restri
     const float m = (float)x[i].dm[1];
     y[tid+ 0] = d * (x[i].scales[0] & 0xF) * (q[tid] & 0xF) - m * (x[i].scales[0] >> 4);
     y[tid+32] = d * (x[i].scales[1] & 0xF) * (q[tid] >>  4) - m * (x[i].scales[1] >> 4);
-#endif
+#endif  // 条件编译结束
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_block_q4_K_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy, uint8_t * scales_local,
                                           const sycl::nd_item<1> & item_ct1, int64_t nb) {
     const int64_t i   = item_ct1.get_group(0);     // block index
@@ -489,14 +489,14 @@ static void dequantize_block_q4_K_reorder(const void * __restrict__ vx, dst_t * 
     dequantize_q4_K_common(y, qs_ptr, dall, dmin, scales_local, il, ir);
 }
 
-template<typename dst_t>
+template<typename dst_t>  // 模板
 static void dequantize_block_q5_K(const void * __restrict__ vx, dst_t * __restrict__ yy,
                                   const sycl::nd_item<3> &item_ct1) {
     const block_q5_K * x = (const block_q5_K *) vx;
 
     const int64_t i = item_ct1.get_group(2);
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     // assume 64 threads - this is very slightly better than the one below
     const int64_t tid = item_ct1.get_local_id(2);
     const int64_t il  = tid/16;   // il is in 0...3
@@ -523,7 +523,7 @@ static void dequantize_block_q5_K(const void * __restrict__ vx, dst_t * __restri
     hm <<= 1;
     y[32] = d2 * ((ql[ 0] >>  4) + (qh[ 0] & hm ? 16 : 0)) - m2;
     y[33] = d2 * ((ql[ 1] >>  4) + (qh[ 1] & hm ? 16 : 0)) - m2;
-#else
+#else  // 否则
     const int64_t tid = item_ct1.get_local_id(2);
     const uint8_t q = x[i].qs[tid];
     const int64_t im = tid/8;  // 0...3
@@ -534,16 +534,16 @@ static void dequantize_block_q5_K(const void * __restrict__ vx, dst_t * __restri
     dst_t * y = yy + i*QK_K + tid;
     y[ 0] = d * x[i].scales[is+0] * ((q & 0xF) - ((h >> 0) & 1 ? 0 : 16));
     y[32] = d * x[i].scales[is+2] * ((q >>  4) - ((h >> 4) & 1 ? 0 : 16));
-#endif
+#endif  // 条件编译结束
 }
 
-template<typename dst_t>
+template<typename dst_t>  // 模板
 static void dequantize_block_q6_K(const void * __restrict__ vx, dst_t * __restrict__ yy,
                                   const sycl::nd_item<3> &item_ct1) {
     const block_q6_K * x = (const block_q6_K *) vx;
 
     const int64_t i = item_ct1.get_group(2);
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
 
     // assume 64 threads - this is very slightly better than the one below
     const int64_t tid = item_ct1.get_local_id(2);
@@ -563,7 +563,7 @@ static void dequantize_block_q6_K(const void * __restrict__ vx, dst_t * __restri
     y[32] = d * sc[2] * ((int8_t)((ql[32] & 0xF) | (((qh >> 2) & 3) << 4)) - 32);
     y[64] = d * sc[4] * ((int8_t)((ql[ 0]  >> 4) | (((qh >> 4) & 3) << 4)) - 32);
     y[96] = d * sc[6] * ((int8_t)((ql[32]  >> 4) | (((qh >> 6) & 3) << 4)) - 32);
-#else
+#else  // 否则
 
     // assume 32 threads
     const int64_t tid = item_ct1.get_local_id(2);
@@ -580,10 +580,10 @@ static void dequantize_block_q6_K(const void * __restrict__ vx, dst_t * __restri
 
     y[ 0] = d * sc[ip+0] * ((int8_t)((ql & 0xF) | (((qh >> 0) & 3) << 4)) - 32);
     y[32] = d * sc[ip+2] * ((int8_t)((ql  >> 4) | (((qh >> 4) & 3) << 4)) - 32);
-#endif
+#endif  // 条件编译结束
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_block_q6_K_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy,
                                           const sycl::nd_item<3> & item_ct1, int64_t n_blocks) {
     const int64_t ib = item_ct1.get_group(2);
@@ -615,7 +615,7 @@ static void dequantize_block_q6_K_reorder(const void * __restrict__ vx, dst_t * 
     y[96] = *d * sc[6] * ((int8_t) ((ql[32] >> 4) | (((qh >> 6) & 3) << 4)) - 32);
 }
 
-template<typename dst_t>
+template<typename dst_t>  // 模板
 static void dequantize_block_iq2_xxs(const void * __restrict__ vx, dst_t * __restrict__ yy,
                                      const sycl::nd_item<3> &item_ct1,
                                      const uint64_t *iq2xxs_grid_ptr,
@@ -626,7 +626,7 @@ static void dequantize_block_iq2_xxs(const void * __restrict__ vx, dst_t * __res
     const block_iq2_xxs * x = (const block_iq2_xxs  *) vx;
 
     const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const int64_t il = tid/8; // 0...3
     const int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
@@ -637,13 +637,13 @@ static void dequantize_block_iq2_xxs(const void * __restrict__ vx, dst_t * __res
     const float d = (float)x[i].d * (0.5f + (aux32 >> 28)) * 0.25f;
     const uint8_t signs = ksigns_iq2xs_ptr[(aux32 >> 7*il) & 127];
     for (int j = 0; j < 8; ++j) y[j] = d * grid[j] * (signs & kmask_iq2xs_ptr[j] ? -1.f : 1.f);
-#else
+#else  // 否则
     assert(false);
-#endif
+#endif  // 条件编译结束
 
 }
 
-template<typename dst_t>
+template<typename dst_t>  // 模板
 static void dequantize_block_iq2_xs(const void * __restrict__ vx, dst_t * __restrict__ yy,
                                     const sycl::nd_item<3> &item_ct1,
                                     const uint64_t *iq2xs_grid,
@@ -654,7 +654,7 @@ static void dequantize_block_iq2_xs(const void * __restrict__ vx, dst_t * __rest
     const block_iq2_xs * x = (const block_iq2_xs *) vx;
 
     const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const int64_t il = tid/8; // 0...3
     const int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
@@ -663,13 +663,13 @@ static void dequantize_block_iq2_xs(const void * __restrict__ vx, dst_t * __rest
     const float d = (float)x[i].d * (0.5f + ((x[i].scales[ib] >> 4*(il/2)) & 0xf)) * 0.25f;
     const uint8_t signs = ksigns_iq2xs[q2[il] >> 9];
     for (int j = 0; j < 8; ++j) y[j] = d * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
-#else
+#else  // 否则
     assert(false);
-#endif
+#endif  // 条件编译结束
 
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 __dpct_inline__ static void
 dequantize_block_iq2_s(const void *__restrict__ vx, dst_t *__restrict__ yy,
                        const sycl::nd_item<3> &item_ct1) {
@@ -678,7 +678,7 @@ dequantize_block_iq2_s(const void *__restrict__ vx, dst_t *__restrict__ yy,
     const block_iq2_s * x = (const block_iq2_s *) vx;
 
     const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const int64_t il = tid/8; // 0...3
     const int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
@@ -688,14 +688,14 @@ dequantize_block_iq2_s(const void *__restrict__ vx, dst_t *__restrict__ yy,
 #pragma unroll
     for (int j = 0; j < 8; ++j)
         y[j] = d * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
-#else
+#else  // 否则
     assert(false);
 
-#endif
+#endif  // 条件编译结束
 
 }
 
-template<typename dst_t>
+template<typename dst_t>  // 模板
 static void dequantize_block_iq3_xxs(const void * __restrict__ vx, dst_t * __restrict__ yy,
                                      const sycl::nd_item<3> &item_ct1,
                                      const uint32_t *iq3xxs_grid,
@@ -706,7 +706,7 @@ static void dequantize_block_iq3_xxs(const void * __restrict__ vx, dst_t * __res
     const block_iq3_xxs * x = (const block_iq3_xxs  *) vx;
 
     const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const int64_t il = tid/8; // 0...3
     const int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
@@ -721,13 +721,13 @@ static void dequantize_block_iq3_xxs(const void * __restrict__ vx, dst_t * __res
         y[j+0] = d * grid1[j] * (signs & kmask_iq2xs[j+0] ? -1.f : 1.f);
         y[j+4] = d * grid2[j] * (signs & kmask_iq2xs[j+4] ? -1.f : 1.f);
     }
-#else
+#else  // 否则
     assert(false);
-#endif
+#endif  // 条件编译结束
 
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 __dpct_inline__ static void
 dequantize_block_iq3_s(const void *__restrict__ vx, dst_t *__restrict__ yy,
                        const sycl::nd_item<3> &item_ct1,
@@ -737,7 +737,7 @@ dequantize_block_iq3_s(const void *__restrict__ vx, dst_t *__restrict__ yy,
     const block_iq3_s * x = (const block_iq3_s *) vx;
 
     const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const int64_t il = tid/8; // 0...3
     const int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
@@ -751,13 +751,13 @@ dequantize_block_iq3_s(const void *__restrict__ vx, dst_t *__restrict__ yy,
         y[j+0] = d * grid1[j] * (signs & kmask_iq2xs[j+0] ? -1.f : 1.f);
         y[j+4] = d * grid2[j] * (signs & kmask_iq2xs[j+4] ? -1.f : 1.f);
     }
-#else
+#else  // 否则
     assert(false);
-#endif
+#endif  // 条件编译结束
 
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 __dpct_inline__ static void
 dequantize_block_iq1_s(const void *__restrict__ vx, dst_t *__restrict__ yy,
                        const sycl::nd_item<3> &item_ct1,
@@ -767,7 +767,7 @@ dequantize_block_iq1_s(const void *__restrict__ vx, dst_t *__restrict__ yy,
     const block_iq1_s * x = (const block_iq1_s  *) vx;
 
     const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const int64_t il = tid/8; // 0...3
     const int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
@@ -781,13 +781,13 @@ dequantize_block_iq1_s(const void *__restrict__ vx, dst_t *__restrict__ yy,
     for (int j = 0; j < 8; ++j) {
         y[j] = d * (q[j] + delta);
     }
-#else
+#else  // 否则
     assert(false);
-#endif
+#endif  // 条件编译结束
 
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 __dpct_inline__ static void
 dequantize_block_iq1_m(const void *__restrict__ vx, dst_t *__restrict__ yy,
                        const sycl::nd_item<3> &item_ct1,
@@ -797,7 +797,7 @@ dequantize_block_iq1_m(const void *__restrict__ vx, dst_t *__restrict__ yy,
     const block_iq1_m * x = (const block_iq1_m  *) vx;
 
     const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
     const int64_t il = tid/8; // 0...3
     const int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
@@ -815,13 +815,13 @@ dequantize_block_iq1_m(const void *__restrict__ vx, dst_t *__restrict__ yy,
     for (int j = 0; j < 8; ++j) {
         y[j] = d * (q[j] + delta);
     }
-#else
+#else  // 否则
     assert(false);
-#endif
+#endif  // 条件编译结束
 
 }
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 __dpct_inline__ static void
 dequantize_block_iq4_nl(const void *__restrict__ vx, dst_t *__restrict__ yy,
                         const sycl::nd_item<3> &item_ct1) {
@@ -844,7 +844,7 @@ dequantize_block_iq4_nl(const void *__restrict__ vx, dst_t *__restrict__ yy,
 }
 
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 __dpct_inline__ static void
 dequantize_block_iq4_xs(const void *__restrict__ vx, dst_t *__restrict__ yy,
                         const sycl::nd_item<3> &item_ct1) {
@@ -864,7 +864,7 @@ dequantize_block_iq4_xs(const void *__restrict__ vx, dst_t *__restrict__ yy,
     }
 }
 
-template<typename dst_t>
+template<typename dst_t>  // 模板
 static void dequantize_block_mxfp4(const void * __restrict__ vx, dst_t * __restrict__ yy,
                                    const sycl::nd_item<3> &item_ct1) {
     // auto                item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
@@ -884,7 +884,7 @@ static void dequantize_block_mxfp4(const void * __restrict__ vx, dst_t * __restr
 }
 
 
-template <typename dst_t>
+template <typename dst_t>  // 模板
 static void dequantize_block_nvfp4(
         const void * __restrict__ vx,
         dst_t * __restrict__ yy,
@@ -895,7 +895,7 @@ static void dequantize_block_nvfp4(
 
     const int64_t base = i * QK_NVFP4;
     if (base >= ne) {
-        return;
+        return;  // 返回
     }
 
     const block_nvfp4 * x = (const block_nvfp4 *) vx;
@@ -915,4 +915,4 @@ static void dequantize_block_nvfp4(
 }
 
 
-#endif // GGML_SYCL_DEQUANTIZE_HPP
+#endif // GGML_SYCL_DEQUANTIZE_HPP  // 条件编译结束

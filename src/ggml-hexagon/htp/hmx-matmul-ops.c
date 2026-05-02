@@ -3,32 +3,32 @@
 #pragma clang diagnostic ignored "-Wunused-variable"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <assert.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#include <assert.h>  // 引入 assert.h 头文件
+#include <stdbool.h>  // 引入 stdbool.h 头文件
+#include <stddef.h>  // 引入 stddef.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#include <HAP_farf.h>
-#include <HAP_compute_res.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_compute_res.h>  // 引入 HAP_compute_res.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
 
-#include "hex-dma.h"
-#include "worker-pool.h"
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
+#include "worker-pool.h"  // 引入 worker-pool.h 头文件
 
-#include "hvx-utils.h"
-#include "hvx-dump.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
+#include "hvx-dump.h"  // 引入 hvx-dump.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
 
-#include "hmx-ops.h"
-#include "hmx-utils.h"
-#include "hmx-queue.h"
-#include "hmx-profile.h"
+#include "hmx-ops.h"  // 引入 hmx-ops.h 头文件
+#include "hmx-utils.h"  // 引入 hmx-utils.h 头文件
+#include "hmx-queue.h"  // 引入 hmx-queue.h 头文件
+#include "hmx-profile.h"  // 引入 hmx-profile.h 头文件
 
-#include "vtcm-utils.h"
+#include "vtcm-utils.h"  // 引入 vtcm-utils.h 头文件
 
 static const __fp16 q4_0_to_fp16_lut[64] __attribute__((aligned(VLEN))) = {
     -8, 0, -7, 0, -6, 0, -5, 0, -4, 0, -3, 0, -2, 0, -1, 0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0,
@@ -46,9 +46,9 @@ static const __fp16 iq4_nl_to_fp16_lut[64] __attribute__((aligned(VLEN))) = {
 };
 
 // Scales per x4x2 logical block: 8 × sizeof(__fp16) = 16 bytes
-#define HMX_X4X2_SCALES_PER_BLK  8
-#define HMX_X4X2_DBLK_SIZE       16  // 8 * 2 bytes (fp16 scales for Q4_0/Q8_0/IQ4_NL)
-#define HMX_X4X2_MXFP4_EBLK_SIZE 8   // 8 * 1 byte  (E8M0 scales for MXFP4)
+#define HMX_X4X2_SCALES_PER_BLK  8  // 宏定义 HMX_X4X2_SCALES_PER_BLK
+#define HMX_X4X2_DBLK_SIZE       16  // 8 * 2 bytes (fp16 scales for Q4_0/Q8_0/IQ4_NL)  // 宏定义 HMX_X4X2_DBLK_SIZE
+#define HMX_X4X2_MXFP4_EBLK_SIZE 8   // 8 * 1 byte  (E8M0 scales for MXFP4)  // 宏定义 HMX_X4X2_MXFP4_EBLK_SIZE
 
 // Compute the byte stride of one row in x4x2 format.
 // Numerically equals ggml_row_size(type, k) when k is 256-aligned, because
@@ -67,7 +67,7 @@ static inline size_t get_x4x2_row_stride(int weight_type, int k) {
         case HTP_TYPE_MXFP4:
             return (size_t) nb * (QK_MXFP4x4x2 / 2 + HMX_X4X2_MXFP4_EBLK_SIZE);  // 136 * nb
         default:
-            return 0;
+            return 0;  // 返回
     }
 }
 
@@ -76,13 +76,13 @@ static inline size_t get_x4x2_row_stride(int weight_type, int k) {
 static inline bool hmx_mul_overflow(size_t a, size_t b, size_t *out) {
     if (a != 0 && b > SIZE_MAX / a) return true;
     *out = a * b;
-    return false;
+    return false;  // 返回
 }
 
 static inline bool hmx_add_overflow(size_t a, size_t b, size_t *out) {
     if (a > SIZE_MAX - b) return true;
     *out = a + b;
-    return false;
+    return false;  // 返回
 }
 
 // Search for optimal (mc, nc) chunk sizes within VTCM budget.
@@ -172,7 +172,7 @@ next_nc:
     *m_chunk_out = best_m;
     *n_chunk_out = best_n;
     *total_out   = total;
-    return 0;
+    return 0;  // 返回
 }
 
 // --- x4x2 format dequantizers ---
@@ -198,7 +198,7 @@ static inline HVX_Vector dequantize_x4x2_q4_0_group_hvx(
     HVX_VectorPair vp = Q6_Wh_vlut16_VbVhR(v_quants, vlut_cvt, 0);
     HVX_Vector v_hf = Q6_V_lo_W(vp);
 
-    return Q6_Vhf_equals_Vqf16(Q6_Vqf16_vmpy_VhfVhf(v_hf, v_scales));
+    return Q6_Vhf_equals_Vqf16(Q6_Vqf16_vmpy_VhfVhf(v_hf, v_scales));  // Q6_Vhf_equals_Vqf16
 }
 
 // Batch-dequantize 4 contiguous x4x2 Q4_0 groups (4x32 = 128 packed bytes) using
@@ -241,7 +241,7 @@ static inline HVX_Vector dequantize_x4x2_q8_0_group_hvx(const int8_t *quants_32,
     HVX_Vector v_scales = hvx_vec_splat_f16(*scale);
     HVX_Vector v0 = Q6_V_lo_W(Q6_Wh_vunpack_Vb(vq));
     HVX_Vector v_hf = Q6_Vhf_equals_Vh(v0);
-    return Q6_Vhf_equals_Vqf16(Q6_Vqf16_vmpy_VhfVhf(v_hf, v_scales));
+    return Q6_Vhf_equals_Vqf16(Q6_Vqf16_vmpy_VhfVhf(v_hf, v_scales));  // Q6_Vhf_equals_Vqf16
 }
 
 // --- MXFP4 E8M0 scale conversion and dequantization ---
@@ -252,7 +252,7 @@ static inline HVX_Vector dequantize_x4x2_q8_0_group_hvx(const int8_t *quants_32,
 // Arithmetic: fp16_bits = clamp(e - 112, 0, 30) << 10
 // e=0..112 -> 0 (underflow), e=113..142 -> valid fp16, e>=143 -> clamped to 2^15.
 
-typedef struct {
+typedef struct {  // 类型定义
     __fp16 v[8] __attribute__((aligned(16)));
 } mxfp4_scales_t;
 
@@ -265,11 +265,11 @@ static inline mxfp4_scales_t mxfp4_convert_scales(const uint8_t * e8m0_8) {
     vh                = Q6_Vh_vmin_VhVh(vh, Q6_Vh_vsplat_R(30));
     vh                = Q6_Vh_vasl_VhR(vh, 10);
     hvx_vec_store_u(s.v, 16, vh);
-    return s;
+    return s;  // 返回
 }
 
 static inline HVX_Vector mxfp4_extract_splat(mxfp4_scales_t scales, int idx) {
-    return hvx_vec_splat_f16(scales.v[idx]);
+    return hvx_vec_splat_f16(scales.v[idx]);  // hvx_vec_splat_f16
 }
 
 // Dequantize one x4x2 MXFP4 group (32 elements from 32 packed bytes) -> 32 FP16.
@@ -289,7 +289,7 @@ static inline HVX_Vector dequantize_x4x2_mxfp4_group_hvx(const uint8_t *  packed
     HVX_VectorPair vp   = Q6_Wh_vlut16_VbVhR(v_quants, vlut_cvt, 0);
     HVX_Vector     v_hf = Q6_V_lo_W(vp);
 
-    return Q6_Vhf_equals_Vqf16(Q6_Vqf16_vmpy_VhfVhf(v_hf, v_sc));
+    return Q6_Vhf_equals_Vqf16(Q6_Vqf16_vmpy_VhfVhf(v_hf, v_sc));  // Q6_Vhf_equals_Vqf16
 }
 
 // Batch-dequantize 4 contiguous x4x2 MXFP4 groups (4x32 = 128 packed bytes).
@@ -547,7 +547,7 @@ static void dequantize_x4x2_weight_to_fp16_tiles_task(
     }
 }
 
-typedef struct {
+typedef struct {  // 类型定义
     __fp16        *dst;
     const uint8_t *src;
     int            n_cols;
@@ -632,7 +632,7 @@ static void core_dot_chunk_fp16(__fp16 *restrict output, const __fp16 *restrict 
 
 // --- Async HMX matmul job (for pipeline overlap) ---
 
-typedef struct {
+typedef struct {  // 类型定义
     __fp16 *       output;
     const __fp16 * activation;
     const __fp16 * weight;
@@ -697,7 +697,7 @@ static void transfer_output_chunk_fp16_to_fp32(float *restrict dst, const __fp16
     }
 }
 
-typedef struct {
+typedef struct {  // 类型定义
     const __fp16  *vtcm_src;
     float         *dst;
     int            n_tasks;
@@ -766,7 +766,7 @@ static void transfer_activation_chunk_fp32_to_fp16(__fp16 *restrict vtcm_dst, co
     }
 }
 
-typedef struct {
+typedef struct {  // 类型定义
     __fp16      *dst;
     const float *src;
     int          n_tasks;
@@ -811,7 +811,7 @@ static void transfer_activation_chunk_threaded(struct htp_context *ctx, __fp16 *
 
 //
 
-#define FALLBACK_TO_STANDARD 1
+#define FALLBACK_TO_STANDARD 1  // 宏定义 FALLBACK_TO_STANDARD
 
 // C += AB
 static void core_mma_chunk_fp16(__fp16 *restrict c, const __fp16 *restrict a, const __fp16 *restrict b,
@@ -849,13 +849,13 @@ static void core_mma_chunk_fp16(__fp16 *restrict c, const __fp16 *restrict a, co
     }
 }
 
-static __attribute__((noinline)) int mat_mul_qk_0_d16a32_out_stationary(struct htp_context *ctx,
+static __attribute__((noinline)) int mat_mul_qk_0_d16a32_out_stationary(struct htp_context *ctx,  // __attribute__
                                        float *restrict out, const float *restrict x, const uint8_t *restrict w,
                                        int m, int k, int n, int weight_type) {
     // assume k % 32 == 0 && n % 32 == 0
     const size_t row_stride = get_x4x2_row_stride(weight_type, k);
     if (row_stride == 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     const size_t vtcm_budget = ctx->vtcm_size;
@@ -866,7 +866,7 @@ static __attribute__((noinline)) int mat_mul_qk_0_d16a32_out_stationary(struct h
     const size_t k_iters_check = (k + K_BLOCK_SIZE - 1) / K_BLOCK_SIZE;
     if (k_iters_check <= 1) {
         FARF(HIGH, "%s: K_BLK=%zu >= k=%d, fallback to standard path", __func__, K_BLOCK_SIZE, k);
-        return FALLBACK_TO_STANDARD;
+        return FALLBACK_TO_STANDARD;  // 返回
     }
 
     // Dynamic M,N search via hmx_compute_chunks
@@ -892,7 +892,7 @@ static __attribute__((noinline)) int mat_mul_qk_0_d16a32_out_stationary(struct h
     if (hmx_compute_chunks(vtcm_budget, overhead, per_n, per_m, per_mn, m, n, m_block_cost, n_block_cost, &M_BLOCK_SIZE,
                            &N_BLOCK_SIZE, &vtcm_used) != 0) {
         FARF(HIGH, "%s: VTCM too small (m=%d k=%d n=%d budget=%zu)", __func__, m, k, n, vtcm_budget);
-        return -1;
+        return -1;  // 返回
     }
 
     // Compute precise buffer sizes from searched M,N and fixed K
@@ -906,7 +906,7 @@ static __attribute__((noinline)) int mat_mul_qk_0_d16a32_out_stationary(struct h
     if (total_vtcm > vtcm_budget) {
         FARF(HIGH, "%s: VTCM overflow after search: need %zu have %zu (M=%zu N=%zu K=%zu)", __func__, total_vtcm,
                     vtcm_budget, M_BLOCK_SIZE, N_BLOCK_SIZE, K_BLOCK_SIZE);
-        return -1;
+        return -1;  // 返回
     }
 
     uint8_t *vtcm_ptr        = (uint8_t *) ctx->vtcm_base;
@@ -961,9 +961,9 @@ static __attribute__((noinline)) int mat_mul_qk_0_d16a32_out_stationary(struct h
 
                     dma_queue_push(ctx->dma[0],
                                      dma_make_ptr(vtcm_scratch1, activation_block),
-                                     k_blk_sz * sizeof(float),
-                                     k * sizeof(float),
-                                     k_blk_sz * sizeof(float),
+                                     k_blk_sz * sizeof(float),  // sizeof
+                                     k * sizeof(float),  // sizeof
+                                     k_blk_sz * sizeof(float),  // sizeof
                                      m_blk_sz);
                 }
 
@@ -1030,11 +1030,11 @@ static __attribute__((noinline)) int mat_mul_qk_0_d16a32_out_stationary(struct h
 
     HAP_compute_res_hmx_unlock(ctx->vtcm_rctx);
 
-#if defined(ENABLE_PROFILE_TIMERS)
+#if defined(ENABLE_PROFILE_TIMERS)  // 条件编译
     FARF(HIGH, "fetch: %lld us, act_load: %lld us, wt_dequant: %lld us, core: %lld us",
          TIMER_US(fetch), TIMER_US(act_load), TIMER_US(wt_dequant), TIMER_US(core));
-#endif
-    return 0;
+#endif  // 条件编译结束
+    return 0;  // 返回
 }
 
 int hmx_mat_mul_permuted_qk_0_d16a32(struct htp_context *ctx, float *restrict dst, const float *restrict activation,
@@ -1044,14 +1044,14 @@ int hmx_mat_mul_permuted_qk_0_d16a32(struct htp_context *ctx, float *restrict ds
     if (k % 32 != 0 || n % 32 != 0) { return -1; }
 
     if (!hex_is_aligned(dst, VLEN) || !hex_is_aligned(activation, VLEN) || !hex_is_aligned(permuted_weight, VLEN)) {
-        return -1;
+        return -1;  // 返回
     }
 
     // for large m, k (e.g. prefill FFN Down), use out-stationary version
     if (m >= 128 && k > n && n > 1024) {
         int rc = mat_mul_qk_0_d16a32_out_stationary(ctx, dst, activation, permuted_weight, m, k, n, weight_type);
         if (rc != FALLBACK_TO_STANDARD) {
-            return rc;  // 0 success, -1 error
+            return rc;  // 0 success, -1 error  // 返回
         }
         FARF(HIGH, "hmx_matmul_qk: out-stationary fallback to standard m=%d k=%d n=%d", m, k, n);
         // fall through to standard path
@@ -1059,7 +1059,7 @@ int hmx_mat_mul_permuted_qk_0_d16a32(struct htp_context *ctx, float *restrict ds
 
     size_t row_stride = get_x4x2_row_stride(weight_type, k);
     if (row_stride == 0) {
-        return -1;
+        return -1;  // 返回
     }
 
     FARF(HIGH, "hmx_matmul_qk: STANDARD path m=%d k=%d n=%d type=%d", m, k, n, weight_type);
@@ -1100,7 +1100,7 @@ int hmx_mat_mul_permuted_qk_0_d16a32(struct htp_context *ctx, float *restrict ds
                                /*m_block_cost=*/(size_t) n * 3,
                                /*n_block_cost=*/(size_t) m * 2, &m_chunk_n_rows, &n_chunk_n_cols, &vtcm_used) != 0) {
             FARF(HIGH, "%s: VTCM too small (m=%d k=%d n=%d budget=%zu)", __func__, m, k, n, vtcm_budget);
-            return -1;
+            return -1;  // 返回
         }
     }
 
@@ -1133,7 +1133,7 @@ int hmx_mat_mul_permuted_qk_0_d16a32(struct htp_context *ctx, float *restrict ds
     if ((size_t)(vtcm_ptr - (uint8_t *)ctx->vtcm_base) > vtcm_budget) {
         FARF(ERROR, "%s: vtcm overflow: used=%zu limit=%zu", __func__,
              (size_t)(vtcm_ptr - (uint8_t *)ctx->vtcm_base), vtcm_budget);
-        return -1;
+        return -1;  // 返回
     }
 
     hmx_init_column_scales(vtcm_scales, Q6_V_vsplat_R(0x3c00));  // scale: 1.0, bias: 0.0 in FP16
@@ -1327,7 +1327,7 @@ int hmx_mat_mul_permuted_qk_0_d16a32(struct htp_context *ctx, float *restrict ds
 
     TIMER_STOP(total);
 
-#if defined(ENABLE_PROFILE_TIMERS)
+#if defined(ENABLE_PROFILE_TIMERS)  // 条件编译
     FARF(HIGH, "%s: %lld us, m=%d k=%d n=%d pipeline=%d", __func__, TIMER_US(total), m, k, n, use_pipeline);
     if (!use_pipeline) {
         FARF(HIGH, "  activation_load: %lld us, weight_load: %lld us, hmx_core: %lld us, output_store: %lld us",
@@ -1336,19 +1336,19 @@ int hmx_mat_mul_permuted_qk_0_d16a32(struct htp_context *ctx, float *restrict ds
         float  bandwidth   = 1e-3f * weight_size / (float)TIMER_US(weight_load);
         FARF(HIGH, "  weight load bandwidth: %.2f GB/s", bandwidth);
     }
-#endif
+#endif  // 条件编译结束
 
-    return 0;
+    return 0;  // 返回
 }
 
 //
 
 static inline int hmx_matmul_batch_r2(const hmx_matmul_w16a32_batched_params_t *params) {
-    return params->ne02 > 0 ? params->ne12 / params->ne02 : 1;
+    return params->ne02 > 0 ? params->ne12 / params->ne02 : 1;  // 返回
 }
 
 static inline int hmx_matmul_batch_r3(const hmx_matmul_w16a32_batched_params_t *params) {
-    return params->ne03 > 0 ? params->ne13 / params->ne03 : 1;
+    return params->ne03 > 0 ? params->ne13 / params->ne03 : 1;  // 返回
 }
 
 static inline const __fp16 *hmx_matmul_weight_batch_ptr(const hmx_matmul_w16a32_batched_params_t *params,
@@ -1387,7 +1387,7 @@ static int hmx_mat_mul_permuted_w16a32_batched_legacy(struct htp_context *ctx,
                                               params->act_stride, params->weight_stride);
         }
     }
-    return ret;
+    return ret;  // 返回
 }
 
 int hmx_mat_mul_permuted_w16a32_batched(struct htp_context *ctx, const hmx_matmul_w16a32_batched_params_t *params) {
@@ -1401,14 +1401,14 @@ int hmx_mat_mul_permuted_w16a32_batched(struct htp_context *ctx, const hmx_matmu
     if (!hex_is_aligned(params->dst, VLEN) ||
         !hex_is_aligned(params->activation, VLEN) ||
         !hex_is_aligned(params->permuted_weight, VLEN)) {
-        return -1;
+        return -1;  // 返回
     }
 
     const int group_size = hmx_matmul_batch_r2(params);
 
     if (group_size <= 1) {
         FARF(HIGH, "%s: no dim2 GQA reuse (group=%d), using legacy batched loop", __func__, group_size);
-        return hmx_mat_mul_permuted_w16a32_batched_legacy(ctx, params);
+        return hmx_mat_mul_permuted_w16a32_batched_legacy(ctx, params);  // hmx_mat_mul_permuted_w16a32_batched_legacy
     }
 
     // Grouped path: reuse interleaved weight across all q_heads sharing a
@@ -1436,7 +1436,7 @@ int hmx_mat_mul_permuted_w16a32_batched(struct htp_context *ctx, const hmx_matmu
                            /*m_block_cost=*/(size_t) params->n,
                            /*n_block_cost=*/(size_t) params->m, &m_chunk_n_rows, &n_chunk_n_cols, &vtcm_used) != 0) {
         FARF(HIGH, "%s: grouped path does not fit VTCM, falling back to legacy batched loop", __func__);
-        return hmx_mat_mul_permuted_w16a32_batched_legacy(ctx, params);
+        return hmx_mat_mul_permuted_w16a32_batched_legacy(ctx, params);  // hmx_mat_mul_permuted_w16a32_batched_legacy
     }
 
     const size_t act_head_stride      = m_chunk_n_rows * (size_t) params->k;  // fp16 elements between heads
@@ -1458,7 +1458,7 @@ int hmx_mat_mul_permuted_w16a32_batched(struct htp_context *ctx, const hmx_matmu
 
     if ((size_t) (vtcm_ptr - (uint8_t *) ctx->vtcm_base) > vtcm_budget) {
         FARF(HIGH, "%s: grouped layout overflowed VTCM, falling back to legacy batched loop", __func__);
-        return hmx_mat_mul_permuted_w16a32_batched_legacy(ctx, params);
+        return hmx_mat_mul_permuted_w16a32_batched_legacy(ctx, params);  // hmx_mat_mul_permuted_w16a32_batched_legacy
     }
 
     hmx_init_column_scales(vtcm_scales, Q6_V_vsplat_R(0x3c00));  // scale: 1.0, bias: 0.0 in FP16
@@ -1574,14 +1574,14 @@ int hmx_mat_mul_permuted_w16a32_batched(struct htp_context *ctx, const hmx_matmu
 
     TIMER_STOP(total);
 
-#if defined(ENABLE_PROFILE_TIMERS)
+#if defined(ENABLE_PROFILE_TIMERS)  // 条件编译
     FARF(HIGH, "%s: %lld us, m=%d k=%d n=%d group=%d", __func__, TIMER_US(total),
          params->m, params->k, params->n, group_size);
     FARF(HIGH, "  activation_load: %lld us, weight_load: %lld us, hmx_core: %lld us, output_store: %lld us",
          TIMER_US(activation_load), TIMER_US(weight_load), TIMER_US(hmx_core), TIMER_US(output_store));
-#endif
+#endif  // 条件编译结束
 
-  return 0;
+  return 0;  // 返回
 }
 
 //
@@ -1594,7 +1594,7 @@ int hmx_mat_mul_permuted_w16a32(struct htp_context *ctx, float *restrict dst, co
     if (k % 32 != 0 || n % 32 != 0) { return -1; }
 
     if (!hex_is_aligned(dst, VLEN) || !hex_is_aligned(activation, VLEN) || !hex_is_aligned(permuted_weight, VLEN)) {
-      return -1;
+      return -1;  // 返回
     }
 
     // --- Dynamic VTCM layout ---
@@ -1616,7 +1616,7 @@ int hmx_mat_mul_permuted_w16a32(struct htp_context *ctx, float *restrict dst, co
                            /*m_block_cost=*/(size_t) n,
                            /*n_block_cost=*/(size_t) m, &m_chunk_n_rows, &n_chunk_n_cols, &vtcm_used) != 0) {
         FARF(HIGH, "%s: VTCM too small (m=%d k=%d n=%d budget=%zu)", __func__, m, k, n, vtcm_budget);
-        return -1;
+        return -1;  // 返回
     }
 
     const size_t weight_area_size     = hex_align_up(n_chunk_n_cols * vec_dot_size, HMX_FP16_TILE_SIZE);
@@ -1638,7 +1638,7 @@ int hmx_mat_mul_permuted_w16a32(struct htp_context *ctx, float *restrict dst, co
     if ((size_t)(vtcm_ptr - (uint8_t *)ctx->vtcm_base) > vtcm_budget) {
         FARF(ERROR, "%s: vtcm overflow: used=%zu limit=%zu", __func__,
              (size_t)(vtcm_ptr - (uint8_t *)ctx->vtcm_base), vtcm_budget);
-        return -1;
+        return -1;  // 返回
     }
 
     hmx_init_column_scales(vtcm_scales, Q6_V_vsplat_R(0x3c00));  // scale: 1.0, bias: 0.0 in FP16
@@ -1742,7 +1742,7 @@ int hmx_mat_mul_permuted_w16a32(struct htp_context *ctx, float *restrict dst, co
 
     TIMER_STOP(total);
 
-#if defined(ENABLE_PROFILE_TIMERS)
+#if defined(ENABLE_PROFILE_TIMERS)  // 条件编译
     FARF(HIGH, "%s: %lld us, m=%d k=%d n=%d", __func__, TIMER_US(total), m, k, n);
     FARF(HIGH, "  activation_load: %lld us, weight_load: %lld us, hmx_core: %lld us, output_store: %lld us",
          TIMER_US(activation_load), TIMER_US(weight_load), TIMER_US(hmx_core), TIMER_US(output_store));
@@ -1751,7 +1751,7 @@ int hmx_mat_mul_permuted_w16a32(struct htp_context *ctx, float *restrict dst, co
         float  bandwidth   = 1e-3f * weight_size / (float)TIMER_US(weight_load);
         FARF(HIGH, "  weight load bandwidth: %.2f GB/s", bandwidth);
     }
-#endif
+#endif  // 条件编译结束
 
-    return 0;
+    return 0;  // 返回
 }

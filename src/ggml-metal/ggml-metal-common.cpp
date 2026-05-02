@@ -1,13 +1,13 @@
-#include "ggml-metal-common.h"
+#include "ggml-metal-common.h"  // 引入 ggml-metal-common.h 头文件
 
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
 
-#include <vector>
+#include <vector>  // 引入 vector 头文件
 
 // represents a memory range (i.e. an interval from a starting address p0 to an ending address p1 in a given buffer pb)
 // the type indicates whether it is a source range (i.e. ops read data from it) or a destination range (i.e. ops write data to it)
-struct ggml_mem_range {
+struct ggml_mem_range {  // 结构体定义
     uint64_t pb; // buffer id
 
     uint64_t p0; // begin
@@ -16,7 +16,7 @@ struct ggml_mem_range {
     ggml_mem_range_type pt;
 };
 
-struct ggml_mem_ranges {
+struct ggml_mem_ranges {  // 结构体定义
     std::vector<ggml_mem_range> ranges;
 
     int debug = 0;
@@ -28,7 +28,7 @@ ggml_mem_ranges_t ggml_mem_ranges_init(int debug) {
     res->ranges.reserve(256);
     res->debug = debug;
 
-    return res;
+    return res;  // 返回
 }
 
 void ggml_mem_ranges_free(ggml_mem_ranges_t mrs) {
@@ -42,7 +42,7 @@ void ggml_mem_ranges_reset(ggml_mem_ranges_t mrs) {
 static bool ggml_mem_ranges_add(ggml_mem_ranges_t mrs, ggml_mem_range mr) {
     mrs->ranges.push_back(mr);
 
-    return true;
+    return true;  // 返回
 }
 
 static ggml_mem_range ggml_mem_range_from_tensor(const ggml_tensor * tensor, ggml_mem_range_type pt) {
@@ -76,15 +76,15 @@ static ggml_mem_range ggml_mem_range_from_tensor(const ggml_tensor * tensor, ggm
         };
     };
 
-    return mr;
+    return mr;  // 返回
 }
 
 static ggml_mem_range ggml_mem_range_from_tensor_src(const ggml_tensor * tensor) {
-    return ggml_mem_range_from_tensor(tensor, MEM_RANGE_TYPE_SRC);
+    return ggml_mem_range_from_tensor(tensor, MEM_RANGE_TYPE_SRC);  // ggml_mem_range_from_tensor
 }
 
 static ggml_mem_range ggml_mem_range_from_tensor_dst(const ggml_tensor * tensor) {
-    return ggml_mem_range_from_tensor(tensor, MEM_RANGE_TYPE_DST);
+    return ggml_mem_range_from_tensor(tensor, MEM_RANGE_TYPE_DST);  // ggml_mem_range_from_tensor
 }
 
 static bool ggml_mem_ranges_add_src(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
@@ -96,7 +96,7 @@ static bool ggml_mem_ranges_add_src(ggml_mem_ranges_t mrs, const ggml_tensor * t
         GGML_LOG_DEBUG("%s: add src range buf=%lld, [%lld, %lld)\n", __func__, mr.pb, mr.p0, mr.p1);
     }
 
-    return ggml_mem_ranges_add(mrs, mr);
+    return ggml_mem_ranges_add(mrs, mr);  // ggml_mem_ranges_add
 }
 
 static bool ggml_mem_ranges_add_dst(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
@@ -108,7 +108,7 @@ static bool ggml_mem_ranges_add_dst(ggml_mem_ranges_t mrs, const ggml_tensor * t
         GGML_LOG_DEBUG("%s: add dst range buf=%lld, [%lld, %lld)\n", __func__, mr.pb, mr.p0, mr.p1);
     }
 
-    return ggml_mem_ranges_add(mrs, mr);
+    return ggml_mem_ranges_add(mrs, mr);  // ggml_mem_ranges_add
 }
 
 bool ggml_mem_ranges_add(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
@@ -118,7 +118,7 @@ bool ggml_mem_ranges_add(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
         }
     }
 
-    return ggml_mem_ranges_add_dst(mrs, tensor);
+    return ggml_mem_ranges_add_dst(mrs, tensor);  // ggml_mem_ranges_add_dst
 }
 
 static bool ggml_mem_ranges_check(ggml_mem_ranges_t mrs, ggml_mem_range mr) {
@@ -145,11 +145,11 @@ static bool ggml_mem_ranges_check(ggml_mem_ranges_t mrs, ggml_mem_range mr) {
                         cmp.pb, cmp.p0, cmp.p1);
             }
 
-            return false;
+            return false;  // 返回
         }
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_mem_ranges_check_src(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
@@ -159,7 +159,7 @@ static bool ggml_mem_ranges_check_src(ggml_mem_ranges_t mrs, const ggml_tensor *
 
     const bool res = ggml_mem_ranges_check(mrs, mr);
 
-    return res;
+    return res;  // 返回
 }
 
 static bool ggml_mem_ranges_check_dst(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
@@ -169,28 +169,28 @@ static bool ggml_mem_ranges_check_dst(ggml_mem_ranges_t mrs, const ggml_tensor *
 
     const bool res = ggml_mem_ranges_check(mrs, mr);
 
-    return res;
+    return res;  // 返回
 }
 
 bool ggml_mem_ranges_check(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
     for (int i = 0; i < GGML_MAX_SRC; i++) {
         if (tensor->src[i]) {
             if (!ggml_mem_ranges_check_src(mrs, tensor->src[i])) {
-                return false;
+                return false;  // 返回
             }
         }
     }
 
-    return ggml_mem_ranges_check_dst(mrs, tensor);
+    return ggml_mem_ranges_check_dst(mrs, tensor);  // ggml_mem_ranges_check_dst
 }
 
-struct node_info {
+struct node_info {  // 结构体定义
     ggml_tensor * node;
 
     std::vector<ggml_tensor *> fused;
 
     ggml_op op() const {
-        return node->op;
+        return node->op;  // 返回
     }
 
     const ggml_tensor * dst() const {
@@ -198,7 +198,7 @@ struct node_info {
     }
 
     bool is_empty() const {
-        return ggml_op_is_empty(node->op);
+        return ggml_op_is_empty(node->op);  // ggml_op_is_empty
     }
 
     void add_fused(ggml_tensor * t) {
@@ -212,7 +212,7 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
         for (int i = 0; i < GGML_MAX_SRC; i++) {
             if (node.node->src[i]) {
                 if (!ggml_mem_ranges_add_src(mrs, node.node->src[i])) {
-                    return false;
+                    return false;  // 返回
                 }
             }
         }
@@ -222,13 +222,13 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
             for (int i = 0; i < GGML_MAX_SRC; i++) {
                 if (fused->src[i]) {
                     if (!ggml_mem_ranges_add_src(mrs, fused->src[i])) {
-                        return false;
+                        return false;  // 返回
                     }
                 }
             }
         }
 
-        return ggml_mem_ranges_add_dst(mrs, node.dst());
+        return ggml_mem_ranges_add_dst(mrs, node.dst());  // ggml_mem_ranges_add_dst
     };
 
     // helper to check if a node can run concurrently with the existing set of nodes
@@ -236,7 +236,7 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
         for (int i = 0; i < GGML_MAX_SRC; i++) {
             if (node.node->src[i]) {
                 if (!ggml_mem_ranges_check_src(mrs, node.node->src[i])) {
-                    return false;
+                    return false;  // 返回
                 }
             }
         }
@@ -245,13 +245,13 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
             for (int i = 0; i < GGML_MAX_SRC; i++) {
                 if (fused->src[i]) {
                     if (!ggml_mem_ranges_check_src(mrs, fused->src[i])) {
-                        return false;
+                        return false;  // 返回
                     }
                 }
             }
         }
 
-        return ggml_mem_ranges_check_dst(mrs, node.dst());
+        return ggml_mem_ranges_check_dst(mrs, node.dst());  // ggml_mem_ranges_check_dst
     };
 
     // perform reorders only across these types of ops
@@ -284,9 +284,9 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
             case GGML_OP_CPY:
             case GGML_OP_CONT:
             case GGML_OP_REPEAT:
-                return true;
+                return true;  // 返回
             default:
-                return ggml_op_is_empty(op);
+                return ggml_op_is_empty(op);  // ggml_op_is_empty
         }
     };
 
@@ -369,7 +369,7 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
     ggml_mem_ranges_free(mrs0);
     ggml_mem_ranges_free(mrs1);
 
-    return res;
+    return res;  // 返回
 }
 
 void ggml_graph_optimize(ggml_cgraph * gf) {
@@ -431,15 +431,15 @@ void ggml_graph_optimize(ggml_cgraph * gf) {
         nodes.push_back(std::move(node));
     }
 
-#if 1
+#if 1  // 条件编译
     // reorder to improve concurrency
     const auto order = ggml_metal_graph_optimize_reorder(nodes);
-#else
+#else  // 否则
     std::vector<int> order(nodes.size());
     for (size_t i = 0; i < nodes.size(); i++) {
         order[i] = i;
     }
-#endif
+#endif  // 条件编译结束
 
     // unfuse
     {

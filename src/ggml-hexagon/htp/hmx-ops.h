@@ -1,19 +1,19 @@
 // HMX operation entry-point declarations.
 // Ported from htp-ops-lib/include/dsp/ops.h (renamed, benchmark kernels removed). (https://github.com/haozixu/htp-ops-lib)
 
-#ifndef HMX_OPS_H
-#define HMX_OPS_H
+#ifndef HMX_OPS_H  // 如果未定义 HMX_OPS_H 则编译
+#define HMX_OPS_H  // 宏定义 HMX_OPS_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include <stddef.h>  // 引入 stddef.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
 
-#include "htp-ops.h"
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+extern "C" {  // C 链接声明
+#endif  // 条件编译结束
 
-typedef struct {
+typedef struct {  // 类型定义
     float        *dst;
     const float  *activation;
     const __fp16 *permuted_weight;
@@ -62,10 +62,10 @@ int hmx_mat_mul_permuted_qk_0_d16a32(struct htp_context *ctx,
                                       int weight_type);
 
 // HMX flash attention
-int hmx_flash_attn_ext(struct htp_ops_context * octx);
+int hmx_flash_attn_ext(struct htp_ops_context * octx);  // hmx_flash_attn_ext
 
-#ifdef __cplusplus
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
 }
-#endif
+#endif  // 条件编译结束
 
-#endif // HMX_OPS_H
+#endif // HMX_OPS_H  // 条件编译结束

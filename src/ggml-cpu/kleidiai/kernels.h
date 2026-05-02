@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: MIT
 //
 
-#pragma once
+#pragma once  // 防止重复包含
 
-#include "ggml.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-enum cpu_feature {
+enum cpu_feature {  // 枚举定义
     CPU_FEATURE_NONE    = 0,
     CPU_FEATURE_DOTPROD = 1,
     CPU_FEATURE_I8MM    = 2,
@@ -16,13 +16,13 @@ enum cpu_feature {
 
 inline cpu_feature& operator|=(cpu_feature& lhs, cpu_feature rhs) {
     lhs = static_cast<cpu_feature>(lhs | rhs);
-    return lhs;
+    return lhs;  // 返回
 }
 inline cpu_feature operator|(cpu_feature lhs, cpu_feature rhs) {
     return static_cast<cpu_feature>(static_cast<int>(lhs) | static_cast<int>(rhs));
 }
 
-struct kernel_info {
+struct kernel_info {  // 结构体定义
     size_t (*get_m_step)(void);
     size_t (*get_n_step)(void);
     size_t (*get_mr)(void);
@@ -44,7 +44,7 @@ struct kernel_info {
         float clamp_min, float clamp_max);
 };
 
-struct lhs_packing_info {
+struct lhs_packing_info {  // 结构体定义
     size_t (*get_offset)(size_t m_idx, size_t lhs_stride);
 
     size_t (*get_packed_offset_ex)(size_t m_idx, size_t k, size_t bl, size_t mr, size_t kr, size_t sr);
@@ -55,7 +55,7 @@ struct lhs_packing_info {
         size_t m_idx_start, const void * lhs, size_t lhs_stride, void * lhs_packed);
 };
 
-struct rhs_packing_info {
+struct rhs_packing_info {  // 结构体定义
     size_t (*packed_stride)(size_t k, size_t nr, size_t kr, size_t bl);
 
     void (*to_float)(const void *packed_data, int32_t row_idx, int64_t nc, float *out,
@@ -70,7 +70,7 @@ struct rhs_packing_info {
         size_t rhs_stride, const void * rhs, const void * bias, const void * scale, void * rhs_packed, size_t extra_bytes, const void * params);
 };
 
-struct ggml_kleidiai_kernels {
+struct ggml_kleidiai_kernels {  // 结构体定义
     kernel_info      gemm;
     lhs_packing_info gemm_lhs_info;
 
@@ -85,6 +85,6 @@ struct ggml_kleidiai_kernels {
     ggml_type op_type;
 };
 
-ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, const ggml_tensor * tensor);
-ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_0(cpu_feature features);
-ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q8_0(cpu_feature features);
+ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, const ggml_tensor * tensor);  // ggml_kleidiai_select_kernels
+ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_0(cpu_feature features);  // ggml_kleidiai_select_kernels_q4_0
+ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q8_0(cpu_feature features);  // ggml_kleidiai_select_kernels_q8_0

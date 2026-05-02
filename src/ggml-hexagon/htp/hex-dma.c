@@ -1,28 +1,28 @@
-#include "hex-dma.h"
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stdbool.h>  // 引入 stdbool.h 头文件
+#include <stdlib.h>  // 引入 stdlib.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
 #pragma clang diagnostic ignored "-Wunused-function"
 
 static inline uint32_t pow2_ceil(uint32_t x) {
     if (x <= 1) {
-        return 1;
+        return 1;  // 返回
     }
     int p = 2;
     x--;
     while (x >>= 1) {
         p <<= 1;
     }
-    return p;
+    return p;  // 返回
 }
 
 dma_queue * dma_queue_create(size_t capacity) {
     dma_queue * q = (dma_queue *) memalign(32, sizeof(dma_queue));
     if (q == NULL) {
         FARF(ERROR, "%s: failed to allocate DMA queue\n", __FUNCTION__);
-        return NULL;
+        return NULL;  // 返回
     }
 
     capacity = pow2_ceil(capacity);
@@ -41,17 +41,17 @@ dma_queue * dma_queue_create(size_t capacity) {
 
     if (!q->desc && !q->dptr) {
         FARF(ERROR, "%s: failed to allocate DMA queue items\n", __FUNCTION__);
-        return NULL;
+        return NULL;  // 返回
     }
 
     FARF(HIGH, "dma-queue: capacity %u\n", capacity);
 
-    return q;
+    return q;  // 返回
 }
 
 void dma_queue_delete(dma_queue * q) {
     if (!q) {
-        return;
+        return;  // 返回
     }
     free(q->desc);
     free(q->dptr);

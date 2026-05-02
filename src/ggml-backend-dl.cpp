@@ -1,6 +1,6 @@
-#include "ggml-backend-dl.h"
+#include "ggml-backend-dl.h"  // 引入 ggml-backend-dl.h 头文件
 
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
 
 dl_handle * dl_load_library(const fs::path & path) {
     // suppress error dialogs for missing DLLs
@@ -11,7 +11,7 @@ dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    return handle;  // 返回
 }
 
 void * dl_get_sym(dl_handle * handle, const char * name) {
@@ -22,27 +22,27 @@ void * dl_get_sym(dl_handle * handle, const char * name) {
 
     SetErrorMode(old_mode);
 
-    return p;
+    return p;  // 返回
 }
 
 const char * dl_error() {
-    return "";
+    return "";  // 返回
 }
 
-#else
+#else  // 否则
 
 dl_handle * dl_load_library(const fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    return handle;  // 返回
 }
 
 void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+    return dlsym(handle, name);  // dlsym
 }
 
 const char * dl_error() {
     const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+    return rslt != nullptr ? rslt : "";  // 返回
 }
 
-#endif
+#endif  // 条件编译结束

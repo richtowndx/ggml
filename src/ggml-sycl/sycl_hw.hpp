@@ -1,19 +1,19 @@
-#ifndef SYCL_HW_HPP
-#define SYCL_HW_HPP
+#ifndef SYCL_HW_HPP  // 如果未定义 SYCL_HW_HPP 则编译
+#define SYCL_HW_HPP  // 宏定义 SYCL_HW_HPP
 
-#include <algorithm>
-#include <stdio.h>
-#include <vector>
-#include <map>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <stdio.h>  // 引入 stdio.h 头文件
+#include <vector>  // 引入 vector 头文件
+#include <map>  // 引入 map 头文件
 
-#include <sycl/sycl.hpp>
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
 
-namespace syclex = sycl::ext::oneapi::experimental;
-using gpu_arch = sycl::ext::oneapi::experimental::architecture;
+namespace syclex = sycl::ext::oneapi::experimental;  // 命名空间
+using gpu_arch = sycl::ext::oneapi::experimental::architecture;  // using 声明
 
 // It's used to mark the GPU computing capacity
 // The value must flow the order of performance.
-enum sycl_intel_gpu_family {
+enum sycl_intel_gpu_family {  // 枚举定义
   GPU_FAMILY_UKNOWN = -1,
   // iGPU without Xe core, before Meteor Lake iGPU(Xe)
   GPU_FAMILY_IGPU_NON_XE = 0,
@@ -25,7 +25,7 @@ enum sycl_intel_gpu_family {
   GPU_FAMILY_DGPU_CLOUD = 3
 };
 
-struct sycl_hw_info {
+struct sycl_hw_info {  // 结构体定义
   syclex::architecture arch;
   const char* arch_name;
   int32_t device_id;
@@ -33,6 +33,6 @@ struct sycl_hw_info {
   sycl_intel_gpu_family gpu_family;
 };
 
-sycl_hw_info get_device_hw_info(sycl::device *device_ptr);
+sycl_hw_info get_device_hw_info(sycl::device *device_ptr);  // get_device_hw_info
 
-#endif // SYCL_HW_HPP
+#endif // SYCL_HW_HPP  // 条件编译结束

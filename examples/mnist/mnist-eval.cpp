@@ -1,20 +1,20 @@
-#include "ggml.h"
-#include "ggml-opt.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-opt.h"  // 引入 ggml-opt.h 头文件
 
-#include "mnist-common.h"
+#include "mnist-common.h"  // 引入 mnist-common.h 头文件
 
-#include <cmath>
-#include <cstdint>
-#include <cstdio>
-#include <cstring>
-#include <ctime>
-#include <string>
-#include <thread>
-#include <vector>
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <ctime>  // 引入 ctime 头文件
+#include <string>  // 引入 string 头文件
+#include <thread>  // 引入 thread 头文件
+#include <vector>  // 引入 vector 头文件
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER)  // 条件编译
 #pragma warning(disable: 4244 4267) // possible loss of data
-#endif
+#endif  // 条件编译结束
 
 int main(int argc, char ** argv) {
     srand(time(NULL));
@@ -28,10 +28,10 @@ int main(int argc, char ** argv) {
     ggml_opt_dataset_t dataset = ggml_opt_dataset_init(GGML_TYPE_F32, GGML_TYPE_F32, MNIST_NINPUT, MNIST_NCLASSES, MNIST_NTEST, MNIST_NBATCH_PHYSICAL);
 
     if (!mnist_image_load(argv[2], dataset)) {
-        return 1;
+        return 1;  // 返回
     }
     if (!mnist_label_load(argv[3], dataset)) {
-        return 1;
+        return 1;  // 返回
     }
 
     const int iex = rand() % MNIST_NTEST;
@@ -63,5 +63,5 @@ int main(int argc, char ** argv) {
 
     ggml_opt_result_free(result_eval);
 
-    return 0;
+    return 0;  // 返回
 }

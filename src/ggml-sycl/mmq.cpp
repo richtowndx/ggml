@@ -10,15 +10,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "mmq.hpp"
-#include "vecdotq.hpp"
+#include "mmq.hpp"  // 引入 mmq.hpp 头文件
+#include "vecdotq.hpp"  // 引入 vecdotq.hpp 头文件
 
-typedef void (*allocate_tiles_sycl_t)(
+typedef void (*allocate_tiles_sycl_t)(  // 类型定义
     int** x_ql,
     sycl::half2** x_dm,
     int** x_qh,
     int** x_sc);
-typedef void (*load_tiles_sycl_t)(
+typedef void (*load_tiles_sycl_t)(  // 类型定义
     const void* __restrict__ vx,
     int* __restrict__ x_ql,
     sycl::half2* __restrict__ x_dm,
@@ -28,7 +28,7 @@ typedef void (*load_tiles_sycl_t)(
     const int& i_max,
     const int& k,
     const int& blocks_per_row);
-typedef float (*vec_dot_q_mul_mat_sycl_t)(
+typedef float (*vec_dot_q_mul_mat_sycl_t)(  // 类型定义
     const int* __restrict__ x_ql,
     const sycl::half2* __restrict__ x_dm,
     const int* __restrict__ x_qh,
@@ -40,7 +40,7 @@ typedef float (*vec_dot_q_mul_mat_sycl_t)(
     const int& k);
 
 
-template <int mmq_y>
+template <int mmq_y>  // 模板
 static __dpct_inline__ void
 allocate_tiles_q4_0(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
                     int *tile_x_qs_q4_0, float *tile_x_d_q4_0) {
@@ -50,7 +50,7 @@ allocate_tiles_q4_0(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
     *x_dm = (sycl::half2 *)tile_x_d_q4_0;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
+template <int mmq_y, int nwarps, bool need_check>  // 模板
 static __dpct_inline__ void
 load_tiles_q4_0(const void *__restrict__ vx, int *__restrict__ x_ql,
                 sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
@@ -118,12 +118,12 @@ static __dpct_inline__ float vec_dot_q4_0_q8_1_mul_mat(
         u[2*l+1] = y_qs[j * WARP_SIZE + (kyqs + l + QI4_0) % WARP_SIZE];
     }
 
-    return vec_dot_q4_0_q8_1_impl<VDR_Q4_0_Q8_1_MMQ>
+    return vec_dot_q4_0_q8_1_impl<VDR_Q4_0_Q8_1_MMQ>  // 返回
         (&x_ql[i * (WARP_SIZE + 1) + k], u, x_dmf[i * (WARP_SIZE/QI4_0) + i/QI4_0 + k/QI4_0],
          y_ds[j * (WARP_SIZE/QI8_1) + (2*k/QI8_1) % (WARP_SIZE/QI8_1)]);
 }
 
-template <int mmq_y>
+template <int mmq_y>  // 模板
 static __dpct_inline__ void
 allocate_tiles_q4_1(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
                     int *tile_x_qs_q4_1, sycl::half2 *tile_x_dm_q4_1) {
@@ -134,7 +134,7 @@ allocate_tiles_q4_1(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
 }
 
 
-template <int mmq_y, int nwarps, bool need_check>
+template <int mmq_y, int nwarps, bool need_check>  // 模板
 static __dpct_inline__ void
 load_tiles_q4_1(const void *__restrict__ vx, int *__restrict__ x_ql,
                 sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
@@ -199,12 +199,12 @@ static __dpct_inline__ float vec_dot_q4_1_q8_1_mul_mat(
         u[2*l+1] = y_qs[j * WARP_SIZE + (kyqs + l + QI4_1) % WARP_SIZE];
     }
 
-    return vec_dot_q4_1_q8_1_impl<VDR_Q4_1_Q8_1_MMQ>
+    return vec_dot_q4_1_q8_1_impl<VDR_Q4_1_Q8_1_MMQ>  // 返回
         (&x_ql[i * (WARP_SIZE + 1) + k], u, x_dm[i * (WARP_SIZE/QI4_1) + i/QI4_1 + k/QI4_1],
          y_ds[j * (WARP_SIZE/QI8_1) + (2*k/QI8_1) % (WARP_SIZE/QI8_1)]);
 }
 
-template <int mmq_y>
+template <int mmq_y>  // 模板
 static __dpct_inline__ void
 allocate_tiles_q5_0(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
                     int *tile_x_ql_q5_0, float *tile_x_d_q5_0) {
@@ -214,7 +214,7 @@ allocate_tiles_q5_0(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
     *x_dm = (sycl::half2 *)tile_x_d_q5_0;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
+template <int mmq_y, int nwarps, bool need_check>  // 模板
 static __dpct_inline__ void
 load_tiles_q5_0(const void *__restrict__ vx, int *__restrict__ x_ql,
                 sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
@@ -304,11 +304,11 @@ static __dpct_inline__ float vec_dot_q5_0_q8_1_mul_mat(
         u[2*l+1] = y_qs[j * WARP_SIZE + (kyqs + l + QI5_0) % WARP_SIZE];
     }
 
-    return vec_dot_q8_0_q8_1_impl<QR5_0*VDR_Q5_0_Q8_1_MMQ>
+    return vec_dot_q8_0_q8_1_impl<QR5_0*VDR_Q5_0_Q8_1_MMQ>  // 返回
         (&x_ql[i * (2*WARP_SIZE + 1) + 2 * k], u, x_dmf[index_bx], y_df[j * (WARP_SIZE/QI8_1) + (2*k/QI8_1) % (WARP_SIZE/QI8_1)]);
 }
 
-template <int mmq_y>
+template <int mmq_y>  // 模板
 static __dpct_inline__ void
 allocate_tiles_q5_1(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
                     int *tile_x_ql_q5_1, sycl::half2 *tile_x_dm_q5_1) {
@@ -318,7 +318,7 @@ allocate_tiles_q5_1(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
     *x_dm = tile_x_dm_q5_1;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
+template <int mmq_y, int nwarps, bool need_check>  // 模板
 static __dpct_inline__ void
 load_tiles_q5_1(const void *__restrict__ vx, int *__restrict__ x_ql,
                 sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
@@ -401,11 +401,11 @@ static __dpct_inline__ float vec_dot_q5_1_q8_1_mul_mat(
         u[2*l+1] = y_qs[j * WARP_SIZE + (kyqs + l + QI5_1) % WARP_SIZE];
     }
 
-    return vec_dot_q8_1_q8_1_impl<QR5_1*VDR_Q5_1_Q8_1_MMQ>
+    return vec_dot_q8_1_q8_1_impl<QR5_1*VDR_Q5_1_Q8_1_MMQ>  // 返回
         (&x_ql[i * (2*WARP_SIZE + 1) + 2 * k], u, x_dm[index_bx], y_ds[j * (WARP_SIZE/QI8_1) + (2*k/QI8_1) % (WARP_SIZE/QI8_1)]);
 }
 
-template <int mmq_y>
+template <int mmq_y>  // 模板
 static __dpct_inline__ void
 allocate_tiles_q8_0(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
                     int *tile_x_qs_q8_0, float *tile_x_d_q8_0) {
@@ -415,7 +415,7 @@ allocate_tiles_q8_0(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
     *x_dm = (sycl::half2 *)tile_x_d_q8_0;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
+template <int mmq_y, int nwarps, bool need_check>  // 模板
 static __dpct_inline__ void
 load_tiles_q8_0(const void *__restrict__ vx, int *__restrict__ x_ql,
                 sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
@@ -474,12 +474,12 @@ static __dpct_inline__ float vec_dot_q8_0_q8_1_mul_mat(
     const float * x_dmf = (const float *) x_dm;
     const float * y_df  = (const float *) y_ds;
 
-    return vec_dot_q8_0_q8_1_impl<VDR_Q8_0_Q8_1_MMQ>
+    return vec_dot_q8_0_q8_1_impl<VDR_Q8_0_Q8_1_MMQ>  // 返回
         (&x_ql[i * (WARP_SIZE + 1) + k], &y_qs[j * WARP_SIZE + k], x_dmf[i * (WARP_SIZE/QI8_0) + i/QI8_0 + k/QI8_0],
          y_df[j * (WARP_SIZE/QI8_1) + k/QI8_1]);
 }
 
-template <int mmq_y>
+template <int mmq_y>  // 模板
 static __dpct_inline__ void
 allocate_tiles_q2_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
                     int *tile_x_ql_q2_K, sycl::half2 *tile_x_dm_q2_K,
@@ -491,7 +491,7 @@ allocate_tiles_q2_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
     *x_sc = tile_x_sc_q2_K;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
+template <int mmq_y, int nwarps, bool need_check>  // 模板
 static __dpct_inline__ void
 load_tiles_q2_K(const void *__restrict__ vx, int *__restrict__ x_ql,
                 sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
@@ -552,7 +552,7 @@ load_tiles_q2_K(const void *__restrict__ vx, int *__restrict__ x_ql,
     }
 }
 
-#define VDR_Q2_K_Q8_1_MMQ  2
+#define VDR_Q2_K_Q8_1_MMQ  2  // 宏定义 VDR_Q2_K_Q8_1_MMQ
 // contiguous u/y values
 static __dpct_inline__ float
 vec_dot_q2_K_q8_1_impl_mmq(const int *__restrict__ v, const int *__restrict__ u,
@@ -613,10 +613,10 @@ static __dpct_inline__ float vec_dot_q2_K_q8_1_mul_mat(
     const uint8_t * scales = ((const uint8_t *) &x_sc[i * (WARP_SIZE/4) + i/4 + kbx*4]) + ky/4;
 
     const int index_y = j * WARP_SIZE + (QR2_K*k) % WARP_SIZE;
-    return vec_dot_q2_K_q8_1_impl_mmq(v, &y_qs[index_y], scales, x_dm[i * (WARP_SIZE/QI2_K) + i/QI2_K + kbx], y_df[index_y/QI8_1]);
+    return vec_dot_q2_K_q8_1_impl_mmq(v, &y_qs[index_y], scales, x_dm[i * (WARP_SIZE/QI2_K) + i/QI2_K + kbx], y_df[index_y/QI8_1]);  // vec_dot_q2_K_q8_1_impl_mmq
 }
 
-template <int mmq_y>
+template <int mmq_y>  // 模板
 static __dpct_inline__ void
 allocate_tiles_q3_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
                     int *tile_x_ql_q3_K, sycl::half2 *tile_x_dm_q3_K,
@@ -628,7 +628,7 @@ allocate_tiles_q3_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
     *x_sc = tile_x_sc_q3_K;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
+template <int mmq_y, int nwarps, bool need_check>  // 模板
 static __dpct_inline__ void
 load_tiles_q3_K(const void *__restrict__ vx, int *__restrict__ x_ql,
                 sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
@@ -716,7 +716,7 @@ load_tiles_q3_K(const void *__restrict__ vx, int *__restrict__ x_ql,
     }
 }
 
-#define VDR_Q3_K_Q8_1_MMQ  2
+#define VDR_Q3_K_Q8_1_MMQ  2  // 宏定义 VDR_Q3_K_Q8_1_MMQ
 // contiguous u/y values
 static __dpct_inline__ float
 vec_dot_q3_K_q8_1_impl_mmq(const int *__restrict__ v, const int *__restrict__ u,
@@ -736,7 +736,7 @@ vec_dot_q3_K_q8_1_impl_mmq(const int *__restrict__ v, const int *__restrict__ u,
         sumi += sumi_sc * scales[i0 / (QI8_1/2)];
     }
 
-    return d3*d8 * sumi;
+    return d3*d8 * sumi;  // 返回
 }
 
 static __dpct_inline__ float vec_dot_q3_K_q8_1_mul_mat(
@@ -767,10 +767,10 @@ static __dpct_inline__ float vec_dot_q3_K_q8_1_mul_mat(
     }
 
     const int index_y = j * WARP_SIZE + (k*QR3_K) % WARP_SIZE;
-    return vec_dot_q3_K_q8_1_impl_mmq(v, &y_qs[index_y], scales, x_dmf[i * (WARP_SIZE/QI3_K) + i/QI3_K + kbx], y_df[index_y/QI8_1]);
+    return vec_dot_q3_K_q8_1_impl_mmq(v, &y_qs[index_y], scales, x_dmf[i * (WARP_SIZE/QI3_K) + i/QI3_K + kbx], y_df[index_y/QI8_1]);  // vec_dot_q3_K_q8_1_impl_mmq
 }
 
-template <int mmq_y>
+template <int mmq_y>  // 模板
 static __dpct_inline__ void
 allocate_tiles_q4_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
                     int *tile_x_ql_q4_K, sycl::half2 *tile_x_dm_q4_K,
@@ -782,7 +782,7 @@ allocate_tiles_q4_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
     *x_sc = tile_x_sc_q4_K;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
+template <int mmq_y, int nwarps, bool need_check>  // 模板
 static __dpct_inline__ void
 load_tiles_q4_K(const void *__restrict__ vx, int *__restrict__ x_ql,
                 sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
@@ -826,11 +826,11 @@ load_tiles_q4_K(const void *__restrict__ vx, int *__restrict__ x_ql,
 
         const block_q4_K * bxi = bx0 + i*blocks_per_row + kbxd;
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
         x_dm[i * (WARP_SIZE/QI4_K) + i / QI4_K + kbxd] = bxi->dm;
-#else
+#else  // 否则
         x_dm[i * (WARP_SIZE/QI4_K) + i / QI4_K + kbxd] = {bxi->dm[0], bxi->dm[1]};
-#endif
+#endif  // 条件编译结束
     }
 
 #pragma unroll
@@ -856,7 +856,7 @@ load_tiles_q4_K(const void *__restrict__ vx, int *__restrict__ x_ql,
 }
 
 
-#define VDR_Q4_K_Q8_1_MMQ  8
+#define VDR_Q4_K_Q8_1_MMQ  8  // 宏定义 VDR_Q4_K_Q8_1_MMQ
 
 // contiguous u/y values
 static __dpct_inline__ float vec_dot_q4_K_q8_1_impl_mmq(
@@ -901,11 +901,11 @@ static __dpct_inline__ float vec_dot_q4_K_q8_1_mul_mat(
     const uint8_t * sc = ((const uint8_t *) &x_sc[i * (WARP_SIZE/8) + i/8 + k/16]) + 2*((k % 16) / 8);
 
     const int index_y = j * WARP_SIZE + (QR4_K*k) % WARP_SIZE;
-    return vec_dot_q4_K_q8_1_impl_mmq(&x_ql[i * (WARP_SIZE + 1) + k], &y_qs[index_y], sc, sc+8,
+    return vec_dot_q4_K_q8_1_impl_mmq(&x_ql[i * (WARP_SIZE + 1) + k], &y_qs[index_y], sc, sc+8,  // vec_dot_q4_K_q8_1_impl_mmq
                                       x_dm[i * (WARP_SIZE/QI4_K) + i/QI4_K], &y_ds[index_y/QI8_1]);
 }
 
-template <int mmq_y>
+template <int mmq_y>  // 模板
 static __dpct_inline__ void
 allocate_tiles_q5_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
                     int *tile_x_ql_q5_K, sycl::half2 *tile_x_dm_q5_K,
@@ -917,7 +917,7 @@ allocate_tiles_q5_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
     *x_sc = tile_x_sc_q5_K;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
+template <int mmq_y, int nwarps, bool need_check>  // 模板
 static __dpct_inline__ void
 load_tiles_q5_K(const void *__restrict__ vx, int *__restrict__ x_ql,
                 sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
@@ -974,9 +974,9 @@ load_tiles_q5_K(const void *__restrict__ vx, int *__restrict__ x_ql,
 
         const block_q5_K * bxi = bx0 + i*blocks_per_row + kbxd;
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
         x_dm[i * (WARP_SIZE/QI5_K) + i / QI5_K + kbxd] = bxi->dm;
-#endif
+#endif  // 条件编译结束
     }
 
 #pragma unroll
@@ -1001,7 +1001,7 @@ load_tiles_q5_K(const void *__restrict__ vx, int *__restrict__ x_ql,
     }
 }
 
-#define VDR_Q5_K_Q8_1_MMQ  8
+#define VDR_Q5_K_Q8_1_MMQ  8  // 宏定义 VDR_Q5_K_Q8_1_MMQ
 
 // contiguous u/y values
 static __dpct_inline__ float vec_dot_q5_K_q8_1_impl_mmq(
@@ -1046,11 +1046,11 @@ static __dpct_inline__ float vec_dot_q5_K_q8_1_mul_mat(
 
     const int index_x = i * (QR5_K*WARP_SIZE + 1) +  QR5_K*k;
     const int index_y = j * WARP_SIZE             + (QR5_K*k) % WARP_SIZE;
-    return vec_dot_q5_K_q8_1_impl_mmq(&x_ql[index_x], &y_qs[index_y], sc, sc+8,
+    return vec_dot_q5_K_q8_1_impl_mmq(&x_ql[index_x], &y_qs[index_y], sc, sc+8,  // 返回
                                       x_dm[i * (WARP_SIZE/QI5_K) + i/QI5_K], &y_ds[index_y/QI8_1]);
 }
 
-template <int mmq_y>
+template <int mmq_y>  // 模板
 static __dpct_inline__ void
 allocate_tiles_q6_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
                     int *tile_x_ql, sycl::half2 *tile_x_dm, int *tile_x_sc) {
@@ -1061,7 +1061,7 @@ allocate_tiles_q6_K(int **x_ql, sycl::half2 **x_dm, int **x_qh, int **x_sc,
     *x_sc = tile_x_sc;
 }
 
-template <int mmq_y, int nwarps, bool need_check>
+template <int mmq_y, int nwarps, bool need_check>  // 模板
 static __dpct_inline__ void
 load_tiles_q6_K(const void *__restrict__ vx, int *__restrict__ x_ql,
                 sycl::half2 *__restrict__ x_dm, int *__restrict__ x_qh,
@@ -1140,7 +1140,7 @@ load_tiles_q6_K(const void *__restrict__ vx, int *__restrict__ x_ql,
     }
 }
 
-#define VDR_Q6_K_Q8_1_MMQ  8
+#define VDR_Q6_K_Q8_1_MMQ  8  // 宏定义 VDR_Q6_K_Q8_1_MMQ
 
 // contiguous u/y values
 static __dpct_inline__ float
@@ -1171,7 +1171,7 @@ vec_dot_q6_K_q8_1_impl_mmq(const int *__restrict__ v, const int *__restrict__ u,
                   (sc[i0 / 2 + 0] * sumi_d.x() + sc[i0 / 2 + 1] * sumi_d.y());
     }
 
-    return d6 * sumf_d;
+    return d6 * sumf_d;  // 返回
 }
 
 static __dpct_inline__ float vec_dot_q6_K_q8_1_mul_mat(
@@ -1188,10 +1188,10 @@ static __dpct_inline__ float vec_dot_q6_K_q8_1_mul_mat(
 
     const int index_x = i * (QR6_K*WARP_SIZE + 1) +  QR6_K*k;
     const int index_y = j * WARP_SIZE             + (QR6_K*k) % WARP_SIZE;
-    return vec_dot_q6_K_q8_1_impl_mmq(&x_ql[index_x], &y_qs[index_y], sc, x_dmf[i * (WARP_SIZE/QI6_K) + i/QI6_K], &y_df[index_y/QI8_1]);
+    return vec_dot_q6_K_q8_1_impl_mmq(&x_ql[index_x], &y_qs[index_y], sc, x_dmf[i * (WARP_SIZE/QI6_K) + i/QI6_K], &y_df[index_y/QI8_1]);  // vec_dot_q6_K_q8_1_impl_mmq
 }
 
-template <int qk, int qr, int qi, bool need_sum, typename block_q_t, int mmq_x,
+template <int qk, int qr, int qi, bool need_sum, typename block_q_t, int mmq_x,  // 模板
           int mmq_y, int nwarps, load_tiles_sycl_t load_tiles, int vdr,
           vec_dot_q_mul_mat_sycl_t vec_dot>
 /*
@@ -1318,7 +1318,7 @@ mul_mat_q(const void *__restrict__ vx, const void *__restrict__ vy,
         const int col_dst = col_dst_0 + j + item_ct1.get_local_id(1);
 
         if (col_dst >= ncols_dst) {
-            return;
+            return;  // 返回
         }
 
 #pragma unroll
@@ -1334,26 +1334,26 @@ mul_mat_q(const void *__restrict__ vx, const void *__restrict__ vy,
     }
 }
 
-#define  MMQ_X_Q4_0_RDNA2  64
-#define  MMQ_Y_Q4_0_RDNA2  128
-#define NWARPS_Q4_0_RDNA2  8
-#define  MMQ_X_Q4_0_RDNA1  64
-#define  MMQ_Y_Q4_0_RDNA1  64
-#define NWARPS_Q4_0_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q4_0_AMPERE 4
-#define  MMQ_Y_Q4_0_AMPERE 32
-#define NWARPS_Q4_0_AMPERE 4
-#else
-#define  MMQ_X_Q4_0_AMPERE 64
-#define  MMQ_Y_Q4_0_AMPERE 128
-#define NWARPS_Q4_0_AMPERE 4
-#endif
-#define  MMQ_X_Q4_0_PASCAL 64
-#define  MMQ_Y_Q4_0_PASCAL 64
-#define NWARPS_Q4_0_PASCAL 8
+#define  MMQ_X_Q4_0_RDNA2  64  // 宏定义 MMQ_X_Q4_0_RDNA2
+#define  MMQ_Y_Q4_0_RDNA2  128  // 宏定义 MMQ_Y_Q4_0_RDNA2
+#define NWARPS_Q4_0_RDNA2  8  // 宏定义 NWARPS_Q4_0_RDNA2
+#define  MMQ_X_Q4_0_RDNA1  64  // 宏定义 MMQ_X_Q4_0_RDNA1
+#define  MMQ_Y_Q4_0_RDNA1  64  // 宏定义 MMQ_Y_Q4_0_RDNA1
+#define NWARPS_Q4_0_RDNA1  8  // 宏定义 NWARPS_Q4_0_RDNA1
+#if defined(SYCL_USE_XMX)  // 条件编译
+#define  MMQ_X_Q4_0_AMPERE 4  // 宏定义 MMQ_X_Q4_0_AMPERE
+#define  MMQ_Y_Q4_0_AMPERE 32  // 宏定义 MMQ_Y_Q4_0_AMPERE
+#define NWARPS_Q4_0_AMPERE 4  // 宏定义 NWARPS_Q4_0_AMPERE
+#else  // 否则
+#define  MMQ_X_Q4_0_AMPERE 64  // 宏定义 MMQ_X_Q4_0_AMPERE
+#define  MMQ_Y_Q4_0_AMPERE 128  // 宏定义 MMQ_Y_Q4_0_AMPERE
+#define NWARPS_Q4_0_AMPERE 4  // 宏定义 NWARPS_Q4_0_AMPERE
+#endif  // 条件编译结束
+#define  MMQ_X_Q4_0_PASCAL 64  // 宏定义 MMQ_X_Q4_0_PASCAL
+#define  MMQ_Y_Q4_0_PASCAL 64  // 宏定义 MMQ_Y_Q4_0_PASCAL
+#define NWARPS_Q4_0_PASCAL 8  // 宏定义 NWARPS_Q4_0_PASCAL
 
-template <bool need_check> static void
+template <bool need_check> static void  // 模板
     mul_mat_q4_0(
     const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
     const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
@@ -1378,26 +1378,26 @@ template <bool need_check> static void
         tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q4_1_RDNA2  64
-#define  MMQ_Y_Q4_1_RDNA2  128
-#define NWARPS_Q4_1_RDNA2  8
-#define  MMQ_X_Q4_1_RDNA1  64
-#define  MMQ_Y_Q4_1_RDNA1  64
-#define NWARPS_Q4_1_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q4_1_AMPERE 4
-#define  MMQ_Y_Q4_1_AMPERE 32
-#define NWARPS_Q4_1_AMPERE 4
-#else
-#define  MMQ_X_Q4_1_AMPERE 64
-#define  MMQ_Y_Q4_1_AMPERE 128
-#define NWARPS_Q4_1_AMPERE 4
-#endif
-#define  MMQ_X_Q4_1_PASCAL 64
-#define  MMQ_Y_Q4_1_PASCAL 64
-#define NWARPS_Q4_1_PASCAL 8
+#define  MMQ_X_Q4_1_RDNA2  64  // 宏定义 MMQ_X_Q4_1_RDNA2
+#define  MMQ_Y_Q4_1_RDNA2  128  // 宏定义 MMQ_Y_Q4_1_RDNA2
+#define NWARPS_Q4_1_RDNA2  8  // 宏定义 NWARPS_Q4_1_RDNA2
+#define  MMQ_X_Q4_1_RDNA1  64  // 宏定义 MMQ_X_Q4_1_RDNA1
+#define  MMQ_Y_Q4_1_RDNA1  64  // 宏定义 MMQ_Y_Q4_1_RDNA1
+#define NWARPS_Q4_1_RDNA1  8  // 宏定义 NWARPS_Q4_1_RDNA1
+#if defined(SYCL_USE_XMX)  // 条件编译
+#define  MMQ_X_Q4_1_AMPERE 4  // 宏定义 MMQ_X_Q4_1_AMPERE
+#define  MMQ_Y_Q4_1_AMPERE 32  // 宏定义 MMQ_Y_Q4_1_AMPERE
+#define NWARPS_Q4_1_AMPERE 4  // 宏定义 NWARPS_Q4_1_AMPERE
+#else  // 否则
+#define  MMQ_X_Q4_1_AMPERE 64  // 宏定义 MMQ_X_Q4_1_AMPERE
+#define  MMQ_Y_Q4_1_AMPERE 128  // 宏定义 MMQ_Y_Q4_1_AMPERE
+#define NWARPS_Q4_1_AMPERE 4  // 宏定义 NWARPS_Q4_1_AMPERE
+#endif  // 条件编译结束
+#define  MMQ_X_Q4_1_PASCAL 64  // 宏定义 MMQ_X_Q4_1_PASCAL
+#define  MMQ_Y_Q4_1_PASCAL 64  // 宏定义 MMQ_Y_Q4_1_PASCAL
+#define NWARPS_Q4_1_PASCAL 8  // 宏定义 NWARPS_Q4_1_PASCAL
 
-template <bool need_check> static void
+template <bool need_check> static void  // 模板
     mul_mat_q4_1(
     const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
     const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
@@ -1421,26 +1421,26 @@ template <bool need_check> static void
         tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q5_0_RDNA2  64
-#define  MMQ_Y_Q5_0_RDNA2  128
-#define NWARPS_Q5_0_RDNA2  8
-#define  MMQ_X_Q5_0_RDNA1  64
-#define  MMQ_Y_Q5_0_RDNA1  64
-#define NWARPS_Q5_0_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q5_0_AMPERE 4
-#define  MMQ_Y_Q5_0_AMPERE 32
-#define NWARPS_Q5_0_AMPERE 4
-#else
-#define  MMQ_X_Q5_0_AMPERE 128
-#define  MMQ_Y_Q5_0_AMPERE 64
-#define NWARPS_Q5_0_AMPERE 4
-#endif
-#define  MMQ_X_Q5_0_PASCAL 64
-#define  MMQ_Y_Q5_0_PASCAL 64
-#define NWARPS_Q5_0_PASCAL 8
+#define  MMQ_X_Q5_0_RDNA2  64  // 宏定义 MMQ_X_Q5_0_RDNA2
+#define  MMQ_Y_Q5_0_RDNA2  128  // 宏定义 MMQ_Y_Q5_0_RDNA2
+#define NWARPS_Q5_0_RDNA2  8  // 宏定义 NWARPS_Q5_0_RDNA2
+#define  MMQ_X_Q5_0_RDNA1  64  // 宏定义 MMQ_X_Q5_0_RDNA1
+#define  MMQ_Y_Q5_0_RDNA1  64  // 宏定义 MMQ_Y_Q5_0_RDNA1
+#define NWARPS_Q5_0_RDNA1  8  // 宏定义 NWARPS_Q5_0_RDNA1
+#if defined(SYCL_USE_XMX)  // 条件编译
+#define  MMQ_X_Q5_0_AMPERE 4  // 宏定义 MMQ_X_Q5_0_AMPERE
+#define  MMQ_Y_Q5_0_AMPERE 32  // 宏定义 MMQ_Y_Q5_0_AMPERE
+#define NWARPS_Q5_0_AMPERE 4  // 宏定义 NWARPS_Q5_0_AMPERE
+#else  // 否则
+#define  MMQ_X_Q5_0_AMPERE 128  // 宏定义 MMQ_X_Q5_0_AMPERE
+#define  MMQ_Y_Q5_0_AMPERE 64  // 宏定义 MMQ_Y_Q5_0_AMPERE
+#define NWARPS_Q5_0_AMPERE 4  // 宏定义 NWARPS_Q5_0_AMPERE
+#endif  // 条件编译结束
+#define  MMQ_X_Q5_0_PASCAL 64  // 宏定义 MMQ_X_Q5_0_PASCAL
+#define  MMQ_Y_Q5_0_PASCAL 64  // 宏定义 MMQ_Y_Q5_0_PASCAL
+#define NWARPS_Q5_0_PASCAL 8  // 宏定义 NWARPS_Q5_0_PASCAL
 
-template <bool need_check> static void
+template <bool need_check> static void  // 模板
     mul_mat_q5_0(
     const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
     const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
@@ -1464,26 +1464,26 @@ template <bool need_check> static void
         tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q5_1_RDNA2  64
-#define  MMQ_Y_Q5_1_RDNA2  128
-#define NWARPS_Q5_1_RDNA2  8
-#define  MMQ_X_Q5_1_RDNA1  64
-#define  MMQ_Y_Q5_1_RDNA1  64
-#define NWARPS_Q5_1_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q5_1_AMPERE 4
-#define  MMQ_Y_Q5_1_AMPERE 32
-#define NWARPS_Q5_1_AMPERE 4
-#else
-#define  MMQ_X_Q5_1_AMPERE 128
-#define  MMQ_Y_Q5_1_AMPERE 64
-#define NWARPS_Q5_1_AMPERE 4
-#endif
-#define  MMQ_X_Q5_1_PASCAL 64
-#define  MMQ_Y_Q5_1_PASCAL 64
-#define NWARPS_Q5_1_PASCAL 8
+#define  MMQ_X_Q5_1_RDNA2  64  // 宏定义 MMQ_X_Q5_1_RDNA2
+#define  MMQ_Y_Q5_1_RDNA2  128  // 宏定义 MMQ_Y_Q5_1_RDNA2
+#define NWARPS_Q5_1_RDNA2  8  // 宏定义 NWARPS_Q5_1_RDNA2
+#define  MMQ_X_Q5_1_RDNA1  64  // 宏定义 MMQ_X_Q5_1_RDNA1
+#define  MMQ_Y_Q5_1_RDNA1  64  // 宏定义 MMQ_Y_Q5_1_RDNA1
+#define NWARPS_Q5_1_RDNA1  8  // 宏定义 NWARPS_Q5_1_RDNA1
+#if defined(SYCL_USE_XMX)  // 条件编译
+#define  MMQ_X_Q5_1_AMPERE 4  // 宏定义 MMQ_X_Q5_1_AMPERE
+#define  MMQ_Y_Q5_1_AMPERE 32  // 宏定义 MMQ_Y_Q5_1_AMPERE
+#define NWARPS_Q5_1_AMPERE 4  // 宏定义 NWARPS_Q5_1_AMPERE
+#else  // 否则
+#define  MMQ_X_Q5_1_AMPERE 128  // 宏定义 MMQ_X_Q5_1_AMPERE
+#define  MMQ_Y_Q5_1_AMPERE 64  // 宏定义 MMQ_Y_Q5_1_AMPERE
+#define NWARPS_Q5_1_AMPERE 4  // 宏定义 NWARPS_Q5_1_AMPERE
+#endif  // 条件编译结束
+#define  MMQ_X_Q5_1_PASCAL 64  // 宏定义 MMQ_X_Q5_1_PASCAL
+#define  MMQ_Y_Q5_1_PASCAL 64  // 宏定义 MMQ_Y_Q5_1_PASCAL
+#define NWARPS_Q5_1_PASCAL 8  // 宏定义 NWARPS_Q5_1_PASCAL
 
-template <bool need_check> static void
+template <bool need_check> static void  // 模板
 mul_mat_q5_1(
     const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
     const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
@@ -1507,26 +1507,26 @@ mul_mat_q5_1(
         tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q8_0_RDNA2  64
-#define  MMQ_Y_Q8_0_RDNA2  128
-#define NWARPS_Q8_0_RDNA2  8
-#define  MMQ_X_Q8_0_RDNA1  64
-#define  MMQ_Y_Q8_0_RDNA1  64
-#define NWARPS_Q8_0_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q8_0_AMPERE 4
-#define  MMQ_Y_Q8_0_AMPERE 32
-#define NWARPS_Q8_0_AMPERE 4
-#else
-#define  MMQ_X_Q8_0_AMPERE 128
-#define  MMQ_Y_Q8_0_AMPERE 64
-#define NWARPS_Q8_0_AMPERE 4
-#endif
-#define  MMQ_X_Q8_0_PASCAL 64
-#define  MMQ_Y_Q8_0_PASCAL 64
-#define NWARPS_Q8_0_PASCAL 8
+#define  MMQ_X_Q8_0_RDNA2  64  // 宏定义 MMQ_X_Q8_0_RDNA2
+#define  MMQ_Y_Q8_0_RDNA2  128  // 宏定义 MMQ_Y_Q8_0_RDNA2
+#define NWARPS_Q8_0_RDNA2  8  // 宏定义 NWARPS_Q8_0_RDNA2
+#define  MMQ_X_Q8_0_RDNA1  64  // 宏定义 MMQ_X_Q8_0_RDNA1
+#define  MMQ_Y_Q8_0_RDNA1  64  // 宏定义 MMQ_Y_Q8_0_RDNA1
+#define NWARPS_Q8_0_RDNA1  8  // 宏定义 NWARPS_Q8_0_RDNA1
+#if defined(SYCL_USE_XMX)  // 条件编译
+#define  MMQ_X_Q8_0_AMPERE 4  // 宏定义 MMQ_X_Q8_0_AMPERE
+#define  MMQ_Y_Q8_0_AMPERE 32  // 宏定义 MMQ_Y_Q8_0_AMPERE
+#define NWARPS_Q8_0_AMPERE 4  // 宏定义 NWARPS_Q8_0_AMPERE
+#else  // 否则
+#define  MMQ_X_Q8_0_AMPERE 128  // 宏定义 MMQ_X_Q8_0_AMPERE
+#define  MMQ_Y_Q8_0_AMPERE 64  // 宏定义 MMQ_Y_Q8_0_AMPERE
+#define NWARPS_Q8_0_AMPERE 4  // 宏定义 NWARPS_Q8_0_AMPERE
+#endif  // 条件编译结束
+#define  MMQ_X_Q8_0_PASCAL 64  // 宏定义 MMQ_X_Q8_0_PASCAL
+#define  MMQ_Y_Q8_0_PASCAL 64  // 宏定义 MMQ_Y_Q8_0_PASCAL
+#define NWARPS_Q8_0_PASCAL 8  // 宏定义 NWARPS_Q8_0_PASCAL
 
-template <bool need_check> static void
+template <bool need_check> static void  // 模板
     mul_mat_q8_0(
     const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
     const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
@@ -1550,26 +1550,26 @@ template <bool need_check> static void
         tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q2_K_RDNA2  64
-#define  MMQ_Y_Q2_K_RDNA2  128
-#define NWARPS_Q2_K_RDNA2  8
-#define  MMQ_X_Q2_K_RDNA1  128
-#define  MMQ_Y_Q2_K_RDNA1  32
-#define NWARPS_Q2_K_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q2_K_AMPERE 4
-#define  MMQ_Y_Q2_K_AMPERE 32
-#define NWARPS_Q2_K_AMPERE 4
-#else
-#define  MMQ_X_Q2_K_AMPERE 64
-#define  MMQ_Y_Q2_K_AMPERE 128
-#define NWARPS_Q2_K_AMPERE 4
-#endif
-#define  MMQ_X_Q2_K_PASCAL 64
-#define  MMQ_Y_Q2_K_PASCAL 64
-#define NWARPS_Q2_K_PASCAL 8
+#define  MMQ_X_Q2_K_RDNA2  64  // 宏定义 MMQ_X_Q2_K_RDNA2
+#define  MMQ_Y_Q2_K_RDNA2  128  // 宏定义 MMQ_Y_Q2_K_RDNA2
+#define NWARPS_Q2_K_RDNA2  8  // 宏定义 NWARPS_Q2_K_RDNA2
+#define  MMQ_X_Q2_K_RDNA1  128  // 宏定义 MMQ_X_Q2_K_RDNA1
+#define  MMQ_Y_Q2_K_RDNA1  32  // 宏定义 MMQ_Y_Q2_K_RDNA1
+#define NWARPS_Q2_K_RDNA1  8  // 宏定义 NWARPS_Q2_K_RDNA1
+#if defined(SYCL_USE_XMX)  // 条件编译
+#define  MMQ_X_Q2_K_AMPERE 4  // 宏定义 MMQ_X_Q2_K_AMPERE
+#define  MMQ_Y_Q2_K_AMPERE 32  // 宏定义 MMQ_Y_Q2_K_AMPERE
+#define NWARPS_Q2_K_AMPERE 4  // 宏定义 NWARPS_Q2_K_AMPERE
+#else  // 否则
+#define  MMQ_X_Q2_K_AMPERE 64  // 宏定义 MMQ_X_Q2_K_AMPERE
+#define  MMQ_Y_Q2_K_AMPERE 128  // 宏定义 MMQ_Y_Q2_K_AMPERE
+#define NWARPS_Q2_K_AMPERE 4  // 宏定义 NWARPS_Q2_K_AMPERE
+#endif  // 条件编译结束
+#define  MMQ_X_Q2_K_PASCAL 64  // 宏定义 MMQ_X_Q2_K_PASCAL
+#define  MMQ_Y_Q2_K_PASCAL 64  // 宏定义 MMQ_Y_Q2_K_PASCAL
+#define NWARPS_Q2_K_PASCAL 8  // 宏定义 NWARPS_Q2_K_PASCAL
 
-template <bool need_check> static void
+template <bool need_check> static void  // 模板
 mul_mat_q2_K(
     const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
     const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
@@ -1594,26 +1594,26 @@ mul_mat_q2_K(
         tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q3_K_RDNA2  128
-#define  MMQ_Y_Q3_K_RDNA2  64
-#define NWARPS_Q3_K_RDNA2  8
-#define  MMQ_X_Q3_K_RDNA1  32
-#define  MMQ_Y_Q3_K_RDNA1  128
-#define NWARPS_Q3_K_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q3_K_AMPERE 4
-#define  MMQ_Y_Q3_K_AMPERE 32
-#define NWARPS_Q3_K_AMPERE 4
-#else
-#define  MMQ_X_Q3_K_AMPERE 128
-#define  MMQ_Y_Q3_K_AMPERE 128
-#define NWARPS_Q3_K_AMPERE 4
-#endif
-#define  MMQ_X_Q3_K_PASCAL 64
-#define  MMQ_Y_Q3_K_PASCAL 64
-#define NWARPS_Q3_K_PASCAL 8
+#define  MMQ_X_Q3_K_RDNA2  128  // 宏定义 MMQ_X_Q3_K_RDNA2
+#define  MMQ_Y_Q3_K_RDNA2  64  // 宏定义 MMQ_Y_Q3_K_RDNA2
+#define NWARPS_Q3_K_RDNA2  8  // 宏定义 NWARPS_Q3_K_RDNA2
+#define  MMQ_X_Q3_K_RDNA1  32  // 宏定义 MMQ_X_Q3_K_RDNA1
+#define  MMQ_Y_Q3_K_RDNA1  128  // 宏定义 MMQ_Y_Q3_K_RDNA1
+#define NWARPS_Q3_K_RDNA1  8  // 宏定义 NWARPS_Q3_K_RDNA1
+#if defined(SYCL_USE_XMX)  // 条件编译
+#define  MMQ_X_Q3_K_AMPERE 4  // 宏定义 MMQ_X_Q3_K_AMPERE
+#define  MMQ_Y_Q3_K_AMPERE 32  // 宏定义 MMQ_Y_Q3_K_AMPERE
+#define NWARPS_Q3_K_AMPERE 4  // 宏定义 NWARPS_Q3_K_AMPERE
+#else  // 否则
+#define  MMQ_X_Q3_K_AMPERE 128  // 宏定义 MMQ_X_Q3_K_AMPERE
+#define  MMQ_Y_Q3_K_AMPERE 128  // 宏定义 MMQ_Y_Q3_K_AMPERE
+#define NWARPS_Q3_K_AMPERE 4  // 宏定义 NWARPS_Q3_K_AMPERE
+#endif  // 条件编译结束
+#define  MMQ_X_Q3_K_PASCAL 64  // 宏定义 MMQ_X_Q3_K_PASCAL
+#define  MMQ_Y_Q3_K_PASCAL 64  // 宏定义 MMQ_Y_Q3_K_PASCAL
+#define NWARPS_Q3_K_PASCAL 8  // 宏定义 NWARPS_Q3_K_PASCAL
 
-template <bool need_check> static void
+template <bool need_check> static void  // 模板
 mul_mat_q3_K(
     const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
     const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
@@ -1639,26 +1639,26 @@ mul_mat_q3_K(
         tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q4_K_RDNA2  64
-#define  MMQ_Y_Q4_K_RDNA2  128
-#define NWARPS_Q4_K_RDNA2  8
-#define  MMQ_X_Q4_K_RDNA1  32
-#define  MMQ_Y_Q4_K_RDNA1  64
-#define NWARPS_Q4_K_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q4_K_AMPERE 4
-#define  MMQ_Y_Q4_K_AMPERE 32
-#define NWARPS_Q4_K_AMPERE 4
-#else
-#define  MMQ_X_Q4_K_AMPERE 64
-#define  MMQ_Y_Q4_K_AMPERE 128
-#define NWARPS_Q4_K_AMPERE 4
-#endif
-#define  MMQ_X_Q4_K_PASCAL 64
-#define  MMQ_Y_Q4_K_PASCAL 64
-#define NWARPS_Q4_K_PASCAL 8
+#define  MMQ_X_Q4_K_RDNA2  64  // 宏定义 MMQ_X_Q4_K_RDNA2
+#define  MMQ_Y_Q4_K_RDNA2  128  // 宏定义 MMQ_Y_Q4_K_RDNA2
+#define NWARPS_Q4_K_RDNA2  8  // 宏定义 NWARPS_Q4_K_RDNA2
+#define  MMQ_X_Q4_K_RDNA1  32  // 宏定义 MMQ_X_Q4_K_RDNA1
+#define  MMQ_Y_Q4_K_RDNA1  64  // 宏定义 MMQ_Y_Q4_K_RDNA1
+#define NWARPS_Q4_K_RDNA1  8  // 宏定义 NWARPS_Q4_K_RDNA1
+#if defined(SYCL_USE_XMX)  // 条件编译
+#define  MMQ_X_Q4_K_AMPERE 4  // 宏定义 MMQ_X_Q4_K_AMPERE
+#define  MMQ_Y_Q4_K_AMPERE 32  // 宏定义 MMQ_Y_Q4_K_AMPERE
+#define NWARPS_Q4_K_AMPERE 4  // 宏定义 NWARPS_Q4_K_AMPERE
+#else  // 否则
+#define  MMQ_X_Q4_K_AMPERE 64  // 宏定义 MMQ_X_Q4_K_AMPERE
+#define  MMQ_Y_Q4_K_AMPERE 128  // 宏定义 MMQ_Y_Q4_K_AMPERE
+#define NWARPS_Q4_K_AMPERE 4  // 宏定义 NWARPS_Q4_K_AMPERE
+#endif  // 条件编译结束
+#define  MMQ_X_Q4_K_PASCAL 64  // 宏定义 MMQ_X_Q4_K_PASCAL
+#define  MMQ_Y_Q4_K_PASCAL 64  // 宏定义 MMQ_Y_Q4_K_PASCAL
+#define NWARPS_Q4_K_PASCAL 8  // 宏定义 NWARPS_Q4_K_PASCAL
 
-template <bool need_check> static void
+template <bool need_check> static void  // 模板
     mul_mat_q4_K(
     const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
     const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
@@ -1683,26 +1683,26 @@ template <bool need_check> static void
         tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q5_K_RDNA2  64
-#define  MMQ_Y_Q5_K_RDNA2  128
-#define NWARPS_Q5_K_RDNA2  8
-#define  MMQ_X_Q5_K_RDNA1  32
-#define  MMQ_Y_Q5_K_RDNA1  64
-#define NWARPS_Q5_K_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q5_K_AMPERE 4
-#define  MMQ_Y_Q5_K_AMPERE 32
-#define NWARPS_Q5_K_AMPERE 4
-#else
-#define  MMQ_X_Q5_K_AMPERE 64
-#define  MMQ_Y_Q5_K_AMPERE 128
-#define NWARPS_Q5_K_AMPERE 4
-#endif
-#define  MMQ_X_Q5_K_PASCAL 64
-#define  MMQ_Y_Q5_K_PASCAL 64
-#define NWARPS_Q5_K_PASCAL 8
+#define  MMQ_X_Q5_K_RDNA2  64  // 宏定义 MMQ_X_Q5_K_RDNA2
+#define  MMQ_Y_Q5_K_RDNA2  128  // 宏定义 MMQ_Y_Q5_K_RDNA2
+#define NWARPS_Q5_K_RDNA2  8  // 宏定义 NWARPS_Q5_K_RDNA2
+#define  MMQ_X_Q5_K_RDNA1  32  // 宏定义 MMQ_X_Q5_K_RDNA1
+#define  MMQ_Y_Q5_K_RDNA1  64  // 宏定义 MMQ_Y_Q5_K_RDNA1
+#define NWARPS_Q5_K_RDNA1  8  // 宏定义 NWARPS_Q5_K_RDNA1
+#if defined(SYCL_USE_XMX)  // 条件编译
+#define  MMQ_X_Q5_K_AMPERE 4  // 宏定义 MMQ_X_Q5_K_AMPERE
+#define  MMQ_Y_Q5_K_AMPERE 32  // 宏定义 MMQ_Y_Q5_K_AMPERE
+#define NWARPS_Q5_K_AMPERE 4  // 宏定义 NWARPS_Q5_K_AMPERE
+#else  // 否则
+#define  MMQ_X_Q5_K_AMPERE 64  // 宏定义 MMQ_X_Q5_K_AMPERE
+#define  MMQ_Y_Q5_K_AMPERE 128  // 宏定义 MMQ_Y_Q5_K_AMPERE
+#define NWARPS_Q5_K_AMPERE 4  // 宏定义 NWARPS_Q5_K_AMPERE
+#endif  // 条件编译结束
+#define  MMQ_X_Q5_K_PASCAL 64  // 宏定义 MMQ_X_Q5_K_PASCAL
+#define  MMQ_Y_Q5_K_PASCAL 64  // 宏定义 MMQ_Y_Q5_K_PASCAL
+#define NWARPS_Q5_K_PASCAL 8  // 宏定义 NWARPS_Q5_K_PASCAL
 
-template <bool need_check> static void
+template <bool need_check> static void  // 模板
 mul_mat_q5_K(
     const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
     const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
@@ -1727,26 +1727,26 @@ mul_mat_q5_K(
         tile_x_dm, tile_x_qh, tile_x_sc, item_ct1, tile_y_qs, tile_y_ds);
 }
 
-#define  MMQ_X_Q6_K_RDNA2  64
-#define  MMQ_Y_Q6_K_RDNA2  128
-#define NWARPS_Q6_K_RDNA2  8
-#define  MMQ_X_Q6_K_RDNA1  32
-#define  MMQ_Y_Q6_K_RDNA1  64
-#define NWARPS_Q6_K_RDNA1  8
-#if defined(SYCL_USE_XMX)
-#define  MMQ_X_Q6_K_AMPERE 4
-#define  MMQ_Y_Q6_K_AMPERE 32
-#define NWARPS_Q6_K_AMPERE 4
-#else
-#define  MMQ_X_Q6_K_AMPERE 64
-#define  MMQ_Y_Q6_K_AMPERE 64
-#define NWARPS_Q6_K_AMPERE 4
-#endif
-#define  MMQ_X_Q6_K_PASCAL 64
-#define  MMQ_Y_Q6_K_PASCAL 64
-#define NWARPS_Q6_K_PASCAL 8
+#define  MMQ_X_Q6_K_RDNA2  64  // 宏定义 MMQ_X_Q6_K_RDNA2
+#define  MMQ_Y_Q6_K_RDNA2  128  // 宏定义 MMQ_Y_Q6_K_RDNA2
+#define NWARPS_Q6_K_RDNA2  8  // 宏定义 NWARPS_Q6_K_RDNA2
+#define  MMQ_X_Q6_K_RDNA1  32  // 宏定义 MMQ_X_Q6_K_RDNA1
+#define  MMQ_Y_Q6_K_RDNA1  64  // 宏定义 MMQ_Y_Q6_K_RDNA1
+#define NWARPS_Q6_K_RDNA1  8  // 宏定义 NWARPS_Q6_K_RDNA1
+#if defined(SYCL_USE_XMX)  // 条件编译
+#define  MMQ_X_Q6_K_AMPERE 4  // 宏定义 MMQ_X_Q6_K_AMPERE
+#define  MMQ_Y_Q6_K_AMPERE 32  // 宏定义 MMQ_Y_Q6_K_AMPERE
+#define NWARPS_Q6_K_AMPERE 4  // 宏定义 NWARPS_Q6_K_AMPERE
+#else  // 否则
+#define  MMQ_X_Q6_K_AMPERE 64  // 宏定义 MMQ_X_Q6_K_AMPERE
+#define  MMQ_Y_Q6_K_AMPERE 64  // 宏定义 MMQ_Y_Q6_K_AMPERE
+#define NWARPS_Q6_K_AMPERE 4  // 宏定义 NWARPS_Q6_K_AMPERE
+#endif  // 条件编译结束
+#define  MMQ_X_Q6_K_PASCAL 64  // 宏定义 MMQ_X_Q6_K_PASCAL
+#define  MMQ_Y_Q6_K_PASCAL 64  // 宏定义 MMQ_Y_Q6_K_PASCAL
+#define NWARPS_Q6_K_PASCAL 8  // 宏定义 NWARPS_Q6_K_PASCAL
 
-template <bool need_check> static void
+template <bool need_check> static void  // 模板
     mul_mat_q6_K(
     const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
     const int ncols_x, const int nrows_x, const int ncols_y, const int nrows_y, const int nrows_dst,
@@ -2472,7 +2472,7 @@ static void ggml_mul_mat_q3_K_q8_1_sycl(const void *vx, const void *vy,
                                         const int nrows_y, const int nrows_dst,
                                         dpct::queue_ptr stream) try {
 
-#if QK_K == 256
+#if QK_K == 256  // 条件编译
 
     int id;
     SYCL_CHECK(
@@ -2588,7 +2588,7 @@ static void ggml_mul_mat_q3_K_q8_1_sycl(const void *vx, const void *vy,
             });
         }
     }
-#endif
+#endif  // 条件编译结束
 }
 catch (sycl::exception const &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__

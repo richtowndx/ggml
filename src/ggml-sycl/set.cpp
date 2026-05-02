@@ -1,10 +1,10 @@
-#include "presets.hpp"
-#include "common.hpp"
-#include "ggml.h"
-#include "set.hpp"
-#include <cstdint>
-#include <sycl/sycl.hpp>
-using namespace sycl;
+#include "presets.hpp"  // 引入 presets.hpp 头文件
+#include "common.hpp"  // 引入 common.hpp 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "set.hpp"  // 引入 set.hpp 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <sycl/sycl.hpp>  // 引入 sycl/sycl.hpp 头文件
+using namespace sycl;  // using 声明
 
 // Internal function: perform element-wise set operation for each thread
 inline void set_f32(const float* src, float* dst,

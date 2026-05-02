@@ -20,35 +20,35 @@
  * IN THE SOFTWARE.
  */
 
-#include "ggml-cann.h"
+#include "ggml-cann.h"  // 引入 ggml-cann.h 头文件
 
-#include "ggml-backend-impl.h"
-#include "ggml-cann/aclnn_ops.h"
-#include "ggml-cann/common.h"
-#include "ggml-impl.h"
-#include "ggml.h"
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-cann/aclnn_ops.h"  // 引入 ggml-cann/aclnn_ops.h 头文件
+#include "ggml-cann/common.h"  // 引入 ggml-cann/common.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-#include <acl/acl.h>
-#include <aclnnop/aclnn_trans_matmul_weight.h>
-#include <stdarg.h>
+#include <acl/acl.h>  // 引入 acl/acl.h 头文件
+#include <aclnnop/aclnn_trans_matmul_weight.h>  // 引入 aclnnop/aclnn_trans_matmul_weight.h 头文件
+#include <stdarg.h>  // 引入 stdarg.h 头文件
 
-#include <chrono>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <memory>
-#include <mutex>
-#include <optional>
-#include <queue>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#include <chrono>  // 引入 chrono 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <memory>  // 引入 memory 头文件
+#include <mutex>  // 引入 mutex 头文件
+#include <optional>  // 引入 optional 头文件
+#include <queue>  // 引入 queue 头文件
+#include <unordered_map>  // 引入 unordered_map 头文件
+#include <unordered_set>  // 引入 unordered_set 头文件
+#include <vector>  // 引入 vector 头文件
 
-#define GGML_COMMON_DECL_C
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
 
-#include "ggml-common.h"
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
 
-#define GGML_CANN_NAME "CANN"
+#define GGML_CANN_NAME "CANN"  // 宏定义 GGML_CANN_NAME
 
 /**
  * @brief Handles CANN errors by printing an error message and aborting.
@@ -86,7 +86,7 @@ void ggml_cann_set_device(const int32_t device) {
 
     // If the current device is already the target one, no need to switch.
     if (device == g_current_cann_device) {
-        return;
+        return;  // 返回
     }
 
     // Switch to the new device.
@@ -103,11 +103,11 @@ void ggml_cann_set_device(const int32_t device) {
 std::optional<std::string> get_env_as_lowercase(const std::string & name) {
     const char * val = std::getenv(name.c_str());
     if (!val) {
-        return std::nullopt;
+        return std::nullopt;  // 返回
     }
     std::string res = std::string(val);
     std::transform(res.begin(), res.end(), res.begin(), ::tolower);
-    return res;
+    return res;  // 返回
 }
 
 /**
@@ -132,7 +132,7 @@ int parse_integer(const std::string & value) {
     try {
         return std::stoi(value);
     } catch (...) {
-        return 0;
+        return 0;  // 返回
     }
 }
 
@@ -151,7 +151,7 @@ static ggml_cann_device_info ggml_cann_init() {
 
     if (err != ACL_SUCCESS) {
         GGML_LOG_ERROR("%s: failed to initialize CANN: %s\n", __func__, aclGetRecentErrMsg());
-        return info;
+        return info;  // 返回
     }
 
     GGML_ASSERT(info.device_count <= GGML_CANN_MAX_DEVICES);
@@ -174,7 +174,7 @@ static ggml_cann_device_info ggml_cann_init() {
     }
 
     // TODO: add more device info later.
-    return info;
+    return info;  // 返回
 }
 
 /**
@@ -188,7 +188,7 @@ static ggml_cann_device_info ggml_cann_init() {
  */
 const ggml_cann_device_info & ggml_cann_info() {
     static ggml_cann_device_info info = ggml_cann_init();
-    return info;
+    return info;  // 返回
 }
 
 //#define DEBUG_CANN_MALLOC
@@ -197,7 +197,7 @@ const ggml_cann_device_info & ggml_cann_info() {
  *
  * This class manages a pool of CANN buffers for a specific device.
  */
-struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
+struct ggml_cann_pool_buf_prio : public ggml_cann_pool {  // 结构体定义
     /**
      * @brief The maximum reuse margin for a buffer.
      */
@@ -226,7 +226,7 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
     /**
      * @brief Structure representing a CANN buffer.
      */
-    struct ggml_cann_buffer {
+    struct ggml_cann_buffer {  // 结构体定义
         void *                                ptr  = nullptr;  ///< Pointer to the buffer.
         size_t                                size = 0;        ///< Size of the buffer.
         std::chrono::steady_clock::time_point last_used;       ///< Last used time.
@@ -296,8 +296,8 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
                 if (margin <= max_reuse_margin) {
                     *actual_size = b.size;
                     ptr          = b.ptr;
-#ifdef DEBUG_CANN_MALLOC
-                    GGML_LOG_INFO(
+#ifdef DEBUG_CANN_MALLOC  // 如果定义了 DEBUG_CANN_MALLOC 则编译
+                    GGML_LOG_INFO(  // 打印信息日志
                         "cann pool[%d]: reused   %p, "
                         "pool_size = %5u MB, "
                         "size = %5u MB, "
@@ -305,7 +305,7 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
                         device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576),
                         (uint32_t) (GGML_PAD(size, 1048576) / 1048576),
                         (uint32_t) (GGML_PAD(margin, 1048576) / 1048576));
-#endif
+#endif  // 条件编译结束
                     break;
                 }
             }
@@ -317,14 +317,14 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
                 ACL_CHECK(aclrtFree(b.ptr));
                 pool_size -= b.size;
                 buffer_pool.erase(b.ptr);
-#ifdef DEBUG_CANN_MALLOC
-                GGML_LOG_INFO(
+#ifdef DEBUG_CANN_MALLOC  // 如果定义了 DEBUG_CANN_MALLOC 则编译
+                GGML_LOG_INFO(  // 打印信息日志
                     "cann pool[%d]: clean    %p, "
                     "pool_size = %5u MB, "
                     "size = %5u MB\n",
                     device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576),
                     (uint32_t) (GGML_PAD(b.size, 1048576) / 1048576));
-#endif
+#endif  // 条件编译结束
                 continue;
             }
             free_buffers_rest.push_back(b);
@@ -333,12 +333,12 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
             free_buffers.push(std::move(b));
         }
 
-#ifdef DEBUG_CANN_MALLOC
-        GGML_LOG_INFO("cann pool[%d] free pool_size = %5u MB\n\n", device,
+#ifdef DEBUG_CANN_MALLOC  // 如果定义了 DEBUG_CANN_MALLOC 则编译
+        GGML_LOG_INFO("cann pool[%d] free pool_size = %5u MB\n\n", device,  // 打印信息日志
                       (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576));
-#endif
+#endif  // 条件编译结束
         if (ptr != nullptr) {
-            return ptr;
+            return ptr;  // 返回
         }
 
         // allocate a new buffer if no buffer can be reused
@@ -346,16 +346,16 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
         ACL_CHECK(aclrtMalloc(&ptr, size, ACL_MEM_MALLOC_HUGE_FIRST));
         *actual_size = size;
         pool_size += size;
-#ifdef DEBUG_CANN_MALLOC
-        GGML_LOG_INFO(
+#ifdef DEBUG_CANN_MALLOC  // 如果定义了 DEBUG_CANN_MALLOC 则编译
+        GGML_LOG_INFO(  // 打印信息日志
             "cann pool[%d]: allocate %p, "
             "pool_size = %5u MB, "
             "size = %5u MB\n",
             device, ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576),
             (uint32_t) (GGML_PAD(size, 1048576) / 1048576));
-#endif
+#endif  // 条件编译结束
         buffer_pool.emplace(ptr, size);
-        return ptr;
+        return ptr;  // 返回
     }
 
     /**
@@ -373,12 +373,12 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
 
         auto now = std::chrono::steady_clock::now();
         free_buffers.emplace(ggml_cann_buffer{ ptr, it->second, now });
-#ifdef DEBUG_CANN_MALLOC
-        GGML_LOG_INFO(
+#ifdef DEBUG_CANN_MALLOC  // 如果定义了 DEBUG_CANN_MALLOC 则编译
+        GGML_LOG_INFO(  // 打印信息日志
             "cann pool[%d]: return   %p, "
             "pool_size = %5u MB\n",
             device, ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576));
-#endif
+#endif  // 条件编译结束
     }
 };
 
@@ -387,7 +387,7 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
  *
  * This class manages a pool of CANN buffers for a specific device.
  */
-struct ggml_cann_pool_buf : public ggml_cann_pool {
+struct ggml_cann_pool_buf : public ggml_cann_pool {  // 结构体定义
     /**
      * @brief The maximum reuse margin for a buffer.
      */
@@ -421,7 +421,7 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
     /**
      * @brief Structure representing a CANN buffer.
      */
-    struct ggml_cann_buffer {
+    struct ggml_cann_buffer {  // 结构体定义
         void *                                ptr  = nullptr;  ///< Pointer to the buffer memory.
         size_t                                size = 0;        ///< Size of the buffer.
         bool                                  used = false;    ///< Whether the buffer is currently in use.
@@ -495,8 +495,8 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
                     *actual_size = b.size;
                     b.used       = true;
                     ptr          = b.ptr;
-#ifdef DEBUG_CANN_MALLOC
-                    GGML_LOG_INFO(
+#ifdef DEBUG_CANN_MALLOC  // 如果定义了 DEBUG_CANN_MALLOC 则编译
+                    GGML_LOG_INFO(  // 打印信息日志
                         "cann pool[%d]: reused   %p, "
                         "pool_size = %5u MB, "
                         "size = %5u MB, "
@@ -504,7 +504,7 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
                         device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576),
                         (uint32_t) (GGML_PAD(size, 1048576) / 1048576),
                         (uint32_t) (GGML_PAD(margin, 1048576) / 1048576));
-#endif
+#endif  // 条件编译结束
                     break;
                 }
             }
@@ -515,19 +515,19 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
                 // free the buffer if the size is needed to be freed
                 ACL_CHECK(aclrtFree(b.ptr));
                 pool_size -= b.size;
-#ifdef DEBUG_CANN_MALLOC
-                GGML_LOG_INFO(
+#ifdef DEBUG_CANN_MALLOC  // 如果定义了 DEBUG_CANN_MALLOC 则编译
+                GGML_LOG_INFO(  // 打印信息日志
                     "cann pool[%d]: clean    %p, "
                     "pool_size = %5u MB, "
                     "size = %5u MB\n",
                     device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576),
                     (uint32_t) (GGML_PAD(b.size, 1048576) / 1048576));
-#endif
+#endif  // 条件编译结束
                 b.ptr = nullptr;
             }
         }
         if (ptr != nullptr) {
-            return ptr;
+            return ptr;  // 返回
         }
 
         if (i < MAX_BUFFERS) {
@@ -542,15 +542,15 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
             if (i >= MAX_BUFFERS - 8) {
                 GGML_LOG_WARN("cann pool[%d]: slots almost full\n", device);
             }
-#ifdef DEBUG_CANN_MALLOC
-            GGML_LOG_INFO(
+#ifdef DEBUG_CANN_MALLOC  // 如果定义了 DEBUG_CANN_MALLOC 则编译
+            GGML_LOG_INFO(  // 打印信息日志
                 "cann pool[%d]: allocate %p, "
                 "pool_size = %5u MB, "
                 "size = %5u MB\n",
                 device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576),
                 (uint32_t) (GGML_PAD(b.size, 1048576) / 1048576));
-#endif
-            return b.ptr;
+#endif  // 条件编译结束
+            return b.ptr;  // 返回
         }
 
         GGML_ABORT("cann pool[%d]: slots full\n", device);
@@ -571,13 +571,13 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
             }
             b.used      = false;
             b.last_used = std::chrono::steady_clock::now();
-#ifdef DEBUG_CANN_MALLOC
-            GGML_LOG_INFO(
+#ifdef DEBUG_CANN_MALLOC  // 如果定义了 DEBUG_CANN_MALLOC 则编译
+            GGML_LOG_INFO(  // 打印信息日志
                 "cann pool[%d]: return   %p, "
                 "pool_size = %5u MB\n",
                 device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576));
-#endif
-            return;
+#endif  // 条件编译结束
+            return;  // 返回
         }
         GGML_ABORT("cann pool[%d]: slots full\n", device);
     }
@@ -589,7 +589,7 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
  * This class manages a pool of CANN buffers with virtual memory for a specific
  * device.
  */
-struct ggml_cann_pool_vmm : public ggml_cann_pool {
+struct ggml_cann_pool_vmm : public ggml_cann_pool {  // 结构体定义
     /**
      * @brief The maximum size of the virtual memory pool (32 GB).
      */
@@ -708,11 +708,11 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
             // add to the pool
             pool_size += reserve_size;
 
-#ifdef DEBUG_CANN_MALLOC
+#ifdef DEBUG_CANN_MALLOC  // 如果定义了 DEBUG_CANN_MALLOC 则编译
             GGML_LOG_INFO("cann pool[%d]: size increased to %llu MB (reserved %llu MB)\n", device,
                           (unsigned long long) (pool_size / 1024 / 1024),
                           (unsigned long long) (reserve_size / 1024 / 1024));
-#endif
+#endif  // 条件编译结束
         }
 
         GGML_ASSERT(pool_addr != 0);
@@ -721,11 +721,11 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
         *actual_size = size;
         pool_used += size;
 
-#ifdef DEBUG_CANN_MALLOC
+#ifdef DEBUG_CANN_MALLOC  // 如果定义了 DEBUG_CANN_MALLOC 则编译
         GGML_LOG_INFO("cann pool[%d]: allocated %llu bytes at %llx\n", device, (unsigned long long) size,
                       (unsigned long long) ptr);
-#endif
-        return ptr;
+#endif  // 条件编译结束
+        return ptr;  // 返回
     }
 
     /**
@@ -735,10 +735,10 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
      * @param size Size of the buffer to free.
      */
     void free(void * ptr, size_t size) override {
-#ifdef DEBUG_CANN_MALLOC
+#ifdef DEBUG_CANN_MALLOC  // 如果定义了 DEBUG_CANN_MALLOC 则编译
         GGML_LOG_INFO("cann pool[%d]: freed %llu bytes at %llx\n", device, (unsigned long long) size,
                       (unsigned long long) ptr);
-#endif
+#endif  // 条件编译结束
 
         pool_used -= size;
 
@@ -781,7 +781,7 @@ std::unique_ptr<ggml_cann_pool> ggml_backend_cann_context::new_pool_for_device(i
  * this tracker accumulates progress and defers post-processing (quantized format
  * transform or ND-to-NZ conversion) until all data has been written.
  */
-struct TensorSetTracker {
+struct TensorSetTracker {  // 结构体定义
     std::mutex mtx;                   ///< Protects concurrent access to this tracker
     size_t bytes_written = 0;         ///< Accumulated bytes written so far
     size_t total_bytes = 0;           ///< Target size (full tensor)
@@ -794,7 +794,7 @@ struct TensorSetTracker {
  * This structure holds information about a CANN buffer, including the device
  * ID, device pointer, and a name derived from GGML_CANN_NAME and the device ID.
  */
-struct ggml_backend_cann_buffer_context {
+struct ggml_backend_cann_buffer_context {  // 结构体定义
     int32_t device;             ///< The device ID associated with this buffer context.
     void *  dev_ptr = nullptr;  ///< Pointer to the device memory allocated for the buffer.
 
@@ -826,7 +826,7 @@ struct ggml_backend_cann_buffer_context {
             tracker->total_bytes = ggml_nbytes(tensor);
             auto * ptr = tracker.get();
             trackers[key] = std::move(tracker);
-            return ptr;
+            return ptr;  // 返回
         }
         return it->second.get();
     }
@@ -845,7 +845,7 @@ struct ggml_backend_cann_buffer_context {
  * @brief Structure representing context information for a specific backend
  * buffer type.
  */
-struct ggml_backend_cann_buffer_type_context {
+struct ggml_backend_cann_buffer_type_context {  // 结构体定义
     int32_t     device; /**< Device identifier associated with the buffer context. */
     std::string name;   /**< Name associated with the buffer context. */
 };
@@ -877,7 +877,7 @@ static const char * ggml_backend_cann_buffer_type_name(ggml_backend_buffer_type_
  * backend, otherwise false.
  */
 static bool ggml_backend_buft_is_cann(ggml_backend_buffer_type_t buft) {
-    return buft->iface.get_name == ggml_backend_cann_buffer_type_name;
+    return buft->iface.get_name == ggml_backend_cann_buffer_type_name;  // 返回
 }
 
 /**
@@ -904,7 +904,7 @@ static void ggml_backend_cann_buffer_free_buffer(ggml_backend_buffer_t buffer) {
  */
 static void * ggml_backend_cann_buffer_get_base(ggml_backend_buffer_t buffer) {
     ggml_backend_cann_buffer_context * ctx = (ggml_backend_cann_buffer_context *) buffer->context;
-    return ctx->dev_ptr;
+    return ctx->dev_ptr;  // 返回
 }
 
 /**
@@ -1126,9 +1126,9 @@ static bool need_transform(ggml_type type) {
     switch (type) {
         case GGML_TYPE_Q4_0:
         case GGML_TYPE_Q8_0:
-            return true;
+            return true;  // 返回
         default:
-            return false;
+            return false;  // 返回
     }
 }
 
@@ -1144,7 +1144,7 @@ static bool need_transform(ggml_type type) {
 static enum ggml_status ggml_backend_cann_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
     if (tensor->view_src != NULL && tensor->view_offs == 0) {
         GGML_ASSERT(tensor->view_src->buffer->buft == buffer->buft);
-        return GGML_STATUS_SUCCESS;
+        return GGML_STATUS_SUCCESS;  // 返回
     }
 
     // TODO: cann backend doesn't support quantized yet. Just leave the code
@@ -1159,7 +1159,7 @@ static enum ggml_status ggml_backend_cann_buffer_init_tensor(ggml_backend_buffer
             ACL_CHECK(aclrtMemset((char *) tensor->data + original_size, memset_size, 0, memset_size));
         }
     }
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 /**
@@ -1169,7 +1169,7 @@ static enum ggml_status ggml_backend_cann_buffer_init_tensor(ggml_backend_buffer
  * allocation, reallocation, and clearing of cached memory. The struct is
  * designed to be used with a global array, one per device.
  */
-struct ggml_cann_nz_workspace {
+struct ggml_cann_nz_workspace {  // 结构体定义
     std::mutex mtx;    // Protects ptr/allocated from concurrent access
     void * ptr;        // Pointer to allocated device buffer
     size_t allocated;  // Size of currently allocated buffer in bytes
@@ -1292,7 +1292,7 @@ static void ggml_backend_cann_buffer_set_tensor(ggml_backend_buffer_t buffer,
     // Plain tensor (not quantized, not NZ): direct copy, no tracking needed
     if (!is_quantized && !is_nz) {
         ACL_CHECK(aclrtMemcpy((char *) tensor->data + offset, size, data, size, ACL_MEMCPY_HOST_TO_DEVICE));
-        return;
+        return;  // 返回
     }
 
     // Single-shot write (full tensor at once): handle directly without tracking overhead
@@ -1309,7 +1309,7 @@ static void ggml_backend_cann_buffer_set_tensor(ggml_backend_buffer_t buffer,
             ACL_CHECK(aclrtMemcpy(tensor->data, size, data, size, ACL_MEMCPY_HOST_TO_DEVICE));
             weight_format_to_nz(tensor, ctx->device);
         }
-        return;
+        return;  // 返回
     }
 
     // Chunked write: use tracker to accumulate progress and defer transform/conversion
@@ -1407,12 +1407,12 @@ static bool ggml_backend_cann_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
         if (src_ctx->device == dst_ctx->device) {
             ACL_CHECK(aclrtMemcpy((char *) dst->data, memcpy_size, (const char *) src->data, memcpy_size,
                                   ACL_MEMCPY_DEVICE_TO_DEVICE));
-            return true;
+            return true;  // 返回
         } else {
-#ifdef ASCEND_310P
+#ifdef ASCEND_310P  // 如果定义了 ASCEND_310P 则编译
             // TODO: Support 310p P2P copy
-            return false;
-#endif
+            return false;  // 返回
+#endif  // 条件编译结束
             // Different device but can access by peer.
             int32_t canAccessPeer = 0;
             ACL_CHECK(aclrtDeviceCanAccessPeer(&canAccessPeer, src_ctx->device, dst_ctx->device));
@@ -1421,11 +1421,11 @@ static bool ggml_backend_cann_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
                 ACL_CHECK(aclrtDeviceEnablePeerAccess(dst_ctx->device, 0));
                 ACL_CHECK(aclrtMemcpy((char *) dst->data, memcpy_size, (const char *) src->data, memcpy_size,
                                       ACL_MEMCPY_DEVICE_TO_DEVICE));
-                return true;
+                return true;  // 返回
             }
         }
     }
-    return false;
+    return false;  // 返回
 }
 
 /**
@@ -1503,14 +1503,14 @@ static ggml_backend_buffer_t ggml_backend_cann_buffer_type_alloc_buffer(ggml_bac
     void *   dev_ptr;
     aclError err = aclrtMalloc(&dev_ptr, size, ACL_MEM_MALLOC_HUGE_FIRST);
     if (err != ACL_SUCCESS) {
-        GGML_LOG_ERROR("%s: allocating %.2f MiB on device %d: aclrtMalloc failed: %s\n", __func__,
+        GGML_LOG_ERROR("%s: allocating %.2f MiB on device %d: aclrtMalloc failed: %s\n", __func__,  // 打印错误日志
                        size / 1024.0 / 1024.0, buft_ctx->device, aclGetRecentErrMsg());
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     ggml_backend_cann_buffer_context * ctx = new ggml_backend_cann_buffer_context(buft_ctx->device, dev_ptr);
 
-    return ggml_backend_buffer_init(buft, ggml_backend_cann_buffer_interface, ctx, size);
+    return ggml_backend_buffer_init(buft, ggml_backend_cann_buffer_interface, ctx, size);  // ggml_backend_buffer_init
 }
 
 /**
@@ -1526,7 +1526,7 @@ static ggml_backend_buffer_t ggml_backend_cann_buffer_type_alloc_buffer(ggml_bac
  * buffers).
  */
 static size_t ggml_backend_cann_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 128;
+    return 128;  // 返回
 
     GGML_UNUSED(buft);
 }
@@ -1577,13 +1577,13 @@ static size_t ggml_backend_cann_buffer_type_get_alloc_size(ggml_backend_buffer_t
         size = std::max(size, new_size);
     }
 
-    return size;
+    return size;  // 返回
 
     GGML_UNUSED(buft);
 }
 
 static bool ggml_backend_cann_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
-    return false;
+    return false;  // 返回
 
     GGML_UNUSED(buft);
 }
@@ -1618,7 +1618,7 @@ ggml_backend_buffer_type_t ggml_backend_cann_buffer_type(int32_t device) {
     std::lock_guard<std::mutex> lock(mutex);
 
     if (device >= ggml_backend_cann_get_device_count()) {
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     static ggml_backend_buffer_type ggml_backend_cann_buffer_types[GGML_CANN_MAX_DEVICES];
@@ -1637,7 +1637,7 @@ ggml_backend_buffer_type_t ggml_backend_cann_buffer_type(int32_t device) {
         ggml_backend_cann_buffer_type_initialized = true;
     }
 
-    return &ggml_backend_cann_buffer_types[device];
+    return &ggml_backend_cann_buffer_types[device];  // 返回
 }
 
 /**
@@ -1650,7 +1650,7 @@ ggml_backend_buffer_type_t ggml_backend_cann_buffer_type(int32_t device) {
  * @return Const pointer to the C-style string containing the name.
  */
 static const char * ggml_backend_cann_host_buffer_type_name(ggml_backend_buffer_type_t buft) {
-    return "CANN_Host";
+    return "CANN_Host";  // 返回
 
     GGML_UNUSED(buft);
 }
@@ -1665,7 +1665,7 @@ static const char * ggml_backend_cann_host_buffer_type_name(ggml_backend_buffer_
  * @return Const pointer to the C-style string containing the name.
  */
 static const char * ggml_backend_cann_host_buffer_name(ggml_backend_buffer_t buffer) {
-    return "CANN_Host";
+    return "CANN_Host";  // 返回
 
     GGML_UNUSED(buffer);
 }
@@ -1691,7 +1691,7 @@ static void ggml_backend_cann_host_buffer_free(ggml_backend_buffer_t buffer) {
  */
 static void * ggml_cann_host_malloc(size_t size) {
     if (getenv("GGML_CANN_NO_PINNED") != nullptr) {
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     const size_t alignment = 128;
@@ -1703,11 +1703,11 @@ static void * ggml_cann_host_malloc(size_t size) {
     void *   hostPtr = nullptr;
     aclError err     = aclrtMallocHost((void **) &hostPtr, size);
     if (err != ACL_SUCCESS) {
-        GGML_LOG_WARN("%s: failed to allocate %.2f MiB of pinned memory: %s\n", __func__, size / 1024.0 / 1024.0,
+        GGML_LOG_WARN("%s: failed to allocate %.2f MiB of pinned memory: %s\n", __func__, size / 1024.0 / 1024.0,  // 打印警告日志
                       aclGetRecentErrMsg());
-        return nullptr;
+        return nullptr;  // 返回
     }
-    return hostPtr;
+    return hostPtr;  // 返回
 }
 
 /**
@@ -1723,14 +1723,14 @@ static ggml_backend_buffer_t ggml_backend_cann_host_buffer_type_alloc_buffer(ggm
 
     if (hostPtr == nullptr) {
         // fallback to cpu buffer
-        return ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
+        return ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);  // ggml_backend_buft_alloc_buffer
     }
 
     ggml_backend_buffer_t buffer = ggml_backend_cpu_buffer_from_ptr(hostPtr, size);
     buffer->buft                 = buft;
     buffer->iface.free_buffer    = ggml_backend_cann_host_buffer_free;
 
-    return buffer;
+    return buffer;  // 返回
 }
 
 /**
@@ -1754,7 +1754,7 @@ ggml_backend_buffer_type_t ggml_backend_cann_host_buffer_type() {
         /* .context  = */ nullptr,
     };
 
-    return &ggml_backend_cann_buffer_type_host;
+    return &ggml_backend_cann_buffer_type_host;  // 返回
 }
 
 /**
@@ -1855,7 +1855,7 @@ static bool ggml_cann_compute_forward(ggml_backend_cann_context & ctx, struct gg
                     ggml_cann_softplus(ctx, dst);
                     break;
                 default:
-                    return false;
+                    return false;  // 返回
             }
             break;
         case GGML_OP_GLU:
@@ -1876,7 +1876,7 @@ static bool ggml_cann_compute_forward(ggml_backend_cann_context & ctx, struct gg
                     ggml_cann_geglu_quick(ctx, dst);
                     break;
                 default:
-                    return false;
+                    return false;  // 返回
             }
             break;
         case GGML_OP_NORM:
@@ -2023,10 +2023,10 @@ static bool ggml_cann_compute_forward(ggml_backend_cann_context & ctx, struct gg
             ggml_cann_solve_tri(ctx, dst);
             break;
         default:
-            return false;
+            return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 // backend
@@ -2136,7 +2136,7 @@ static bool ggml_backend_cann_cpy_tensor_async(ggml_backend_t      backend_src,
     GGML_ASSERT(!is_matmul_weight((const ggml_tensor *) src));
 
     if (!ggml_backend_buft_is_cann(src->buffer->buft) || !ggml_backend_buft_is_cann(dst->buffer->buft)) {
-        return false;
+        return false;  // 返回
     }
 
     ggml_backend_buffer_t buf_src = src->view_src ? src->view_src->buffer : src->buffer;
@@ -2147,13 +2147,13 @@ static bool ggml_backend_cann_cpy_tensor_async(ggml_backend_t      backend_src,
 
     size_t copy_size = ggml_nbytes(dst);
     if (copy_size == 0) {
-        return true;
+        return true;  // 返回
     }
     if (backend_src != backend_dst) {
-#ifdef ASCEND_310P
+#ifdef ASCEND_310P  // 如果定义了 ASCEND_310P 则编译
         // TODO: Support 310p P2P copy
-        return false;
-#endif
+        return false;  // 返回
+#endif  // 条件编译结束
         ggml_backend_cann_buffer_context * buf_ctx_src = (ggml_backend_cann_buffer_context *) buf_src->context;
         ggml_backend_cann_buffer_context * buf_ctx_dst = (ggml_backend_cann_buffer_context *) buf_dst->context;
 
@@ -2163,7 +2163,7 @@ static bool ggml_backend_cann_cpy_tensor_async(ggml_backend_t      backend_src,
         int32_t canAccessPeer = 0;
         ACL_CHECK(aclrtDeviceCanAccessPeer(&canAccessPeer, cann_ctx_src->device, cann_ctx_dst->device));
         if (!canAccessPeer) {
-            return false;
+            return false;  // 返回
         }
 
         // need open both directions for memcpyasync between devices.
@@ -2191,7 +2191,7 @@ static bool ggml_backend_cann_cpy_tensor_async(ggml_backend_t      backend_src,
                                    cann_ctx_dst->stream()));
     }
 
-    return true;
+    return true;  // 返回
 }
 
 /**
@@ -2225,7 +2225,7 @@ static bool ggml_cann_can_fuse(const struct ggml_cgraph *          cgraph,
                                int                                 node_idx,
                                std::initializer_list<enum ggml_op> ops) {
     if (!ggml_can_fuse(cgraph, node_idx, ops)) {
-        return false;
+        return false;  // 返回
     }
 
     // CANN backend supports fusing ADD + RMS_NORM operations
@@ -2234,12 +2234,12 @@ static bool ggml_cann_can_fuse(const struct ggml_cgraph *          cgraph,
         // TODO: support broadcast for ADD + RMS_NORM
         if (add_node->src[0]->ne[0] != add_node->src[1]->ne[0] || add_node->src[0]->ne[1] != add_node->src[1]->ne[1] ||
             add_node->src[0]->ne[2] != add_node->src[1]->ne[2] || add_node->src[0]->ne[3] != add_node->src[1]->ne[3]) {
-            return false;
+            return false;  // 返回
         }
-        return true;
+        return true;  // 返回
     }
 
-    return false;
+    return false;  // 返回
 }
 
 /**
@@ -2259,11 +2259,11 @@ static void evaluate_and_capture_cann_graph(ggml_backend_cann_context * cann_ctx
                                             ggml_cgraph *               cgraph,
                                             bool                        use_cann_graph,
                                             bool                        cann_graph_capture_required) {
-#ifdef USE_ACL_GRAPH
+#ifdef USE_ACL_GRAPH  // 如果定义了 USE_ACL_GRAPH 则编译
     if (use_cann_graph && cann_graph_capture_required) {  // Begin CANN graph capture
         ACL_CHECK(aclmdlRICaptureBegin(cann_ctx->stream(), ACL_MODEL_RI_CAPTURE_MODE_GLOBAL));
     }
-#endif  // USE_ACL_GRAPH
+#endif  // USE_ACL_GRAPH  // 条件编译结束
     // Only perform the graph execution if CANN graphs are not enabled, or we are capturing the graph.
     // With the use of CANN graphs, the execution will be performed by the graph launch.
     static bool opt_fusion = parse_bool(get_env_as_lowercase("GGML_CANN_OPERATOR_FUSION").value_or(""));
@@ -2296,7 +2296,7 @@ static void evaluate_and_capture_cann_graph(ggml_backend_cann_context * cann_ctx
         }
     }
 
-#ifdef USE_ACL_GRAPH
+#ifdef USE_ACL_GRAPH  // 如果定义了 USE_ACL_GRAPH 则编译
     if (use_cann_graph) {
         GGML_ASSERT(!cann_ctx->graph_lru_cache.cache_list.empty());
         ggml_cann_graph * matched_graph = cann_ctx->graph_lru_cache.cache_list.front();
@@ -2308,7 +2308,7 @@ static void evaluate_and_capture_cann_graph(ggml_backend_cann_context * cann_ctx
         // Execute CANN graph
         ACL_CHECK(aclmdlRIExecuteAsync(matched_graph->graph, cann_ctx->stream()));
     }
-#endif  // USE_ACL_GRAPH
+#endif  // USE_ACL_GRAPH  // 条件编译结束
 }
 
 /**
@@ -2332,7 +2332,7 @@ static enum ggml_status ggml_backend_cann_graph_compute(ggml_backend_t backend, 
     cann_ctx->rope_cache.cached = false;
 
     bool graph_capture_required = false;
-#ifdef USE_ACL_GRAPH
+#ifdef USE_ACL_GRAPH  // 如果定义了 USE_ACL_GRAPH 则编译
     bool use_cann_graph = true;
 
     static bool prefill_use_graph = parse_bool(get_env_as_lowercase("GGML_CANN_PREFILL_USE_GRAPH").value_or(""));
@@ -2377,12 +2377,12 @@ static enum ggml_status ggml_backend_cann_graph_compute(ggml_backend_t backend, 
             }
         }
     }
-#else
+#else  // 否则
     bool use_cann_graph = false;
-#endif  // USE_ACL_GRAPH
+#endif  // USE_ACL_GRAPH  // 条件编译结束
     evaluate_and_capture_cann_graph(cann_ctx, cgraph, use_cann_graph, graph_capture_required);
 
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 /**
@@ -2417,9 +2417,9 @@ static bool ggml_backend_cann_supports_op(ggml_backend_dev_t dev, const ggml_ten
                 case GGML_UNARY_OP_STEP:
                 case GGML_UNARY_OP_GELU_ERF:
                 case GGML_UNARY_OP_SOFTPLUS:
-                    return true;
+                    return true;  // 返回
                 default:
-                    return false;
+                    return false;  // 返回
             }
         case GGML_OP_GLU:
             switch (ggml_get_glu_op(op)) {
@@ -2428,47 +2428,47 @@ static bool ggml_backend_cann_supports_op(ggml_backend_dev_t dev, const ggml_ten
                 case GGML_GLU_OP_SWIGLU:
                 case GGML_GLU_OP_GEGLU_ERF:
                 case GGML_GLU_OP_GEGLU_QUICK:
-                    return true;
+                    return true;  // 返回
                 default:
-                    return false;
+                    return false;  // 返回
             }
             break;
         case GGML_OP_MUL_MAT:
             {
                 switch (op->src[0]->type) {
-#ifndef ASCEND_310P
+#ifndef ASCEND_310P  // 如果未定义 ASCEND_310P 则编译
                     case GGML_TYPE_BF16:
-#endif
+#endif  // 条件编译结束
                     case GGML_TYPE_F16:
                     case GGML_TYPE_F32:
-                        return true;
+                        return true;  // 返回
                     case GGML_TYPE_Q8_0:
                     case GGML_TYPE_Q4_0:
-#ifdef ASCEND_310P
+#ifdef ASCEND_310P  // 如果定义了 ASCEND_310P 则编译
                         // Q4 && Q8 per group is not support on 310p device
-                        return false;
-#endif
+                        return false;  // 返回
+#endif  // 条件编译结束
                         // only support contiguous for quantized types.
-                        return ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
+                        return ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);  // ggml_is_contiguous
                     default:
-                        return false;
+                        return false;  // 返回
                 }
             }
         case GGML_OP_MUL_MAT_ID:
             switch (op->src[0]->type) {
                 case GGML_TYPE_F16:
                 case GGML_TYPE_F32:
-                    return true;
+                    return true;  // 返回
                 case GGML_TYPE_Q8_0:
                 case GGML_TYPE_Q4_0:
-#ifdef ASCEND_310P
+#ifdef ASCEND_310P  // 如果定义了 ASCEND_310P 则编译
                     // Q4 && Q8 per group is not support on 310p device
-                    return false;
-#endif
+                    return false;  // 返回
+#endif  // 条件编译结束
                     // only support contiguous for quantized types.
-                    return ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
+                    return ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);  // ggml_is_contiguous
                 default:
-                    return false;
+                    return false;  // 返回
             }
         // embedding
         case GGML_OP_GET_ROWS:
@@ -2476,13 +2476,13 @@ static bool ggml_backend_cann_supports_op(ggml_backend_dev_t dev, const ggml_ten
                 switch (op->src[0]->type) {
                     case GGML_TYPE_F32:
                     case GGML_TYPE_F16:
-#ifndef ASCEND_310P
+#ifndef ASCEND_310P  // 如果未定义 ASCEND_310P 则编译
                     case GGML_TYPE_BF16:
-#endif
+#endif  // 条件编译结束
                     case GGML_TYPE_Q8_0:
-                        return true;
+                        return true;  // 返回
                     default:
-                        return false;
+                        return false;  // 返回
                 }
             }
             break;
@@ -2491,32 +2491,32 @@ static bool ggml_backend_cann_supports_op(ggml_backend_dev_t dev, const ggml_ten
                 switch (op->type) {
                     case GGML_TYPE_F32:
                     case GGML_TYPE_F16:
-#ifndef ASCEND_310P
+#ifndef ASCEND_310P  // 如果未定义 ASCEND_310P 则编译
                     case GGML_TYPE_BF16:
-#endif
-                        return true;
+#endif  // 条件编译结束
+                        return true;  // 返回
                     default:
-                        return false;
+                        return false;  // 返回
                 }
             }
             break;
         case GGML_OP_CPY:
             {
                 ggml_tensor * src = op->src[0];
-#ifdef ASCEND_310P
+#ifdef ASCEND_310P  // 如果定义了 ASCEND_310P 则编译
                 if ((op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_F16) ||
                     (src->type != GGML_TYPE_F32 && src->type != GGML_TYPE_F16)) {
                     // only support F32 and F16 on 310P.
-                    return false;
+                    return false;  // 返回
                 }
-#else
+#else  // 否则
                 if ((op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_F16 && op->type != GGML_TYPE_BF16) ||
                     (src->type != GGML_TYPE_F32 && src->type != GGML_TYPE_F16 && src->type != GGML_TYPE_BF16)) {
                     // only support F32, F16 and BF16.
-                    return false;
+                    return false;  // 返回
                 }
-#endif
-                return true;
+#endif  // 条件编译结束
+                return true;  // 返回
             }
             break;
         case GGML_OP_CONT:
@@ -2524,54 +2524,54 @@ static bool ggml_backend_cann_supports_op(ggml_backend_dev_t dev, const ggml_ten
                 switch (op->src[0]->type) {
                     case GGML_TYPE_F32:
                     case GGML_TYPE_F16:
-#ifndef ASCEND_310P
+#ifndef ASCEND_310P  // 如果未定义 ASCEND_310P 则编译
                     case GGML_TYPE_BF16:
-#endif
-                        return true;
+#endif  // 条件编译结束
+                        return true;  // 返回
                     default:
-                        return false;
+                        return false;  // 返回
                 }
             }
         case GGML_OP_ROPE:
             {
                 if (op->src[0]->ne[0] > 896) {
-                    return false;
+                    return false;  // 返回
                 }
-#ifdef ASCEND_310P
+#ifdef ASCEND_310P  // 如果定义了 ASCEND_310P 则编译
                 // TODO: Support rope_dim < ne00(dim)
                 if (op->src[0]->ne[0] != op->op_params[1]) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (!ggml_is_contiguous(op->src[0])) {
-                    return false;
+                    return false;  // 返回
                 }
-#endif
-                return true;
+#endif  // 条件编译结束
+                return true;  // 返回
             }
         case GGML_OP_UPSCALE:
             {
                 // aclnnUpsampleNearest2dGetWorkspaceSize not support
                 // selfDimN[2]/outDimN[2] or selfDimC[3]/outDimC[3] not equal
                 if (op->src[0]->ne[2] * op->ne[3] != op->src[0]->ne[3] * op->ne[2]) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (op->op_params[0] != GGML_SCALE_MODE_NEAREST) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (op->op_params[0] & GGML_SCALE_FLAG_ANTIALIAS) {
-                    return false;
+                    return false;  // 返回
                 }
-                return true;
+                return true;  // 返回
             }
         case GGML_OP_POOL_2D:
             {
                 const int32_t * opts = (const int32_t *) op->op_params;
-#ifdef ASCEND_310P
+#ifdef ASCEND_310P  // 如果定义了 ASCEND_310P 则编译
                 enum ggml_op_pool opt = static_cast<ggml_op_pool>(opts[0]);
                 if (opt == GGML_OP_POOL_MAX) {
-                    return false;
+                    return false;  // 返回
                 }
-#endif
+#endif  // 条件编译结束
                 const int k0 = opts[1];
                 const int k1 = opts[2];
                 const int p0 = opts[5];
@@ -2581,7 +2581,7 @@ static bool ggml_backend_cann_supports_op(ggml_backend_dev_t dev, const ggml_ten
                 return (p0 <= (k0 / 2)) && (p1 <= (k1 / 2));
             }
         case GGML_OP_SUM:
-            return ggml_is_contiguous_rows(op->src[0]);
+            return ggml_is_contiguous_rows(op->src[0]);  // ggml_is_contiguous_rows
         case GGML_OP_L2_NORM:
         case GGML_OP_CROSS_ENTROPY_LOSS:
         case GGML_OP_DUP:
@@ -2609,10 +2609,10 @@ static bool ggml_backend_cann_supports_op(ggml_backend_dev_t dev, const ggml_ten
         case GGML_OP_ACC:
         case GGML_OP_SET:
         case GGML_OP_GROUP_NORM:
-            return true;
+            return true;  // 返回
         case GGML_OP_PAD:
             // TODO: add circular padding support for cann, see https://github.com/ggml-org/llama.cpp/pull/16985
-            return ggml_get_op_params_i32(op, 8) == 0;
+            return ggml_get_op_params_i32(op, 8) == 0;  // ggml_get_op_params_i32
         case GGML_OP_ARANGE:
         case GGML_OP_TIMESTEP_EMBEDDING:
         case GGML_OP_LEAKY_RELU:
@@ -2624,79 +2624,79 @@ static bool ggml_backend_cann_supports_op(ggml_backend_dev_t dev, const ggml_ten
         case GGML_OP_PAD_REFLECT_1D:
         case GGML_OP_COUNT_EQUAL:
         case GGML_OP_GATED_LINEAR_ATTN:
-            return true;
+            return true;  // 返回
         case GGML_OP_OUT_PROD:
             {
-#ifdef ASCEND_310P
+#ifdef ASCEND_310P  // 如果定义了 ASCEND_310P 则编译
                 // Ger is not supported on 310p device
-                return false;
-#endif
+                return false;  // 返回
+#endif  // 条件编译结束
                 switch (op->src[0]->type) {
                     case GGML_TYPE_F16:
                     case GGML_TYPE_F32:
-                        return true;
+                        return true;  // 返回
                     default:
-                        return false;
+                        return false;  // 返回
                 }
             }
         case GGML_OP_CONV_TRANSPOSE_1D:
-            return true;
+            return true;  // 返回
         case GGML_OP_SCALE:
             float bias;
             memcpy(&bias, (const float *) (op->op_params) + 1, sizeof(float));
-            return bias == 0.0f;  // TODO: support bias != 0.0f
+            return bias == 0.0f;  // TODO: support bias != 0.0f  // 返回
         case GGML_OP_SOFT_MAX:
             // TODO: support attention sinks [TAG_ATTN_SINKS]
             if (op->src[2]) {
-                return false;
+                return false;  // 返回
             }
-            return true;
+            return true;  // 返回
         case GGML_OP_FLASH_ATTN_EXT:
             {
-#ifdef ASCEND_310P
+#ifdef ASCEND_310P  // 如果定义了 ASCEND_310P 则编译
                 // FA not support on 310p device
-                return false;
-#endif
+                return false;  // 返回
+#endif  // 条件编译结束
                 // derived from [ggml-cuda.cu]
                 if (op->src[1]->type != GGML_TYPE_F16 || op->src[2]->type != GGML_TYPE_F16) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (op->src[1]->type != GGML_TYPE_F16 && op->src[1]->type != GGML_TYPE_F32 &&
                     op->src[1]->type != GGML_TYPE_BF16) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (op->type != GGML_TYPE_F16 && op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_BF16) {
-                    return false;
+                    return false;  // 返回
                 }
                 // TODO: support attention sinks [TAG_ATTN_SINKS]
                 if (op->src[4]) {
-                    return false;
+                    return false;  // 返回
                 }
                 if (op->src[1]->ne[0] != op->src[2]->ne[0]) {
                     // different head sizes of K and V are not supported yet
-                    return false;
+                    return false;  // 返回
                 }
                 float logitSoftcap = 0.0f;
                 memcpy(&logitSoftcap, (const float *) (op->op_params) + 2, sizeof(float));
                 if (logitSoftcap != 0.0f) {
-                    return false;
+                    return false;  // 返回
                 }
-                return true;
+                return true;  // 返回
             }
         case GGML_OP_SSM_CONV:
-            return true;
+            return true;  // 返回
         case GGML_OP_CUMSUM:
-            return op->src[0]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_TRI:
-            return op->src[0]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_FILL:
-            return op->src[0]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_DIAG:
-            return op->src[0]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_SOLVE_TRI:
-            return op->src[0]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32;  // 返回
         default:
-            return false;
+            return false;  // 返回
     }
 
     GGML_UNUSED(dev);
@@ -2771,11 +2771,11 @@ static const ggml_backend_i ggml_backend_cann_interface = {
 static ggml_guid_t ggml_backend_cann_guid() {
     static ggml_guid guid = { 0xa1, 0x94, 0xaf, 0xac, 0xbd, 0x4f, 0x47, 0x34,
                               0xbe, 0x1a, 0x9e, 0x71, 0x1f, 0x9e, 0xed, 0x64 };
-    return &guid;
+    return &guid;  // 返回
 }
 
 // backend device
-struct ggml_backend_cann_device_context {
+struct ggml_backend_cann_device_context {  // 结构体定义
     int         device;
     std::string name;
     std::string description;
@@ -2799,7 +2799,7 @@ static void ggml_backend_cann_device_get_memory(ggml_backend_dev_t dev, size_t *
 
 static enum ggml_backend_dev_type ggml_backend_cann_device_get_type(ggml_backend_dev_t dev) {
     GGML_UNUSED(dev);
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+    return GGML_BACKEND_DEVICE_TYPE_GPU;  // 返回
 }
 
 static void ggml_backend_cann_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
@@ -2821,7 +2821,7 @@ static void ggml_backend_cann_device_get_props(ggml_backend_dev_t dev, ggml_back
 static ggml_backend_t ggml_backend_cann_device_init(ggml_backend_dev_t dev, const char * params) {
     GGML_UNUSED(params);
     ggml_backend_cann_device_context * ctx = (ggml_backend_cann_device_context *) dev->context;
-    return ggml_backend_cann_init(ctx->device);
+    return ggml_backend_cann_init(ctx->device);  // ggml_backend_cann_init
 }
 
 /**
@@ -2841,19 +2841,19 @@ static bool ggml_backend_cann_supports_buft(ggml_backend_dev_t dev, ggml_backend
     if (ggml_backend_buft_is_cann(buft)) {
         ggml_backend_cann_device_context *      dev_ctx  = (ggml_backend_cann_device_context *) dev->context;
         ggml_backend_cann_buffer_type_context * buft_ctx = (ggml_backend_cann_buffer_type_context *) buft->context;
-        return buft_ctx->device == dev_ctx->device;
+        return buft_ctx->device == dev_ctx->device;  // 返回
     }
-    return false;
+    return false;  // 返回
 }
 
 static ggml_backend_buffer_type_t ggml_backend_cann_device_get_buffer_type(ggml_backend_dev_t dev) {
     ggml_backend_cann_device_context * ctx = (ggml_backend_cann_device_context *) dev->context;
-    return ggml_backend_cann_buffer_type(ctx->device);
+    return ggml_backend_cann_buffer_type(ctx->device);  // ggml_backend_cann_buffer_type
 }
 
 static ggml_backend_buffer_type_t ggml_backend_cann_device_get_host_buffer_type(ggml_backend_dev_t dev) {
     GGML_UNUSED(dev);
-    return ggml_backend_cann_host_buffer_type();
+    return ggml_backend_cann_host_buffer_type();  // ggml_backend_cann_host_buffer_type
 }
 
 /**
@@ -2873,7 +2873,7 @@ static ggml_backend_buffer_type_t ggml_backend_cann_device_get_host_buffer_type(
 static bool ggml_backend_cann_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
     ggml_backend_cann_device_context * dev_ctx = (ggml_backend_cann_device_context *)dev->context;
 
-    return op->ne[1] >= dev_ctx->op_offload_min_batch_size && op->op != GGML_OP_GET_ROWS;
+    return op->ne[1] >= dev_ctx->op_offload_min_batch_size && op->op != GGML_OP_GET_ROWS;  // 返回
 }
 
 /**
@@ -2894,7 +2894,7 @@ static ggml_backend_event_t ggml_backend_cann_device_event_new(ggml_backend_dev_
     aclrtEvent event;
     ACL_CHECK(aclrtCreateEvent(&event));
 
-    return new ggml_backend_event{
+    return new ggml_backend_event{  // 返回
         /* .device = */ ggml_backend_reg_dev_get(ggml_backend_cann_reg(), dev_ctx->device),
         /* .context = */ event,
     };
@@ -2947,13 +2947,13 @@ static const ggml_backend_device_i ggml_backend_cann_device_interface = {
 };
 
 // backend reg
-struct ggml_backend_cann_reg_context {
+struct ggml_backend_cann_reg_context {  // 结构体定义
     std::vector<ggml_backend_dev_t> devices;
 };
 
 static const char * ggml_backend_cann_reg_get_name(ggml_backend_reg_t reg) {
     GGML_UNUSED(reg);
-    return GGML_CANN_NAME;
+    return GGML_CANN_NAME;  // 返回
 }
 
 static size_t ggml_backend_cann_reg_get_device_count(ggml_backend_reg_t reg) {
@@ -2964,14 +2964,14 @@ static size_t ggml_backend_cann_reg_get_device_count(ggml_backend_reg_t reg) {
 static ggml_backend_dev_t ggml_backend_cann_reg_get_device(ggml_backend_reg_t reg, size_t index) {
     ggml_backend_cann_reg_context * ctx = (ggml_backend_cann_reg_context *) reg->context;
     GGML_ASSERT(index < ctx->devices.size());
-    return ctx->devices[index];
+    return ctx->devices[index];  // 返回
 }
 
 static void * ggml_backend_cann_reg_get_proc_address(ggml_backend_reg_t reg, const char * name) {
     GGML_UNUSED(reg);
     GGML_UNUSED(name);
     // reserved for future use
-    return nullptr;
+    return nullptr;  // 返回
 }
 
 static const ggml_backend_reg_i ggml_backend_cann_reg_interface = {
@@ -3015,20 +3015,20 @@ ggml_backend_reg_t ggml_backend_cann_reg() {
         initialized = true;
     }
 
-    return &reg;
+    return &reg;  // 返回
 }
 
 ggml_backend_t ggml_backend_cann_init(int32_t device) {
     aclInit(nullptr);
     if (device < 0 || device >= ggml_backend_cann_get_device_count()) {
         GGML_LOG_ERROR("%s: error: invalid device %d\n", __func__, device);
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     ggml_backend_cann_context * ctx = new ggml_backend_cann_context(device);
     if (ctx == nullptr) {
         GGML_LOG_ERROR("%s: error: failed to allocate context\n", __func__);
-        return nullptr;
+        return nullptr;  // 返回
     }
     ggml_cann_set_device(ctx->device);
     ggml_backend_t cann_backend =
@@ -3037,7 +3037,7 @@ ggml_backend_t ggml_backend_cann_init(int32_t device) {
                           /* .device    = */ ggml_backend_reg_dev_get(ggml_backend_cann_reg(), device),
                           /* .context   = */ ctx };
 
-    return cann_backend;
+    return cann_backend;  // 返回
 }
 
 bool ggml_backend_is_cann(ggml_backend_t backend) {
@@ -3045,7 +3045,7 @@ bool ggml_backend_is_cann(ggml_backend_t backend) {
 }
 
 int32_t ggml_backend_cann_get_device_count() {
-    return ggml_cann_info().device_count;
+    return ggml_cann_info().device_count;  // ggml_cann_info
 }
 
 void ggml_backend_cann_get_device_description(int32_t device, char * description, size_t description_size) {

@@ -20,32 +20,32 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef CANN_COMMON_H
-#define CANN_COMMON_H
+#ifndef CANN_COMMON_H  // 如果未定义 CANN_COMMON_H 则编译
+#define CANN_COMMON_H  // 宏定义 CANN_COMMON_H
 
-#include "../ggml-impl.h"
-#include "../include/ggml-cann.h"
-#include "../include/ggml.h"
+#include "../ggml-impl.h"  // 引入 ../ggml-impl.h 头文件
+#include "../include/ggml-cann.h"  // 引入 ../include/ggml-cann.h 头文件
+#include "../include/ggml.h"  // 引入 ../include/ggml.h 头文件
 
-#include <acl/acl.h>
-#include <unistd.h>
+#include <acl/acl.h>  // 引入 acl/acl.h 头文件
+#include <unistd.h>  // 引入 unistd.h 头文件
 
-#include <atomic>
-#include <condition_variable>
-#include <cstdio>
-#include <functional>
-#include <iostream>
-#include <list>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <optional>
-#include <string>
-#include <thread>
-#include <vector>
+#include <atomic>  // 引入 atomic 头文件
+#include <condition_variable>  // 引入 condition_variable 头文件
+#include <cstdio>  // 引入 cstdio 头文件
+#include <functional>  // 引入 functional 头文件
+#include <iostream>  // 引入 iostream 头文件
+#include <list>  // 引入 list 头文件
+#include <map>  // 引入 map 头文件
+#include <memory>  // 引入 memory 头文件
+#include <mutex>  // 引入 mutex 头文件
+#include <optional>  // 引入 optional 头文件
+#include <string>  // 引入 string 头文件
+#include <thread>  // 引入 thread 头文件
+#include <vector>  // 引入 vector 头文件
 
-#define MATRIX_ROW_PADDING    512
-#define GGML_CANN_MAX_STREAMS 8
+#define MATRIX_ROW_PADDING    512  // 宏定义 MATRIX_ROW_PADDING
+#define GGML_CANN_MAX_STREAMS 8  // 宏定义 GGML_CANN_MAX_STREAMS
 
 /**
  * @brief Handles CANN-related errors by printing an error message and
@@ -73,12 +73,12 @@
         }                                                                     \
     } while (0);
 
-#define ACL_CHECK(stmt) ACL_CHECK_GEN(stmt, 0, aclGetRecentErrMsg)
+#define ACL_CHECK(stmt) ACL_CHECK_GEN(stmt, 0, aclGetRecentErrMsg)  // 宏定义 ACL_CHECK
 
 /**
  * @brief Contains information about CANN devices.
  */
-struct ggml_cann_device_info {
+struct ggml_cann_device_info {  // 结构体定义
     /**
      * @brief Number of CANN devices available.
      */
@@ -87,7 +87,7 @@ struct ggml_cann_device_info {
     /**
      * @brief Information about a single CANN device.
      */
-    struct cann_device_info {
+    struct cann_device_info {  // 结构体定义
         int    cc;              /**< Compute capability.                   */
         size_t smpb;            /**< Maximum shared memory per block.      */
         bool   vmm;             /**< Virtual memory support.               */
@@ -100,16 +100,16 @@ struct ggml_cann_device_info {
 
 const ggml_cann_device_info & ggml_cann_info();
 
-void    ggml_cann_set_device(int32_t device);
+void    ggml_cann_set_device(int32_t device);  // ggml_cann_set_device
 
 std::optional<std::string> get_env_as_lowercase(const std::string & name);
-bool                       parse_bool(const std::string & value);
-int                        parse_integer(const std::string & value);
+bool                       parse_bool(const std::string & value);  // parse_bool
+int                        parse_integer(const std::string & value);  // parse_integer
 
 /**
  * @brief Abstract base class for memory pools used by CANN.
  */
-struct ggml_cann_pool {
+struct ggml_cann_pool {  // 结构体定义
     /**
      * @brief Virtual destructor for the memory pool.
      */
@@ -139,7 +139,7 @@ struct ggml_cann_pool {
 /**
  * @brief RAII wrapper for managing memory allocations from a CANN memory pool.
  */
-struct ggml_cann_pool_alloc {
+struct ggml_cann_pool_alloc {  // 结构体定义
     ggml_cann_pool * pool        = nullptr; /**< Pointer to the memory pool. */
     void *           ptr         = nullptr; /**< Pointer to the allocated memory block. */
     size_t           actual_size = 0;       /**< Actual size of the allocated memory block. */
@@ -180,7 +180,7 @@ struct ggml_cann_pool_alloc {
         GGML_ASSERT(pool != nullptr);
         GGML_ASSERT(ptr == nullptr);
         ptr = pool->alloc(size, &this->actual_size);
-        return ptr;
+        return ptr;  // 返回
     }
 
     /**
@@ -191,7 +191,7 @@ struct ggml_cann_pool_alloc {
      */
     void * alloc(ggml_cann_pool & pool, size_t size) {
         this->pool = &pool;
-        return alloc(size);
+        return alloc(size);  // alloc
     }
 
     /**
@@ -213,8 +213,8 @@ struct ggml_cann_pool_alloc {
     ggml_cann_pool_alloc & operator=(ggml_cann_pool_alloc &&) = delete;
 };
 
-#ifdef USE_ACL_GRAPH
-struct ggml_graph_node_properties {
+#ifdef USE_ACL_GRAPH  // 如果定义了 USE_ACL_GRAPH 则编译
+struct ggml_graph_node_properties {  // 结构体定义
     // dst tensor
     void *    node_address;
     ggml_type node_type;
@@ -242,56 +242,56 @@ struct ggml_graph_node_properties {
      */
     bool has_matching_properties(ggml_tensor * node) {
         if (node->data != this->node_address && node->op != GGML_OP_VIEW) {
-            return false;
+            return false;  // 返回
         }
 
         if (node->op != this->node_op) {
-            return false;
+            return false;  // 返回
         }
 
         if (node->type != this->node_type) {
-            return false;
+            return false;  // 返回
         }
 
         for (int i = 0; i < GGML_MAX_DIMS; i++) {
             if (node->ne[i] != this->ne[i]) {
-                return false;
+                return false;  // 返回
             }
             if (node->nb[i] != this->nb[i]) {
-                return false;
+                return false;  // 返回
             }
         }
 
         for (int i = 0; i < GGML_MAX_SRC; i++) {
             if (node->src[i]) {
                 if (node->src[i]->data != this->src_address[i] && node->op != GGML_OP_VIEW) {
-                    return false;
+                    return false;  // 返回
                 }
 
                 if (node->src[i]->type != this->src_type[i]) {
-                    return false;
+                    return false;  // 返回
                 }
 
                 for (int d = 0; d < GGML_MAX_DIMS; d++) {
                     if (node->src[i]->ne[d] != this->src_ne[i][d]) {
-                        return false;
+                        return false;  // 返回
                     }
                     if (node->src[i]->nb[d] != this->src_nb[i][d]) {
-                        return false;
+                        return false;  // 返回
                     }
                 }
             } else {
                 if (this->src_address[i] != nullptr) {
-                    return false;
+                    return false;  // 返回
                 }
             }
         }
 
-        return memcmp(this->op_params, node->op_params, GGML_MAX_OP_PARAMS) == 0;
+        return memcmp(this->op_params, node->op_params, GGML_MAX_OP_PARAMS) == 0;  // memcmp
     }
 };
 
-struct ggml_cann_graph {
+struct ggml_cann_graph {  // 结构体定义
     ~ggml_cann_graph() {
         if (graph != nullptr) {
             ACL_CHECK(aclmdlRIDestroy(graph));
@@ -351,7 +351,7 @@ struct ggml_cann_graph {
             memcpy(prop.op_params, node->op_params, GGML_MAX_OP_PARAMS);
         }
 
-        return new_graph;
+        return new_graph;  // 返回
     }
 
     /**
@@ -366,16 +366,16 @@ struct ggml_cann_graph {
      */
     bool matches_cgraph(ggml_cgraph * cgraph) {
         if (this->ggml_graph_properties.size() != static_cast<size_t>(cgraph->n_nodes)) {
-            return false;
+            return false;  // 返回
         }
 
         for (int i = 0; i < cgraph->n_nodes; ++i) {
             if (!this->ggml_graph_properties[i].has_matching_properties(cgraph->nodes[i])) {
-                return false;
+                return false;  // 返回
             }
         }
 
-        return true;
+        return true;  // 返回
     }
 };
 
@@ -386,7 +386,7 @@ struct ggml_cann_graph {
  * and enforces a maximum capacity. It provides methods to push new graphs,
  * move existing graphs to the front (most recently used), and clear the cache.
  */
-struct ggml_cann_graph_lru_cache {
+struct ggml_cann_graph_lru_cache {  // 结构体定义
     size_t capacity;                         /**< Maximum number of graphs in the cache. */
 
     std::list<ggml_cann_graph *> cache_list; /**< List storing cached graphs as raw pointers. */
@@ -439,15 +439,15 @@ struct ggml_cann_graph_lru_cache {
             if (graph_ptr->matches_cgraph(cgraph)) {
                 cache_list.remove(graph_ptr);
                 cache_list.push_front(graph_ptr);
-                return true;
+                return true;  // 返回
             }
         }
-        return false;
+        return false;  // 返回
     }
 };
-#endif  // USE_ACL_GRAPH
+#endif  // USE_ACL_GRAPH  // 条件编译结束
 
-struct ggml_cann_rope_cache {
+struct ggml_cann_rope_cache {  // 结构体定义
     ~ggml_cann_rope_cache() {
         if (theta_scale_cache) {
             ACL_CHECK(aclrtFree(theta_scale_cache));
@@ -483,7 +483,7 @@ struct ggml_cann_rope_cache {
                bool    mrope_used,
                bool    is_imrope,
                int     sections[4]) {
-        return this->theta_scale_length == theta_scale_length && this->position_length == position_length &&
+        return this->theta_scale_length == theta_scale_length && this->position_length == position_length &&  // 返回
                this->ext_factor == ext_factor && this->theta_scale == theta_scale && this->freq_scale == freq_scale &&
                this->attn_factor == attn_factor && this->is_neox == is_neox && this->indep_sects == indep_sects &&
                this->mrope_used == mrope_used && this->is_imrope == is_imrope && this->sections[0] == sections[0] &&
@@ -541,7 +541,7 @@ struct ggml_cann_rope_cache {
     bool    is_imrope                  = false;
 };
 
-struct ggml_cann_tensor_cache {
+struct ggml_cann_tensor_cache {  // 结构体定义
     ~ggml_cann_tensor_cache() {
         if (cache != nullptr) {
             ACL_CHECK(aclrtFree(cache));
@@ -555,16 +555,16 @@ struct ggml_cann_tensor_cache {
 /**
  * @brief Context for managing CANN backend operations.
  */
-struct ggml_backend_cann_context {
+struct ggml_backend_cann_context {  // 结构体定义
     int32_t     device;               /**< Device ID. */
     std::string name;                 /**< Name of the device. */
     std::string description;          /**< Description of the device. */
     aclrtEvent  copy_event = nullptr; /**< Event for managing copy operations. */
-#ifdef USE_ACL_GRAPH
+#ifdef USE_ACL_GRAPH  // 如果定义了 USE_ACL_GRAPH 则编译
     /// Cached CANN ACL graph used for executing the current ggml computation graph.
     ggml_cann_graph_lru_cache graph_lru_cache;
     bool                      acl_graph_mode = true;
-#endif
+#endif  // 条件编译结束
     bool                   async_mode;
     // Rope Cache
     ggml_cann_rope_cache   rope_cache;
@@ -582,11 +582,11 @@ struct ggml_backend_cann_context {
         ggml_cann_set_device(device);
         description = aclrtGetSocName();
 
-#ifdef USE_ACL_GRAPH
+#ifdef USE_ACL_GRAPH  // 如果定义了 USE_ACL_GRAPH 则编译
         acl_graph_mode = parse_bool(get_env_as_lowercase("GGML_CANN_ACL_GRAPH").value_or("on"));
         GGML_LOG_INFO("%s: device %d execution mode is %s (%s)\n", __func__, device, acl_graph_mode ? "GRAPH" : "EAGER",
                       acl_graph_mode ? "acl graph enabled" : "acl graph disabled");
-#endif
+#endif  // 条件编译结束
     }
 
     /**
@@ -617,7 +617,7 @@ struct ggml_backend_cann_context {
             ACL_CHECK(aclrtSetDevice(device));
             ACL_CHECK(aclrtCreateStream(&streams[stream]));
         }
-        return streams[stream];
+        return streams[stream];  // 返回
     }
 
     /**
@@ -644,8 +644,8 @@ struct ggml_backend_cann_context {
         if (mem_pool == nullptr) {
             mem_pool = new_pool_for_device(device);
         }
-        return *mem_pool;
+        return *mem_pool;  // 返回
     }
 };
 
-#endif  // CANN_COMMON_H
+#endif  // CANN_COMMON_H  // 条件编译结束

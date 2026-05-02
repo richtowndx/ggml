@@ -1,14 +1,14 @@
-#ifndef HVX_REDUCE_H
-#define HVX_REDUCE_H
+#ifndef HVX_REDUCE_H  // 如果未定义 HVX_REDUCE_H 则编译
+#define HVX_REDUCE_H  // 宏定义 HVX_REDUCE_H
 
-#include <math.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <assert.h>
+#include <math.h>  // 引入 math.h 头文件
+#include <stdbool.h>  // 引入 stdbool.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
+#include <assert.h>  // 引入 assert.h 头文件
 
-#include "hex-utils.h"
-#include "hvx-base.h"
-#include "hvx-types.h"
+#include "hex-utils.h"  // 引入 hex-utils.h 头文件
+#include "hvx-base.h"  // 引入 hvx-base.h 头文件
+#include "hvx-types.h"  // 引入 hvx-types.h 头文件
 
 static inline HVX_Vector hvx_vec_reduce_sum_n_i32(HVX_Vector in, unsigned int n) {
     unsigned int total = n * 4;  // total vec nbytes
@@ -20,11 +20,11 @@ static inline HVX_Vector hvx_vec_reduce_sum_n_i32(HVX_Vector in, unsigned int n)
         sum   = Q6_Vw_vadd_VwVw(sum_t, sum);  // elementwise sum
         width = width << 1;
     }
-    return sum;
+    return sum;  // 返回
 }
 
 static inline HVX_Vector hvx_vec_reduce_sum_i32(HVX_Vector in) {
-    return hvx_vec_reduce_sum_n_i32(in, 32);
+    return hvx_vec_reduce_sum_n_i32(in, 32);  // hvx_vec_reduce_sum_n_i32
 }
 
 static inline HVX_Vector hvx_vec_reduce_sum_n_qf32(HVX_Vector in, unsigned int n) {
@@ -37,14 +37,14 @@ static inline HVX_Vector hvx_vec_reduce_sum_n_qf32(HVX_Vector in, unsigned int n
         sum   = Q6_Vqf32_vadd_Vqf32Vsf(sum, sum_t);             // elementwise sum
         width = width << 1;
     }
-    return sum;
+    return sum;  // 返回
 }
 
 static inline HVX_Vector hvx_vec_reduce_sum_qf32(HVX_Vector in) {
-    return hvx_vec_reduce_sum_n_qf32(in, 32);
+    return hvx_vec_reduce_sum_n_qf32(in, 32);  // hvx_vec_reduce_sum_n_qf32
 }
 
-#if __HVX_ARCH__ > 75
+#if __HVX_ARCH__ > 75  // 条件编译
 
 static inline HVX_Vector hvx_vec_reduce_sum_f32x4(HVX_Vector_x4 in) {
     HVX_VectorPair sum_p01 = Q6_W_vshuff_VVR(in.v[1], in.v[0], 4);
@@ -58,7 +58,7 @@ static inline HVX_Vector hvx_vec_reduce_sum_f32x4(HVX_Vector_x4 in) {
     sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 2));
     sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 4));
     sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 8));
-    return sum_sf;
+    return sum_sf;  // 返回
 }
 
 static inline HVX_Vector hvx_vec_reduce_sum_f32x2(HVX_Vector in0, HVX_Vector in1) {
@@ -69,7 +69,7 @@ static inline HVX_Vector hvx_vec_reduce_sum_f32x2(HVX_Vector in0, HVX_Vector in1
     sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 4));
     sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 8));
     sum_sf = Q6_Vsf_vadd_VsfVsf(sum_sf, Q6_V_vror_VR(sum_sf, VLEN / 16));
-    return sum_sf;
+    return sum_sf;  // 返回
 }
 
 static inline HVX_Vector hvx_vec_reduce_sum_n_f32(HVX_Vector in, unsigned int n) {
@@ -82,10 +82,10 @@ static inline HVX_Vector hvx_vec_reduce_sum_n_f32(HVX_Vector in, unsigned int n)
         sum   = Q6_Vsf_vadd_VsfVsf(sum, sum_t); // elementwise sum
         width = width << 1;
     }
-    return sum;
+    return sum;  // 返回
 }
 
-#else
+#else  // 否则
 
 static inline HVX_Vector hvx_vec_reduce_sum_f32x4(HVX_Vector_x4 in) {
     HVX_VectorPair sum_p01  = Q6_W_vshuff_VVR(in.v[1], in.v[0], 4);
@@ -99,7 +99,7 @@ static inline HVX_Vector hvx_vec_reduce_sum_f32x4(HVX_Vector_x4 in) {
     sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 2));
     sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 4));
     sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 8));
-    return Q6_Vsf_equals_Vqf32(sum_qf);
+    return Q6_Vsf_equals_Vqf32(sum_qf);  // Q6_Vsf_equals_Vqf32
 }
 
 static inline HVX_Vector hvx_vec_reduce_sum_f32x2(HVX_Vector in0, HVX_Vector in1) {
@@ -110,7 +110,7 @@ static inline HVX_Vector hvx_vec_reduce_sum_f32x2(HVX_Vector in0, HVX_Vector in1
     sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 4));
     sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 8));
     sum_qf = Q6_Vqf32_vadd_Vqf32Vsf(sum_qf, Q6_V_vror_VR(Q6_Vsf_equals_Vqf32(sum_qf), VLEN / 16));
-    return Q6_Vsf_equals_Vqf32(sum_qf);
+    return Q6_Vsf_equals_Vqf32(sum_qf);  // Q6_Vsf_equals_Vqf32
 }
 
 static inline HVX_Vector hvx_vec_reduce_sum_n_f32(HVX_Vector in, unsigned int n) {
@@ -123,13 +123,13 @@ static inline HVX_Vector hvx_vec_reduce_sum_n_f32(HVX_Vector in, unsigned int n)
         sum   = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(sum, sum_t));  // elementwise sum
         width = width << 1;
     }
-    return sum;
+    return sum;  // 返回
 }
 
-#endif
+#endif  // 条件编译结束
 
 static inline HVX_Vector hvx_vec_reduce_sum_f32(HVX_Vector in) {
-    return hvx_vec_reduce_sum_n_f32(in, 32);
+    return hvx_vec_reduce_sum_n_f32(in, 32);  // hvx_vec_reduce_sum_n_f32
 }
 
 static inline HVX_Vector hvx_vec_reduce_max_f16(HVX_Vector in) {
@@ -143,7 +143,7 @@ static inline HVX_Vector hvx_vec_reduce_max_f16(HVX_Vector in) {
         width  = width << 1;
     }
 
-    return _max;
+    return _max;  // 返回
 }
 
 static inline HVX_Vector hvx_vec_reduce_max2_f16(HVX_Vector in, HVX_Vector _max) {
@@ -159,7 +159,7 @@ static inline HVX_Vector hvx_vec_reduce_max2_f16(HVX_Vector in, HVX_Vector _max)
         width  = width << 1;
     }
 
-    return _max;
+    return _max;  // 返回
 }
 
 static inline HVX_Vector hvx_vec_reduce_max_f32(HVX_Vector in) {
@@ -173,7 +173,7 @@ static inline HVX_Vector hvx_vec_reduce_max_f32(HVX_Vector in) {
         width  = width << 1;
     }
 
-    return _max;
+    return _max;  // 返回
 }
 
 static inline HVX_Vector hvx_vec_reduce_max2_f32(HVX_Vector in, HVX_Vector _max) {
@@ -189,7 +189,7 @@ static inline HVX_Vector hvx_vec_reduce_max2_f32(HVX_Vector in, HVX_Vector _max)
         width  = width << 1;
     }
 
-    return _max;
+    return _max;  // 返回
 }
 
 #define hvx_reduce_loop_body(src_type, init_vec, pad_vec, vec_op, reduce_op, scalar_reduce) \
@@ -217,11 +217,11 @@ static inline HVX_Vector hvx_vec_reduce_max2_f32(HVX_Vector in, HVX_Vector _max)
         return scalar_reduce(v);                                                            \
     } while(0)
 
-#define HVX_REDUCE_MAX_OP(acc, val) Q6_Vsf_vmax_VsfVsf(acc, val)
-#define HVX_REDUCE_SUM_OP(acc, val) Q6_Vqf32_vadd_VsfVsf(Q6_Vsf_equals_Vqf32(acc), val)
-#define HVX_SUM_SQ_OP(acc, val) Q6_Vqf32_vadd_Vqf32Vqf32(acc, Q6_Vqf32_vmpy_VsfVsf(val, val))
-#define HVX_REDUCE_MAX_SCALAR(v) hvx_vec_get_f32(v)
-#define HVX_REDUCE_SUM_SCALAR(v) hvx_vec_get_f32(Q6_Vsf_equals_Vqf32(v))
+#define HVX_REDUCE_MAX_OP(acc, val) Q6_Vsf_vmax_VsfVsf(acc, val)  // 宏定义 HVX_REDUCE_MAX_OP
+#define HVX_REDUCE_SUM_OP(acc, val) Q6_Vqf32_vadd_VsfVsf(Q6_Vsf_equals_Vqf32(acc), val)  // 宏定义 HVX_REDUCE_SUM_OP
+#define HVX_SUM_SQ_OP(acc, val) Q6_Vqf32_vadd_Vqf32Vqf32(acc, Q6_Vqf32_vmpy_VsfVsf(val, val))  // 宏定义 HVX_SUM_SQ_OP
+#define HVX_REDUCE_MAX_SCALAR(v) hvx_vec_get_f32(v)  // 宏定义 HVX_REDUCE_MAX_SCALAR
+#define HVX_REDUCE_SUM_SCALAR(v) hvx_vec_get_f32(Q6_Vsf_equals_Vqf32(v))  // 宏定义 HVX_REDUCE_SUM_SCALAR
 
 // Max variants
 
@@ -238,9 +238,9 @@ static inline float hvx_reduce_max_f32_u(const uint8_t * restrict src, const int
 
 static inline float hvx_reduce_max_f32(const uint8_t * restrict src, const int num_elems) {
     if (hex_is_aligned((void *) src, 128)) {
-        return hvx_reduce_max_f32_a(src, num_elems);
+        return hvx_reduce_max_f32_a(src, num_elems);  // hvx_reduce_max_f32_a
     } else {
-        return hvx_reduce_max_f32_u(src, num_elems);
+        return hvx_reduce_max_f32_u(src, num_elems);  // hvx_reduce_max_f32_u
     }
 }
 
@@ -259,9 +259,9 @@ static inline float hvx_reduce_sum_f32_u(const uint8_t * restrict src, const int
 
 static inline float hvx_reduce_sum_f32(const uint8_t * restrict src, const int num_elems) {
     if (hex_is_aligned((void *) src, 128)) {
-        return hvx_reduce_sum_f32_a(src, num_elems);
+        return hvx_reduce_sum_f32_a(src, num_elems);  // hvx_reduce_sum_f32_a
     } else {
-        return hvx_reduce_sum_f32_u(src, num_elems);
+        return hvx_reduce_sum_f32_u(src, num_elems);  // hvx_reduce_sum_f32_u
     }
 }
 
@@ -280,9 +280,9 @@ static inline float hvx_sum_of_squares_f32_u(const uint8_t * restrict src, const
 
 static inline float hvx_sum_of_squares_f32(const uint8_t * restrict src, const int num_elems) {
     if (hex_is_aligned((void *) src, 128)) {
-        return hvx_sum_of_squares_f32_a(src, num_elems);
+        return hvx_sum_of_squares_f32_a(src, num_elems);  // hvx_sum_of_squares_f32_a
     } else {
-        return hvx_sum_of_squares_f32_u(src, num_elems);
+        return hvx_sum_of_squares_f32_u(src, num_elems);  // hvx_sum_of_squares_f32_u
     }
 }
 
@@ -293,4 +293,4 @@ static inline float hvx_sum_of_squares_f32(const uint8_t * restrict src, const i
 #undef HVX_REDUCE_SUM_SCALAR
 #undef HVX_SUM_SQ_OP
 
-#endif /* HVX_REDUCE_H */
+#endif /* HVX_REDUCE_H */  // 条件编译结束

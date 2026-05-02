@@ -1,11 +1,11 @@
-#include "cpy.hpp"
+#include "cpy.hpp"  // 引入 cpy.hpp 头文件
 
-#include <float.h>
+#include <float.h>  // 引入 float.h 头文件
 
-#include "dequantize.hpp"
-#include "ggml-sycl/common.hpp"
-#include "ggml-sycl/presets.hpp"
-#include "ggml.h"
+#include "dequantize.hpp"  // 引入 dequantize.hpp 头文件
+#include "ggml-sycl/common.hpp"  // 引入 ggml-sycl/common.hpp 头文件
+#include "ggml-sycl/presets.hpp"  // 引入 ggml-sycl/presets.hpp 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
 
 
 static void cpy_1_f32_f32(const char * cxi, char * cdsti) {
@@ -50,7 +50,7 @@ static void cpy_1_i32_i32(const char * cxi, char * cdsti) {
     *dsti = *xi;
 }
 
-template <cpy_kernel_t cpy_1>
+template <cpy_kernel_t cpy_1>  // 模板
 static void cpy_f32_f16(const char * cx, char * cdst, const int ne, const int ne00, const int ne01, const int ne02,
                         const int nb00, const int nb01, const int nb02, const int nb03, const int ne10, const int ne11,
                         const int ne12, const int nb10, const int nb11, const int nb12, const int nb13,
@@ -58,7 +58,7 @@ static void cpy_f32_f16(const char * cx, char * cdst, const int ne, const int ne
     const int i = item_ct1.get_local_range(2) * item_ct1.get_group(2) + item_ct1.get_local_id(2);
 
     if (i >= ne) {
-        return;
+        return;  // 返回
     }
 
     // determine indices i02/i12, i01/i11, i00/i10 as a function of index i of flattened tensor
@@ -80,7 +80,7 @@ static void cpy_f32_f16(const char * cx, char * cdst, const int ne, const int ne
 
 
 /* quantized type same copy */
-template<typename T>
+template<typename T>  // 模板
 static void cpy_blck_q_q(const char * cxi, char * cdsti) {
     const T * xi = (const T *) cxi;
     T * dsti = (T *) cdsti;
@@ -101,7 +101,7 @@ static void cpy_blck_q8_0_f32(const char * cxi, char * cdsti) {
 
 
 
-template <dequantize_kernel_t dequant, int qk> static void cpy_blck_q_f32(const char * cxi, char * cdsti) {
+template <dequantize_kernel_t dequant, int qk> static void cpy_blck_q_f32(const char * cxi, char * cdsti) {  // 模板
     float * cdstf = (float *) (cdsti);
 
     for (int j = 0; j < qk / 2; j++) {
@@ -113,7 +113,7 @@ template <dequantize_kernel_t dequant, int qk> static void cpy_blck_q_f32(const 
 }
 
 
-template <typename T, int qk>
+template <typename T, int qk>  // 模板
 static void cpy_q_q(const char * cx, char * cdst, const int ne, const int ne00, const int ne01, const int ne02,
                       const int nb00, const int nb01, const int nb02, const int nb03, const int ne10, const int ne11,
                       const int ne12, const int nb10, const int nb11, const int nb12, const int nb13,
@@ -121,7 +121,7 @@ static void cpy_q_q(const char * cx, char * cdst, const int ne, const int ne00, 
     const int i = (item_ct1.get_local_range(2) * item_ct1.get_group(2) + item_ct1.get_local_id(2)) * qk;
 
     if (i >= ne) {
-        return;
+        return;  // 返回
     }
 
     const int i03      = i / (ne00 * ne01 * ne02);
@@ -140,7 +140,7 @@ static void cpy_q_q(const char * cx, char * cdst, const int ne, const int ne00, 
     cpy_blck_q_q<T>(cx + x_offset, cdst + dst_offset);
 }
 
-template <cpy_kernel_t cpy_blck, int qk>
+template <cpy_kernel_t cpy_blck, int qk>  // 模板
 static void cpy_f32_q(const char * cx, char * cdst, const int ne, const int ne00, const int ne01, const int ne02,
                       const int nb00, const int nb01, const int nb02, const int nb03, const int ne10, const int ne11,
                       const int ne12, const int nb10, const int nb11, const int nb12, const int nb13,
@@ -148,7 +148,7 @@ static void cpy_f32_q(const char * cx, char * cdst, const int ne, const int ne00
     const int i = (item_ct1.get_local_range(2) * item_ct1.get_group(2) + item_ct1.get_local_id(2)) * qk;
 
     if (i >= ne) {
-        return;
+        return;  // 返回
     }
 
 
@@ -167,7 +167,7 @@ static void cpy_f32_q(const char * cx, char * cdst, const int ne, const int ne00
     cpy_blck(cx + x_offset, cdst + dst_offset);
 }
 
-template <cpy_kernel_t cpy_blck, int qk>
+template <cpy_kernel_t cpy_blck, int qk>  // 模板
 static void cpy_q_f32(const char * cx, char * cdst, const int ne, const int ne00, const int ne01, const int ne02,
                       const int nb00, const int nb01, const int nb02, const int nb03, const int ne10, const int ne11,
                       const int ne12, const int nb10, const int nb11, const int nb12, const int nb13,
@@ -175,7 +175,7 @@ static void cpy_q_f32(const char * cx, char * cdst, const int ne, const int ne00
     const int i = (item_ct1.get_local_range(2) * item_ct1.get_group(2) + item_ct1.get_local_id(2)) * qk;
 
     if (i >= ne) {
-        return;
+        return;  // 返回
     }
 
     const int i03      = i / (ne00 * ne01 * ne02);
@@ -511,7 +511,7 @@ static void ggml_cpy_q4_1_q4_1(const char * cx, char * cdst, const int ne, const
 
 void ggml_sycl_cpy(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1) try {
     // Unlike other operators ggml_sycl_cpy takes 2 distinct tensors instead of a dst ggml_tensor and rely on its src field
-    scope_op_debug_print scope_dbg_print(__func__, src1, /*num_src=*/0, debug_get_tensor_str("\tsrc0", src0));
+    scope_op_debug_print scope_dbg_print(__func__, src1, /*num_src=*/0, debug_get_tensor_str("\tsrc0", src0));  // scope_dbg_print
     const int64_t ne = ggml_nelements(src0);
     GGML_ASSERT(ne == ggml_nelements(src1));
 
@@ -597,6 +597,6 @@ void ggml_sycl_cpy(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, co
 }
 
 void ggml_sycl_dup(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);  // scope_dbg_print
     ggml_sycl_cpy(ctx, dst->src[0], dst);
 }

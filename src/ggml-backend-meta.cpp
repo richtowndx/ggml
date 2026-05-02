@@ -1,22 +1,22 @@
-#include "ggml.h"
-#include "ggml-impl.h"
-#include "ggml-backend.h"
-#include "ggml-backend-impl.h"
-#include "ggml-alloc.h"
-#include "ggml-cpp.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-cpp.h"  // 引入 ggml-cpp.h 头文件
 
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <cstring>
-#include <map>
-#include <memory>
-#include <string>
-#include <tuple>
-#include <utility>
-#include <vector>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cassert>  // 引入 cassert 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstddef>  // 引入 cstddef 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <map>  // 引入 map 头文件
+#include <memory>  // 引入 memory 头文件
+#include <string>  // 引入 string 头文件
+#include <tuple>  // 引入 tuple 头文件
+#include <utility>  // 引入 utility 头文件
+#include <vector>  // 引入 vector 头文件
 
 struct ggml_backend_meta_device;
 struct ggml_backend_meta_buffer_type;
@@ -26,21 +26,21 @@ struct ggml_backend_meta;
 const char * ggml_backend_meta_split_axis_name(enum ggml_backend_meta_split_axis split_axis) {
     switch (split_axis) {
         case GGML_BACKEND_SPLIT_AXIS_0:
-            return "0";
+            return "0";  // 返回
         case GGML_BACKEND_SPLIT_AXIS_1:
-            return "1";
+            return "1";  // 返回
         case GGML_BACKEND_SPLIT_AXIS_2:
-            return "2";
+            return "2";  // 返回
         case GGML_BACKEND_SPLIT_AXIS_3:
-            return "3";
+            return "3";  // 返回
         case GGML_BACKEND_SPLIT_AXIS_MIRRORED:
-            return "MIRRORED";
+            return "MIRRORED";  // 返回
         case GGML_BACKEND_SPLIT_AXIS_PARTIAL:
-            return "PARTIAL";
+            return "PARTIAL";  // 返回
         case GGML_BACKEND_SPLIT_AXIS_NONE:
-            return "NONE";
+            return "NONE";  // 返回
         case GGML_BACKEND_SPLIT_AXIS_UNKNOWN:
-            return "UNKNOWN";
+            return "UNKNOWN";  // 返回
         default:
             GGML_ABORT("fatal error");
     }
@@ -50,7 +50,7 @@ const char * ggml_backend_meta_split_axis_name(enum ggml_backend_meta_split_axis
 // meta backend device
 //
 
-struct ggml_backend_meta_device_context {
+struct ggml_backend_meta_device_context {  // 结构体定义
     std::vector<ggml_backend_dev_t>     simple_devs;
     ggml_backend_meta_get_split_state_t get_split_state;
     void *                              get_split_state_ud;
@@ -81,7 +81,7 @@ struct ggml_backend_meta_device_context {
     }
 };
 
-static bool ggml_backend_dev_is_meta(ggml_backend_dev_t dev);
+static bool ggml_backend_dev_is_meta(ggml_backend_dev_t dev);  // ggml_backend_dev_is_meta
 
 static const char * ggml_backend_meta_device_get_name(ggml_backend_dev_t dev) {
     GGML_ASSERT(ggml_backend_dev_is_meta(dev));
@@ -109,7 +109,7 @@ static void ggml_backend_meta_device_get_memory(ggml_backend_dev_t dev, size_t *
 }
 
 static enum ggml_backend_dev_type ggml_backend_meta_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_META;
+    return GGML_BACKEND_DEVICE_TYPE_META;  // 返回
 
     GGML_UNUSED(dev);
 }
@@ -142,11 +142,11 @@ static void ggml_backend_meta_device_get_props(ggml_backend_dev_t dev, ggml_back
     }
 }
 
-static ggml_backend_t ggml_backend_meta_device_init_backend(ggml_backend_dev_t dev, const char * params);
+static ggml_backend_t ggml_backend_meta_device_init_backend(ggml_backend_dev_t dev, const char * params);  // ggml_backend_meta_device_init_backend
 
-static ggml_backend_buffer_type_t ggml_backend_meta_device_get_buffer_type(ggml_backend_dev_t dev);
+static ggml_backend_buffer_type_t ggml_backend_meta_device_get_buffer_type(ggml_backend_dev_t dev);  // ggml_backend_meta_device_get_buffer_type
 
-static ggml_backend_buffer_type_t ggml_backend_meta_device_get_host_buffer_type(ggml_backend_dev_t dev);
+static ggml_backend_buffer_type_t ggml_backend_meta_device_get_host_buffer_type(ggml_backend_dev_t dev);  // ggml_backend_meta_device_get_host_buffer_type
 
 static bool ggml_backend_meta_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
     GGML_ASSERT(ggml_backend_dev_is_meta(dev));
@@ -159,19 +159,19 @@ static bool ggml_backend_meta_device_supports_buft(ggml_backend_dev_t dev, ggml_
     GGML_ASSERT(ggml_backend_dev_is_meta(dev));
     ggml_backend_dev_t dev_buft = ggml_backend_buft_get_device(buft);
     if (!ggml_backend_dev_is_meta(dev_buft)) {
-        return false;
+        return false;  // 返回
     }
     const ggml_backend_meta_device_context * meta_dev_ctx      = (const ggml_backend_meta_device_context *) dev->context;
     const ggml_backend_meta_device_context * meta_buft_dev_ctx = (const ggml_backend_meta_device_context *) dev_buft->context;
     if (meta_dev_ctx->simple_devs.size() != meta_buft_dev_ctx->simple_devs.size()) {
-        return false;
+        return false;  // 返回
     }
     for (size_t i = 0; i < meta_dev_ctx->simple_devs.size(); i++) {
         if (meta_dev_ctx->simple_devs[i] != meta_buft_dev_ctx->simple_devs[i]) {
-            return false;
+            return false;  // 返回
         }
     }
-    return true;
+    return true;  // 返回
 }
 
 static const ggml_backend_device_i ggml_backend_meta_device_iface = {
@@ -193,7 +193,7 @@ static const ggml_backend_device_i ggml_backend_meta_device_iface = {
 };
 
 static bool ggml_backend_dev_is_meta(ggml_backend_dev_t dev) {
-    return dev != nullptr && dev->iface.get_name == ggml_backend_meta_device_iface.get_name;
+    return dev != nullptr && dev->iface.get_name == ggml_backend_meta_device_iface.get_name;  // 返回
 }
 
 static size_t ggml_backend_meta_dev_n_devs(ggml_backend_dev_t meta_dev) {
@@ -206,7 +206,7 @@ static ggml_backend_dev_t ggml_backend_meta_dev_simple_dev(ggml_backend_dev_t me
     GGML_ASSERT(ggml_backend_dev_is_meta(meta_dev));
     const ggml_backend_meta_device_context * meta_dev_ctx = (const ggml_backend_meta_device_context *) meta_dev->context;
     GGML_ASSERT(index < meta_dev_ctx->simple_devs.size());
-    return meta_dev_ctx->simple_devs[index];
+    return meta_dev_ctx->simple_devs[index];  // 返回
 }
 
 ggml_backend_dev_t ggml_backend_meta_device(
@@ -221,31 +221,31 @@ ggml_backend_dev_t ggml_backend_meta_device(
     for (size_t i = 0; i < n_devs; i++) {
         simple_devs.push_back(devs[i]);
     }
-    ggml_backend_meta_device_context ctx(simple_devs, get_split_state, get_split_state_ud);
+    ggml_backend_meta_device_context ctx(simple_devs, get_split_state, get_split_state_ud);  // ctx
 
     {
         auto it = meta_devs.find(ctx);
         if (it != meta_devs.end()) {
-            return &it->second;
+            return &it->second;  // 返回
         }
     }
     ctxs.push_back(std::make_unique<ggml_backend_meta_device_context>(ctx));
 
-    struct ggml_backend_device meta_dev = {
+    struct ggml_backend_device meta_dev = {  // 结构体定义
         /*iface  =*/ ggml_backend_meta_device_iface,
         /*reg    =*/ nullptr,
         /*ctx    =*/ ctxs.back().get(),
     };
 
     auto result = meta_devs.emplace(*ctxs.back(), meta_dev);
-    return &result.first->second;
+    return &result.first->second;  // 返回
 }
 
 //
 // meta backend buffer type
 //
 
-struct ggml_backend_meta_buffer_type_context {
+struct ggml_backend_meta_buffer_type_context {  // 结构体定义
     std::vector<ggml_backend_buffer_type_t> simple_bufts;
 
     std::string name;
@@ -262,7 +262,7 @@ struct ggml_backend_meta_buffer_type_context {
     }
 
     bool operator<(const ggml_backend_meta_buffer_type_context & other) const {
-        return simple_bufts < other.simple_bufts;
+        return simple_bufts < other.simple_bufts;  // 返回
     }
 };
 
@@ -282,10 +282,10 @@ static ggml_backend_buffer_type_t ggml_backend_meta_buft_simple_buft(ggml_backen
     GGML_ASSERT(ggml_backend_buft_is_meta(meta_buft));
     const ggml_backend_meta_buffer_type_context * meta_buft_ctx = (const ggml_backend_meta_buffer_type_context *) meta_buft->context;
     GGML_ASSERT(index < meta_buft_ctx->simple_bufts.size());
-    return meta_buft_ctx->simple_bufts[index];
+    return meta_buft_ctx->simple_bufts[index];  // 返回
 }
 
-static ggml_backend_buffer_t ggml_backend_meta_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size);
+static ggml_backend_buffer_t ggml_backend_meta_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size);  // ggml_backend_meta_buffer_type_alloc_buffer
 
 static size_t ggml_backend_meta_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
     const size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
@@ -295,7 +295,7 @@ static size_t ggml_backend_meta_buffer_type_get_alignment(ggml_backend_buffer_ty
         max_alignment = std::max(max_alignment, alignment);
         GGML_ASSERT(max_alignment % alignment == 0);
     }
-    return max_alignment;
+    return max_alignment;  // 返回
 }
 
 static size_t ggml_backend_meta_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
@@ -304,7 +304,7 @@ static size_t ggml_backend_meta_buffer_type_get_max_size(ggml_backend_buffer_typ
     for (size_t i = 0; i < n_simple_bufts; i++) {
         max_size = std::min(max_size, ggml_backend_buft_get_max_size(ggml_backend_meta_buft_simple_buft(buft, i)));
     }
-    return max_size;
+    return max_size;  // 返回
 }
 
 static size_t ggml_backend_meta_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
@@ -314,17 +314,17 @@ static size_t ggml_backend_meta_buffer_type_get_alloc_size(ggml_backend_buffer_t
         const size_t alloc_size = ggml_backend_buft_get_alloc_size(ggml_backend_meta_buft_simple_buft(buft, i), tensor);
         max_alloc_size = std::max(max_alloc_size, alloc_size);
     }
-    return max_alloc_size;
+    return max_alloc_size;  // 返回
 }
 
 static bool ggml_backend_meta_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
     const size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
     for (size_t i = 0; i < n_simple_bufts; i++) {
         if (!ggml_backend_buft_is_host(ggml_backend_meta_buft_simple_buft(buft, i))) {
-            return false;
+            return false;  // 返回
         }
     }
-    return true;
+    return true;  // 返回
 }
 
 static const struct ggml_backend_buffer_type_i ggml_backend_meta_buffer_type_iface = {
@@ -337,7 +337,7 @@ static const struct ggml_backend_buffer_type_i ggml_backend_meta_buffer_type_ifa
 };
 
 bool ggml_backend_buft_is_meta(ggml_backend_buffer_type_t buft) {
-    return buft != nullptr && buft->iface.get_name == ggml_backend_meta_buffer_type_iface.get_name;
+    return buft != nullptr && buft->iface.get_name == ggml_backend_meta_buffer_type_iface.get_name;  // 返回
 }
 
 static ggml_backend_buffer_type_t ggml_backend_meta_device_get_buffer_type(ggml_backend_dev_t dev) {
@@ -346,7 +346,7 @@ static ggml_backend_buffer_type_t ggml_backend_meta_device_get_buffer_type(ggml_
     {
         auto it = meta_bufts.find(dev);
         if (it != meta_bufts.end()) {
-            return &it->second;
+            return &it->second;  // 返回
         }
     }
 
@@ -358,13 +358,13 @@ static ggml_backend_buffer_type_t ggml_backend_meta_device_get_buffer_type(ggml_
     }
     ggml_backend_meta_buffer_type_context * buft_ctx = new ggml_backend_meta_buffer_type_context(simple_bufts);
 
-    struct ggml_backend_buffer_type meta_buft = {
+    struct ggml_backend_buffer_type meta_buft = {  // 结构体定义
         /*iface  =*/ ggml_backend_meta_buffer_type_iface,
         /*device =*/ dev,
         /*ctx    =*/ buft_ctx,
     };
     auto result = meta_bufts.emplace(dev, meta_buft);
-    return &result.first->second;
+    return &result.first->second;  // 返回
 }
 
 static ggml_backend_buffer_type_t ggml_backend_meta_device_get_host_buffer_type(ggml_backend_dev_t dev) {
@@ -375,30 +375,30 @@ static ggml_backend_buffer_type_t ggml_backend_meta_device_get_host_buffer_type(
     for (ggml_backend_dev_t simple_dev : meta_dev_ctx->simple_devs) {
         ggml_backend_buffer_type_t simple_host_buft = ggml_backend_dev_host_buffer_type(simple_dev);
         if (simple_host_buft == nullptr) {
-            return nullptr;
+            return nullptr;  // 返回
         }
         if (host_buft == nullptr) {
             host_buft = simple_host_buft;
         } else if (host_buft != simple_host_buft) {
             // if different simple devices have different host buffer types,
             // we cannot provide a single host buffer type for the meta device
-            return nullptr;
+            return nullptr;  // 返回
         }
     }
-    return host_buft;
+    return host_buft;  // 返回
 }
 
 //
 // meta backend buffer
 //
 
-struct ggml_backend_meta_buffer_context {
+struct ggml_backend_meta_buffer_context {  // 结构体定义
     static constexpr size_t nbtc = GGML_TENSOR_SIZE - sizeof(ggml_tensor::padding);
 
     std::map<std::pair<const ggml_tensor *, bool>, std::pair<ggml_backend_meta_split_state, char[nbtc]>> split_state_cache;
     std::map<          const ggml_tensor *,        std::vector<ggml_tensor *>>                           simple_tensors;
 
-    struct buffer_config {
+    struct buffer_config {  // 结构体定义
         ggml_context          * ctx;
         ggml_backend_buffer_t   buf;
 
@@ -434,7 +434,7 @@ static ggml_backend_buffer_t ggml_backend_meta_buffer_simple_buffer(ggml_backend
     GGML_ASSERT(ggml_backend_buffer_is_meta(meta_buf));
     ggml_backend_meta_buffer_context * buf_ctx = (ggml_backend_meta_buffer_context *) meta_buf->context;
     GGML_ASSERT(index < buf_ctx->buf_configs.size());
-    return buf_ctx->buf_configs[index].buf;
+    return buf_ctx->buf_configs[index].buf;  // 返回
 }
 
 static struct ggml_tensor * ggml_backend_meta_buffer_simple_tensor(const struct ggml_tensor * tensor, size_t index) {
@@ -444,9 +444,9 @@ static struct ggml_tensor * ggml_backend_meta_buffer_simple_tensor(const struct 
 
     auto it = buf_ctx->simple_tensors.find(tensor);
     if (it == buf_ctx->simple_tensors.end()) {
-        return nullptr;
+        return nullptr;  // 返回
     }
-    return it->second[index];
+    return it->second[index];  // 返回
 }
 
 static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(const struct ggml_tensor * tensor, bool assume_sync) {
@@ -455,7 +455,7 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
 
     auto split_states_equal = [&](const ggml_backend_meta_split_state & a, const ggml_backend_meta_split_state & b) -> bool {
         if (a.axis != b.axis) {
-            return false;
+            return false;  // 返回
         }
         for (size_t j = 0; j < n_bufs; j++) {
             int64_t sum_a = 0;
@@ -467,10 +467,10 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
                 sum_b += b.ne[s*n_bufs + j];
             }
             if (sum_a != sum_b) {
-                return false;
+                return false;  // 返回
             }
         }
-        return true;
+        return true;  // 返回
     };
 
     auto handle_generic = [&](const std::vector<ggml_backend_meta_split_state> & src_ss, bool scalar_only) -> ggml_backend_meta_split_state {
@@ -493,63 +493,63 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
             ret = {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, 1};
         }
         GGML_ASSERT(ret.axis != GGML_BACKEND_SPLIT_AXIS_UNKNOWN);
-        return ret;
+        return ret;  // 返回
     };
 
     // Some ops process data on a per-row bases:
     auto handle_per_row = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
         GGML_ASSERT(src_ss[0].axis != GGML_BACKEND_SPLIT_AXIS_0);
-        return src_ss[0];
+        return src_ss[0];  // 返回
     };
 
     // Some ops broadcast the src1 data across src0:
     auto handle_bin_bcast = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
         if (src_ss[0].axis >= 0 && src_ss[0].axis < GGML_MAX_DIMS &&
                 tensor->src[1]->ne[src_ss[0].axis] == 1 && src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-            return src_ss[0];
+            return src_ss[0];  // 返回
         }
         if (src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && (src_ss[0].axis == src_ss[1].axis ||
            (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && (src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_PARTIAL)))) {
-            return src_ss[0]; // GGML_OP_ADD_ID
+            return src_ss[0]; // GGML_OP_ADD_ID  // 返回
         }
         GGML_ASSERT(tensor->src[2] == nullptr || src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
-        return handle_generic(src_ss, /*scalar_only =*/ false);
+        return handle_generic(src_ss, /*scalar_only =*/ false);  // handle_generic
     };
 
     auto handle_concat = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
         const ggml_backend_meta_split_axis concat_axis = ggml_backend_meta_split_axis(ggml_get_op_params_i32(tensor, 0));
         if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && src_ss[1].axis >= 0 && src_ss[1].axis < GGML_MAX_DIMS) {
             GGML_ASSERT(concat_axis != src_ss[1].axis);
-            return src_ss[1];
+            return src_ss[1];  // 返回
         }
         if (src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && src_ss[0].axis >= 0 && src_ss[0].axis < GGML_MAX_DIMS) {
             GGML_ASSERT(concat_axis != src_ss[0].axis);
-            return src_ss[0];
+            return src_ss[0];  // 返回
         }
         if (src_ss[0].axis == src_ss[1].axis && src_ss[0].axis != concat_axis) {
-            return src_ss[0];
+            return src_ss[0];  // 返回
         }
-        return handle_generic(src_ss, /*scalar_only =*/ true);
+        return handle_generic(src_ss, /*scalar_only =*/ true);  // handle_generic
     };
 
     auto handle_mul_mat = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
         if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-            return {GGML_BACKEND_SPLIT_AXIS_MIRRORED, {0}, 1};
+            return {GGML_BACKEND_SPLIT_AXIS_MIRRORED, {0}, 1};  // 返回
         }
         if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_1 && src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
             ggml_backend_meta_split_state ret = src_ss[0];
             ret.axis = GGML_BACKEND_SPLIT_AXIS_0;
             ret.n_segments = 1;
-            return ret;
+            return ret;  // 返回
         }
         if (src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_1 && src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
             ggml_backend_meta_split_state ret = src_ss[1];
             ret.n_segments = 1;
-            return ret;
+            return ret;  // 返回
         }
         if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_0 && src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_0) {
             GGML_ASSERT(split_states_equal(src_ss[0], src_ss[1]));
-            return {assume_sync ? GGML_BACKEND_SPLIT_AXIS_MIRRORED : GGML_BACKEND_SPLIT_AXIS_PARTIAL, {0}, 1};
+            return {assume_sync ? GGML_BACKEND_SPLIT_AXIS_MIRRORED : GGML_BACKEND_SPLIT_AXIS_PARTIAL, {0}, 1};  // 返回
         }
         GGML_ABORT("fatal error");
         //return {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, 1};
@@ -565,11 +565,11 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
             for (int dim = 0; dim < GGML_MAX_DIMS; dim++) {
                 ne_split_dst *= tensor->ne[dim];
                 if (ne_split_dst == ne_split_src) {
-                    return {ggml_backend_meta_split_axis(dim), {0}, 1};
+                    return {ggml_backend_meta_split_axis(dim), {0}, 1};  // 返回
                 }
             }
         }
-        return handle_generic(src_ss, /*scalar_only =*/ false);
+        return handle_generic(src_ss, /*scalar_only =*/ false);  // handle_generic
     };
 
     auto handle_reshape = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
@@ -580,7 +580,7 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
             case GGML_BACKEND_SPLIT_AXIS_3: {
                 GGML_ASSERT(!ggml_is_permuted(tensor) && !ggml_is_permuted(tensor->src[0]));
                 if (src_ss[0].axis == ggml_n_dims(tensor->src[0]) - 1) {
-                    return {ggml_backend_meta_split_axis(ggml_n_dims(tensor) - 1), {0}, 1};
+                    return {ggml_backend_meta_split_axis(ggml_n_dims(tensor) - 1), {0}, 1};  // 返回
                 }
                 std::vector<int64_t> base_ne_in;
                 base_ne_in.reserve(GGML_MAX_DIMS - src_ss[0].axis);
@@ -599,12 +599,12 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
                     const int64_t base_ne_out_next = base_ne_out *= tensor->ne[dim];
                     for (const int64_t & bni : base_ne_in) {
                         if (bni == base_ne_out_next) {
-                            return {ggml_backend_meta_split_axis(dim), {0}, 1};
+                            return {ggml_backend_meta_split_axis(dim), {0}, 1};  // 返回
                         }
                     }
                     if (base_ne_out_next > base_ne_in[0]) {
                         GGML_ASSERT(dim + 1 < GGML_MAX_DIMS);
-                        return {ggml_backend_meta_split_axis(dim + 1), {0}, 1};
+                        return {ggml_backend_meta_split_axis(dim + 1), {0}, 1};  // 返回
                     }
                     base_ne_out = base_ne_out_next;
                 }
@@ -612,7 +612,7 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
             }
             case GGML_BACKEND_SPLIT_AXIS_MIRRORED:
             case GGML_BACKEND_SPLIT_AXIS_PARTIAL: {
-                return src_ss[0];
+                return src_ss[0];  // 返回
             }
             default: {
                 GGML_ABORT("fatal error");
@@ -623,7 +623,7 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
 
     auto handle_view = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
         if (ggml_is_contiguous(tensor) && ggml_is_contiguous(tensor->src[0])) {
-            return handle_reshape(src_ss);
+            return handle_reshape(src_ss);  // handle_reshape
         }
         const int axis = src_ss[0].axis;
         {
@@ -638,19 +638,19 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
                 }
             }
             if (all_strides_the_same) {
-                return src_ss[0];
+                return src_ss[0];  // 返回
             }
         }
         if (!ggml_is_permuted(tensor) && !ggml_is_permuted(tensor->src[0]) && axis >= 0 && axis < GGML_MAX_DIMS-1) {
             for (int dim = 0; dim < GGML_MAX_DIMS-1; dim++) {
                 if (tensor->nb[dim+1] == tensor->src[0]->nb[axis+1]) {
-                    return {ggml_backend_meta_split_axis(dim), {0}, 1};
+                    return {ggml_backend_meta_split_axis(dim), {0}, 1};  // 返回
                 }
             }
             GGML_ABORT("fatal error");
         }
         if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED || src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_PARTIAL) {
-            return src_ss[0];
+            return src_ss[0];  // 返回
         }
         GGML_ABORT("view of permuted tensor not implemented");
         //return {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, 1};
@@ -662,11 +662,11 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
             case GGML_BACKEND_SPLIT_AXIS_1:
             case GGML_BACKEND_SPLIT_AXIS_2:
             case GGML_BACKEND_SPLIT_AXIS_3: {
-                return {ggml_backend_meta_split_axis(tensor->op_params[src_ss[0].axis]), {0}, 1};
+                return {ggml_backend_meta_split_axis(tensor->op_params[src_ss[0].axis]), {0}, 1};  // 返回
             }
             case GGML_BACKEND_SPLIT_AXIS_MIRRORED:
             case GGML_BACKEND_SPLIT_AXIS_PARTIAL: {
-                return src_ss[0];
+                return src_ss[0];  // 返回
             }
             default: {
                 GGML_ABORT("fatal error");
@@ -679,13 +679,13 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
         switch (src_ss[0].axis) {
             case GGML_BACKEND_SPLIT_AXIS_0:
             case GGML_BACKEND_SPLIT_AXIS_1: {
-                return {ggml_backend_meta_split_axis(int(src_ss[0].axis) ^ 1), {0}, 1};
+                return {ggml_backend_meta_split_axis(int(src_ss[0].axis) ^ 1), {0}, 1};  // 返回
             }
             case GGML_BACKEND_SPLIT_AXIS_2:
             case GGML_BACKEND_SPLIT_AXIS_3:
             case GGML_BACKEND_SPLIT_AXIS_MIRRORED:
             case GGML_BACKEND_SPLIT_AXIS_PARTIAL: {
-                return src_ss[0];
+                return src_ss[0];  // 返回
             }
             default: {
                 GGML_ABORT("fatal error");
@@ -696,21 +696,21 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
 
     auto handle_get_rows = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
         if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_0 && src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-            return src_ss[0];
+            return src_ss[0];  // 返回
         }
-        return handle_generic(src_ss, /*scalar_only =*/ true);
+        return handle_generic(src_ss, /*scalar_only =*/ true);  // handle_generic
     };
 
     auto handle_set_rows = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
         GGML_ASSERT(src_ss[0].axis != GGML_BACKEND_SPLIT_AXIS_1);
         GGML_ASSERT(src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
         GGML_ASSERT(split_states_equal(src_ss[0], src_ss[2]));
-        return src_ss[0];
+        return src_ss[0];  // 返回
     };
 
     auto handle_rope = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
         GGML_ASSERT(src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
-        return src_ss[0];
+        return src_ss[0];  // 返回
     };
 
     auto handle_pad = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
@@ -718,7 +718,7 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
             GGML_ASSERT(tensor->op_params[2*src_ss[0].axis + 0] == 0);
             GGML_ASSERT(tensor->op_params[2*src_ss[0].axis + 1] == 0);
         }
-        return src_ss[0];
+        return src_ss[0];  // 返回
     };
 
     auto handle_flash_attn_ext = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
@@ -727,26 +727,26 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
         GGML_ASSERT(                             src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_2);
         GGML_ASSERT(tensor->src[4] == nullptr || src_ss[3].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
         GGML_ASSERT(tensor->src[4] == nullptr || src_ss[4].axis == GGML_BACKEND_SPLIT_AXIS_0);
-        return {GGML_BACKEND_SPLIT_AXIS_1, {0}, 1};
+        return {GGML_BACKEND_SPLIT_AXIS_1, {0}, 1};  // 返回
     };
 
     auto handle_ssm_conv = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
         if (src_ss[0].axis == src_ss[1].axis) {
             if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_0) {
-                return {GGML_BACKEND_SPLIT_AXIS_1, {0}, 1};
+                return {GGML_BACKEND_SPLIT_AXIS_1, {0}, 1};  // 返回
             }
             if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_1) {
-                return {GGML_BACKEND_SPLIT_AXIS_0, {0}, 1};
+                return {GGML_BACKEND_SPLIT_AXIS_0, {0}, 1};  // 返回
             }
         }
-        return handle_generic(src_ss, /*scalar_only =*/ false);
+        return handle_generic(src_ss, /*scalar_only =*/ false);  // handle_generic
     };
 
     auto handle_gated_delta_net = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
         if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED &&
             src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && src_ss[3].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED &&
             src_ss[4].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && src_ss[5].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-            return src_ss[0];
+            return src_ss[0];  // 返回
         }
         GGML_ASSERT(src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_1);
         GGML_ASSERT(src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_1);
@@ -754,12 +754,12 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
         GGML_ASSERT(src_ss[3].axis == GGML_BACKEND_SPLIT_AXIS_1);
         GGML_ASSERT(src_ss[4].axis == GGML_BACKEND_SPLIT_AXIS_1);
         GGML_ASSERT(src_ss[5].axis == GGML_BACKEND_SPLIT_AXIS_2);
-        return {GGML_BACKEND_SPLIT_AXIS_0, {0}, 1};
+        return {GGML_BACKEND_SPLIT_AXIS_0, {0}, 1};  // 返回
     };
 
     auto calculate_split_state = [&]() -> ggml_backend_meta_split_state {
         if (ggml_nelements(tensor) == 0) {
-            return {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, 1};
+            return {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, 1};  // 返回
         }
         if (ggml_backend_buffer_get_usage(tensor->buffer) != GGML_BACKEND_BUFFER_USAGE_COMPUTE && tensor->view_src == nullptr) {
             ggml_backend_dev_t dev = ggml_backend_buft_get_device(ggml_backend_buffer_get_type(tensor->buffer));
@@ -774,7 +774,7 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
                 }
                 GGML_ASSERT(ne_sum == tensor->ne[ret.axis]);
             }
-            return ret;
+            return ret;  // 返回
         }
 
         std::vector<ggml_backend_meta_split_state> src_ss(GGML_MAX_SRC, {GGML_BACKEND_SPLIT_AXIS_NONE, {0}, 1});
@@ -1010,7 +1010,7 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
                             sum += src_ss[i].ne[s*n_bufs + j];
                         }
                         // Assert that ratio is consistent:
-                        GGML_ASSERT(split_state.ne[j] * tensor->src[i]->ne[src_ss[i].axis]
+                        GGML_ASSERT(split_state.ne[j] * tensor->src[i]->ne[src_ss[i].axis]  // 断言检查
                                                == sum * tensor->ne[split_state.axis]);
                     }
                 }
@@ -1018,7 +1018,7 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
             }
             GGML_ASSERT(!first_src_split_by_axis);
         }
-        return split_state;
+        return split_state;  // 返回
     };
 
     const std::pair key = std::make_pair(tensor, assume_sync);
@@ -1065,7 +1065,7 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
 
     ggml_backend_meta_split_state ret = buf_ctx->split_state_cache[key].first;
     GGML_ASSERT(ret.axis != GGML_BACKEND_SPLIT_AXIS_NONE);
-#ifndef NDEBUG
+#ifndef NDEBUG  // 如果未定义 NDEBUG 则编译
     if (ret.axis >= 0 && ret.axis < GGML_MAX_DIMS) {
         int64_t ne_ret = 0;
         for (size_t sj = 0; sj < ret.n_segments*n_bufs; sj++) {
@@ -1073,8 +1073,8 @@ static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(co
         }
         assert(ne_ret == tensor->ne[int(ret.axis)]);
     }
-#endif // NDEBUG
-    return ret;
+#endif // NDEBUG  // 条件编译结束
+    return ret;  // 返回
 }
 
 static void * ggml_backend_meta_buffer_get_base(ggml_backend_buffer_t buffer) {
@@ -1194,7 +1194,7 @@ static enum ggml_status ggml_backend_meta_buffer_init_tensor(ggml_backend_buffer
 
     buf_ctx->simple_tensors[tensor] = simple_tensors;
 
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 static void ggml_backend_meta_buffer_set_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
@@ -1233,7 +1233,7 @@ static void ggml_backend_meta_buffer_set_tensor(ggml_backend_buffer_t buffer, gg
                 }
             }
             GGML_ASSERT(offset_data*r_count == size);
-            return;
+            return;  // 返回
         }
         GGML_ASSERT(split_state.axis == GGML_BACKEND_SPLIT_AXIS_1);
 
@@ -1256,7 +1256,7 @@ static void ggml_backend_meta_buffer_set_tensor(ggml_backend_buffer_t buffer, gg
             }
         }
         GGML_ASSERT(offset_data*r_count == size);
-        return;
+        return;  // 返回
     }
 
     switch (split_state.axis) {
@@ -1340,7 +1340,7 @@ static void ggml_backend_meta_buffer_get_tensor(ggml_backend_buffer_t buffer, co
                 }
             }
             GGML_ASSERT(offset_data*r_count == size);
-            return;
+            return;  // 返回
         }
         GGML_ASSERT(split_state.axis == GGML_BACKEND_SPLIT_AXIS_1);
 
@@ -1363,7 +1363,7 @@ static void ggml_backend_meta_buffer_get_tensor(ggml_backend_buffer_t buffer, co
             }
         }
         GGML_ASSERT(offset_data*r_count == size);
-        return;
+        return;  // 返回
     }
 
     switch (split_state.axis) {
@@ -1426,7 +1426,7 @@ static const ggml_backend_buffer_i ggml_backend_meta_buffer_iface = {
 };
 
 bool ggml_backend_buffer_is_meta(ggml_backend_buffer_t buf) {
-    return buf != nullptr && buf->iface.free_buffer == ggml_backend_meta_buffer_iface.free_buffer;
+    return buf != nullptr && buf->iface.free_buffer == ggml_backend_meta_buffer_iface.free_buffer;  // 返回
 }
 
 static ggml_backend_buffer_t ggml_backend_meta_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
@@ -1447,10 +1447,10 @@ static ggml_backend_buffer_t ggml_backend_meta_buffer_type_alloc_buffer(ggml_bac
         buf_ctx->buf_configs.emplace_back(ggml_init(params), simple_buf);
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_meta_buffer_iface, buf_ctx, max_size);
+    return ggml_backend_buffer_init(buft, ggml_backend_meta_buffer_iface, buf_ctx, max_size);  // ggml_backend_buffer_init
 }
 
-struct ggml_backend_buffer * ggml_backend_meta_alloc_ctx_tensors_from_buft(struct ggml_context * ctx, ggml_backend_buffer_type_t buft) {
+struct ggml_backend_buffer * ggml_backend_meta_alloc_ctx_tensors_from_buft(struct ggml_context * ctx, ggml_backend_buffer_type_t buft) {  // 结构体定义
     const size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
 
     ggml_init_params params = {
@@ -1476,7 +1476,7 @@ struct ggml_backend_buffer * ggml_backend_meta_alloc_ctx_tensors_from_buft(struc
             meta_buf_ctx->buf_configs[i].ctx, ggml_backend_meta_buft_simple_buft(buft, i));
         meta_buf->size = std::max(meta_buf->size, ggml_backend_buffer_get_size(meta_buf_ctx->buf_configs[i].buf));
     }
-    return meta_buf;
+    return meta_buf;  // 返回
 }
 
 //
@@ -1485,17 +1485,17 @@ struct ggml_backend_buffer * ggml_backend_meta_alloc_ctx_tensors_from_buft(struc
 
 static ggml_guid_t ggml_backend_meta_guid() {
     static ggml_guid guid = {0xf1, 0x0e, 0x34, 0xcf, 0x9c, 0x6f, 0x43, 0xcb, 0x96, 0x92, 0xbe, 0x8e, 0xbb, 0x71, 0x3f, 0xda};
-    return &guid;
+    return &guid;  // 返回
 }
 
-struct ggml_backend_meta_context {
-    struct cgraph_config {
+struct ggml_backend_meta_context {  // 结构体定义
+    struct cgraph_config {  // 结构体定义
         ggml_cgraph * cgraph_main = nullptr;
         int           offset      = 0; // Node offset vs. original graph
 
         std::vector<ggml_cgraph *> cgraphs_aux;
     };
-    struct backend_config {
+    struct backend_config {  // 结构体定义
         ggml_backend_t backend;
 
         std::vector<cgraph_config>           cgraphs;
@@ -1748,7 +1748,7 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
 
                 skip_unrelated();
                 if (id + 1 >= cgraph->n_nodes) {
-                    return idr;
+                    return idr;  // 返回
                 }
                 {
                     ggml_tensor * next = cgraph->nodes[id+1];
@@ -1765,7 +1765,7 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
                 while (true) {
                     skip_unrelated();
                     if (id + 1 >= cgraph->n_nodes) {
-                        return idr;
+                        return idr;  // 返回
                     }
                     ggml_tensor * next = cgraph->nodes[id+1];
                     if (next->op == GGML_OP_MUL && next->src[0] == node &&
@@ -1780,14 +1780,14 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
                 }
 
                 if (n_used != node->ne[1] || id + 2*n_used-1 >= cgraph->n_nodes) {
-                    return idr;
+                    return idr;  // 返回
                 }
                 for (int32_t k = 0; k < n_used; k++) {
                     ggml_tensor * next = cgraph->nodes[id+1];
                     if (next->op != GGML_OP_VIEW || next->view_src != node || next->view_offs != k*node->nb[1] ||
                             next->ne[0] != node->ne[0] || next->ne[1] != node->ne[2] || next->nb[1] != node->nb[2] ||
                             ggml_node_get_use_count(cgraph, id+1) != 1) {
-                        return idr;
+                        return idr;  // 返回
                     }
                     id++;
                 }
@@ -1795,7 +1795,7 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
                     ggml_tensor * next = cgraph->nodes[id+1];
                     if (next->op != GGML_OP_ADD || next->src[0] != cgraph->nodes[id - (n_used-1)] ||
                             next->src[1] != cgraph->nodes[id - (n_used-2)] || ggml_node_get_use_count(cgraph, id+1) != 1) {
-                        return idr;
+                        return idr;  // 返回
                     }
                     id++;
                 }
@@ -1803,12 +1803,12 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
                     ggml_tensor * next = cgraph->nodes[id+1];
                     if (next->op != GGML_OP_ADD || next->src[0] != cgraph->nodes[id] ||
                             next->src[1] != cgraph->nodes[id - (n_used-2)] || ggml_node_get_use_count(cgraph, id+1) != 1) {
-                        return idr;
+                        return idr;  // 返回
                     }
                     id++;
                 }
                 idr = id;
-                return idr;
+                return idr;  // 返回
             };
 
             int i_start = 0;
@@ -1929,7 +1929,7 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
             ret->ne[k] = t->ne[k];
             ret->nb[k] = t->nb[k];
         }
-        return ret;
+        return ret;  // 返回
     };
     auto set_tmp_data = [&](ggml_tensor * tensor, const size_t j, const size_t i_buf) {
         auto & bcj = backend_ctx->backend_configs[j];
@@ -1943,7 +1943,7 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
     // FIXME usage_counts
     auto get_cgraph_aux = [&]() -> ggml_cgraph * {
         ggml_cgraph * ret = backend_ctx->cgraphs_aux[iga++];
-        return ret;
+        return ret;  // 返回
     };
 
     // Preferentially use backend-specific allreduce_tensor_async (e.g. NCCL for CUDA), use a generic fallback if unavailable:
@@ -1969,7 +1969,7 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
             step_cgraphs[j]->n_nodes = 1;
             const ggml_status status = ggml_backend_graph_compute_async(bcj.backend, step_cgraphs[j]);
             if (status != GGML_STATUS_SUCCESS) {
-                return status;
+                return status;  // 返回
             }
         }
         std::fill(step_cgraphs.begin(), step_cgraphs.end(), nullptr);
@@ -2017,7 +2017,7 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
             push_data(j_src, j_dst, i_buf);
             const ggml_status status = ggml_backend_graph_compute_async(backend_ctx->backend_configs[j_dst].backend, step_cgraphs[j_dst]);
             if (status != GGML_STATUS_SUCCESS) {
-                return status;
+                return status;  // 返回
             }
             i_buf = 1;
         }
@@ -2041,7 +2041,7 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
                 auto & bcj = backend_ctx->backend_configs[j];
                 const ggml_status status = ggml_backend_graph_compute_async(bcj.backend, step_cgraphs[j]);
                 if (status != GGML_STATUS_SUCCESS) {
-                    return status;
+                    return status;  // 返回
                 }
             }
             i_buf++;
@@ -2058,7 +2058,7 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
             ggml_backend_tensor_copy_async(bcj_src.backend, bcj_dst.backend, node_src, node_dst);
         }
 
-        return GGML_STATUS_SUCCESS;
+        return GGML_STATUS_SUCCESS;  // 返回
     };
 
 
@@ -2067,7 +2067,7 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
             auto & bcj = backend_ctx->backend_configs[j];
             const ggml_status status = ggml_backend_graph_compute_async(bcj.backend, bcj.cgraphs[i].cgraph_main);
             if (status != GGML_STATUS_SUCCESS) {
-                return status;
+                return status;  // 返回
             }
         }
 
@@ -2087,12 +2087,12 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
             if (!backend_allreduce_success) {
                 const ggml_status status = allreduce_fallback(i);
                 if (status != GGML_STATUS_SUCCESS) {
-                    return status;
+                    return status;  // 返回
                 }
             }
         }
     }
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 static const ggml_backend_i ggml_backend_meta_i = {
@@ -2115,7 +2115,7 @@ static const ggml_backend_i ggml_backend_meta_i = {
 };
 
 bool ggml_backend_is_meta(ggml_backend_t backend) {
-    return backend != nullptr && backend->iface.get_name == ggml_backend_meta_i.get_name;
+    return backend != nullptr && backend->iface.get_name == ggml_backend_meta_i.get_name;  // 返回
 }
 
 static ggml_backend_t ggml_backend_meta_device_init_backend(ggml_backend_dev_t dev, const char * params) {
@@ -2126,7 +2126,7 @@ static ggml_backend_t ggml_backend_meta_device_init_backend(ggml_backend_dev_t d
     backend->iface   = ggml_backend_meta_i;
     backend->device  = dev;
     backend->context = backend_ctx;
-    return backend;
+    return backend;  // 返回
 }
 
 size_t ggml_backend_meta_n_backends(ggml_backend_t meta_backend) {
@@ -2138,6 +2138,6 @@ size_t ggml_backend_meta_n_backends(ggml_backend_t meta_backend) {
 ggml_backend_t ggml_backend_meta_simple_backend(ggml_backend_t meta_backend, size_t index) {
     GGML_ASSERT(ggml_backend_is_meta(meta_backend));
     const ggml_backend_meta_context * backend_ctx = (const ggml_backend_meta_context *) meta_backend->context;
-    return backend_ctx->backend_configs[index].backend;
+    return backend_ctx->backend_configs[index].backend;  // 返回
 }
 

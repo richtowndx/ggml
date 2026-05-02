@@ -1,53 +1,53 @@
-#include "transport.h"
-#include "ggml-impl.h"
+#include "transport.h"  // 引入 transport.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
 
-#ifdef _WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  ifndef NOMINMAX
-#     define NOMINMAX
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
+#  define WIN32_LEAN_AND_MEAN  // 宏定义 WIN32_LEAN_AND_MEAN
+#  ifndef NOMINMAX  // 如果未定义 NOMINMAX 则编译
+#     define NOMINMAX  // 宏定义 NOMINMAX
 #  endif
-#  include <windows.h>
-#  include <winsock2.h>
-#else
-#  include <arpa/inet.h>
-#  include <sys/socket.h>
-#  include <sys/types.h>
-#  include <netinet/in.h>
-#  include <netinet/tcp.h>
-#  include <netdb.h>
-#  include <unistd.h>
-#endif
-#include <cstdlib>
-#include <mutex>
-#include <optional>
+#  include <windows.h>  // 引入 windows.h 头文件
+#  include <winsock2.h>  // 引入 winsock2.h 头文件
+#else  // 否则
+#  include <arpa/inet.h>  // 引入 arpa/inet.h 头文件
+#  include <sys/socket.h>  // 引入 sys/socket.h 头文件
+#  include <sys/types.h>  // 引入 sys/types.h 头文件
+#  include <netinet/in.h>  // 引入 netinet/in.h 头文件
+#  include <netinet/tcp.h>  // 引入 netinet/tcp.h 头文件
+#  include <netdb.h>  // 引入 netdb.h 头文件
+#  include <unistd.h>  // 引入 unistd.h 头文件
+#endif  // 条件编译结束
+#include <cstdlib>  // 引入 cstdlib 头文件
+#include <mutex>  // 引入 mutex 头文件
+#include <optional>  // 引入 optional 头文件
 
-#ifdef GGML_RPC_RDMA
-#  include <infiniband/verbs.h>
-#  include <time.h>
-#  ifndef _WIN32
-#    include <poll.h>
+#ifdef GGML_RPC_RDMA  // 如果定义了 GGML_RPC_RDMA 则编译
+#  include <infiniband/verbs.h>  // 引入 infiniband/verbs.h 头文件
+#  include <time.h>  // 引入 time.h 头文件
+#  ifndef _WIN32  // 如果未定义 _WIN32 则编译
+#    include <poll.h>  // 引入 poll.h 头文件
 #  endif
-#endif // GGML_RPC_RDMA
+#endif // GGML_RPC_RDMA  // 条件编译结束
 
-#ifdef _WIN32
-typedef SOCKET sockfd_t;
-using ssize_t = __int64;
-#else
-typedef int sockfd_t;
-#endif
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
+typedef SOCKET sockfd_t;  // 类型定义
+using ssize_t = __int64;  // using 声明
+#else  // 否则
+typedef int sockfd_t;  // 类型定义
+#endif  // 条件编译结束
 
 static const char * RPC_DEBUG = std::getenv("GGML_RPC_DEBUG");
 
 #define LOG_DBG(...) \
     do { if (RPC_DEBUG) GGML_LOG_DEBUG(__VA_ARGS__); } while (0)
 
-#ifdef GGML_RPC_RDMA
+#ifdef GGML_RPC_RDMA  // 如果定义了 GGML_RPC_RDMA 则编译
 static constexpr size_t RDMA_CHUNK    = 256 * 1024;   // 256 KiB per send/recv (fits default 8 MiB memlock)
 static constexpr int    RDMA_RX_DEPTH = 24;            // pre-posted recv ring: 24 × 256 KiB = 6 MiB
 static constexpr size_t RDMA_GID_SIZE = 16;            // RoCE GID / IB GID is always 16 bytes
-using rdma_gid_t = std::array<uint8_t, RDMA_GID_SIZE>;
+using rdma_gid_t = std::array<uint8_t, RDMA_GID_SIZE>;  // using 声明
 
-struct rdma_conn {
+struct rdma_conn {  // 结构体定义
     struct ibv_context * ctx = nullptr;
     struct ibv_pd * pd  = nullptr;
     struct ibv_cq * scq = nullptr;   // send completions
@@ -68,15 +68,15 @@ struct rdma_conn {
     }
 
     bool post_rx(int i) {
-        struct ibv_sge sge = {};
+        struct ibv_sge sge = {};  // 结构体定义
         sge.addr   = (uintptr_t)rx_slot(i);
         sge.length = RDMA_CHUNK;
         sge.lkey   = rx_mr->lkey;
-        struct ibv_recv_wr wr = {}, * bad = nullptr;
+        struct ibv_recv_wr wr = {}, * bad = nullptr;  // 结构体定义
         wr.wr_id   = (uint64_t)i;
         wr.sg_list = &sge;
         wr.num_sge = 1;
-        return ibv_post_recv(qp, &wr, &bad) == 0;
+        return ibv_post_recv(qp, &wr, &bad) == 0;  // ibv_post_recv
     }
 
     ~rdma_conn() {
@@ -94,7 +94,7 @@ struct rdma_conn {
 
 // Local RDMA parameters captured during the probe phase and later consumed
 // by rdma_activate() after the remote side's caps arrive via HELLO.
-struct rdma_local_info {
+struct rdma_local_info {  // 结构体定义
     uint32_t qpn     = 0;
     uint32_t psn     = 0;
     uint8_t  gid[RDMA_GID_SIZE] = {};
@@ -103,7 +103,7 @@ struct rdma_local_info {
     enum ibv_mtu path_mtu = IBV_MTU_1024;
 };
 
-struct rdma_caps {
+struct rdma_caps {  // 结构体定义
     uint32_t qpn;
     uint32_t psn;
     uint8_t  gid[RDMA_GID_SIZE];
@@ -111,55 +111,55 @@ struct rdma_caps {
 
 static_assert(sizeof(rdma_caps) == RPC_CONN_CAPS_SIZE, "rdma_caps must match conn_caps size");
 
-#endif // GGML_RPC_RDMA
+#endif // GGML_RPC_RDMA  // 条件编译结束
 
-struct socket_t::impl {
+struct socket_t::impl {  // 结构体定义
     impl(sockfd_t fd) : use_rdma(false), fd(fd) {}
     ~impl();
-    bool send_data(const void * data, size_t size);
-    bool recv_data(void * data, size_t size);
-    void get_caps(uint8_t * local_caps);
-    void update_caps(const uint8_t * remote_caps);
+    bool send_data(const void * data, size_t size);  // send_data
+    bool recv_data(void * data, size_t size);  // recv_data
+    void get_caps(uint8_t * local_caps);  // get_caps
+    void update_caps(const uint8_t * remote_caps);  // update_caps
 
-#ifdef GGML_RPC_RDMA
-    bool tcp_peer_closed();
+#ifdef GGML_RPC_RDMA  // 如果定义了 GGML_RPC_RDMA 则编译
+    bool tcp_peer_closed();  // tcp_peer_closed
     std::optional<rdma_gid_t> rdma_build_target_gid();
-    bool rdma_probe();
-    bool rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, const uint8_t * remote_gid);
-    bool rdma_poll(struct ibv_cq * cq, struct ibv_wc * wc);
-    bool rdma_send(const void * data, size_t size);
-    bool rdma_recv(void * data, size_t size);
+    bool rdma_probe();  // rdma_probe
+    bool rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, const uint8_t * remote_gid);  // rdma_activate
+    bool rdma_poll(struct ibv_cq * cq, struct ibv_wc * wc);  // rdma_poll
+    bool rdma_send(const void * data, size_t size);  // rdma_send
+    bool rdma_recv(void * data, size_t size);  // rdma_recv
 
     std::unique_ptr<rdma_conn> rdma;
     rdma_local_info            rdma_local = {};
-#endif // GGML_RPC_RDMA
+#endif // GGML_RPC_RDMA  // 条件编译结束
     bool     use_rdma;
     sockfd_t fd;
 };
 
 socket_t::impl::~impl() {
-#ifdef GGML_RPC_RDMA
+#ifdef GGML_RPC_RDMA  // 如果定义了 GGML_RPC_RDMA 则编译
     rdma.reset();
-#endif // GGML_RPC_RDMA
+#endif // GGML_RPC_RDMA  // 条件编译结束
     LOG_DBG("[%s] closing socket %d\n", __func__, this->fd);
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
     if (fd != INVALID_SOCKET) closesocket(this->fd);
-#else
+#else  // 否则
     if (fd >= 0) close(this->fd);
-#endif
+#endif  // 条件编译结束
 }
 
-#ifdef GGML_RPC_RDMA
+#ifdef GGML_RPC_RDMA  // 如果定义了 GGML_RPC_RDMA 则编译
 
 bool socket_t::impl::tcp_peer_closed() {
     if (fd < 0) return false;
-#ifndef _WIN32
-    struct pollfd pfd = { fd, POLLIN | POLLRDHUP, 0 };
+#ifndef _WIN32  // 如果未定义 _WIN32 则编译
+    struct pollfd pfd = { fd, POLLIN | POLLRDHUP, 0 };  // 结构体定义
     int r = poll(&pfd, 1, 0);
     return r > 0 && (pfd.revents & (POLLHUP | POLLERR | POLLRDHUP));
-#else
-    return false;
-#endif
+#else  // 否则
+    return false;  // 返回
+#endif  // 条件编译结束
 }
 
 // Build a RoCE GID-shaped 16-byte target from a TCP socket's local address.
@@ -173,7 +173,7 @@ std::optional<rdma_gid_t> socket_t::impl::rdma_build_target_gid() {
     sockaddr_storage addr = {};
     socklen_t addr_len = sizeof(addr);
     if (getsockname(fd, reinterpret_cast<sockaddr *>(&addr), &addr_len) != 0) {
-        return std::nullopt;
+        return std::nullopt;  // 返回
     }
     rdma_gid_t target = {};
     if (addr.ss_family == AF_INET) {
@@ -181,14 +181,14 @@ std::optional<rdma_gid_t> socket_t::impl::rdma_build_target_gid() {
         target[10] = 0xff;
         target[11] = 0xff;
         memcpy(&target[12], &a->sin_addr, 4);
-        return target;
+        return target;  // 返回
     }
     if (addr.ss_family == AF_INET6) {
         const auto * a = reinterpret_cast<const sockaddr_in6 *>(&addr);
         memcpy(target.data(), &a->sin6_addr, RDMA_GID_SIZE);
-        return target;
+        return target;  // 返回
     }
-    return std::nullopt;
+    return std::nullopt;  // 返回
 }
 
 bool socket_t::impl::rdma_probe() {
@@ -197,7 +197,7 @@ bool socket_t::impl::rdma_probe() {
 
     auto target_gid = rdma_build_target_gid();
     if (!target_gid) {
-        return false;
+        return false;  // 返回
     }
 
     const uint8_t ib_port = 1;
@@ -315,9 +315,9 @@ bool socket_t::impl::rdma_probe() {
     } else if (gid_version == IBV_GID_TYPE_ROCE_V1) {
         ver_str = " RoCEv1";
     }
-    GGML_LOG_INFO("RDMA probed: dev=%s gid=%d%s qpn=%u inline=%u\n",
+    GGML_LOG_INFO("RDMA probed: dev=%s gid=%d%s qpn=%u inline=%u\n",  // 打印信息日志
                   matched_dev, gid_idx, ver_str, rdma_local.qpn, rdma->max_inline);
-    return true;
+    return true;  // 返回
 }
 
 // Phase 2: Given remote QPN/PSN/GID, transition QP: RESET->INIT->pre-post->RTR->RTS.
@@ -325,14 +325,14 @@ bool socket_t::impl::rdma_probe() {
 bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, const uint8_t * remote_gid) {
     // RESET -> INIT
     {
-        struct ibv_qp_attr a = {};
+        struct ibv_qp_attr a = {};  // 结构体定义
         a.qp_state        = IBV_QPS_INIT;
         a.port_num        = rdma_local.ib_port;
         a.pkey_index      = 0;
         a.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_LOCAL_WRITE;
         if (ibv_modify_qp(rdma->qp, &a,
                 IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS) != 0) {
-            return false;
+            return false;  // 返回
         }
     }
 
@@ -342,7 +342,7 @@ bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, con
 
     // INIT -> RTR
     {
-        struct ibv_qp_attr a = {};
+        struct ibv_qp_attr a = {};  // 结构体定义
         a.qp_state           = IBV_QPS_RTR;
         a.path_mtu           = rdma_local.path_mtu;
         a.dest_qp_num        = remote_qpn;
@@ -358,13 +358,13 @@ bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, con
         if (ibv_modify_qp(rdma->qp, &a,
                 IBV_QP_STATE | IBV_QP_AV | IBV_QP_PATH_MTU | IBV_QP_DEST_QPN |
                 IBV_QP_RQ_PSN | IBV_QP_MAX_DEST_RD_ATOMIC | IBV_QP_MIN_RNR_TIMER) != 0) {
-            return false;
+            return false;  // 返回
         }
     }
 
     // RTR -> RTS
     {
-        struct ibv_qp_attr a = {};
+        struct ibv_qp_attr a = {};  // 结构体定义
         a.qp_state     = IBV_QPS_RTS;
         a.timeout      = 14;
         a.retry_cnt    = 7;
@@ -374,13 +374,13 @@ bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, con
         if (ibv_modify_qp(rdma->qp, &a,
                 IBV_QP_STATE | IBV_QP_TIMEOUT | IBV_QP_RETRY_CNT | IBV_QP_RNR_RETRY |
                 IBV_QP_SQ_PSN | IBV_QP_MAX_QP_RD_ATOMIC) != 0) {
-            return false;
+            return false;  // 返回
         }
     }
 
-    GGML_LOG_INFO("RDMA activated: qpn=%u->%u mtu=%d rx_depth=%d\n",
+    GGML_LOG_INFO("RDMA activated: qpn=%u->%u mtu=%d rx_depth=%d\n",  // 打印信息日志
                   rdma_local.qpn, remote_qpn, 128 << rdma_local.path_mtu, RDMA_RX_DEPTH);
-    return true;
+    return true;  // 返回
 }
 
 bool socket_t::impl::rdma_poll(struct ibv_cq * cq, struct ibv_wc * wc) {
@@ -391,12 +391,12 @@ bool socket_t::impl::rdma_poll(struct ibv_cq * cq, struct ibv_wc * wc) {
                 GGML_LOG_ERROR("RDMA CQ wc error: status=%d (%s) vendor_err=0x%x\n",
                     wc->status, ibv_wc_status_str(wc->status), wc->vendor_err);
             }
-            return wc->status == IBV_WC_SUCCESS;
+            return wc->status == IBV_WC_SUCCESS;  // 返回
         }
         if (n < 0) return false;
         if ((s & 0xFFFFF) == 0 && s > 0) {
             if (tcp_peer_closed()) {
-                return false;
+                return false;  // 返回
             }
         }
     }
@@ -409,8 +409,8 @@ bool socket_t::impl::rdma_send(const void * data, size_t size) {
     while (rem > 0) {
         size_t chunk = std::min(rem, RDMA_CHUNK);
 
-        struct ibv_sge sge = {};
-        struct ibv_send_wr wr = {}, * bad = nullptr;
+        struct ibv_sge sge = {};  // 结构体定义
+        struct ibv_send_wr wr = {}, * bad = nullptr;  // 结构体定义
         wr.opcode  = IBV_WR_SEND;
         wr.sg_list = &sge;
         wr.num_sge = 1;
@@ -434,7 +434,7 @@ bool socket_t::impl::rdma_send(const void * data, size_t size) {
         src += chunk;
         rem -= chunk;
     }
-    return true;
+    return true;  // 返回
 }
 
 bool socket_t::impl::rdma_recv(void * data, size_t size) {
@@ -454,17 +454,17 @@ bool socket_t::impl::rdma_recv(void * data, size_t size) {
         dst += got;
         rem -= got;
     }
-    return true;
+    return true;  // 返回
 }
 
-#endif // GGML_RPC_RDMA
+#endif // GGML_RPC_RDMA  // 条件编译结束
 
 bool socket_t::impl::send_data(const void * data, size_t size) {
-#ifdef GGML_RPC_RDMA
+#ifdef GGML_RPC_RDMA  // 如果定义了 GGML_RPC_RDMA 则编译
     if (use_rdma) {
-        return rdma_send(data, size);
+        return rdma_send(data, size);  // rdma_send
     }
-#endif
+#endif  // 条件编译结束
     size_t bytes_sent = 0;
     while (bytes_sent < size) {
         size_t size_to_send = std::min(size - bytes_sent, MAX_CHUNK_SIZE);
@@ -472,19 +472,19 @@ bool socket_t::impl::send_data(const void * data, size_t size) {
         if (n < 0) {
             GGML_LOG_ERROR("send failed (bytes_sent=%zu, size_to_send=%zu)\n",
                            bytes_sent, size_to_send);
-            return false;
+            return false;  // 返回
         }
         bytes_sent += (size_t)n;
     }
-    return true;
+    return true;  // 返回
 }
 
 bool socket_t::impl::recv_data(void * data, size_t size) {
-#ifdef GGML_RPC_RDMA
+#ifdef GGML_RPC_RDMA  // 如果定义了 GGML_RPC_RDMA 则编译
     if (use_rdma) {
-        return rdma_recv(data, size);
+        return rdma_recv(data, size);  // rdma_recv
     }
-#endif
+#endif  // 条件编译结束
     size_t bytes_recv = 0;
     while (bytes_recv < size) {
         size_t size_to_recv = std::min(size - bytes_recv, MAX_CHUNK_SIZE);
@@ -492,20 +492,20 @@ bool socket_t::impl::recv_data(void * data, size_t size) {
         if (n < 0) {
             GGML_LOG_ERROR("recv failed (bytes_recv=%zu, size_to_recv=%zu)\n",
                            bytes_recv, size_to_recv);
-            return false;
+            return false;  // 返回
         }
         if (n == 0) {
             LOG_DBG("recv returned 0 (peer closed?)\n");
-            return false;
+            return false;  // 返回
         }
         bytes_recv += (size_t)n;
     }
-    return true;
+    return true;  // 返回
 }
 
 void socket_t::impl::get_caps(uint8_t * local_caps) {
     memset(local_caps, 0, RPC_CONN_CAPS_SIZE);
-#ifdef GGML_RPC_RDMA
+#ifdef GGML_RPC_RDMA  // 如果定义了 GGML_RPC_RDMA 则编译
     rdma_local = {};
     if (rdma_probe()) {
         rdma_caps rc = {};
@@ -516,19 +516,19 @@ void socket_t::impl::get_caps(uint8_t * local_caps) {
     } else {
         rdma.reset();
     }
-#endif // GGML_RPC_RDMA
+#endif // GGML_RPC_RDMA  // 条件编译结束
 }
 
 void socket_t::impl::update_caps(const uint8_t * remote_caps) {
-#ifdef GGML_RPC_RDMA
+#ifdef GGML_RPC_RDMA  // 如果定义了 GGML_RPC_RDMA 则编译
     if (!rdma) {
-        return;
+        return;  // 返回
     }
     rdma_caps rc = {};
     memcpy(&rc, remote_caps, sizeof(rc));
     if (rc.qpn == 0) {
         rdma.reset();
-        return;
+        return;  // 返回
     }
     if (rdma_activate(rc.qpn, rc.psn, rc.gid)) {
         use_rdma = true;
@@ -536,9 +536,9 @@ void socket_t::impl::update_caps(const uint8_t * remote_caps) {
         GGML_LOG_ERROR("RDMA activate failed, staying on TCP\n");
         rdma.reset();
     }
-#else
+#else  // 否则
     (void)remote_caps;
-#endif // GGML_RPC_RDMA
+#endif // GGML_RPC_RDMA  // 条件编译结束
 }
 
 
@@ -565,50 +565,50 @@ void socket_t::update_caps(const uint8_t * remote_caps) {
 }
 
 static bool is_valid_fd(sockfd_t sockfd) {
-#ifdef _WIN32
-    return sockfd != INVALID_SOCKET;
-#else
-    return sockfd >= 0;
-#endif
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
+    return sockfd != INVALID_SOCKET;  // 返回
+#else  // 否则
+    return sockfd >= 0;  // 返回
+#endif  // 条件编译结束
 }
 
 static bool set_no_delay(sockfd_t sockfd) {
     int flag = 1;
     // set TCP_NODELAY to disable Nagle's algorithm
     int ret = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int));
-    return ret == 0;
+    return ret == 0;  // 返回
 }
 
 static bool set_reuse_addr(sockfd_t sockfd) {
     int flag = 1;
     int ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(int));
-    return ret == 0;
+    return ret == 0;  // 返回
 }
 
 socket_ptr socket_t::accept() {
     auto client_socket_fd = ::accept(pimpl->fd, NULL, NULL);
     if (!is_valid_fd(client_socket_fd)) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     if (!set_no_delay(client_socket_fd)) {
         GGML_LOG_ERROR("Failed to set TCP_NODELAY\n");
-        return nullptr;
+        return nullptr;  // 返回
     }
-    return socket_ptr(new socket_t(std::make_unique<impl>(client_socket_fd)));
+    return socket_ptr(new socket_t(std::make_unique<impl>(client_socket_fd)));  // socket_ptr
 }
 
 socket_ptr socket_t::create_server(const char * host, int port) {
     auto sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (!is_valid_fd(sockfd)) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     if (!set_reuse_addr(sockfd)) {
         GGML_LOG_ERROR("Failed to set SO_REUSEADDR\n");
-        return nullptr;
+        return nullptr;  // 返回
     }
     if (inet_addr(host) == INADDR_NONE) {
         GGML_LOG_ERROR("Invalid host address: %s\n", host);
-        return nullptr;
+        return nullptr;  // 返回
     }
     struct sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
@@ -616,22 +616,22 @@ socket_ptr socket_t::create_server(const char * host, int port) {
     serv_addr.sin_port = htons(port);
 
     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     if (listen(sockfd, 1) < 0) {
-        return nullptr;
+        return nullptr;  // 返回
     }
-    return socket_ptr(new socket_t(std::make_unique<impl>(sockfd)));
+    return socket_ptr(new socket_t(std::make_unique<impl>(sockfd)));  // socket_ptr
 }
 
 socket_ptr socket_t::connect(const char * host, int port) {
     auto sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (!is_valid_fd(sockfd)) {
-        return nullptr;
+        return nullptr;  // 返回
     }
     if (!set_no_delay(sockfd)) {
         GGML_LOG_ERROR("Failed to set TCP_NODELAY\n");
-        return nullptr;
+        return nullptr;  // 返回
     }
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
@@ -639,45 +639,45 @@ socket_ptr socket_t::connect(const char * host, int port) {
     struct hostent * server = gethostbyname(host);
     if (server == NULL) {
         GGML_LOG_ERROR("Cannot resolve host '%s'\n", host);
-        return nullptr;
+        return nullptr;  // 返回
     }
     memcpy(&addr.sin_addr.s_addr, server->h_addr, server->h_length);
     if (::connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        return nullptr;
+        return nullptr;  // 返回
     }
-    return socket_ptr(new socket_t(std::make_unique<impl>(sockfd)));
+    return socket_ptr(new socket_t(std::make_unique<impl>(sockfd)));  // socket_ptr
 }
 
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
 static std::mutex g_rpc_transport_mu;
 static bool g_rpc_transport_wsa_started = false;
-#endif
+#endif  // 条件编译结束
 
 bool rpc_transport_init() {
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
     std::lock_guard<std::mutex> lock(g_rpc_transport_mu);
     if (g_rpc_transport_wsa_started) {
-        return true;
+        return true;  // 返回
     }
     WSADATA wsaData;
     int res = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (res != 0) {
-        return false;
+        return false;  // 返回
     }
     g_rpc_transport_wsa_started = true;
-    return true;
-#else
-    return true;
-#endif
+    return true;  // 返回
+#else  // 否则
+    return true;  // 返回
+#endif  // 条件编译结束
 }
 
 void rpc_transport_shutdown() {
-#ifdef _WIN32
+#ifdef _WIN32  // 如果定义了 _WIN32 则编译
     std::lock_guard<std::mutex> lock(g_rpc_transport_mu);
     if (!g_rpc_transport_wsa_started) {
-        return;
+        return;  // 返回
     }
     WSACleanup();
     g_rpc_transport_wsa_started = false;
-#endif
+#endif  // 条件编译结束
 }

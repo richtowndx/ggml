@@ -1,19 +1,19 @@
-#include "softmax.hpp"
-#include <cstdint>
-#include <utility>
-#include <cmath>
+#include "softmax.hpp"  // 引入 softmax.hpp 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <utility>  // 引入 utility 头文件
+#include <cmath>  // 引入 cmath 头文件
 
 
-template <typename T> static __dpct_inline__ float t2f32(T val) {
+template <typename T> static __dpct_inline__ float t2f32(T val) {  // 模板
     return (float) val;
 }
 
-template <> float __dpct_inline__ t2f32<sycl::half>(sycl::half val) {
+template <> float __dpct_inline__ t2f32<sycl::half>(sycl::half val) {  // 模板
   return sycl::vec<sycl::half, 1>(val)
       .convert<float, sycl::rounding_mode::automatic>()[0];
 }
 
-struct soft_max_params {
+struct soft_max_params {  // 结构体定义
 
     int64_t nheads;
     uint32_t n_head_log2;
@@ -38,11 +38,11 @@ struct soft_max_params {
 
 // When ncols_template == 0 the bounds for the loops in this function are not known and can't be unrolled.
 // As we want to keep pragma unroll for all other cases we suppress the clang transformation warning here.
-#ifdef __clang__
+#ifdef __clang__  // 如果定义了 __clang__ 则编译
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpass-failed"
-#endif // __clang__
-template <bool use_shared, int ncols_template, int block_size_template, typename T>
+#endif // __clang__  // 条件编译结束
+template <bool use_shared, int ncols_template, int block_size_template, typename T>  // 模板
 static void soft_max_f32(const float *         x,
                          const T *             mask,
                          const float *         sinks,
@@ -165,15 +165,15 @@ static void soft_max_f32(const float *         x,
         const int col = col0 + tid;
 
         if (ncols_template == 0 && col >= ncols) {
-            return;
+            return;  // 返回
         }
 
         dst[col] = vals[col] * inv_sum;
     }
 }
-#ifdef __clang__
+#ifdef __clang__  // 如果定义了 __clang__ 则编译
 #pragma clang diagnostic pop
-#endif // __clang__
+#endif // __clang__  // 条件编译结束
 
 static void soft_max_back_f32(const float *grad, const float *dstf, float *dst,
                               const int ncols, const float scale) {
@@ -198,7 +198,7 @@ static void soft_max_back_f32(const float *grad, const float *dstf, float *dst,
     }
 }
 
-template <int... Ns, typename T>
+template <int... Ns, typename T>  // 模板
 static void launch_soft_max_kernels(const float *           x,
                                     const T *               mask,
                                     const float *           sinks,
@@ -229,14 +229,14 @@ static void launch_soft_max_kernels(const float *           x,
                         GGML_UNUSED(item_ct1);
                     });
             });
-            return true;
+            return true;  // 返回
         }
-        return false;
+        return false;  // 返回
     };
 
     // unary fold over launch_kernel
     if ((launch_kernel(std::integral_constant<int, Ns>{}) || ...)) {
-        return;
+        return;  // 返回
     }
 
     stream->submit([&](sycl::handler &cgh) {
@@ -257,7 +257,7 @@ static void launch_soft_max_kernels(const float *           x,
     });
 }
 
-template <typename T>
+template <typename T>  // 模板
 static void soft_max_f32_sycl(const float *x, const T *mask,
                               const float *sinks, float *dst,
                               const soft_max_params &params,
@@ -320,7 +320,7 @@ static void soft_max_back_f32_sycl(const float *   grad,
 }
 
 void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
 
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
@@ -397,7 +397,7 @@ void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 }
 
 void ggml_sycl_op_soft_max_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);  // scope_dbg_print
     const ggml_tensor * src0 = dst->src[0]; // grad
     const ggml_tensor * src1 = dst->src[1]; // forward pass output
 

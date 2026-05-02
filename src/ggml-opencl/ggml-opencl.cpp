@@ -1,41 +1,41 @@
-#define CL_TARGET_OPENCL_VERSION GGML_OPENCL_TARGET_VERSION
-#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+#define CL_TARGET_OPENCL_VERSION GGML_OPENCL_TARGET_VERSION  // 宏定义 CL_TARGET_OPENCL_VERSION
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS  // 宏定义 CL_USE_DEPRECATED_OPENCL_1_2_APIS
 
 // suppress warnings in CL headers for GCC and Clang
 #pragma GCC diagnostic ignored "-Woverlength-strings"
-#ifdef __clang__
+#ifdef __clang__  // 如果定义了 __clang__ 则编译
 #pragma GCC diagnostic ignored "-Wgnu-anonymous-struct"
-#endif
+#endif  // 条件编译结束
 
-#include "ggml-opencl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
-#include "ggml.h"
+#include "ggml-opencl.h"  // 引入 ggml-opencl.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-#include <CL/cl.h>
+#include <CL/cl.h>  // 引入 CL/cl.h 头文件
 
-#include <inttypes.h>
-#include <string.h>
+#include <inttypes.h>  // 引入 inttypes.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#include <cstddef>
-#include <cstdint>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <cmath>
-#include <map>
-#include <memory>
-#include <charconv>
-#include <mutex>
+#include <cstddef>  // 引入 cstddef 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <vector>  // 引入 vector 头文件
+#include <string>  // 引入 string 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <map>  // 引入 map 头文件
+#include <memory>  // 引入 memory 头文件
+#include <charconv>  // 引入 charconv 头文件
+#include <mutex>  // 引入 mutex 头文件
 
 #undef MIN
 #undef MAX
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define CEIL_DIV(M, N) (((M) + (N)-1) / (N))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))  // 宏定义 MIN
+#define MAX(a, b) ((a) > (b) ? (a) : (b))  // 宏定义 MAX
+#define CEIL_DIV(M, N) (((M) + (N)-1) / (N))  // 宏定义 CEIL_DIV
 
-#define UNUSED(x) (void)(x)
+#define UNUSED(x) (void)(x)  // 宏定义 UNUSED
 
 #define CL_CHECK(err)                                               \
     do {                                                            \
@@ -51,7 +51,7 @@
 // OpenCL
 //------------------------------------------------------------------------------
 
-bool ggml_cl_compute_forward(ggml_backend_t backend, struct ggml_tensor * tensor);
+bool ggml_cl_compute_forward(ggml_backend_t backend, struct ggml_tensor * tensor);  // ggml_cl_compute_forward
 
 // See https://gmplib.org/~tege/divcnst-pldi94.pdf figure 4.1.
 // Precompute mp (m' in the paper) and L such that division
@@ -59,7 +59,7 @@ bool ggml_cl_compute_forward(ggml_backend_t backend, struct ggml_tensor * tensor
 // and a shift:
 //
 // n/d = (mulhi(n, mp) + n) >> L;
-struct fastdiv_vals {
+struct fastdiv_vals {  // 结构体定义
     uint32_t mp;
     uint32_t L;
     uint32_t d;
@@ -81,47 +81,47 @@ static fastdiv_vals init_fastdiv_values(uint64_t d_64) {
 
     uint32_t mp = (uint32_t) ((uint64_t{ 1 } << 32) * ((uint64_t{ 1 } << L) - d) / d + 1);
     // pack divisor as well to reduce error surface
-    return { mp, L, d, 0 };
+    return { mp, L, d, 0 };  // 返回
 }
 
-enum GPU_FAMILY {
+enum GPU_FAMILY {  // 枚举定义
     ADRENO,
     INTEL,
     UNKNOWN,
 };
 
-enum ADRENO_GPU_GEN {
+enum ADRENO_GPU_GEN {  // 枚举定义
     ADRENO_UNKNOWN,
     A7X,
     A8X,
     X1E,
 };
 
-enum ADRENO_CL_COMPILER_TYPE {
+enum ADRENO_CL_COMPILER_TYPE {  // 枚举定义
     E031,
     DX,
 };
 
-struct ggml_cl_version {
+struct ggml_cl_version {  // 结构体定义
     cl_uint major = 0;
     cl_uint minor = 0;
 };
 
 
-struct ggml_cl_compiler_version {
+struct ggml_cl_compiler_version {  // 结构体定义
     ADRENO_CL_COMPILER_TYPE type;
     int major = -1;
     int minor = -1;
     int patch = -1;
 
     bool same(ADRENO_CL_COMPILER_TYPE t, int x, int y, int z) const {
-        return major == x && minor == y && patch == z && type == t;
+        return major == x && minor == y && patch == z && type == t;  // 返回
     }
     bool newer_than(ADRENO_CL_COMPILER_TYPE t, int x, int y, int z) const {
-        return major*10000 + minor*100 + patch > x*10000 + y*100 + z && type == t;
+        return major*10000 + minor*100 + patch > x*10000 + y*100 + z && type == t;  // 返回
     }
     bool newer_than_or_same(ADRENO_CL_COMPILER_TYPE t, int x, int y, int z) const {
-        return same(t, x, y, z) || newer_than(t, x, y, z);
+        return same(t, x, y, z) || newer_than(t, x, y, z);  // same
     }
 };
 
@@ -138,25 +138,25 @@ static ggml_cl_version parse_cl_version(std::string_view str) {
     size_t major_str_begin = 0;
     size_t major_str_end   = str.find(".", major_str_begin);
     if (major_str_end == std::string::npos) {
-        return {};
+        return {};  // 返回
     }
 
     size_t minor_str_begin = major_str_end + 1;
     size_t minor_str_end   = str.find(" ", minor_str_begin);
     if (minor_str_end == std::string::npos) {
-        return {};
+        return {};  // 返回
     }
 
     cl_uint version_major;
     if (std::from_chars(str.data() + major_str_begin, str.data() + major_str_end, version_major).ec != std::errc{}) {
-        return {};
+        return {};  // 返回
     }
 
     cl_uint version_minor;
     if (std::from_chars(str.data() + minor_str_begin, str.data() + minor_str_end, version_minor).ec != std::errc{}) {
-        return {};
+        return {};  // 返回
     }
-    return { version_major, version_minor };
+    return { version_major, version_minor };  // 返回
 }
 
 // Returns OpenCL platform's version. On an error returns ggml_cl_version with all zeroes.
@@ -169,21 +169,21 @@ static ggml_cl_version get_opencl_platform_version(cl_platform_id platform) {
     auto              param_value    = std::string_view(param_storage.get(), param_size);
     const std::string version_prefix = "OpenCL ";  // Suffix: "XX.YY <platform-specific-info>"
     if (param_value.find(version_prefix) != 0) {
-        return {};
+        return {};  // 返回
     }
     param_value.remove_prefix(version_prefix.length());
-    return parse_cl_version(param_value);
+    return parse_cl_version(param_value);  // parse_cl_version
 }
 
 // Return a version to use in OpenCL C compilation. On an error returns ggml_cl_version with all zeroes.
 static ggml_cl_version get_opencl_c_version(ggml_cl_version platform_version, cl_device_id device) {
     size_t param_size;
 
-#if CL_TARGET_OPENCL_VERSION >= 300
+#if CL_TARGET_OPENCL_VERSION >= 300  // 条件编译
     if (platform_version.major >= 3) {
         CL_CHECK(clGetDeviceInfo(device, CL_DEVICE_OPENCL_C_ALL_VERSIONS, 0, nullptr, &param_size));
         if (!param_size) {
-            return {};
+            return {};  // 返回
         }
 
         std::unique_ptr<cl_name_version[]> versions(new cl_name_version[param_size]);
@@ -195,15 +195,15 @@ static ggml_cl_version get_opencl_c_version(ggml_cl_version platform_version, cl
             version_max = std::max<cl_version>(versions[i].version, version_max);
         }
 
-        return { CL_VERSION_MAJOR(version_max), CL_VERSION_MINOR(version_max) };
+        return { CL_VERSION_MAJOR(version_max), CL_VERSION_MINOR(version_max) };  // 返回
     }
-#else
+#else  // 否则
     GGML_UNUSED(platform_version);
-#endif  // CL_TARGET_OPENCL_VERSION >= 300
+#endif  // CL_TARGET_OPENCL_VERSION >= 300  // 条件编译结束
 
     CL_CHECK(clGetDeviceInfo(device, CL_DEVICE_OPENCL_C_VERSION, 0, nullptr, &param_size));
     if (!param_size) {
-        return {};
+        return {};  // 返回
     }
 
     std::unique_ptr<char[]> param_storage(new char[param_size]);
@@ -212,30 +212,30 @@ static ggml_cl_version get_opencl_c_version(ggml_cl_version platform_version, cl
 
     const std::string version_prefix = "OpenCL C ";  // Suffix: "XX.YY <platform-specific-info>"
     if (param_value.find(version_prefix) != 0) {
-        return {};
+        return {};  // 返回
     }
     param_value.remove_prefix(version_prefix.length());
 
-    return parse_cl_version(param_value);
+    return parse_cl_version(param_value);  // parse_cl_version
 }
 
 static ADRENO_GPU_GEN get_adreno_gpu_gen(const char *device_name) {
     if (strstr(device_name, "730") ||
         strstr(device_name, "740") ||
         strstr(device_name, "750")) {
-        return ADRENO_GPU_GEN::A7X;
+        return ADRENO_GPU_GEN::A7X;  // 返回
     }
 
     if (strstr(device_name, "830") ||
         strstr(device_name, "840")) {
-        return ADRENO_GPU_GEN::A8X;
+        return ADRENO_GPU_GEN::A8X;  // 返回
     }
 
     if (strstr(device_name, "X1")) {
-        return ADRENO_GPU_GEN::X1E;
+        return ADRENO_GPU_GEN::X1E;  // 返回
     }
 
-    return ADRENO_GPU_GEN::ADRENO_UNKNOWN;
+    return ADRENO_GPU_GEN::ADRENO_UNKNOWN;  // 返回
 }
 
 static ggml_cl_compiler_version get_adreno_cl_compiler_version(const char *driver_version) {
@@ -250,7 +250,7 @@ static ggml_cl_compiler_version get_adreno_cl_compiler_version(const char *drive
     if (compiler_ver_pos == std::string::npos) {
         compiler_ver_pos = driver_ver_str.find("DX");
         if (compiler_ver_pos == std::string::npos) {
-            return {};
+            return {};  // 返回
         }
         type = ADRENO_CL_COMPILER_TYPE::DX;
         compiler_ver_len = 11;
@@ -261,11 +261,11 @@ static ggml_cl_compiler_version get_adreno_cl_compiler_version(const char *drive
     int major = std::atoi(compiler_ver_str.substr(compiler_major_offset, 2).c_str());
     int minor = std::atoi(compiler_ver_str.substr(compiler_minor_offset, 2).c_str());
     int patch = std::atoi(compiler_ver_str.substr(compiler_patch_offset, 2).c_str());
-    return { type, major, minor, patch };
+    return { type, major, minor, patch };  // 返回
 }
 
 // cl buffer wrapper
-struct ggml_cl_buffer {
+struct ggml_cl_buffer {  // 结构体定义
     cl_mem buffer;
     size_t size;
 
@@ -291,7 +291,7 @@ struct ggml_cl_buffer {
 };
 
 // Profiling
-struct ProfilingInfo {
+struct ProfilingInfo {  // 结构体定义
     std::string op_name;
     std::string kernel_name;
 
@@ -358,7 +358,7 @@ static void populateProfilingInfo(
 struct ggml_backend_opencl_context;
 
 // backend device context
-struct ggml_backend_opencl_device_context {
+struct ggml_backend_opencl_device_context {  // 结构体定义
     cl_platform_id platform;
     std::string platform_name;
 
@@ -377,7 +377,7 @@ struct ggml_backend_opencl_device_context {
 };
 
 // backend context
-struct ggml_backend_opencl_context {
+struct ggml_backend_opencl_context {  // 结构体定义
     int ref_count;
 
     cl_device_id device;
@@ -607,7 +607,7 @@ struct ggml_backend_opencl_context {
         FILE * fperf = fopen("cl_profiling.csv", "w");
         if (!fperf) {
             GGML_LOG_ERROR("Failed to open cl_profiling.csv\n");
-            return;
+            return;  // 返回
         }
 
         // Populate profiling info
@@ -664,7 +664,7 @@ struct ggml_backend_opencl_context {
         FILE* ftrace = fopen("cl_trace.json", "w");
         if (!ftrace) {
             GGML_LOG_ERROR("Failed to open cl_trace.json\n");
-            return;
+            return;  // 返回
         }
 
         fprintf(ftrace, "[\n");
@@ -689,23 +689,23 @@ struct ggml_backend_opencl_context {
             clGetKernelWorkGroupInfo(kernel, device, CL_KERNEL_WORK_GROUP_SIZE,
                 sizeof(size_t), &workgroup_size, &ret_size));
         GGML_ASSERT(sizeof(size_t) == ret_size);
-        return workgroup_size;
+        return workgroup_size;  // 返回
     }
 
     void enqueue_ndrange_kernel(cl_kernel kernel, cl_uint work_dim, size_t *global_work_size, size_t *local_work_size, const ggml_tensor * tensor) {
-#ifdef GGML_OPENCL_PROFILING
+#ifdef GGML_OPENCL_PROFILING  // 如果定义了 GGML_OPENCL_PROFILING 则编译
         cl_event evt;
         CL_CHECK(clEnqueueNDRangeKernel(queue, kernel, work_dim, NULL, global_work_size, local_work_size, 0, NULL, &evt));
 
         profiling_info.emplace_back();
         populateProfilingInfo(profiling_info.back(), evt, kernel, work_dim, global_work_size, local_work_size, tensor);
-#else
+#else  // 否则
         GGML_UNUSED(tensor);
         CL_CHECK(clEnqueueNDRangeKernel(queue, kernel, work_dim, NULL, global_work_size, local_work_size, 0, NULL, NULL));
-#endif
+#endif  // 条件编译结束
     }
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
     // Transpose kernels
     cl_program program_transpose;
 
@@ -742,15 +742,15 @@ struct ggml_backend_opencl_context {
     cl_kernel kernel_gemm_noshuffle_q5_k_f32;
     cl_kernel kernel_gemv_noshuffle_iq4_nl_f32;
     cl_kernel kernel_gemm_noshuffle_iq4_nl_f32;
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
 
     void free() {
         ref_count--;
         if (ref_count == 0) {
-#ifdef GGML_OPENCL_PROFILING
+#ifdef GGML_OPENCL_PROFILING  // 如果定义了 GGML_OPENCL_PROFILING 则编译
             write_profiling_info();
             profiling_info.clear();
-#endif
+#endif  // 条件编译结束
         }
     }
 };
@@ -761,14 +761,14 @@ static std::vector<ggml_backend_device> g_ggml_backend_opencl_devices;
 inline std::string read_file(const std::string &path) {
   std::ifstream ifs(path);
   if (!ifs) {
-    return "";
+    return "";  // 返回
   }
   std::string text;
   ifs.seekg(0, std::ios::end);
   text.resize(ifs.tellg());
   ifs.seekg(0, std::ios::beg);
   ifs.read(&text[0], text.size());
-  return text;
+  return text;  // 返回
 }
 
 static cl_program build_program_from_source(cl_context ctx, cl_device_id dev, const char* program_buffer, const std::string &compile_opts) {
@@ -797,7 +797,7 @@ static cl_program build_program_from_source(cl_context ctx, cl_device_id dev, co
         exit(1);
     }
 
-    return p;
+    return p;  // 返回
 }
 
 static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_version opencl_c_version) {
@@ -818,13 +818,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // add
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "add.cl.h"
+            #include "add.cl.h"  // 引入 add.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("add.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_add =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -837,13 +837,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // add_id
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "add_id.cl.h"
+            #include "add_id.cl.h"  // 引入 add_id.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("add_id.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_add_id =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -853,13 +853,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // tri
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "tri.cl.h"
+            #include "tri.cl.h"  // 引入 tri.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("tri.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -871,13 +871,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // fill
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "fill.cl.h"
+            #include "fill.cl.h"  // 引入 fill.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("fill.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -889,13 +889,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // clamp
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "clamp.cl.h"
+            #include "clamp.cl.h"  // 引入 clamp.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("clamp.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_clamp =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -905,13 +905,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // cpy
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "cpy.cl.h"
+            #include "cpy.cl.h"  // 引入 cpy.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("cpy.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -925,13 +925,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // cvt
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "cvt.cl.h"
+            #include "cvt.cl.h"  // 引入 cvt.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("cvt.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_cvt =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -971,13 +971,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // diag_mask_inf
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "diag_mask_inf.cl.h"
+            #include "diag_mask_inf.cl.h"  // 引入 diag_mask_inf.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("diag_mask_inf.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_diag_mask_inf =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -988,13 +988,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // diag
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "diag.cl.h"
+            #include "diag.cl.h"  // 引入 diag.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("diag.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1005,13 +1005,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // gelu
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "gelu.cl.h"
+            #include "gelu.cl.h"  // 引入 gelu.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("gelu.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_gelu =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1026,13 +1026,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // glu
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "glu.cl.h"
+            #include "glu.cl.h"  // 引入 glu.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("glu.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_glu =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1052,13 +1052,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // get_rows
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "get_rows.cl.h"
+            #include "get_rows.cl.h"  // 引入 get_rows.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("get_rows.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_get_rows =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1070,13 +1070,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // solve_tri_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "solve_tri.cl.h"
+            #include "solve_tri.cl.h"  // 引入 solve_tri.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("solve_tri.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1087,13 +1087,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // im2col_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "im2col_f32.cl.h"
+            #include "im2col_f32.cl.h"  // 引入 im2col_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("im2col_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_im2col_f32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1103,13 +1103,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // im2col_f16
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "im2col_f16.cl.h"
+            #include "im2col_f16.cl.h"  // 引入 im2col_f16.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("im2col_f16.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_im2col_f16 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1119,13 +1119,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_q4_0_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q4_0_f32.cl.h"
+            #include "mul_mv_q4_0_f32.cl.h"  // 引入 mul_mv_q4_0_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q4_0_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_q4_0_f32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1135,13 +1135,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_q4_0_f32_v
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q4_0_f32_v.cl.h"
+            #include "mul_mv_q4_0_f32_v.cl.h"  // 引入 mul_mv_q4_0_f32_v.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q4_0_f32_v.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_q4_0_f32_v =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1151,13 +1151,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_q4_0_f32_8x_flat
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q4_0_f32_8x_flat.cl.h"
+            #include "mul_mv_q4_0_f32_8x_flat.cl.h"  // 引入 mul_mv_q4_0_f32_8x_flat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q4_0_f32_8x_flat.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_q4_0_f32_8x_flat =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1171,13 +1171,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
     if (backend_ctx->gpu_family != ADRENO ||
         backend_ctx->adreno_cl_compiler_version.newer_than_or_same(E031, 38, 11, 0) ||
         backend_ctx->adreno_cl_compiler_version.type == DX) {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q4_0_f32_1d_8x_flat.cl.h"
+            #include "mul_mv_q4_0_f32_1d_8x_flat.cl.h"  // 引入 mul_mv_q4_0_f32_1d_8x_flat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q4_0_f32_1d_8x_flat.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_q4_0_f32_1d_8x_flat =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1191,13 +1191,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
     if (backend_ctx->gpu_family != ADRENO ||
         backend_ctx->adreno_cl_compiler_version.newer_than_or_same(E031, 38, 11, 0) ||
     backend_ctx->adreno_cl_compiler_version.type == DX) {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q4_0_f32_1d_16x_flat.cl.h"
+            #include "mul_mv_q4_0_f32_1d_16x_flat.cl.h"  // 引入 mul_mv_q4_0_f32_1d_16x_flat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q4_0_f32_1d_16x_flat.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_q4_0_f32_1d_16x_flat =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1207,13 +1207,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_q4_1_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q4_1_f32.cl.h"
+            #include "mul_mv_q4_1_f32.cl.h"  // 引入 mul_mv_q4_1_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q4_1_f32.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1224,13 +1224,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_q4_1_f32_flat
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q4_1_f32_flat.cl.h"
+            #include "mul_mv_q4_1_f32_flat.cl.h"  // 引入 mul_mv_q4_1_f32_flat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q4_1_f32_flat.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1241,13 +1241,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_q4_k_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q4_k_f32.cl.h"
+            #include "mul_mv_q4_k_f32.cl.h"  // 引入 mul_mv_q4_k_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q4_k_f32.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1258,13 +1258,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_q4_k_f32_flat
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q4_k_f32_flat.cl.h"
+            #include "mul_mv_q4_k_f32_flat.cl.h"  // 引入 mul_mv_q4_k_f32_flat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q4_k_f32_flat.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1275,13 +1275,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_q5_k_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q5_k_f32.cl.h"
+            #include "mul_mv_q5_k_f32.cl.h"  // 引入 mul_mv_q5_k_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q5_k_f32.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1292,13 +1292,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_q5_k_f32_flat
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q5_k_f32_flat.cl.h"
+            #include "mul_mv_q5_k_f32_flat.cl.h"  // 引入 mul_mv_q5_k_f32_flat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q5_k_f32_flat.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1308,13 +1308,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_q6_k_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q6_k_f32.cl.h"
+            #include "mul_mv_q6_k_f32.cl.h"  // 引入 mul_mv_q6_k_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q6_k_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_q6_K =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1324,13 +1324,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_q6_k_f32_flat
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q6_k_f32_flat.cl.h"
+            #include "mul_mv_q6_k_f32_flat.cl.h"  // 引入 mul_mv_q6_k_f32_flat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q6_k_f32_flat.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1341,13 +1341,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_q8_0_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q8_0_f32.cl.h"
+            #include "mul_mv_q8_0_f32.cl.h"  // 引入 mul_mv_q8_0_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q8_0_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_q8_0_f32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1357,13 +1357,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_q8_0_f32_flat
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_q8_0_f32_flat.cl.h"
+            #include "mul_mv_q8_0_f32_flat.cl.h"  // 引入 mul_mv_q8_0_f32_flat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_q8_0_f32_flat.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_q8_0_f32_flat =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1373,13 +1373,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_iq4_nl_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_iq4_nl_f32.cl.h"
+            #include "mul_mv_iq4_nl_f32.cl.h"  // 引入 mul_mv_iq4_nl_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_iq4_nl_f32.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1390,13 +1390,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_iq4_nl_f32_flat
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_iq4_nl_f32_flat.cl.h"
+            #include "mul_mv_iq4_nl_f32_flat.cl.h"  // 引入 mul_mv_iq4_nl_f32_flat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_iq4_nl_f32_flat.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1407,13 +1407,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_mxfp4_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_mxfp4_f32.cl.h"
+            #include "mul_mv_mxfp4_f32.cl.h"  // 引入 mul_mv_mxfp4_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_mxfp4_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_mxfp4_f32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1423,13 +1423,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_mxfp4_f32_flat
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_mxfp4_f32_flat.cl.h"
+            #include "mul_mv_mxfp4_f32_flat.cl.h"  // 引入 mul_mv_mxfp4_f32_flat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_mxfp4_f32_flat.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_mxfp4_f32_flat =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1439,13 +1439,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_f16_f16
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_f16_f16.cl.h"
+            #include "mul_mv_f16_f16.cl.h"  // 引入 mul_mv_f16_f16.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_f16_f16.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_f16_f16 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1455,13 +1455,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_f16_f32_1row
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_f16_f32_1row.cl.h"
+            #include "mul_mv_f16_f32_1row.cl.h"  // 引入 mul_mv_f16_f32_1row.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_f16_f32_1row.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_f16_f32_1row =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1471,13 +1471,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_f16_f32_l4
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_f16_f32_l4.cl.h"
+            #include "mul_mv_f16_f32_l4.cl.h"  // 引入 mul_mv_f16_f32_l4.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_f16_f32_l4.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_f16_f32_l4 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1487,13 +1487,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_f16_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_f16_f32.cl.h"
+            #include "mul_mv_f16_f32.cl.h"  // 引入 mul_mv_f16_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_f16_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_f16_f32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1503,13 +1503,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_f32_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_f32_f32.cl.h"
+            #include "mul_mv_f32_f32.cl.h"  // 引入 mul_mv_f32_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_f32_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_f32_f32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1519,13 +1519,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mat_f16_f32_tiled
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mat_f16_f32.cl.h"
+            #include "mul_mat_f16_f32.cl.h"  // 引入 mul_mat_f16_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mat_f16_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mat_f16_f32_tiled =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1535,13 +1535,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mm_f32_f32_l4_lm
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mm_f32_f32_l4_lm.cl.h"
+            #include "mul_mm_f32_f32_l4_lm.cl.h"  // 引入 mul_mm_f32_f32_l4_lm.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mm_f32_f32_l4_lm.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mm_f32_f32_l4_lm =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1551,13 +1551,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mm_f16_f32_l4_lm
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mm_f16_f32_l4_lm.cl.h"
+            #include "mul_mm_f16_f32_l4_lm.cl.h"  // 引入 mul_mm_f16_f32_l4_lm.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mm_f16_f32_l4_lm.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mm_f16_f32_l4_lm =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1567,13 +1567,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mm_q4_0_f32_l4_lm
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mm_q4_0_f32_l4_lm.cl.h"
+            #include "mul_mm_q4_0_f32_l4_lm.cl.h"  // 引入 mul_mm_q4_0_f32_l4_lm.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mm_q4_0_f32_l4_lm.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1583,13 +1583,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mm_q4_1_f32_l4_lm
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mm_q4_1_f32_l4_lm.cl.h"
+            #include "mul_mm_q4_1_f32_l4_lm.cl.h"  // 引入 mul_mm_q4_1_f32_l4_lm.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mm_q4_1_f32_l4_lm.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1599,13 +1599,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mm_q8_0_f32_l4_lm
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mm_q8_0_f32_l4_lm.cl.h"
+            #include "mul_mm_q8_0_f32_l4_lm.cl.h"  // 引入 mul_mm_q8_0_f32_l4_lm.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mm_q8_0_f32_l4_lm.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mm_q8_0_f32_l4_lm =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1615,13 +1615,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mm_iq4_nl_f32_l4_lm
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mm_iq4_nl_f32_l4_lm.cl.h"
+            #include "mul_mm_iq4_nl_f32_l4_lm.cl.h"  // 引入 mul_mm_iq4_nl_f32_l4_lm.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mm_iq4_nl_f32_l4_lm.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1632,13 +1632,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mm_q4_k_f32_l4_lm
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mm_q4_k_f32_l4_lm.cl.h"
+            #include "mul_mm_q4_k_f32_l4_lm.cl.h"  // 引入 mul_mm_q4_k_f32_l4_lm.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mm_q4_k_f32_l4_lm.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1649,13 +1649,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mm_q6_k_f32_l4_lm
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mm_q6_k_f32_l4_lm.cl.h"
+            #include "mul_mm_q6_k_f32_l4_lm.cl.h"  // 引入 mul_mm_q6_k_f32_l4_lm.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mm_q6_k_f32_l4_lm.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1666,13 +1666,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mm_q5_k_f32_l4_lm
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mm_q5_k_f32_l4_lm.cl.h"
+            #include "mul_mm_q5_k_f32_l4_lm.cl.h"  // 引入 mul_mm_q5_k_f32_l4_lm.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mm_q5_k_f32_l4_lm.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1683,13 +1683,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mm_f16_f32_kq_kqv
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mm_f16_f32_kq_kqv.cl.h"
+            #include "mul_mm_f16_f32_kq_kqv.cl.h"  // 引入 mul_mm_f16_f32_kq_kqv.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mm_f16_f32_kq_kqv.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mm_f16_f32_kqv =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts+" -DKQV ");
         backend_ctx->program_mul_mm_f16_f32_kq =
@@ -1702,13 +1702,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul.cl.h"
+            #include "mul.cl.h"  // 引入 mul.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1721,13 +1721,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // norm
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "norm.cl.h"
+            #include "norm.cl.h"  // 引入 norm.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("norm.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_norm =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1738,13 +1738,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // relu
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "relu.cl.h"
+            #include "relu.cl.h"  // 引入 relu.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("relu.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_relu =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1754,13 +1754,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // rms_norm
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "rms_norm.cl.h"
+            #include "rms_norm.cl.h"  // 引入 rms_norm.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("rms_norm.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_rms_norm =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1771,13 +1771,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // l2_norm
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "l2_norm.cl.h"
+            #include "l2_norm.cl.h"  // 引入 l2_norm.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("l2_norm.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1788,13 +1788,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // rope
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "rope.cl.h"
+            #include "rope.cl.h"  // 引入 rope.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("rope.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_rope =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1811,13 +1811,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // scale
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "scale.cl.h"
+            #include "scale.cl.h"  // 引入 scale.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("scale.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1829,13 +1829,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // silu
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "silu.cl.h"
+            #include "silu.cl.h"  // 引入 silu.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("silu.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_silu =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1846,13 +1846,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // softmax_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "softmax_f32.cl.h"
+            #include "softmax_f32.cl.h"  // 引入 softmax_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("softmax_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_softmax_f32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1862,13 +1862,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // softmax_f16
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "softmax_f16.cl.h"
+            #include "softmax_f16.cl.h"  // 引入 softmax_f16.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("softmax_f16.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_softmax_f16 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1878,13 +1878,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // softmax_4_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "softmax_4_f32.cl.h"
+            #include "softmax_4_f32.cl.h"  // 引入 softmax_4_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("softmax_4_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_softmax_4_f32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1894,13 +1894,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // softmax_4_f16
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "softmax_4_f16.cl.h"
+            #include "softmax_4_f16.cl.h"  // 引入 softmax_4_f16.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("softmax_4_f16.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_softmax_4_f16 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1910,21 +1910,21 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // flash_attn
     {
-        #ifdef GGML_OPENCL_EMBED_KERNELS
+        #ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
                 const std::string kernel_src_f16 {
-                    #include "flash_attn_f16.cl.h"
+                    #include "flash_attn_f16.cl.h"  // 引入 flash_attn_f16.cl.h 头文件
                 };
                 const std::string kernel_src_f32 {
-                    #include "flash_attn_f32.cl.h"
+                    #include "flash_attn_f32.cl.h"  // 引入 flash_attn_f32.cl.h 头文件
                 };
                 const std::string kernel_src_f32_f16 {
-                    #include "flash_attn_f32_f16.cl.h"
+                    #include "flash_attn_f32_f16.cl.h"  // 引入 flash_attn_f32_f16.cl.h 头文件
                 };
-        #else
+        #else  // 否则
                 const std::string kernel_src_f16 = read_file("flash_attn_f16.cl");
                 const std::string kernel_src_f32 = read_file("flash_attn_f32.cl");
                 const std::string kernel_src_f32_f16 = read_file("flash_attn_f32_f16.cl");
-        #endif
+        #endif  // 条件编译结束
 
         if (!kernel_src_f16.empty() && !kernel_src_f32.empty() && !kernel_src_f32_f16.empty()) {
             const struct { int dk; int dv; int bm; int bn; } fa_dims[] = {
@@ -1977,13 +1977,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // argsort
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "argsort.cl.h"
+            #include "argsort.cl.h"  // 引入 argsort.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("argsort.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_argsort_f32_i32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -1993,13 +1993,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // div
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "div.cl.h"
+            #include "div.cl.h"  // 引入 div.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("div.cl");
-#endif
+#endif  // 条件编译结束
         std::string compile_opts = std::string("-cl-std=") + opencl_c_std +
                                " -cl-mad-enable -cl-finite-math-only ";
 
@@ -2015,13 +2015,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // sqr
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "sqr.cl.h"
+            #include "sqr.cl.h"  // 引入 sqr.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("sqr.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2036,13 +2036,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // sqrt
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "sqrt.cl.h"
+            #include "sqrt.cl.h"  // 引入 sqrt.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("sqrt.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2057,13 +2057,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mean
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mean.cl.h"
+            #include "mean.cl.h"  // 引入 mean.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mean.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2076,13 +2076,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // sub
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "sub.cl.h"
+            #include "sub.cl.h"  // 引入 sub.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("sub.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_sub =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2095,13 +2095,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // sum_rows
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "sum_rows.cl.h"
+            #include "sum_rows.cl.h"  // 引入 sum_rows.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("sum_rows.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_sum_rows_f32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2112,13 +2112,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // cumsum
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "cumsum.cl.h"
+            #include "cumsum.cl.h"  // 引入 cumsum.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("cumsum.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog;
         prog = build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2130,13 +2130,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // sigmoid
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "sigmoid.cl.h"
+            #include "sigmoid.cl.h"  // 引入 sigmoid.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("sigmoid.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_sigmoid =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2147,13 +2147,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // group_norm
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "group_norm.cl.h"
+            #include "group_norm.cl.h"  // 引入 group_norm.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("group_norm.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_group_norm =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2164,13 +2164,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // repeat
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "repeat.cl.h"
+            #include "repeat.cl.h"  // 引入 repeat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("repeat.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
         CL_CHECK((backend_ctx->kernel_repeat_f32 = clCreateKernel(prog, "kernel_repeat_f32", &err), err));
@@ -2180,13 +2180,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // pad
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "pad.cl.h"
+            #include "pad.cl.h"  // 引入 pad.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("pad.cl");
-#endif
+#endif  // 条件编译结束
         if (!kernel_src.empty()) {
             backend_ctx->program_pad =
                 build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
@@ -2201,13 +2201,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // tanh
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "tanh.cl.h"
+            #include "tanh.cl.h"  // 引入 tanh.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("tanh.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
         CL_CHECK((backend_ctx->kernel_tanh_f32    = clCreateKernel(prog, "kernel_tanh_f32", &err), err));
@@ -2222,13 +2222,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // neg
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "neg.cl.h"
+            #include "neg.cl.h"  // 引入 neg.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("neg.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
         CL_CHECK((backend_ctx->kernel_neg_f32    = clCreateKernel(prog, "kernel_neg_f32", &err), err));
@@ -2243,13 +2243,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // exp
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "exp.cl.h"
+            #include "exp.cl.h"  // 引入 exp.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("exp.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
         CL_CHECK((backend_ctx->kernel_exp_f32    = clCreateKernel(prog, "kernel_exp_f32", &err), err));
@@ -2264,13 +2264,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // expm1
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "expm1.cl.h"
+            #include "expm1.cl.h"  // 引入 expm1.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("expm1.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
         CL_CHECK((backend_ctx->kernel_expm1_f32    = clCreateKernel(prog, "kernel_expm1_f32", &err), err));
@@ -2285,13 +2285,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // softplus
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "softplus.cl.h"
+            #include "softplus.cl.h"  // 引入 softplus.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("softplus.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
         CL_CHECK((backend_ctx->kernel_softplus_f32    = clCreateKernel(prog, "kernel_softplus_f32", &err), err));
@@ -2306,13 +2306,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // upscale
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "upscale.cl.h"
+            #include "upscale.cl.h"  // 引入 upscale.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("upscale.cl");
-#endif
+#endif  // 条件编译结束
         if (!kernel_src.empty()) {
             backend_ctx->program_upscale =
                 build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
@@ -2338,13 +2338,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // concat
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "concat.cl.h"
+            #include "concat.cl.h"  // 引入 concat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("concat.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
         CL_CHECK((backend_ctx->kernel_concat_f32 = clCreateKernel(prog, "kernel_concat_f32", &err), err));
@@ -2354,14 +2354,14 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // timestep_embedding
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "tsembd.cl.h"
+            #include "tsembd.cl.h"  // 引入 tsembd.cl.h 头文件
         };
-#else
+#else  // 否则
 
         const std::string kernel_src = read_file("tsembd.cl");
-#endif
+#endif  // 条件编译结束
         if (!kernel_src.empty()) {
             backend_ctx->program_tsembd =
                 build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
@@ -2376,13 +2376,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // set_rows
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "set_rows.cl.h"
+            #include "set_rows.cl.h"  // 引入 set_rows.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("set_rows.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_set_rows =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2395,17 +2395,17 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
      // conv2d
      {
-        #ifdef GGML_OPENCL_EMBED_KERNELS
+        #ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
                 const std::string kernel_src {
-                    #include "conv2d.cl.h"
+                    #include "conv2d.cl.h"  // 引入 conv2d.cl.h 头文件
                 };
                 const std::string kernel_src_f16_f32 {
-                    #include "conv2d_f16_f32.cl.h"
+                    #include "conv2d_f16_f32.cl.h"  // 引入 conv2d_f16_f32.cl.h 头文件
                 };
-        #else
+        #else  // 否则
                 const std::string kernel_src = read_file("conv2d.cl");
                 const std::string kernel_src_f16_f32 = read_file("conv2d_f16_f32.cl");
-        #endif
+        #endif  // 条件编译结束
                 if (!kernel_src.empty()) {
                     backend_ctx->program_conv_2d_f16 =
                         build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), (std::string(compile_opts) + " -DUSE_FP16=1").c_str());
@@ -2436,13 +2436,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // ssm_conv
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "ssm_conv.cl.h"
+            #include "ssm_conv.cl.h"  // 引入 ssm_conv.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("ssm_conv.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2454,13 +2454,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_id_q4_0_f32_8x_flat
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_id_q4_0_f32_8x_flat.cl.h"
+            #include "mul_mv_id_q4_0_f32_8x_flat.cl.h"  // 引入 mul_mv_id_q4_0_f32_8x_flat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_id_q4_0_f32_8x_flat.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_id_q4_0_f32_8x_flat =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2470,13 +2470,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_id_q8_0_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_id_q8_0_f32.cl.h"
+            #include "mul_mv_id_q8_0_f32.cl.h"  // 引入 mul_mv_id_q8_0_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_id_q8_0_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_id_q8_0_f32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2486,13 +2486,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_id_q8_0_f32_flat
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_id_q8_0_f32_flat.cl.h"
+            #include "mul_mv_id_q8_0_f32_flat.cl.h"  // 引入 mul_mv_id_q8_0_f32_flat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_id_q8_0_f32_flat.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_id_q8_0_f32_flat =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2502,13 +2502,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_id_mxfp4_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_id_mxfp4_f32.cl.h"
+            #include "mul_mv_id_mxfp4_f32.cl.h"  // 引入 mul_mv_id_mxfp4_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_id_mxfp4_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_id_mxfp4_f32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2518,13 +2518,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mv_id_mxfp4_f32_flat
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "mul_mv_id_mxfp4_f32_flat.cl.h"
+            #include "mul_mv_id_mxfp4_f32_flat.cl.h"  // 引入 mul_mv_id_mxfp4_f32_flat.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("mul_mv_id_mxfp4_f32_flat.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_mul_mv_id_mxfp4_f32_flat =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2533,16 +2533,16 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
     }
 
     // Adreno kernels
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
     // transpose
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "transpose.cl.h"
+            #include "transpose.cl.h"  // 引入 transpose.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("transpose.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_transpose =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
 
@@ -2566,13 +2566,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
             CL_gemv_compile_opts += " -DVECTOR_SUB_GROUP_BROADCAT ";
         }
 
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src_CL_gemv_general {
-            #include "gemv_noshuffle_general.cl.h"
+            #include "gemv_noshuffle_general.cl.h"  // 引入 gemv_noshuffle_general.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src_CL_gemv_general = read_file("gemv_noshuffle_general.cl");
-#endif
+#endif  // 条件编译结束
 
         backend_ctx->program_CL_gemv_general = build_program_from_source(
             backend_ctx->context, backend_ctx->device, kernel_src_CL_gemv_general.c_str(), CL_gemv_compile_opts);
@@ -2594,13 +2594,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
             CL_gemv_compile_opts += " -DVECTOR_SUB_GROUP_BROADCAT ";
         }
 
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src_CL_gemv {
-            #include "gemv_noshuffle.cl.h"
+            #include "gemv_noshuffle.cl.h"  // 引入 gemv_noshuffle.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src_CL_gemv = read_file("gemv_noshuffle.cl");
-#endif
+#endif  // 条件编译结束
 
         backend_ctx->program_CL_gemv_4096_1_4096 = build_program_from_source(
             backend_ctx->context, backend_ctx->device, kernel_src_CL_gemv.c_str(), CL_gemv_compile_opts);
@@ -2659,13 +2659,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mat_Ab_Bi_8x4
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src_CL_gemm {
-            #include "mul_mat_Ab_Bi_8x4.cl.h"
+            #include "mul_mat_Ab_Bi_8x4.cl.h"  // 引入 mul_mat_Ab_Bi_8x4.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src_CL_gemm = read_file("mul_mat_Ab_Bi_8x4.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_CL_gemm = build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src_CL_gemm.c_str(), compile_opts);
         CL_CHECK((backend_ctx->CL_mul_mat_Ab_Bi_8x4 = clCreateKernel(backend_ctx->program_CL_gemm, "kernel_mul_mat_Ab_Bi_8x4", &err), err));
         GGML_LOG_CONT(".");
@@ -2673,13 +2673,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // gemm_noshuffle_q4_1_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "gemm_noshuffle_q4_1_f32.cl.h"
+            #include "gemm_noshuffle_q4_1_f32.cl.h"  // 引入 gemm_noshuffle_q4_1_f32.cl.h 头文件
        };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("gemm_noshuffle_q4_1_f32.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog = build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
         CL_CHECK((backend_ctx->kernel_gemm_noshuffle_q4_1_f32 = clCreateKernel(prog, "kernel_gemm_noshuffle_q4_1_f32", &err), err));
         CL_CHECK(clReleaseProgram(prog));
@@ -2694,13 +2694,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
             CL_gemv_compile_opts += " -DVECTOR_SUB_GROUP_BROADCAT ";
         }
 
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "gemv_noshuffle_q4_1_f32.cl.h"
+            #include "gemv_noshuffle_q4_1_f32.cl.h"  // 引入 gemv_noshuffle_q4_1_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("gemv_noshuffle_q4_1_f32.cl");
-#endif
+#endif  // 条件编译结束
 
         cl_program prog = build_program_from_source(
             backend_ctx->context, backend_ctx->device, kernel_src.c_str(), CL_gemv_compile_opts);
@@ -2712,13 +2712,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // gemm_noshuffle_iq4_nl_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "gemm_noshuffle_iq4_nl_f32.cl.h"
+            #include "gemm_noshuffle_iq4_nl_f32.cl.h"  // 引入 gemm_noshuffle_iq4_nl_f32.cl.h 头文件
        };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("gemm_noshuffle_iq4_nl_f32.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog = build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
         CL_CHECK((backend_ctx->kernel_gemm_noshuffle_iq4_nl_f32 = clCreateKernel(prog, "kernel_gemm_noshuffle_iq4_nl_f32", &err), err));
         CL_CHECK(clReleaseProgram(prog));
@@ -2733,13 +2733,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
             CL_gemv_compile_opts += " -DVECTOR_SUB_GROUP_BROADCAST ";
         }
 
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "gemv_noshuffle_iq4_nl_f32.cl.h"
+            #include "gemv_noshuffle_iq4_nl_f32.cl.h"  // 引入 gemv_noshuffle_iq4_nl_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("gemv_noshuffle_iq4_nl_f32.cl");
-#endif
+#endif  // 条件编译结束
 
         cl_program prog = build_program_from_source(
             backend_ctx->context, backend_ctx->device, kernel_src.c_str(), CL_gemv_compile_opts);
@@ -2751,13 +2751,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // mul_mm_q8_0_f32_8x4
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src_q8_8x4_gemm {
-            #include "mul_mm_q8_0_f32_8x4.cl.h"
+            #include "mul_mm_q8_0_f32_8x4.cl.h"  // 引入 mul_mm_q8_0_f32_8x4.cl.h 头文件
        };
-#else
+#else  // 否则
         const std::string kernel_src_q8_8x4_gemm = read_file("mul_mm_q8_0_f32_8x4.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_CL_gemm = build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src_q8_8x4_gemm.c_str(), compile_opts);
         CL_CHECK((backend_ctx->kernel_mul_mm_q8_0_f32_8x4 = clCreateKernel(backend_ctx->program_CL_gemm, "kernel_mul_mm_q8_0_f32_8x4", &err), err));
         GGML_LOG_CONT(".");
@@ -2773,13 +2773,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
             CL_gemv_compile_opts += " -DVECTOR_SUB_GROUP_BROADCAT ";
         }
 
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src_CL_gemv_general {
-            #include "gemv_noshuffle_general_q8_0_f32.cl.h"
+            #include "gemv_noshuffle_general_q8_0_f32.cl.h"  // 引入 gemv_noshuffle_general_q8_0_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src_CL_gemv_general = read_file("gemv_noshuffle_general_q8_0_f32.cl");
-#endif
+#endif  // 条件编译结束
 
         cl_program prog = build_program_from_source(
             backend_ctx->context, backend_ctx->device, kernel_src_CL_gemv_general.c_str(), CL_gemv_compile_opts);
@@ -2791,13 +2791,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // gemm_noshuffle_q4_k_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "gemm_noshuffle_q4_k_f32.cl.h"
+            #include "gemm_noshuffle_q4_k_f32.cl.h"  // 引入 gemm_noshuffle_q4_k_f32.cl.h 头文件
        };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("gemm_noshuffle_q4_k_f32.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog = build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
         CL_CHECK((backend_ctx->kernel_gemm_noshuffle_q4_k_f32 = clCreateKernel(prog, "kernel_gemm_noshuffle_q4_k_f32", &err), err));
         CL_CHECK(clReleaseProgram(prog));
@@ -2812,13 +2812,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
             CL_gemv_compile_opts += " -DVECTOR_SUB_GROUP_BROADCAST ";
         }
 
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "gemv_noshuffle_q4_k_f32.cl.h"
+            #include "gemv_noshuffle_q4_k_f32.cl.h"  // 引入 gemv_noshuffle_q4_k_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("gemv_noshuffle_q4_k_f32.cl");
-#endif
+#endif  // 条件编译结束
 
         cl_program prog = build_program_from_source(
             backend_ctx->context, backend_ctx->device, kernel_src.c_str(), CL_gemv_compile_opts);
@@ -2834,13 +2834,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // gemv_moe_mxfp4_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "gemv_moe_mxfp4_f32.cl.h"
+            #include "gemv_moe_mxfp4_f32.cl.h"  // 引入 gemv_moe_mxfp4_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("gemv_moe_mxfp4_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_gemv_moe_mxfp4_f32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), CL_moe_compile_opts);
 
@@ -2850,13 +2850,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // gemm_moe_mxfp4_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "gemm_moe_mxfp4_f32.cl.h"
+            #include "gemm_moe_mxfp4_f32.cl.h"  // 引入 gemm_moe_mxfp4_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("gemm_moe_mxfp4_f32.cl");
-#endif
+#endif  // 条件编译结束
         backend_ctx->program_gemm_moe_mxfp4_f32 =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), CL_moe_compile_opts);
 
@@ -2866,13 +2866,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // gemv_noshuffle_q6_k_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "gemv_noshuffle_q6_k_f32.cl.h"
+            #include "gemv_noshuffle_q6_k_f32.cl.h"  // 引入 gemv_noshuffle_q6_k_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("gemv_noshuffle_q6_k_f32.cl");
-#endif
+#endif  // 条件编译结束
 
         std::string CL_gemv_compile_opts = std::string("-cl-std=") + opencl_c_std +
                                        " -cl-mad-enable ";
@@ -2889,13 +2889,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // gemm_noshuffle_q6_k_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "gemm_noshuffle_q6_k_f32.cl.h"
+            #include "gemm_noshuffle_q6_k_f32.cl.h"  // 引入 gemm_noshuffle_q6_k_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("gemm_noshuffle_q6_k_f32.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog =
             build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), CL_moe_compile_opts);
 
@@ -2911,13 +2911,13 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
             CL_gemv_compile_opts += " -DVECTOR_SUB_GROUP_BROADCAST ";
         }
 
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "gemv_noshuffle_q5_k_f32.cl.h"
+            #include "gemv_noshuffle_q5_k_f32.cl.h"  // 引入 gemv_noshuffle_q5_k_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("gemv_noshuffle_q5_k_f32.cl");
-#endif
+#endif  // 条件编译结束
 
         cl_program prog = build_program_from_source(
             backend_ctx->context, backend_ctx->device, kernel_src.c_str(), CL_gemv_compile_opts);
@@ -2929,19 +2929,19 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 
     // gemm_noshuffle_q5_k_f32
     {
-#ifdef GGML_OPENCL_EMBED_KERNELS
+#ifdef GGML_OPENCL_EMBED_KERNELS  // 如果定义了 GGML_OPENCL_EMBED_KERNELS 则编译
         const std::string kernel_src {
-            #include "gemm_noshuffle_q5_k_f32.cl.h"
+            #include "gemm_noshuffle_q5_k_f32.cl.h"  // 引入 gemm_noshuffle_q5_k_f32.cl.h 头文件
         };
-#else
+#else  // 否则
         const std::string kernel_src = read_file("gemm_noshuffle_q5_k_f32.cl");
-#endif
+#endif  // 条件编译结束
         cl_program prog = build_program_from_source(backend_ctx->context, backend_ctx->device, kernel_src.c_str(), compile_opts);
         CL_CHECK((backend_ctx->kernel_gemm_noshuffle_q5_k_f32 = clCreateKernel(prog, "kernel_gemm_noshuffle_q5_k_f32", &err), err));
         CL_CHECK(clReleaseProgram(prog));
         GGML_LOG_CONT(".");
     }
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
     GGML_LOG_CONT("\n");
 }
 
@@ -2949,9 +2949,9 @@ static void load_cl_kernels(ggml_backend_opencl_context *backend_ctx, ggml_cl_ve
 // XXX    static bool initialized = false;
 // XXX    static ggml_backend_opencl_context *backend_ctx = nullptr;
 
-static ggml_backend_opencl_context * ggml_cl2_init(ggml_backend_dev_t dev);
+static ggml_backend_opencl_context * ggml_cl2_init(ggml_backend_dev_t dev);  // ggml_cl2_init
 
-namespace /* anonymous */ {
+namespace /* anonymous */ {  // 命名空间
 extern struct ggml_backend_device_i ggml_backend_opencl_device_i;
 }
 
@@ -2959,12 +2959,12 @@ extern struct ggml_backend_device_i ggml_backend_opencl_device_i;
 static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_reg * reg) {
     std::vector<ggml_backend_device> found_devices;
 
-#ifdef GGML_OPENCL_PROFILING
+#ifdef GGML_OPENCL_PROFILING  // 如果定义了 GGML_OPENCL_PROFILING 则编译
     GGML_LOG_INFO("ggml_opencl: OpenCL profiling enabled\n");
-#endif
+#endif  // 条件编译结束
 
     struct cl_device;
-    struct cl_platform {
+    struct cl_platform {  // 结构体定义
         cl_platform_id id;
         unsigned number;
         char name[128];
@@ -2974,7 +2974,7 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
         struct cl_device * default_device;
     };
 
-    struct cl_device {
+    struct cl_device {  // 结构体定义
         struct cl_platform * platform;
         cl_device_id id;
         unsigned number;
@@ -2983,7 +2983,7 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
         char version[128];
     };
 
-    enum { NPLAT = 16, NDEV = 16 };
+    enum { NPLAT = 16, NDEV = 16 };  // 枚举定义
 
     struct cl_platform platforms[NPLAT];
     unsigned n_platforms = 0;
@@ -2995,7 +2995,7 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
     cl_platform_id platform_ids[NPLAT];
     if (clGetPlatformIDs(NPLAT, platform_ids, &n_platforms) != CL_SUCCESS) {
         GGML_LOG_ERROR("ggml_opencl: platform IDs not available.\n");
-        return found_devices;
+        return found_devices;  // 返回
     }
 
     for (unsigned i = 0; i < n_platforms; i++) {
@@ -3037,7 +3037,7 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
 
     if (n_devices == 0) {
         GGML_LOG_ERROR("ggml_opencl: could find any OpenCL devices.\n");
-        return found_devices;
+        return found_devices;  // 返回
     }
 
     char *      user_platform_string = getenv("GGML_OPENCL_PLATFORM");
@@ -3177,12 +3177,12 @@ static std::vector<ggml_backend_device> ggml_opencl_probe_devices(ggml_backend_r
                       dev_ctx->device_version.c_str());
 
         if (dev_ctx->device_type != CL_DEVICE_TYPE_GPU) {
-            GGML_LOG_WARN("ggml_opencl: warning, the default device is not a GPU: '%s'.\n",
+            GGML_LOG_WARN("ggml_opencl: warning, the default device is not a GPU: '%s'.\n",  // 打印警告日志
                           dev_ctx->device_name.c_str());
         }
     }
 
-    return found_devices;
+    return found_devices;  // 返回
 }
 
 // Initialize device if it is supported (returns nullptr if it is not).
@@ -3195,7 +3195,7 @@ static ggml_backend_opencl_context * ggml_cl2_init(ggml_backend_dev_t dev) {
     GGML_ASSERT(dev_ctx->device);
 
     if (dev_ctx->backend_ctx) {
-        return dev_ctx->backend_ctx;
+        return dev_ctx->backend_ctx;  // 返回
     }
 
     auto backend_ctx        = std::make_unique<ggml_backend_opencl_context>();
@@ -3225,16 +3225,16 @@ static ggml_backend_opencl_context * ggml_cl2_init(ggml_backend_dev_t dev) {
     } else {
         GGML_LOG_ERROR("Unsupported GPU: %s\n", dev_ctx->device_name.c_str());
         backend_ctx->gpu_family = GPU_FAMILY::UNKNOWN;
-        return nullptr;
+        return nullptr;  // 返回
     }
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
     if (backend_ctx->gpu_family != GPU_FAMILY::ADRENO) {
-        GGML_LOG_ERROR("ggml_opencl: Adreno-specific kernels should not be enabled for non-Adreno GPUs; "
+        GGML_LOG_ERROR("ggml_opencl: Adreno-specific kernels should not be enabled for non-Adreno GPUs; "  // 打印错误日志
             "run on an Adreno GPU or recompile with CMake option `-DGGML_OPENCL_USE_ADRENO_KERNELS=OFF`\n");
-        return nullptr;
+        return nullptr;  // 返回
     }
-#endif
+#endif  // 条件编译结束
 
     // Populate backend device name
     backend_ctx->device_name = dev_ctx->device_name;
@@ -3248,7 +3248,7 @@ static ggml_backend_opencl_context * ggml_cl2_init(ggml_backend_dev_t dev) {
     ggml_cl_version opencl_c_version = get_opencl_c_version(platform_version, device);
     if (opencl_c_version.major < 2) {
         GGML_LOG_ERROR("ggml_opencl: OpenCL 2.0 or above is required\n");
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     // Check driver version
@@ -3264,7 +3264,7 @@ static ggml_backend_opencl_context * ggml_cl2_init(ggml_backend_dev_t dev) {
     backend_ctx->has_vector_subgroup_broadcast =
         (backend_ctx->adreno_cl_compiler_version.type == E031 && backend_ctx->adreno_cl_compiler_version.major >= 47) ||
         (backend_ctx->adreno_cl_compiler_version.type == DX   && backend_ctx->adreno_cl_compiler_version.major >= 17);
-    GGML_LOG_INFO("ggml_opencl: vector subgroup broadcast support: %s\n",
+    GGML_LOG_INFO("ggml_opencl: vector subgroup broadcast support: %s\n",  // 打印信息日志
         backend_ctx->has_vector_subgroup_broadcast ? "true" : "false");
 
     size_t ext_str_size;
@@ -3281,7 +3281,7 @@ static ggml_backend_opencl_context * ggml_cl2_init(ggml_backend_dev_t dev) {
     // fp16 is required
     if (!backend_ctx->fp16_support) {
         GGML_LOG_ERROR("ggml_opencl: device does not support FP16\n");
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     // If OpenCL 3.0 is supported, then check for cl_khr_subgroups, which becomes
@@ -3290,7 +3290,7 @@ static ggml_backend_opencl_context * ggml_cl2_init(ggml_backend_dev_t dev) {
         strstr(ext_buffer, "cl_intel_subgroups") == NULL) {
         GGML_LOG_ERROR("ggml_opencl: device does not support subgroups (cl_khr_subgroups or cl_intel_subgroups) "
             "(note that subgroups is an optional feature in OpenCL 3.0)\n");
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     cl_uint base_align_in_bits;
@@ -3311,23 +3311,23 @@ static ggml_backend_opencl_context * ggml_cl2_init(ggml_backend_dev_t dev) {
     // Check SVM.
     cl_device_svm_capabilities svm_caps;
     CL_CHECK(clGetDeviceInfo(device, CL_DEVICE_SVM_CAPABILITIES, sizeof(cl_device_svm_capabilities), &svm_caps, 0));
-    GGML_LOG_INFO("ggml_opencl: SVM coarse grain buffer support: %s\n",
+    GGML_LOG_INFO("ggml_opencl: SVM coarse grain buffer support: %s\n",  // 打印信息日志
         svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER ? "true" : "false");
-    GGML_LOG_INFO("ggml_opencl: SVM fine grain buffer support: %s\n",
+    GGML_LOG_INFO("ggml_opencl: SVM fine grain buffer support: %s\n",  // 打印信息日志
         svm_caps & CL_DEVICE_SVM_FINE_GRAIN_BUFFER ? "true" : "false");
-    GGML_LOG_INFO("ggml_opencl: SVM fine grain system support: %s\n",
+    GGML_LOG_INFO("ggml_opencl: SVM fine grain system support: %s\n",  // 打印信息日志
         svm_caps & CL_DEVICE_SVM_FINE_GRAIN_SYSTEM ? "true" : "false");
-    GGML_LOG_INFO("ggml_opencl: SVM atomics support: %s\n",
+    GGML_LOG_INFO("ggml_opencl: SVM atomics support: %s\n",  // 打印信息日志
         svm_caps & CL_DEVICE_SVM_ATOMICS ? "true" : "false");
 
     if (opencl_c_version.major >= 3) {
         // Assume it is not available for 3.0, since it is optional in 3.0.
         // If compiling against 3.0, then we can query.
         backend_ctx->non_uniform_workgroups = false;
-#if CL_TARGET_OPENCL_VERSION >= 300
+#if CL_TARGET_OPENCL_VERSION >= 300  // 条件编译
         CL_CHECK(clGetDeviceInfo(device, CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT, sizeof(cl_bool),
                                  &backend_ctx->non_uniform_workgroups, 0));
-#endif
+#endif  // 条件编译结束
     } else {
         GGML_ASSERT(opencl_c_version.major == 2);
         // Non-uniform workgroup sizes is mandatory feature in v2.x.
@@ -3335,13 +3335,13 @@ static ggml_backend_opencl_context * ggml_cl2_init(ggml_backend_dev_t dev) {
     }
 
     // Print out configurations
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
     GGML_LOG_INFO("ggml_opencl: flattening quantized weights representation as struct of arrays (GGML_OPENCL_SOA_Q)\n");
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
     GGML_LOG_INFO("ggml_opencl: using kernels optimized for Adreno (GGML_OPENCL_USE_ADRENO_KERNELS)\n");
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
 
     // determine whether to use large buffer for Adreno
     backend_ctx->adreno_use_large_buffer = getenv("GGML_OPENCL_ADRENO_USE_LARGE_BUFFER") != nullptr &&
@@ -3365,15 +3365,15 @@ static ggml_backend_opencl_context * ggml_cl2_init(ggml_backend_dev_t dev) {
     //    (queue = clCreateCommandQueue(context, device, 0, &err), err)
     //)));
     cl_command_queue_properties command_queue_props = 0;
-#ifdef GGML_OPENCL_PROFILING
+#ifdef GGML_OPENCL_PROFILING  // 如果定义了 GGML_OPENCL_PROFILING 则编译
     command_queue_props |= CL_QUEUE_PROFILING_ENABLE;
-#endif
+#endif  // 条件编译结束
     CL_CHECK((backend_ctx->queue = clCreateCommandQueue(context, device, command_queue_props, &err), err));
 
     // Load kernels
     load_cl_kernels(backend_ctx.get(), opencl_c_version);
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
     // Allocate intermediate buffers and images
     size_t required_A_q_d_bytes = 311164928;
     size_t required_A_s_d_bytes = 38895616;
@@ -3384,27 +3384,27 @@ static ggml_backend_opencl_context * ggml_cl2_init(ggml_backend_dev_t dev) {
     size_t max_A_s_d_bytes = MIN(required_A_s_d_bytes, backend_ctx->max_alloc_size);
     size_t max_B_d_bytes   = MIN(required_B_d_bytes, backend_ctx->max_alloc_size);
     if (required_A_q_d_bytes > backend_ctx->max_alloc_size) {
-        GGML_LOG_WARN("ggml_opencl: A_q_d buffer size reduced from %zu to %zu due to device limitations.\n",
+        GGML_LOG_WARN("ggml_opencl: A_q_d buffer size reduced from %zu to %zu due to device limitations.\n",  // 打印警告日志
                       required_A_q_d_bytes, max_A_q_d_bytes);
     }
     if (required_A_s_d_bytes > backend_ctx->max_alloc_size) {
-        GGML_LOG_WARN("ggml_opencl: A_s_d buffer size reduced from %zu to %zu due to device limitations.\n",
+        GGML_LOG_WARN("ggml_opencl: A_s_d buffer size reduced from %zu to %zu due to device limitations.\n",  // 打印警告日志
                       required_A_s_d_bytes, max_A_s_d_bytes);
     }
     if (required_B_d_bytes > backend_ctx->max_alloc_size) {
-        GGML_LOG_WARN("ggml_opencl: B_d buffer size reduced from %zu to %zu due to device limitations.\n",
+        GGML_LOG_WARN("ggml_opencl: B_d buffer size reduced from %zu to %zu due to device limitations.\n",  // 打印警告日志
                       required_B_d_bytes, max_B_d_bytes);
     }
 
     backend_ctx->prealloc_quant_trans.allocate(context, max_A_q_d_bytes);
     backend_ctx->prealloc_scales_trans.allocate(context, max_A_s_d_bytes);
     backend_ctx->prealloc_act_trans.allocate(context, max_B_d_bytes);
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
 
     backend_ctx->disable_fusion = getenv("GGML_OPENCL_DISABLE_FUSION") != nullptr;
 
     dev_ctx->backend_ctx = backend_ctx.release();
-    return dev_ctx->backend_ctx;
+    return dev_ctx->backend_ctx;  // 返回
 }
 
 static void ggml_cl2_free(ggml_backend_t backend) {
@@ -3425,7 +3425,7 @@ static void ggml_cl2_free(ggml_backend_t backend) {
     }
 }
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
 static void transpose_2d(
     ggml_backend_opencl_context * backend_ctx,
     cl_kernel kernel,
@@ -3499,12 +3499,12 @@ static void transpose_2d_as_32b(
     transpose_2d(backend_ctx, backend_ctx->kernel_transpose_32_buf,
         src, dst, size, stride, rows, blocking);
 }
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
 
 //------------------------------------------------------------------------------
 // Tensor extra management
 //------------------------------------------------------------------------------
-struct ggml_tensor_extra_cl {
+struct ggml_tensor_extra_cl {  // 结构体定义
     // The buffer object that holds the data.
     cl_mem data_device;
     // The offset into the buffer object. This is primarily for scratch buffer
@@ -3527,7 +3527,7 @@ struct ggml_tensor_extra_cl {
 // These tensors are loaded from files and should not be allocated in scratch --
 // they should always be allocated from the pool. Hence, they do not have an
 // `offset`, which indicate their locations in the scratch buffer.
-struct ggml_tensor_extra_cl_q4_0 {
+struct ggml_tensor_extra_cl_q4_0 {  // 结构体定义
     // Quantized values.
     cl_mem q = nullptr;
     // Quantized values in image1d_buffer_t.
@@ -3568,7 +3568,7 @@ struct ggml_tensor_extra_cl_q4_0 {
     }
 };
 
-struct ggml_tensor_extra_cl_q4_1 {
+struct ggml_tensor_extra_cl_q4_1 {  // 结构体定义
     // Quantized values.
     cl_mem q = nullptr;
     // Quantized values in image1d_buffer_t.
@@ -3621,7 +3621,7 @@ struct ggml_tensor_extra_cl_q4_1 {
     }
 };
 
-struct ggml_tensor_extra_cl_mxfp4 {
+struct ggml_tensor_extra_cl_mxfp4 {  // 结构体定义
     // Quantized values.
     cl_mem q = nullptr;
     // Quantized values in image1d_buffer_t.
@@ -3664,7 +3664,7 @@ struct ggml_tensor_extra_cl_mxfp4 {
     }
 };
 
-struct ggml_tensor_extra_cl_q8_0 {
+struct ggml_tensor_extra_cl_q8_0 {  // 结构体定义
     cl_mem q = nullptr;
     cl_mem q_img = nullptr;
 
@@ -3699,7 +3699,7 @@ struct ggml_tensor_extra_cl_q8_0 {
     }
 };
 
-struct ggml_tensor_extra_cl_iq4_nl {
+struct ggml_tensor_extra_cl_iq4_nl {  // 结构体定义
     cl_mem q = nullptr;
     cl_mem q_img = nullptr;
 
@@ -3723,7 +3723,7 @@ struct ggml_tensor_extra_cl_iq4_nl {
     }
 };
 
-struct ggml_tensor_extra_cl_q4_K {
+struct ggml_tensor_extra_cl_q4_K {  // 结构体定义
     // Quantized values
     cl_mem q = nullptr;
     // Scales for each super block.
@@ -3757,7 +3757,7 @@ struct ggml_tensor_extra_cl_q4_K {
     }
 };
 
-struct ggml_tensor_extra_cl_q5_K {
+struct ggml_tensor_extra_cl_q5_K {  // 结构体定义
     // Lower 4 bits of quantized weights.
     cl_mem q  = nullptr;
     // Upper 1 bit of quantized weights.
@@ -3809,7 +3809,7 @@ struct ggml_tensor_extra_cl_q5_K {
     }
 };
 
-struct ggml_tensor_extra_cl_q6_K {
+struct ggml_tensor_extra_cl_q6_K {  // 结构体定义
     // Lower 4 bits of quantized weights.
     cl_mem ql = nullptr;
     // Upper 2 bits of quantized weights.
@@ -3861,7 +3861,7 @@ struct ggml_tensor_extra_cl_q6_K {
 // backend
 //
 static const char * ggml_backend_opencl_name(ggml_backend_t backend) {
-    return "OpenCL";
+    return "OpenCL";  // 返回
 
     UNUSED(backend);
 }
@@ -3890,7 +3890,7 @@ static bool ggml_backend_opencl_cpy_tensor_async(ggml_backend_t backend, const g
     GGML_UNUSED(backend);
     GGML_UNUSED(src);
     GGML_UNUSED(dst);
-    return false;
+    return false;  // 返回
 }
 
 static void ggml_backend_opencl_synchronize(ggml_backend_t backend) {
@@ -3935,7 +3935,7 @@ static void sync_with_other_backends(ggml_backend_t backend) {
 
 static bool ggml_opencl_can_fuse(const struct ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops) {
     if (!ggml_can_fuse(cgraph, node_idx, ops)) {
-        return false;
+        return false;  // 返回
     }
 
     if (ops.size() == 2 && ops.begin()[0] == GGML_OP_RMS_NORM && ops.begin()[1] == GGML_OP_MUL) {
@@ -3949,18 +3949,18 @@ static bool ggml_opencl_can_fuse(const struct ggml_cgraph * cgraph, int node_idx
         if (mul->src[0]->type != GGML_TYPE_F32 ||
             mul->src[1]->type != GGML_TYPE_F32 ||
             mul->type != GGML_TYPE_F32) {
-            return false;
+            return false;  // 返回
         }
 
         // if rms_norm is the B operand, then we don't handle broadcast
         if (rms_norm == mul->src[1] &&
             !ggml_are_same_shape(mul->src[0], rms_norm)) {
-            return false;
+            return false;  // 返回
         }
 
         // rms_norm assumes contiguous rows
         if (!ggml_is_contiguous_rows(mul->src[0]) || !ggml_is_contiguous_rows(mul->src[1])) {
-            return false;
+            return false;  // 返回
         }
     } else if (ops.size() == 3 && ops.begin()[0] == GGML_OP_NORM && ops.begin()[1] == GGML_OP_MUL && ops.begin()[2] == GGML_OP_ADD) {
         const ggml_tensor *norm = cgraph->nodes[node_idx];
@@ -3971,15 +3971,15 @@ static bool ggml_opencl_can_fuse(const struct ggml_cgraph * cgraph, int node_idx
 
         // norm fusion only supports F32
         if (norm->src[0]->type != GGML_TYPE_F32 || w->type != GGML_TYPE_F32 || b->type != GGML_TYPE_F32) {
-            return false;
+            return false;  // 返回
         }
 
         if (norm->src[0]->ne[0] % 4 != 0) {
-            return false;
+            return false;  // 返回
         }
 
         if (!ggml_is_contiguous(norm->src[0]) || !ggml_is_contiguous(w) || !ggml_is_contiguous(b)) {
-            return false;
+            return false;  // 返回
         }
     } else if (ops.size() == 3 && ops.begin()[0] == GGML_OP_GROUP_NORM && ops.begin()[1] == GGML_OP_MUL && ops.begin()[2] == GGML_OP_ADD) {
         const ggml_tensor *gn = cgraph->nodes[node_idx];
@@ -3989,20 +3989,20 @@ static bool ggml_opencl_can_fuse(const struct ggml_cgraph * cgraph, int node_idx
         const ggml_tensor *b   = add->src[0] == mul ? add->src[1] : add->src[0];
 
         if (gn->src[0]->type != GGML_TYPE_F32 || w->type != GGML_TYPE_F32 || b->type != GGML_TYPE_F32) {
-            return false;
+            return false;  // 返回
         }
 
         if (!ggml_is_contiguous(gn->src[0]) || !ggml_is_contiguous(w) || !ggml_is_contiguous(b)) {
-            return false;
+            return false;  // 返回
         }
     }
 
-    return true;
+    return true;  // 返回
 }
 
-static void ggml_opencl_op_rms_norm_fused(ggml_backend_t backend, ggml_tensor * rms_norm_tensor, ggml_tensor * mul_tensor);
-static void ggml_opencl_op_norm_fused(ggml_backend_t backend, ggml_tensor * norm_tensor, ggml_tensor * mul_tensor, ggml_tensor * add_tensor);
-static void ggml_opencl_op_group_norm_fused(ggml_backend_t backend, ggml_tensor * gn_tensor, ggml_tensor * mul_tensor, ggml_tensor * add_tensor);
+static void ggml_opencl_op_rms_norm_fused(ggml_backend_t backend, ggml_tensor * rms_norm_tensor, ggml_tensor * mul_tensor);  // ggml_opencl_op_rms_norm_fused
+static void ggml_opencl_op_norm_fused(ggml_backend_t backend, ggml_tensor * norm_tensor, ggml_tensor * mul_tensor, ggml_tensor * add_tensor);  // ggml_opencl_op_norm_fused
+static void ggml_opencl_op_group_norm_fused(ggml_backend_t backend, ggml_tensor * gn_tensor, ggml_tensor * mul_tensor, ggml_tensor * add_tensor);  // ggml_opencl_op_group_norm_fused
 
 static ggml_status ggml_backend_opencl_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
     ggml_backend_opencl_context *backend_ctx = (ggml_backend_opencl_context *)backend->context;
@@ -4046,7 +4046,7 @@ static ggml_status ggml_backend_opencl_graph_compute(ggml_backend_t backend, ggm
         GGML_ASSERT(ok);
     }
 
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_tensor * op) {
@@ -4055,21 +4055,21 @@ static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_te
 
     switch (op->op) {
         case GGML_OP_NONE:
-            return true;
+            return true;  // 返回
         case GGML_OP_GET_ROWS:
             switch (op->src[0]->type) {
                 case GGML_TYPE_F32:
                 case GGML_TYPE_F16:
-                    return true;
+                    return true;  // 返回
                 case GGML_TYPE_Q4_0:
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
                     // We do not support flattened Q4_0 (and possibly other Q's)
-                    return false;
-#else // GGML_OPENCL_SOA_Q
-                    return true;
-#endif // GGML_OPENCL_SOA_Q
+                    return false;  // 返回
+#else // GGML_OPENCL_SOA_Q  // 否则
+                    return true;  // 返回
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
                 default:
-                    return false;
+                    return false;  // 返回
             }
         case GGML_OP_SET_ROWS:
             {
@@ -4077,14 +4077,14 @@ static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_te
                 // ref: https://github.com/ggml-org/llama.cpp/pull/14274
 #pragma message("TODO: implement BF16, Q4_0, Q4_1, Q5_0, Q5_1, Q8_0, IQ4_NL support (https://github.com/ggml-org/llama.cpp/pull/14661)")
                 if (op->src[0]->type != GGML_TYPE_F32) {
-                    return false;
+                    return false;  // 返回
                 }
                 switch (op->type) {
                     case GGML_TYPE_F16:
                     case GGML_TYPE_F32:
                         return (op->src[1]->type == GGML_TYPE_I64 || op->src[1]->type == GGML_TYPE_I32);
                     default:
-                        return false;
+                        return false;  // 返回
                 }
             }
         case GGML_OP_CPY:
@@ -4095,27 +4095,27 @@ static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_te
                     switch (op->type) {
                         case GGML_TYPE_F16:
                         case GGML_TYPE_F32:
-                            return true;
+                            return true;  // 返回
                         default:
-                            return false;
+                            return false;  // 返回
                     }
                 case GGML_TYPE_F16:
                     switch (op->type) {
                         case GGML_TYPE_F16:
                         case GGML_TYPE_F32:
-                            return true;
+                            return true;  // 返回
                         default:
-                            return false;
+                            return false;  // 返回
                     }
                 case GGML_TYPE_I32:
                     switch (op->type) {
                         case GGML_TYPE_I32:
-                            return true;
+                            return true;  // 返回
                         default:
-                            return false;
+                            return false;  // 返回
                     }
                 default:
-                    return false;
+                    return false;  // 返回
             }
         case GGML_OP_SET: {
             return (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_I32) &&
@@ -4129,7 +4129,7 @@ static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_te
                 const bool src0_ok = op->src[0]->type == GGML_TYPE_F16 || op->src[0]->type == GGML_TYPE_F32;
                 const bool src1_ok = op->src[1]->type == GGML_TYPE_F16 || op->src[1]->type == GGML_TYPE_F32;
                 if (src0_ok && src1_ok) {
-                    return true;
+                    return true;  // 返回
                 }
             }
         case GGML_OP_MUL:
@@ -4139,7 +4139,7 @@ static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_te
                    (op->src[0]->type == op->type) &&
                    (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16);
         case GGML_OP_ADD_ID:
-            return op->src[0]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_SQR:
         case GGML_OP_SQRT:
             return (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16) &&
@@ -4151,19 +4151,19 @@ static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_te
                 case GGML_UNARY_OP_RELU:
                 case GGML_UNARY_OP_GELU_ERF:
                 case GGML_UNARY_OP_GELU_QUICK:
-                   return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;
+                   return ggml_is_contiguous(op->src[0]) && op->src[0]->type == GGML_TYPE_F32;  // ggml_is_contiguous
                 case GGML_UNARY_OP_SIGMOID:
-                    return ggml_is_contiguous(op->src[0]);
+                    return ggml_is_contiguous(op->src[0]);  // ggml_is_contiguous
                 case GGML_UNARY_OP_TANH:
                 case GGML_UNARY_OP_NEG:
                 case GGML_UNARY_OP_EXP:
-                   return op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16;
+                   return op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16;  // 返回
                 case GGML_UNARY_OP_EXPM1:
-                   return op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16;
+                   return op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16;  // 返回
                 case GGML_UNARY_OP_SOFTPLUS:
-                   return op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16;
+                   return op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16;  // 返回
                 default:
-                    return false;
+                    return false;  // 返回
             }
         case GGML_OP_GLU:
             switch (ggml_get_glu_op(op)) {
@@ -4173,35 +4173,35 @@ static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_te
                 case GGML_GLU_OP_SWIGLU_OAI:
                 case GGML_GLU_OP_GEGLU_ERF:
                 case GGML_GLU_OP_GEGLU_QUICK:
-                    return ggml_is_contiguous_1(op->src[0]) && (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16);
+                    return ggml_is_contiguous_1(op->src[0]) && (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16);  // ggml_is_contiguous_1
                 default:
-                    return false;
+                    return false;  // 返回
             }
         case GGML_OP_TRI:
             return op->type == GGML_TYPE_F32 && ggml_is_contiguous(op);
         case GGML_OP_FILL:
             return op->type == GGML_TYPE_F32 && ggml_is_contiguous(op);
         case GGML_OP_CLAMP:
-            return op->src[0]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_SOFT_MAX:
         case GGML_OP_NORM:
-            return true;
+            return true;  // 返回
         case GGML_OP_RMS_NORM:
             return op->ne[0] % 4 == 0 && ggml_is_contiguous_rows(op->src[0]);
         case GGML_OP_L2_NORM:
-            return ggml_is_contiguous_rows(op->src[0]);
+            return ggml_is_contiguous_rows(op->src[0]);  // ggml_is_contiguous_rows
         case GGML_OP_REPEAT:
-            return op->src[0]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32; // Assuming F32 for now, can be expanded
+            return op->src[0]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32; // Assuming F32 for now, can be expanded  // 返回
         case GGML_OP_PAD:
             // TODO: add circular padding support for opencl, see https://github.com/ggml-org/llama.cpp/pull/16985
             if (ggml_get_op_params_i32(op, 8) != 0) {
-                return false;
+                return false;  // 返回
             }
-            return op->src[0]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_UPSCALE: {
             ggml_scale_mode mode = (ggml_scale_mode)(ggml_get_op_params_i32(op, 0) & 0xFF);
             const bool antialias = (ggml_scale_mode)(ggml_get_op_params_i32(op, 0) & GGML_SCALE_FLAG_ANTIALIAS);
-            return op->src[0]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32 &&
+            return op->src[0]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32 &&  // 返回
                    (mode == GGML_SCALE_MODE_NEAREST || mode == GGML_SCALE_MODE_BILINEAR) && !antialias;
         }
         case GGML_OP_CONV_2D:
@@ -4211,16 +4211,16 @@ static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_te
         case GGML_OP_SSM_CONV:
             return (op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32);
         case GGML_OP_CONCAT:
-            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_TIMESTEP_EMBEDDING:
-            return op->src[0]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_GROUP_NORM:
-            return ggml_is_contiguous(op->src[0]);
+            return ggml_is_contiguous(op->src[0]);  // ggml_is_contiguous
         case GGML_OP_MUL_MAT:
             if (op->src[0]->type == GGML_TYPE_F16) {
-                return true;
+                return true;  // 返回
             } else if (op->src[0]->type == GGML_TYPE_F32) {
-                return op->src[1]->type == GGML_TYPE_F32;
+                return op->src[1]->type == GGML_TYPE_F32;  // 返回
             } else if (op->src[0]->type == GGML_TYPE_Q4_0  || op->src[0]->type == GGML_TYPE_Q4_1 ||
                        op->src[0]->type == GGML_TYPE_MXFP4 ||
                        op->src[0]->type == GGML_TYPE_IQ4_NL ||
@@ -4229,27 +4229,27 @@ static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_te
                        op->src[0]->type == GGML_TYPE_Q6_K) {
                 return op->src[1]->type == GGML_TYPE_F32 && ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
             } else if (op->src[0]->type == GGML_TYPE_Q8_0) {
-                return op->src[1]->type == GGML_TYPE_F32;
+                return op->src[1]->type == GGML_TYPE_F32;  // 返回
             }
-            return false;
+            return false;  // 返回
         case GGML_OP_MUL_MAT_ID:
             if (op->src[0]->type == GGML_TYPE_Q4_0 ||
                 op->src[0]->type == GGML_TYPE_Q8_0 ||
                 op->src[0]->type == GGML_TYPE_MXFP4) {
                 if (op->src[1]->type == GGML_TYPE_F32) {
-                    return ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
+                    return ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);  // ggml_is_contiguous
                 }
             }
-            return false;
+            return false;  // 返回
         case GGML_OP_RESHAPE:
         case GGML_OP_VIEW:
         case GGML_OP_PERMUTE:
         case GGML_OP_TRANSPOSE:
-            return true;
+            return true;  // 返回
         case GGML_OP_DIAG:
-            return true;
+            return true;  // 返回
         case GGML_OP_DIAG_MASK_INF:
-            return op->ne[3] == 1;
+            return op->ne[3] == 1;  // 返回
         case GGML_OP_ROPE: {
             const int mode = ((const int32_t *) op->op_params)[2];
             const bool is_mrope = mode & GGML_ROPE_TYPE_MROPE;
@@ -4257,23 +4257,23 @@ static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_te
             if (is_mrope && !is_vision) {
                 if (op->src[0]->type == GGML_TYPE_F32 ||
                     op->src[0]->type == GGML_TYPE_F16) {
-                    return true;
+                    return true;  // 返回
                 }
-                return false;
+                return false;  // 返回
             }
             if (is_vision) {
                 if (op->src[0]->type == GGML_TYPE_F32 ||
                     op->src[0]->type == GGML_TYPE_F16) {
-                    return true;
+                    return true;  // 返回
                 }
-                return false;
+                return false;  // 返回
             }
-            return true;
+            return true;  // 返回
         }
         case GGML_OP_SOLVE_TRI:
             return op->src[0]->type == GGML_TYPE_F32 && ggml_is_contiguous(op->src[0]);
         case GGML_OP_IM2COL:
-            return true;
+            return true;  // 返回
         case GGML_OP_ARGSORT: {
             cl_kernel kernel = backend_ctx->kernel_argsort_f32_i32;
             int max_workgroup_size = backend_ctx->get_kernel_workgroup_size(kernel);
@@ -4283,13 +4283,13 @@ static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_te
                 cols *= 2;
             }
 
-            return cols <= max_workgroup_size && op->src[0]->type == GGML_TYPE_F32;
+            return cols <= max_workgroup_size && op->src[0]->type == GGML_TYPE_F32;  // 返回
         }
         case GGML_OP_SUM_ROWS:
         case GGML_OP_CUMSUM:
             return op->src[0]->type == GGML_TYPE_F32 && ggml_is_contiguous(op->src[0]);
         case GGML_OP_MEAN:
-            return op->src[0]->type == GGML_TYPE_F32;
+            return op->src[0]->type == GGML_TYPE_F32;  // 返回
         case GGML_OP_FLASH_ATTN_EXT:
             {
                 const ggml_tensor * q = op->src[0];
@@ -4313,7 +4313,7 @@ static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_te
                     }
                 }
                 if (!dims_supported) {
-                    return false;
+                    return false;  // 返回
                 }
 
                 const bool is_f32_f32 = q->type == GGML_TYPE_F32 && k->type == GGML_TYPE_F32 &&
@@ -4323,19 +4323,19 @@ static bool ggml_opencl_supports_op(ggml_backend_dev_t dev, const struct ggml_te
                 const bool is_f32_f16 = q->type == GGML_TYPE_F32 && k->type == GGML_TYPE_F16 &&
                                         v->type == GGML_TYPE_F16 && op->type == GGML_TYPE_F32;
 
-                return is_f32_f32 || is_f16_f16 || is_f32_f16;
+                return is_f32_f32 || is_f16_f16 || is_f32_f16;  // 返回
             }
         default:
-            return false;
+            return false;  // 返回
     }
 }
 
 // Forward declaration - implementation appears later in the file.
-static const char * ggml_backend_opencl_buffer_type_get_name(ggml_backend_buffer_type_t buffer_type);
+static const char * ggml_backend_opencl_buffer_type_get_name(ggml_backend_buffer_type_t buffer_type);  // ggml_backend_opencl_buffer_type_get_name
 
 static ggml_guid_t ggml_backend_opencl_guid() {
     static ggml_guid guid = { 0xde, 0xe0, 0x70, 0xa2, 0x73, 0x4e, 0x4d, 0xbc, 0xb0, 0xc7, 0x4f, 0xd4, 0x6d, 0x4e, 0x90, 0xfe };
-    return &guid;
+    return &guid;  // 返回
 }
 
 static ggml_backend_i ggml_backend_opencl_i = {
@@ -4368,17 +4368,17 @@ ggml_backend_t ggml_backend_opencl_init(void) {
         /* .context = */ backend_ctx
     };
 
-    return backend;
+    return backend;  // 返回
 }
 
 bool ggml_backend_is_opencl(ggml_backend_t backend) {
-    return backend && backend->iface.get_name == ggml_backend_opencl_name;
+    return backend && backend->iface.get_name == ggml_backend_opencl_name;  // 返回
 }
 
 //
 // buffer
 //
-struct ggml_backend_opencl_buffer_context {
+struct ggml_backend_opencl_buffer_context {  // 结构体定义
     // A buffer context can hold multiple cl_mem objects. This is for flattening
     // quantized weights and should be used with GGML_OPENCL_SMALL_ALLOC where
     // each tensor is allocated a separate buffer. When flattening is enabled
@@ -4460,7 +4460,7 @@ struct ggml_backend_opencl_buffer_context {
         temp_tensor_extras_in_use.push_back(extra);
 
         extra->reset();
-        return extra;
+        return extra;  // 返回
     }
 
     ggml_tensor_extra_cl_q4_0 * ggml_opencl_alloc_temp_tensor_extra_q4_0() {
@@ -4475,7 +4475,7 @@ struct ggml_backend_opencl_buffer_context {
         temp_tensor_extras_q4_0_in_use.push_back(extra);
 
         extra->reset();
-        return extra;
+        return extra;  // 返回
     }
 
     ggml_tensor_extra_cl_q4_1 * ggml_opencl_alloc_temp_tensor_extra_q4_1() {
@@ -4490,7 +4490,7 @@ struct ggml_backend_opencl_buffer_context {
         temp_tensor_extras_q4_1_in_use.push_back(extra);
 
         extra->reset();
-        return extra;
+        return extra;  // 返回
     }
 
     ggml_tensor_extra_cl_mxfp4 * ggml_opencl_alloc_temp_tensor_extra_mxfp4() {
@@ -4505,7 +4505,7 @@ struct ggml_backend_opencl_buffer_context {
         temp_tensor_extras_mxfp4_in_use.push_back(extra);
 
         extra->reset();
-        return extra;
+        return extra;  // 返回
     }
 
     ggml_tensor_extra_cl_q8_0 * ggml_opencl_alloc_temp_tensor_extra_q8_0() {
@@ -4520,7 +4520,7 @@ struct ggml_backend_opencl_buffer_context {
         temp_tensor_extras_q8_0_in_use.push_back(extra);
 
         extra->reset();
-        return extra;
+        return extra;  // 返回
     }
 
     ggml_tensor_extra_cl_iq4_nl * ggml_opencl_alloc_temp_tensor_extra_iq4_nl() {
@@ -4535,7 +4535,7 @@ struct ggml_backend_opencl_buffer_context {
         temp_tensor_extras_iq4_nl_in_use.push_back(extra);
 
         extra->reset();
-        return extra;
+        return extra;  // 返回
     }
 
     ggml_tensor_extra_cl_q4_K * ggml_opencl_alloc_temp_tensor_extra_q4_K() {
@@ -4550,7 +4550,7 @@ struct ggml_backend_opencl_buffer_context {
         temp_tensor_extras_q4_K_in_use.push_back(extra);
 
         extra->reset();
-        return extra;
+        return extra;  // 返回
     }
 
     ggml_tensor_extra_cl_q5_K * ggml_opencl_alloc_temp_tensor_extra_q5_K() {
@@ -4565,7 +4565,7 @@ struct ggml_backend_opencl_buffer_context {
         temp_tensor_extras_q5_K_in_use.push_back(extra);
 
         extra->reset();
-        return extra;
+        return extra;  // 返回
     }
 
     ggml_tensor_extra_cl_q6_K * ggml_opencl_alloc_temp_tensor_extra_q6_K() {
@@ -4580,7 +4580,7 @@ struct ggml_backend_opencl_buffer_context {
         temp_tensor_extras_q6_K_in_use.push_back(extra);
 
         extra->reset();
-        return extra;
+        return extra;  // 返回
     }
 
     void reset() {
@@ -4720,7 +4720,7 @@ static enum ggml_status ggml_backend_opencl_buffer_init_tensor(ggml_backend_buff
             tensor->extra = extra;
         }
     }
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 }
 
 // The optimized gemm and gemv kernels are used for large matrices without batch.
@@ -4733,7 +4733,7 @@ inline bool use_adreno_kernels(const ggml_backend_opencl_context *backend_ctx, c
         threshold_ne0 = 128;
         threshold_ne1 = 128;
     }
-    return tensor->ne[0] >= threshold_ne0 && tensor->ne[1] >= threshold_ne1 &&
+    return tensor->ne[0] >= threshold_ne0 && tensor->ne[1] >= threshold_ne1 &&  // 返回
             tensor->ne[2] == 1 && tensor->ne[3] == 1;
 }
 
@@ -4758,7 +4758,7 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
     cl_context context = backend_ctx->context;
     cl_command_queue queue = backend_ctx->queue;
 
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
     // We separate the quantized bits and scale from block_q4_0 by using an
     // additional kernel, where each thread handles a block. We first read the
     // original weights into a temporary buffer, then create two separate
@@ -4823,16 +4823,16 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
         CL_CHECK(err);
 
         //cl_kernel kernel = backend_ctx->kernel_convert_block_q4_0;
-    #ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+    #ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         cl_kernel kernel = backend_ctx->kernel_convert_block_q4_0;
 
         // The optimized kernels need weights in natural order, so unshuffle.
         if (use_adreno_kernels(backend_ctx, tensor)) {
             kernel = backend_ctx->kernel_convert_block_q4_0_noshuffle;
         }
-    #else
+    #else  // 否则
         cl_kernel kernel = backend_ctx->kernel_convert_block_q4_0;
-    #endif // GGML_OPENCL_USE_ADRENO_KERNELS
+    #endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
         CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &data_device));
         CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &extra->q));
         CL_CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), &extra->d));
@@ -4848,7 +4848,7 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
         tensor->extra = extra;
 
         // transpose the weights and scales
-    #ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+    #ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         // Only do transpose for large, non batched matrix
         // TODO: use preallocated images instead of sub-buffer then image
         if (use_adreno_kernels(backend_ctx, tensor)) {
@@ -5011,9 +5011,9 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
         // end transpose
         // <----------------------------------------------------------------------------------> //
         }
-    #endif // GGML_OPENCL_USE_ADRENO_KERNELS
+    #endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
 
-        return;
+        return;  // 返回
 
     }
     if (tensor->type == GGML_TYPE_Q4_1) {
@@ -5067,15 +5067,15 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
             CL_BUFFER_CREATE_TYPE_REGION, &region, &err);
         CL_CHECK(err);
 
-    #ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+    #ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         cl_kernel kernel = backend_ctx->kernel_convert_block_q4_1;
 
         if (use_adreno_kernels(backend_ctx, tensor)) {
             kernel = backend_ctx->kernel_convert_block_q4_1_noshuffle;
         }
-    #else
+    #else  // 否则
         cl_kernel kernel = backend_ctx->kernel_convert_block_q4_1;
-    #endif // GGML_OPENCL_USE_ADRENO_KERNELS
+    #endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
         CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &data_device));
         CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &extra->q));
         CL_CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), &extra->d));
@@ -5091,7 +5091,7 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
 
         tensor->extra = extra;
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (use_adreno_kernels(backend_ctx, tensor)) {
 
             int M = tensor->ne[1];
@@ -5106,8 +5106,8 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
             // Transpose m as ushort
             transpose_2d_as_16b(backend_ctx, extra->m, extra->m, size_m, K/32, M);
         }
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
-        return;
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
+        return;  // 返回
     }
     if (tensor->type == GGML_TYPE_MXFP4) {
         ggml_tensor_extra_cl * extra_orig = (ggml_tensor_extra_cl *)tensor->extra;
@@ -5150,7 +5150,7 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
             CL_BUFFER_CREATE_TYPE_REGION, &region, &err);
         CL_CHECK(err);
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (use_adreno_moe_kernels(backend_ctx, tensor)) {
             cl_kernel kernel = backend_ctx->kernel_convert_block_mxfp4_trans;
 
@@ -5172,9 +5172,9 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
             CL_CHECK(clReleaseMemObject(data_device));
             tensor->extra = extra;
 
-            return;
+            return;  // 返回
         }
-#endif
+#endif  // 条件编译结束
         cl_kernel kernel = backend_ctx->kernel_convert_block_mxfp4;
 
         CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &data_device));
@@ -5200,7 +5200,7 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
         extra->q_img = clCreateImage(context, CL_MEM_READ_ONLY, &img_format_q, &img_desc_q, NULL, &err);
         tensor->extra = extra;
 
-        return;
+        return;  // 返回
     }
     if (tensor->type == GGML_TYPE_Q8_0) {
         ggml_tensor_extra_cl * extra_orig = (ggml_tensor_extra_cl *)tensor->extra;
@@ -5260,7 +5260,7 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
         tensor->extra = extra;
 
         // Transpose the weights and scales
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (enable_adreno_trans_weight(backend_ctx, tensor)) {
 
             int M = tensor->ne[1];   // ne01
@@ -5274,9 +5274,9 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
             transpose_2d_as_32b(backend_ctx, extra->q, extra->q, size_q, K/4,  M);
             transpose_2d_as_16b(backend_ctx, extra->d, extra->d, size_d, K/32, M);
         } // end transpose
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
 
-        return;
+        return;  // 返回
     }
     if (tensor->type == GGML_TYPE_IQ4_NL) {
         ggml_tensor_extra_cl * extra_orig = (ggml_tensor_extra_cl *)tensor->extra;
@@ -5316,14 +5316,14 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
             CL_BUFFER_CREATE_TYPE_REGION, &region, &err);
         CL_CHECK(err);
 
-    #ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+    #ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         cl_kernel kernel = backend_ctx->kernel_convert_block_iq4_nl;
         if (use_adreno_kernels(backend_ctx, tensor)) {
             kernel = backend_ctx->kernel_convert_block_iq4_nl_noshuffle;
         }
-    #else
+    #else  // 否则
         cl_kernel kernel = backend_ctx->kernel_convert_block_iq4_nl;
-    #endif
+    #endif  // 条件编译结束
         cl_ulong n_blk = ggml_nelements(tensor)/ggml_blck_size(tensor->type);
         cl_uchar mask_0F = 0x0F;
         cl_uchar mask_F0 = 0xF0;
@@ -5345,7 +5345,7 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
 
         tensor->extra = extra;
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (use_adreno_kernels(backend_ctx, tensor)) {
             int M = tensor->ne[1];
             int K = tensor->ne[0];
@@ -5356,8 +5356,8 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
             // Transpose d as ushort
             transpose_2d_as_16b(backend_ctx, extra->d, extra->d, size_d, K/32, M);
         }
-#endif
-        return;
+#endif  // 条件编译结束
+        return;  // 返回
     }
     if (tensor->type == GGML_TYPE_Q4_K) {
         ggml_tensor_extra_cl * extra_orig = (ggml_tensor_extra_cl *)tensor->extra;
@@ -5418,14 +5418,14 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
             CL_BUFFER_CREATE_TYPE_REGION, &region, &err);
         CL_CHECK(err);
 
-        #ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+        #ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         cl_kernel kernel = backend_ctx->kernel_convert_block_q4_K;
         if (use_adreno_kernels(backend_ctx, tensor)) {
             kernel = backend_ctx->kernel_convert_block_q4_K_noshuffle;
         }
-        #else
+        #else  // 否则
         cl_kernel kernel = backend_ctx->kernel_convert_block_q4_K;
-        #endif
+        #endif  // 条件编译结束
 
         cl_uchar mask_0F = 0x0F;
         cl_uchar mask_F0 = 0xF0;
@@ -5447,7 +5447,7 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
         CL_CHECK(clReleaseMemObject(data_device));
 
         tensor->extra  = extra;
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (use_adreno_kernels(backend_ctx, tensor)) {
 
             int M = tensor->ne[1];
@@ -5460,8 +5460,8 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
             transpose_2d_as_16b(backend_ctx, extra->d, extra->d, size_d, K/256, M);
             transpose_2d_as_16b(backend_ctx, extra->dm, extra->dm, size_dm, K/256, M);
         }
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
-        return;
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
+        return;  // 返回
     }
     if (tensor->type == GGML_TYPE_Q5_K) {
         ggml_tensor_extra_cl * extra_orig = (ggml_tensor_extra_cl *)tensor->extra;
@@ -5528,14 +5528,14 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
         CL_CHECK((extra->qh = clCreateSubBuffer(extra_orig->data_device, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &err), err));
         CL_CHECK(err);
 
-        #ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+        #ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         cl_kernel kernel = backend_ctx->kernel_convert_block_q5_K;
         if (use_adreno_kernels(backend_ctx, tensor)) {
             kernel = backend_ctx->kernel_convert_block_q5_K_noshuffle;
         }
-        #else
+        #else  // 否则
         cl_kernel kernel = backend_ctx->kernel_convert_block_q5_K;
-        #endif
+        #endif  // 条件编译结束
 
         cl_uchar mask_0F = 0x0F;
         cl_uchar mask_F0 = 0xF0;
@@ -5564,7 +5564,7 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
         extra->size_dm = size_dm;
 
         tensor->extra = extra;
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (use_adreno_kernels(backend_ctx, tensor)) {
 
             int M = tensor->ne[1];
@@ -5578,8 +5578,8 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
             transpose_2d_as_16b(backend_ctx, extra->d,  extra->d,  size_d,  K/256, M);
             transpose_2d_as_16b(backend_ctx, extra->dm, extra->dm, size_dm, K/256, M);
         }
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
-        return;
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
+        return;  // 返回
     }
     if (tensor->type == GGML_TYPE_Q6_K) {
         ggml_tensor_extra_cl * extra_orig = (ggml_tensor_extra_cl *)tensor->extra;
@@ -5629,14 +5629,14 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
 
         // Flatten the weights
         cl_kernel kernel;
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         kernel = backend_ctx->kernel_convert_block_q6_K;
         if (use_adreno_kernels(backend_ctx, tensor)) {
             kernel = backend_ctx->kernel_convert_block_q6_K_noshuffle;
         }
-#else
+#else  // 否则
         kernel = backend_ctx->kernel_convert_block_q6_K;
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
 
         cl_uchar mask = 0xff;
         cl_ulong n_blk = ggml_nelements(tensor)/ggml_blck_size(tensor->type);
@@ -5663,7 +5663,7 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
 
         tensor->extra  = extra;
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (use_adreno_kernels(backend_ctx, tensor)) {
             cl_int M = tensor->ne[1];   // ne01
             cl_int K = tensor->ne[0];   // ne00
@@ -5684,10 +5684,10 @@ static void ggml_backend_opencl_buffer_set_tensor(ggml_backend_buffer_t buffer, 
             transpose_2d_as_16b(backend_ctx,
                 extra->d, extra->d, size_d, K/256, M);
         }
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
-        return;
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
+        return;  // 返回
     }
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
 
     ggml_tensor_extra_cl * extra = (ggml_tensor_extra_cl *) tensor->extra;
     GGML_ASSERT(extra);
@@ -5710,7 +5710,7 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
     // Make sure all previously submitted commands in other devices are finished.
     sync_with_other_backends(backend_ctx);
 
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
     // In end-to-end runs, get_tensor is usually used to get back the logits,
     // where we can simply do clEnqueueReadBuffer since they are f32.
     // However, in test-backend-ops, the GPU graph is copied to the CPU backend,
@@ -5720,7 +5720,7 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
     if (tensor->type == GGML_TYPE_Q4_0) {
         ggml_tensor_extra_cl_q4_0 * extra = (ggml_tensor_extra_cl_q4_0 *)tensor->extra;
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (use_adreno_kernels(backend_ctx, tensor)) {
             cl_int err;
             cl_kernel kernel;
@@ -5801,9 +5801,9 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             CL_CHECK(clReleaseMemObject(buf_trans_q));
             CL_CHECK(clReleaseMemObject(buf_trans_d));
 
-            return;
+            return;  // 返回
         }
-#endif
+#endif  // 条件编译结束
 
         cl_int err;
         cl_mem data_device = clCreateBuffer(context, CL_MEM_READ_WRITE,
@@ -5826,12 +5826,12 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             queue, data_device, CL_TRUE, offset,
             size, data, 0, NULL, NULL));
         CL_CHECK(clReleaseMemObject(data_device));
-        return;
+        return;  // 返回
     }
     if (tensor->type == GGML_TYPE_Q4_1) {
         ggml_tensor_extra_cl_q4_1 * extra = (ggml_tensor_extra_cl_q4_1 *)tensor->extra;
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (use_adreno_kernels(backend_ctx, tensor)) {
             static ggml_cl_buffer buf_trans_q;
             static ggml_cl_buffer buf_trans_m;
@@ -5874,9 +5874,9 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
 
             CL_CHECK(clEnqueueNDRangeKernel(queue, kernel, 3, NULL, global_work_size, local_work_size, 0, NULL, NULL));
             CL_CHECK(clEnqueueReadBuffer(queue, buf_unpacked.buffer, CL_TRUE, offset, size, data, 0, NULL, NULL));
-            return;
+            return;  // 返回
         }
-#endif
+#endif  // 条件编译结束
 
         cl_int err;
         cl_mem data_device = clCreateBuffer(context, CL_MEM_READ_WRITE,
@@ -5900,7 +5900,7 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             queue, data_device, CL_TRUE, offset,
             size, data, 0, NULL, NULL));
         CL_CHECK(clReleaseMemObject(data_device));
-        return;
+        return;  // 返回
     }
     if (tensor->type == GGML_TYPE_MXFP4) {
         ggml_tensor_extra_cl_mxfp4 * extra = (ggml_tensor_extra_cl_mxfp4 *)tensor->extra;
@@ -5910,7 +5910,7 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             ggml_nbytes(tensor), NULL, &err);
         CL_CHECK(err);
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (use_adreno_moe_kernels(backend_ctx, tensor)) {
             cl_kernel kernel = backend_ctx->kernel_restore_block_mxfp4_trans;
 
@@ -5934,9 +5934,9 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
                 queue, data_device, CL_TRUE, offset,
                 size, data, 0, NULL, NULL));
             CL_CHECK(clReleaseMemObject(data_device));
-            return;
+            return;  // 返回
         }
-#endif
+#endif  // 条件编译结束
         cl_kernel kernel = backend_ctx->kernel_restore_block_mxfp4;
         CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &extra->q));
         CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &extra->e));
@@ -5953,7 +5953,7 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             queue, data_device, CL_TRUE, offset,
             size, data, 0, NULL, NULL));
         CL_CHECK(clReleaseMemObject(data_device));
-        return;
+        return;  // 返回
     }
     if (tensor->type == GGML_TYPE_Q8_0) {
         ggml_tensor_extra_cl_q8_0 * extra = (ggml_tensor_extra_cl_q8_0 *)tensor->extra;
@@ -5963,7 +5963,7 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             ggml_nbytes(tensor), NULL, &err);
         CL_CHECK(err);
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (enable_adreno_trans_weight(backend_ctx, tensor)) {
             cl_kernel kernel = backend_ctx->kernel_restore_block_q8_0_trans;
 
@@ -5990,9 +5990,9 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
                 queue, data_device, CL_TRUE, offset,
                 size, data, 0, NULL, NULL));
             CL_CHECK(clReleaseMemObject(data_device));
-            return;
+            return;  // 返回
         }
-#endif
+#endif  // 条件编译结束
         cl_kernel kernel = backend_ctx->kernel_restore_block_q8_0;
         CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &extra->q));
         CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &extra->d));
@@ -6009,7 +6009,7 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             queue, data_device, CL_TRUE, offset,
             size, data, 0, NULL, NULL));
         CL_CHECK(clReleaseMemObject(data_device));
-        return;
+        return;  // 返回
     }
     if (tensor->type == GGML_TYPE_IQ4_NL) {
         ggml_tensor_extra_cl_iq4_nl * extra = (ggml_tensor_extra_cl_iq4_nl *)tensor->extra;
@@ -6019,7 +6019,7 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             ggml_nbytes(tensor), NULL, &err);
         CL_CHECK(err);
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (use_adreno_kernels(backend_ctx, tensor)) {
             static ggml_cl_buffer buf_trans_q;
             static ggml_cl_buffer buf_trans_d;
@@ -6059,9 +6059,9 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
 
             CL_CHECK(clEnqueueNDRangeKernel(queue, kernel, 3, NULL, global_work_size, local_work_size, 0, NULL, NULL));
             CL_CHECK(clEnqueueReadBuffer(queue, buf_unpacked.buffer, CL_TRUE, offset, size, data, 0, NULL, NULL));
-            return;
+            return;  // 返回
         }
-#endif
+#endif  // 条件编译结束
         cl_kernel kernel = backend_ctx->kernel_restore_block_iq4_nl;
         cl_ulong n_blk = ggml_nelements(tensor)/ggml_blck_size(tensor->type);
 
@@ -6081,7 +6081,7 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             queue, data_device, CL_TRUE, offset,
             size, data, 0, NULL, NULL));
         CL_CHECK(clReleaseMemObject(data_device));
-        return;
+        return;  // 返回
     }
     if (tensor->type == GGML_TYPE_Q4_K) {
         ggml_tensor_extra_cl_q4_K * extra = (ggml_tensor_extra_cl_q4_K *)tensor->extra;
@@ -6094,7 +6094,7 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
         cl_uchar mask_0F = 0x0F;
         cl_uchar mask_F0 = 0xF0;
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (use_adreno_kernels(backend_ctx, tensor)) {
             int M = tensor->ne[1];
             int K = tensor->ne[0];
@@ -6133,9 +6133,9 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             CL_CHECK(clEnqueueReadBuffer(queue, data_device, CL_TRUE, offset,
                 size, data, 0, NULL, NULL));
             CL_CHECK(clReleaseMemObject(data_device));
-            return;
+            return;  // 返回
         }
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
 
         cl_kernel kernel = backend_ctx->kernel_restore_block_q4_K;
         CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &extra->q));
@@ -6157,7 +6157,7 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             queue, data_device, CL_TRUE, offset,
             size, data, 0, NULL, NULL));
         CL_CHECK(clReleaseMemObject(data_device));
-        return;
+        return;  // 返回
     }
     if (tensor->type == GGML_TYPE_Q5_K) {
         ggml_tensor_extra_cl_q5_K * extra = (ggml_tensor_extra_cl_q5_K *)tensor->extra;
@@ -6170,7 +6170,7 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
         cl_uchar mask_0F = 0x0F;
         cl_uchar mask_F0 = 0xF0;
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (use_adreno_kernels(backend_ctx, tensor)) {
             int M = tensor->ne[1];
             int K = tensor->ne[0];
@@ -6214,9 +6214,9 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             CL_CHECK(clEnqueueReadBuffer(queue, data_device, CL_TRUE, offset,
                 size, data, 0, NULL, NULL));
             CL_CHECK(clReleaseMemObject(data_device));
-            return;
+            return;  // 返回
         }
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
 
         cl_kernel kernel = backend_ctx->kernel_restore_block_q5_K;
         CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem),   &extra->q));
@@ -6239,12 +6239,12 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             queue, data_device, CL_TRUE, offset,
             size, data, 0, NULL, NULL));
         CL_CHECK(clReleaseMemObject(data_device));
-        return;
+        return;  // 返回
     }
     if (tensor->type == GGML_TYPE_Q6_K) {
         ggml_tensor_extra_cl_q6_K * extra = (ggml_tensor_extra_cl_q6_K *)tensor->extra;
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
         if (use_adreno_kernels(backend_ctx, tensor)) {
             static ggml_cl_buffer buf_trans_ql;
             static ggml_cl_buffer buf_trans_qh;
@@ -6295,9 +6295,9 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             CL_CHECK(clWaitForEvents(1, &evt));
             CL_CHECK(clEnqueueReadBuffer(queue, buf_unpacked.buffer, CL_TRUE, offset, size, data, 0, NULL, NULL));
 
-            return;
+            return;  // 返回
         }
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
 
         cl_int err;
         cl_mem data_device = clCreateBuffer(context, CL_MEM_READ_WRITE,
@@ -6326,9 +6326,9 @@ static void ggml_backend_opencl_buffer_get_tensor(ggml_backend_buffer_t buffer, 
             queue, data_device, CL_TRUE, offset,
             size, data, 0, NULL, NULL));
         CL_CHECK(clReleaseMemObject(data_device));
-        return;
+        return;  // 返回
     }
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
 
     ggml_tensor_extra_cl * extra = (ggml_tensor_extra_cl *) tensor->extra;
 
@@ -6375,7 +6375,7 @@ static ggml_backend_buffer_i ggml_backend_opencl_buffer_interface = {
 //
 
 static const char * ggml_backend_opencl_buffer_type_get_name(ggml_backend_buffer_type_t buffer_type) {
-    return "OpenCL";
+    return "OpenCL";  // 返回
 
     GGML_UNUSED(buffer_type);
 }
@@ -6395,17 +6395,17 @@ static ggml_backend_buffer_t ggml_backend_opencl_buffer_type_alloc_buffer(ggml_b
 
     if (err != CL_SUCCESS) {
         GGML_LOG_INFO("%s: failed to allocate %.2f MiB\n", __func__, size / 1024.0 / 1024.0);
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     ggml_backend_opencl_buffer_context * ctx = new ggml_backend_opencl_buffer_context(mem);
 
-    return ggml_backend_buffer_init(buffer_type, ggml_backend_opencl_buffer_interface, ctx, size);
+    return ggml_backend_buffer_init(buffer_type, ggml_backend_opencl_buffer_interface, ctx, size);  // ggml_backend_buffer_init
 }
 
 static size_t ggml_backend_opencl_buffer_type_get_alignment(ggml_backend_buffer_type_t buffer_type) {
     ggml_backend_opencl_context * backend_ctx = ggml_cl2_init(buffer_type->device);
-    return backend_ctx->alignment;
+    return backend_ctx->alignment;  // 返回
 }
 
 static size_t ggml_backend_opencl_buffer_type_get_max_size(ggml_backend_buffer_type_t buffer_type) {
@@ -6414,11 +6414,11 @@ static size_t ggml_backend_opencl_buffer_type_get_max_size(ggml_backend_buffer_t
         ggml_backend_opencl_context * backend_ctx = ggml_cl2_init(buffer_type->device);
         max_size = backend_ctx->max_alloc_size;
     }
-    return max_size;
+    return max_size;  // 返回
 }
 
 static bool ggml_backend_opencl_buffer_type_supports_backend(ggml_backend_buffer_type_t buft, ggml_backend_t backend) {
-    return ggml_backend_is_opencl(backend);
+    return ggml_backend_is_opencl(backend);  // ggml_backend_is_opencl
 
     UNUSED(buft);
 }
@@ -6437,7 +6437,7 @@ static ggml_backend_buffer_type_i ggml_backend_opencl_buffer_type_interface = {
 //
 
 static const char * ggml_backend_opencl_device_get_name(ggml_backend_dev_t dev) {
-    return "GPUOpenCL";
+    return "GPUOpenCL";  // 返回
 
     GGML_UNUSED(dev);
 }
@@ -6456,7 +6456,7 @@ static void ggml_backend_opencl_device_get_memory(ggml_backend_dev_t dev, size_t
 }
 
 static enum ggml_backend_dev_type ggml_backend_opencl_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+    return GGML_BACKEND_DEVICE_TYPE_GPU;  // 返回
 
     GGML_UNUSED(dev);
 }
@@ -6486,7 +6486,7 @@ static ggml_backend_t ggml_backend_opencl_device_init(ggml_backend_dev_t dev, co
         /* .context   = */ backend_ctx,
     };
 
-    return backend;
+    return backend;  // 返回
 
     GGML_UNUSED(params);
 }
@@ -6500,7 +6500,7 @@ static ggml_backend_buffer_type_t ggml_backend_opencl_device_get_buffer_type(ggm
         /* .context = */ nullptr,
     };
 
-    return &dev_ctx->buffer_type;
+    return &dev_ctx->buffer_type;  // 返回
 }
 
 static ggml_backend_buffer_t ggml_backend_opencl_device_buffer_from_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
@@ -6508,29 +6508,29 @@ static ggml_backend_buffer_t ggml_backend_opencl_device_buffer_from_ptr(ggml_bac
     GGML_UNUSED(ptr);
     GGML_UNUSED(size);
     GGML_UNUSED(max_tensor_size);
-    return nullptr;
+    return nullptr;  // 返回
 }
 
 static bool ggml_backend_opencl_device_supports_op(ggml_backend_dev_t dev, const struct ggml_tensor * op) {
-    return ggml_opencl_supports_op(dev, op);
+    return ggml_opencl_supports_op(dev, op);  // ggml_opencl_supports_op
 }
 
 static bool ggml_backend_opencl_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
     // Check 'dev' and 'buffer_type' are not objects belonging to this backend.
     if (dev->iface.get_name != ggml_backend_opencl_device_get_name ||
         buft->iface.get_name != ggml_backend_opencl_buffer_type_get_name) {
-        return false;
+        return false;  // 返回
     }
 
     // Check cl_context is the same. clEnqueue* commands may not use
     // buffers from another cl_context.
     ggml_backend_opencl_context * backend_ctx0 = ggml_cl2_init(dev);
     ggml_backend_opencl_context * backend_ctx1 = ggml_cl2_init(buft->device);
-    return backend_ctx0->context == backend_ctx1->context;
+    return backend_ctx0->context == backend_ctx1->context;  // 返回
 }
 
-namespace /* anonymous */ {
-struct ggml_backend_device_i ggml_backend_opencl_device_i = {
+namespace /* anonymous */ {  // 命名空间
+struct ggml_backend_device_i ggml_backend_opencl_device_i = {  // 结构体定义
     /* .get_name             = */ ggml_backend_opencl_device_get_name,
     /* .get_description      = */ ggml_backend_opencl_device_get_description,
     /* .get_memory           = */ ggml_backend_opencl_device_get_memory,
@@ -6552,7 +6552,7 @@ struct ggml_backend_device_i ggml_backend_opencl_device_i = {
 // Backend registry
 
 static const char * ggml_backend_opencl_reg_get_name(ggml_backend_reg_t reg) {
-    return "OpenCL";
+    return "OpenCL";  // 返回
 
     GGML_UNUSED(reg);
 }
@@ -6566,7 +6566,7 @@ static size_t ggml_backend_opencl_reg_device_count(ggml_backend_reg_t reg) {
 static ggml_backend_dev_t ggml_backend_opencl_reg_device_get(ggml_backend_reg_t reg, size_t index) {
     GGML_ASSERT(index < ggml_backend_opencl_reg_device_count(reg));
 
-    return &g_ggml_backend_opencl_devices[index];
+    return &g_ggml_backend_opencl_devices[index];  // 返回
 
     GGML_UNUSED(reg);
     GGML_UNUSED(index);
@@ -6586,7 +6586,7 @@ ggml_backend_reg_t ggml_backend_opencl_reg(void) {
     std::lock_guard<std::mutex> lock(mutex);
 
     if (initialized) {
-        return &reg;
+        return &reg;  // 返回
     }
     initialized = true;
 
@@ -6598,7 +6598,7 @@ ggml_backend_reg_t ggml_backend_opencl_reg(void) {
         /* .context     = */ NULL,
     };
 
-    return &reg;
+    return &reg;  // 返回
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_opencl_reg)
@@ -6606,36 +6606,36 @@ GGML_BACKEND_DL_IMPL(ggml_backend_opencl_reg)
 //------------------------------------------------------------------------------
 // Debugging utils
 //------------------------------------------------------------------------------
-#if 0
-#define QK4_0 32
-typedef struct {
+#if 0  // 条件编译
+#define QK4_0 32  // 宏定义 QK4_0
+typedef struct {  // 类型定义
     ggml_fp16_t d;          // delta
     uint8_t qs[QK4_0 / 2];  // nibbles / quants
 } block_q4_0;
 static_assert(sizeof(block_q4_0) == sizeof(ggml_fp16_t) + QK4_0 / 2,
     "wrong q4_0 block size/padding");
 
-#define QK_MXFP4 32
+#define QK_MXFP4 32  // 宏定义 QK_MXFP4
 
-#include <math.h>
-#ifdef __cplusplus
-#include "half.hpp"
-#endif
+#include <math.h>  // 引入 math.h 头文件
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
+#include "half.hpp"  // 引入 half.hpp 头文件
+#endif  // 条件编译结束
 
 static void dump_tensor(ggml_backend_t backend, const struct ggml_tensor * tensor) {
     void * buf = malloc(ggml_nbytes(tensor));
 
     ggml_backend_opencl_context *backend_ctx = (ggml_backend_opencl_context *)backend->context;
     cl_command_queue queue = backend_ctx->queue;
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
     void * buf_q;
     void * buf_d;
-#endif
+#endif  // 条件编译结束
 
     // Make sure everything is done.
     CL_CHECK(clFinish(queue));
 
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
     if (tensor->type == GGML_TYPE_Q4_0) {
         ggml_tensor_extra_cl_q4_0 * extra = (ggml_tensor_extra_cl_q4_0 *) tensor->extra;
         GGML_ASSERT(extra);
@@ -6671,7 +6671,7 @@ static void dump_tensor(ggml_backend_t backend, const struct ggml_tensor * tenso
         extra->offset, ggml_nbytes(tensor), buf, 0, NULL, NULL));
         CL_CHECK(clFinish(queue));
     }
-#else
+#else  // 否则
     // Read out the tensor from GPU memory.
     ggml_tensor_extra_cl * extra = (ggml_tensor_extra_cl *) tensor->extra;
     GGML_ASSERT(extra);
@@ -6679,7 +6679,7 @@ static void dump_tensor(ggml_backend_t backend, const struct ggml_tensor * tenso
     CL_CHECK(clEnqueueReadBuffer(queue, extra->data_device, CL_TRUE,
         extra->offset, ggml_nbytes(tensor), buf, 0, NULL, NULL));
     CL_CHECK(clFinish(queue));
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
 
     // Open file and dump.
     char fname[512];
@@ -6687,7 +6687,7 @@ static void dump_tensor(ggml_backend_t backend, const struct ggml_tensor * tenso
     FILE * f = fopen(fname, "w");
     if (!f) {
         printf("Failed to open %s\n", fname);
-        return;
+        return;  // 返回
     }
 
     if (tensor->type == GGML_TYPE_F32) {
@@ -6709,7 +6709,7 @@ static void dump_tensor(ggml_backend_t backend, const struct ggml_tensor * tenso
             fprintf(f, "%d\n", data[i]);
         }
     } else if (tensor->type == GGML_TYPE_F16) {
-#ifdef __cplusplus
+#ifdef __cplusplus  // 如果定义了 __cplusplus 则编译
         half_float::half * data = (half_float::half *) buf;
         for (int i = 0; i < ggml_nelements(tensor); ++i) {
             if (std::isnan(data[i])) {
@@ -6718,9 +6718,9 @@ static void dump_tensor(ggml_backend_t backend, const struct ggml_tensor * tenso
             }
             fprintf(f, "%f\n", float(data[i]));
         }
-#endif
+#endif  // 条件编译结束
     } else if (tensor->type == GGML_TYPE_Q4_0) {
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
         ggml_fp16_t * data_d = (ggml_fp16_t *)buf_d;
         unsigned char * data_q = (unsigned char *)buf_q;
 
@@ -6734,7 +6734,7 @@ static void dump_tensor(ggml_backend_t backend, const struct ggml_tensor * tenso
         }
         free(buf_d);
         free(buf_q);
-#else
+#else  // 否则
         block_q4_0 * data = (block_q4_0 *) buf;
         for (int i = 0; i < ggml_nelements(tensor)/QK4_0; ++i) {
             fprintf(f, "%04x, ", data[i].d);
@@ -6743,15 +6743,15 @@ static void dump_tensor(ggml_backend_t backend, const struct ggml_tensor * tenso
             }
             fprintf(f, "\n");
         }
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
     }
     free(buf);
     fflush(f);
     fclose(f);
 }
-#else
-#define dump_tensor(tensor)
-#endif
+#else  // 否则
+#define dump_tensor(tensor)  // 宏定义 dump_tensor
+#endif  // 条件编译结束
 
 //------------------------------------------------------------------------------
 // Ops
@@ -8508,7 +8508,7 @@ static void ggml_opencl_op_norm_fused(ggml_backend_t backend, ggml_tensor * norm
     size_t sgs;
     if (backend_ctx->gpu_family == ADRENO) sgs = 64;
     else if (backend_ctx->gpu_family == INTEL) sgs = 32;
-    else GGML_ASSERT(false && "Unsupported GPU");
+    else GGML_ASSERT(false && "Unsupported GPU");  // GGML_ASSERT
 
     cl_kernel kernel = backend_ctx->kernel_norm_mul_add;
 
@@ -9245,7 +9245,7 @@ static void ggml_cl_pad(ggml_backend_t backend, const ggml_tensor * src0, ggml_t
 
     if (backend_ctx->kernel_pad == nullptr) {
         GGML_LOG_WARN("%s: pad kernel not available, skipping OpenCL execution.\n", __func__);
-        return;
+        return;  // 返回
     }
 
     ggml_tensor_extra_cl * extra_src0 = (ggml_tensor_extra_cl *)src0->extra;
@@ -9346,17 +9346,17 @@ static void ggml_cl_upscale(ggml_backend_t backend, const ggml_tensor * src0, gg
         kernel = backend_ctx->kernel_upscale;
         if (kernel == nullptr) {
             GGML_LOG_WARN("%s: nearest upscale kernel not available, skipping OpenCL execution.\n", __func__);
-            return;
+            return;  // 返回
         }
     } else if (mode == GGML_SCALE_MODE_BILINEAR) {
         kernel = backend_ctx->kernel_upscale_bilinear;
         if (kernel == nullptr) {
             GGML_LOG_WARN("%s: bilinear upscale kernel not available, skipping OpenCL execution.\n", __func__);
-            return;
+            return;  // 返回
         }
     } else {
         GGML_LOG_WARN("%s: unsupported upscale mode %d, skipping OpenCL execution.\n", __func__, mode);
-        return;
+        return;  // 返回
     }
 
     ggml_tensor_extra_cl * extra_src0 = (ggml_tensor_extra_cl *)src0->extra;
@@ -9428,7 +9428,7 @@ static void ggml_cl_upscale(ggml_backend_t backend, const ggml_tensor * src0, gg
 
     size_t dst_total_elements = (size_t)ne0 * ne1 * ne2 * ne3;
     if (dst_total_elements == 0) {
-        return;
+        return;  // 返回
     }
     size_t global_work_size[] = { dst_total_elements, 1, 1 };
     size_t local_work_size_pref = 256;
@@ -9538,7 +9538,7 @@ static void ggml_cl_timestep_embedding(ggml_backend_t backend, const ggml_tensor
 
     if (backend_ctx->kernel_timestep_embedding == nullptr) {
         GGML_LOG_WARN("%s: timestep_embedding kernel not available, skipping OpenCL execution.\n", __func__);
-        return;
+        return;  // 返回
     }
 
     ggml_tensor_extra_cl * extra_src0 = (ggml_tensor_extra_cl *)src0->extra;
@@ -9975,7 +9975,7 @@ static void ggml_cl_mul_mat_kq_kqv_adreno(ggml_backend_t backend, const ggml_ten
 }
 
 static void ggml_cl_mul_mat_q4_1_f32_adreno(ggml_backend_t backend, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
     GGML_ASSERT(src0);
     GGML_ASSERT(src0->extra);
     GGML_ASSERT(src1);
@@ -10140,16 +10140,16 @@ static void ggml_cl_mul_mat_q4_1_f32_adreno(ggml_backend_t backend, const ggml_t
         CL_CHECK(clReleaseMemObject(b_img));
         CL_CHECK(clReleaseMemObject(b_img_trans));
     }
-#else
+#else  // 否则
     GGML_UNUSED(backend);
     GGML_UNUSED(src0);
     GGML_UNUSED(src1);
     GGML_UNUSED(dst);
-#endif
+#endif  // 条件编译结束
 }
 
 static void ggml_cl_mul_mat_iq4_nl_f32_adreno(ggml_backend_t backend, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
     GGML_ASSERT(src0);
     GGML_ASSERT(src0->extra);
     GGML_ASSERT(src1);
@@ -10312,16 +10312,16 @@ static void ggml_cl_mul_mat_iq4_nl_f32_adreno(ggml_backend_t backend, const ggml
         CL_CHECK(clReleaseMemObject(b_img));
         CL_CHECK(clReleaseMemObject(b_img_trans));
     }
-#else
+#else  // 否则
     GGML_UNUSED(backend);
     GGML_UNUSED(src0);
     GGML_UNUSED(src1);
     GGML_UNUSED(dst);
-#endif
+#endif  // 条件编译结束
 }
 
 static void ggml_cl_mul_mat_q8_0_f32_adreno(ggml_backend_t backend, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
     GGML_ASSERT(src0);
     GGML_ASSERT(src0->extra);
     GGML_ASSERT(src1);
@@ -10509,16 +10509,16 @@ static void ggml_cl_mul_mat_q8_0_f32_adreno(ggml_backend_t backend, const ggml_t
         CL_CHECK(clReleaseMemObject(b_img));
         CL_CHECK(clReleaseMemObject(b_sub_buf));
     }
-#else
+#else  // 否则
     GGML_UNUSED(backend);
     GGML_UNUSED(src0);
     GGML_UNUSED(src1);
     GGML_UNUSED(dst);
-#endif
+#endif  // 条件编译结束
 }
 
 static void ggml_cl_mul_mat_q4_k_f32_adreno(ggml_backend_t backend, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
     GGML_ASSERT(src0);
     GGML_ASSERT(src0->extra);
     GGML_ASSERT(src1);
@@ -10695,16 +10695,16 @@ static void ggml_cl_mul_mat_q4_k_f32_adreno(ggml_backend_t backend, const ggml_t
         CL_CHECK(clReleaseMemObject(b_img));
         CL_CHECK(clReleaseMemObject(b_img_trans));
     }
-#else
+#else  // 否则
     GGML_UNUSED(backend);
     GGML_UNUSED(src0);
     GGML_UNUSED(src1);
     GGML_UNUSED(dst);
-#endif
+#endif  // 条件编译结束
 }
 
 static void ggml_cl_mul_mat_q6_K_f32_adreno(ggml_backend_t backend, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
     GGML_ASSERT(src0);
     GGML_ASSERT(src0->extra);
     GGML_ASSERT(src1);
@@ -10885,16 +10885,16 @@ static void ggml_cl_mul_mat_q6_K_f32_adreno(ggml_backend_t backend, const ggml_t
         CL_CHECK(clReleaseMemObject(b_buf_trans));
         CL_CHECK(clReleaseMemObject(b_img_trans));
     }
-#else
+#else  // 否则
     GGML_UNUSED(backend);
     GGML_UNUSED(src0);
     GGML_UNUSED(src1);
     GGML_UNUSED(dst);
-#endif
+#endif  // 条件编译结束
 }
 
 static void ggml_cl_mul_mat_q5_K_f32_adreno(ggml_backend_t backend, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
     GGML_ASSERT(src0);
     GGML_ASSERT(src0->extra);
     GGML_ASSERT(src1);
@@ -11080,12 +11080,12 @@ static void ggml_cl_mul_mat_q5_K_f32_adreno(ggml_backend_t backend, const ggml_t
         CL_CHECK(clReleaseMemObject(b_img));
         CL_CHECK(clReleaseMemObject(b_img_trans));
     }
-#else
+#else  // 否则
     GGML_UNUSED(backend);
     GGML_UNUSED(src0);
     GGML_UNUSED(src1);
     GGML_UNUSED(dst);
-#endif
+#endif  // 条件编译结束
 }
 
 static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
@@ -11109,7 +11109,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
     cl_ulong offset1 = extra1->offset + src1->view_offs;
     cl_ulong offsetd = extrad->offset + dst->view_offs;
 
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
     ggml_tensor_extra_cl_q4_0 * extra0_q4_0 = (ggml_tensor_extra_cl_q4_0 *)src0->extra;
     ggml_tensor_extra_cl_q4_1 * extra0_q4_1 = (ggml_tensor_extra_cl_q4_1 *)src0->extra;
     ggml_tensor_extra_cl_mxfp4 * extra0_mxfp4 = (ggml_tensor_extra_cl_mxfp4 *)src0->extra;
@@ -11118,7 +11118,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
     ggml_tensor_extra_cl_q4_K * extra0_q4_K = (ggml_tensor_extra_cl_q4_K *)src0->extra;
     ggml_tensor_extra_cl_q5_K * extra0_q5_K = (ggml_tensor_extra_cl_q5_K *)src0->extra;
     ggml_tensor_extra_cl_q6_K * extra0_q6_K = (ggml_tensor_extra_cl_q6_K *)src0->extra;
-#endif
+#endif  // 条件编译结束
 
     const int  ne00 = src0 ? src0->ne[0] : 0;
     const int  ne01 = src0 ? src0->ne[1] : 0;
@@ -11156,7 +11156,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
 
     cl_kernel kernel;
 
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
     cl_context context = backend_ctx->context;
 
     if(src0t == GGML_TYPE_F16 && src1t == GGML_TYPE_F32){
@@ -11173,13 +11173,13 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
                 nb12 <= nb11 &&
                 nb11 <= nb13) {
                 ggml_cl_mul_mat_kq_kqv_adreno(backend, src0, src1, dst);
-                return;
+                return;  // 返回
             }
             // For KQV
             if (!ggml_is_contiguous(src0) && ggml_is_contiguous(src1) &&
                 ((nb02 * ne02 / 4)/4 <= backend_ctx->image_max_buffer_size)) {
                 ggml_cl_mul_mat_kq_kqv_adreno(backend, src0, src1, dst);
-                return;
+                return;  // 返回
             }
         }
     }
@@ -11216,38 +11216,38 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
     // q4_1 x fp32
     if (src0t == GGML_TYPE_Q4_1 && src1t == GGML_TYPE_F32) {
             ggml_cl_mul_mat_q4_1_f32_adreno(backend, src0, src1, dst);
-            return;
+            return;  // 返回
     }
 
     // iq4_nl x fp32
     if (src0t == GGML_TYPE_IQ4_NL && src1t == GGML_TYPE_F32) {
         ggml_cl_mul_mat_iq4_nl_f32_adreno(backend, src0, src1, dst);
-        return;
+        return;  // 返回
     }
 
     // q8_0 x fp32
     if (src0t == GGML_TYPE_Q8_0 && src1t == GGML_TYPE_F32 &&
         enable_adreno_trans_weight(backend_ctx, src0)) {
             ggml_cl_mul_mat_q8_0_f32_adreno(backend, src0, src1, dst);
-            return;
+            return;  // 返回
     }
 
     // q4_k x fp32
     if (src0t == GGML_TYPE_Q4_K && src1t == GGML_TYPE_F32) {
             ggml_cl_mul_mat_q4_k_f32_adreno(backend, src0, src1, dst);
-            return;
+            return;  // 返回
     }
 
     // q6_K x fp32
     if (src0t == GGML_TYPE_Q6_K && src1t == GGML_TYPE_F32) {
         ggml_cl_mul_mat_q6_K_f32_adreno(backend, src0, src1, dst);
-        return;
+        return;  // 返回
     }
 
     // q5_K x fp32
     if (src0t == GGML_TYPE_Q5_K && src1t == GGML_TYPE_F32) {
         ggml_cl_mul_mat_q5_K_f32_adreno(backend, src0, src1, dst);
-        return;
+        return;  // 返回
     }
 
     // q4_0 x fp32
@@ -11517,10 +11517,10 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
         }
         // <--------------------------------------------> //
 
-        return;
+        return;  // 返回
     }
     } // if (ne01 && ne1)
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
 
     // GEMM using local memory
     // Current BK = 16, so ne00 % 16 == 0
@@ -11593,7 +11593,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
                 size_t local_work_size[] = {(size_t)nth0, 1, 1};
 
                 backend_ctx->enqueue_ndrange_kernel(kernel, 3, global_work_size, local_work_size, dst);
-                return;
+                return;  // 返回
             }
             case GGML_TYPE_F16: {
                 kernel = backend_ctx->kernel_mul_mm_f16_f32_l4_lm;
@@ -11660,7 +11660,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
                 size_t local_work_size[] = {(size_t)nth0, 1, 1};
 
                 backend_ctx->enqueue_ndrange_kernel(kernel, 3, global_work_size, local_work_size, dst);
-                return;
+                return;  // 返回
             }
             case GGML_TYPE_Q4_0: {
                 if (ne11 < 32) {
@@ -11702,7 +11702,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
                 size_t local_work_size[] = {(size_t)nth0, 1, 1};
 
                 backend_ctx->enqueue_ndrange_kernel(kernel, 3, global_work_size, local_work_size, dst);
-                return;
+                return;  // 返回
             }
             case GGML_TYPE_Q4_1: {
                 if (ne11 < 32) {
@@ -11745,7 +11745,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
                 size_t local_work_size[] = {(size_t)nth0, 1, 1};
 
                 backend_ctx->enqueue_ndrange_kernel(kernel, 3, global_work_size, local_work_size, dst);
-                return;
+                return;  // 返回
             }
             case GGML_TYPE_Q8_0: {
                 if (ne11 < 32) {
@@ -11787,7 +11787,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
                 size_t local_work_size[] = {(size_t)nth0, 1, 1};
 
                 backend_ctx->enqueue_ndrange_kernel(kernel, 3, global_work_size, local_work_size, dst);
-                return;
+                return;  // 返回
             }
             case GGML_TYPE_IQ4_NL: {
                 if (ne11 < 32) {
@@ -11829,7 +11829,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
                 size_t local_work_size[] = {(size_t)nth0, 1, 1};
 
                 backend_ctx->enqueue_ndrange_kernel(kernel, 3, global_work_size, local_work_size, dst);
-                return;
+                return;  // 返回
             }
             case GGML_TYPE_Q4_K: {
                 if (ne11 < 32) {
@@ -11873,7 +11873,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
                 size_t local_work_size[] = {(size_t)nth0, 1, 1};
 
                 backend_ctx->enqueue_ndrange_kernel(kernel, 3, global_work_size, local_work_size, dst);
-                return;
+                return;  // 返回
             }
             case GGML_TYPE_Q5_K: {
                 if (ne11 < 32) {
@@ -11918,7 +11918,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
                 size_t local_work_size[] = {(size_t)nth0, 1, 1};
 
                 backend_ctx->enqueue_ndrange_kernel(kernel, 3, global_work_size, local_work_size, dst);
-                return;
+                return;  // 返回
             }
             case GGML_TYPE_Q6_K: {
                 if (ne11 < 32) {
@@ -11962,7 +11962,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
                 size_t local_work_size[] = {(size_t)nth0, 1, 1};
 
                 backend_ctx->enqueue_ndrange_kernel(kernel, 3, global_work_size, local_work_size, dst);
-                return;
+                return;  // 返回
             }
             default:
                 break;
@@ -11978,7 +11978,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
         ggml_is_contiguous(src0) && ggml_is_contiguous(src1) &&
         backend_ctx->kernel_mul_mat_f16_f32_tiled != NULL) {
         ggml_cl_mul_mat_f16_f32_tiled(backend, src0, src1, dst);
-        return;
+        return;  // 返回
     }
 
     if (!ggml_is_transposed(src0) &&
@@ -11986,7 +11986,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
         src1t == GGML_TYPE_F32 &&
         ne00%32 == 0 &&
         ne11 > 2) {
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
         // Set up kernel.
         switch(src0t) {
             case GGML_TYPE_Q4_0:
@@ -12041,11 +12041,11 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             }
 
             backend_ctx->enqueue_ndrange_kernel(kernel, 3, global_work_size, local_work_size, dst);
-            return;
+            return;  // 返回
         }
-#else // GGML_OPENCL_SOA_Q
+#else // GGML_OPENCL_SOA_Q  // 否则
         // TODO: add block_q4_0 variant.
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
     }
 
     // use custom matrix x vector kernel
@@ -12148,7 +12148,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             GGML_ASSERT(ne11 == ne1);
             GGML_ASSERT(ne01 == ne0);
 
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
             if (backend_ctx->gpu_family == INTEL) {
                 nth0 = 16;
                 nth1 = 1;
@@ -12180,7 +12180,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 12, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 13, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 14, sizeof(int),      &r3));
-#else // GGML_OPENCL_SOA_Q
+#else // GGML_OPENCL_SOA_Q  // 否则
             if (backend_ctx->gpu_family == INTEL) {
                 // Use 1D local size. Each workgroup is a SIMD group. Each SIMD
                 // group produces N_DST (4 for Q4_0 kernel) values in the result.
@@ -12216,10 +12216,10 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 12, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 13, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 14, sizeof(int),      &r3));
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
             break;
         case GGML_TYPE_Q4_1: {
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
             if (backend_ctx->gpu_family == INTEL) {
                 nth0 = 16;
                 nth1 = 1;
@@ -12250,7 +12250,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 13, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 14, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 15, sizeof(int),      &r3));
-#else
+#else  // 否则
             if (backend_ctx->gpu_family == INTEL) {
                 nth0 = 16;
                 nth1 = 1;
@@ -12280,11 +12280,11 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 12, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 13, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 14, sizeof(int),      &r3));
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
             break;
         }
         case GGML_TYPE_Q8_0: {
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
             kernel = backend_ctx->kernel_mul_mv_q8_0_f32_flat;
 
             // nth0 - subgroup size
@@ -12321,7 +12321,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 16, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 17, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 18, sizeof(int),      &r3));
-#else
+#else  // 否则
             kernel = backend_ctx->kernel_mul_mv_q8_0_f32;
 
             // nth0 - subgroup size
@@ -12358,11 +12358,11 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 16, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 17, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 18, sizeof(int),      &r3));
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
             break;
         }
         case GGML_TYPE_IQ4_NL: {
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
             kernel = backend_ctx->kernel_mul_mv_iq4_nl_f32_flat;
 
             if (backend_ctx->gpu_family == INTEL) {
@@ -12392,7 +12392,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 12, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 13, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 14, sizeof(int),      &r3));
-#else
+#else  // 否则
             kernel = backend_ctx->kernel_mul_mv_iq4_nl_f32;
 
             if (backend_ctx->gpu_family == INTEL) {
@@ -12422,13 +12422,13 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 12, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 13, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 14, sizeof(int),      &r3));
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
             break;
         }
         case GGML_TYPE_Q2_K:
         case GGML_TYPE_Q3_K:
         case GGML_TYPE_Q4_K: {
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
             kernel = backend_ctx->kernel_mul_mv_q4_K_f32_flat;
 
             if (backend_ctx->gpu_family == INTEL) {
@@ -12464,7 +12464,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 18, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 19, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 20, sizeof(int),      &r3));
-#else
+#else  // 否则
             kernel = backend_ctx->kernel_mul_mv_q4_K_f32;
 
             if (backend_ctx->gpu_family == INTEL) {
@@ -12498,11 +12498,11 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 16, sizeof(int),        &ne1));
             CL_CHECK(clSetKernelArg(kernel, 17, sizeof(int),        &r2));
             CL_CHECK(clSetKernelArg(kernel, 18, sizeof(int),        &r3));
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
             break;
         }
         case GGML_TYPE_Q5_K: {
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
                 kernel = backend_ctx->kernel_mul_mv_q5_K_f32_flat;
 
             if (backend_ctx->gpu_family == INTEL) {
@@ -12539,7 +12539,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 19, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 20, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 21, sizeof(int),      &r3));
-#else
+#else  // 否则
             kernel = backend_ctx->kernel_mul_mv_q5_K_f32;
 
             if (backend_ctx->gpu_family == INTEL) {
@@ -12573,11 +12573,11 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 16, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 17, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 18, sizeof(int),      &r3));
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
             break;
         }
         case GGML_TYPE_Q6_K:
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
             kernel = backend_ctx->kernel_mul_mv_q6_K_f32_flat;
 
             if (backend_ctx->gpu_family == INTEL) {
@@ -12609,7 +12609,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 14, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 15, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 16, sizeof(int),      &r3));
-#else
+#else  // 否则
             kernel = backend_ctx->kernel_mul_mv_q6_K_f32;
 
             if (backend_ctx->gpu_family == INTEL) {
@@ -12639,10 +12639,10 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 12, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 13, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 14, sizeof(int),      &r3));
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
             break;
         case GGML_TYPE_MXFP4: {
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
             kernel = backend_ctx->kernel_mul_mv_mxfp4_f32_flat;
 
             cl_mem q;
@@ -12680,7 +12680,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 15, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 16, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 17, sizeof(int),      &r3));
-#else
+#else  // 否则
             kernel = backend_ctx->kernel_mul_mv_mxfp4_f32;
 
             if (backend_ctx->gpu_family == INTEL) {
@@ -12714,7 +12714,7 @@ static void ggml_cl_mul_mat(ggml_backend_t backend, const ggml_tensor * src0, co
             CL_CHECK(clSetKernelArg(kernel, 16, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 17, sizeof(int),      &r3));
             CL_CHECK(clSetKernelArg(kernel, 18, sizeof(float)*nth0,nullptr));
-#endif
+#endif  // 条件编译结束
             break;
         }
         default:
@@ -12789,11 +12789,11 @@ static void ggml_cl_mul_mat_id(ggml_backend_t backend, const ggml_tensor * src0,
 
     GGML_UNUSED(offset0);
 
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
     ggml_tensor_extra_cl_q4_0 * extra0_q4_0 = (ggml_tensor_extra_cl_q4_0 *)src0->extra;
     ggml_tensor_extra_cl_mxfp4 * extra0_mxfp4 = (ggml_tensor_extra_cl_mxfp4 *)src0->extra;
     ggml_tensor_extra_cl_q8_0 * extra0_q8_0 = (ggml_tensor_extra_cl_q8_0 *)src0->extra;
-#endif
+#endif  // 条件编译结束
 
     const int ne00 = src0->ne[0];
     const int ne01 = src0->ne[1];
@@ -12884,7 +12884,7 @@ static void ggml_cl_mul_mat_id(ggml_backend_t backend, const ggml_tensor * src0,
             break;
         }
         case GGML_TYPE_Q8_0: {
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
             kernel = backend_ctx->kernel_mul_mv_id_q8_0_f32_flat;
 
             if (backend_ctx->gpu_family == INTEL) {
@@ -12920,7 +12920,7 @@ static void ggml_cl_mul_mat_id(ggml_backend_t backend, const ggml_tensor * src0,
             CL_CHECK(clSetKernelArg(kernel, 18, sizeof(cl_ulong), &nb21));
             CL_CHECK(clSetKernelArg(kernel, 19, sizeof(int),      &ne0));
             CL_CHECK(clSetKernelArg(kernel, 20, sizeof(int),      &ne1));
-#else
+#else  // 否则
             kernel = backend_ctx->kernel_mul_mv_id_q8_0_f32;
 
             if (backend_ctx->gpu_family == INTEL) {
@@ -12956,11 +12956,11 @@ static void ggml_cl_mul_mat_id(ggml_backend_t backend, const ggml_tensor * src0,
             CL_CHECK(clSetKernelArg(kernel, 18, sizeof(cl_ulong), &nb21));
             CL_CHECK(clSetKernelArg(kernel, 19, sizeof(int),      &ne0));
             CL_CHECK(clSetKernelArg(kernel, 20, sizeof(int),      &ne1));
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
             break;
         }
         case GGML_TYPE_MXFP4: {
-#ifdef GGML_OPENCL_USE_ADRENO_KERNELS
+#ifdef GGML_OPENCL_USE_ADRENO_KERNELS  // 如果定义了 GGML_OPENCL_USE_ADRENO_KERNELS 则编译
             if (use_adreno_moe_kernels(backend_ctx, src0)) {
                 cl_int status;
 
@@ -13055,11 +13055,11 @@ static void ggml_cl_mul_mat_id(ggml_backend_t backend, const ggml_tensor * src0,
                 CL_CHECK(clReleaseMemObject(src1_sub_buffer));
                 CL_CHECK(clReleaseMemObject(buf_src1_image));
                 CL_CHECK(clReleaseMemObject(buf_src2));
-                return;
+                return;  // 返回
             } // else fallback to generic kernel
-#endif // GGML_OPENCL_USE_ADRENO_KERNELS
+#endif // GGML_OPENCL_USE_ADRENO_KERNELS  // 条件编译结束
 
-#ifdef GGML_OPENCL_SOA_Q
+#ifdef GGML_OPENCL_SOA_Q  // 如果定义了 GGML_OPENCL_SOA_Q 则编译
             kernel = backend_ctx->kernel_mul_mv_id_mxfp4_f32_flat;
 
             cl_mem q;
@@ -13103,7 +13103,7 @@ static void ggml_cl_mul_mat_id(ggml_backend_t backend, const ggml_tensor * src0,
             CL_CHECK(clSetKernelArg(kernel, 21, sizeof(int),      &ne1));
             CL_CHECK(clSetKernelArg(kernel, 22, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 23, sizeof(int),      &r3));
-#else // GGML_OPENCL_SOA_Q
+#else // GGML_OPENCL_SOA_Q  // 否则
             kernel = backend_ctx->kernel_mul_mv_id_mxfp4_f32;
 
             if (backend_ctx->gpu_family == INTEL) {
@@ -13143,7 +13143,7 @@ static void ggml_cl_mul_mat_id(ggml_backend_t backend, const ggml_tensor * src0,
             CL_CHECK(clSetKernelArg(kernel, 22, sizeof(int),      &r2));
             CL_CHECK(clSetKernelArg(kernel, 23, sizeof(int),      &r3));
             CL_CHECK(clSetKernelArg(kernel, 24, sizeof(float)*sgs,nullptr));
-#endif // GGML_OPENCL_SOA_Q
+#endif // GGML_OPENCL_SOA_Q  // 条件编译结束
             break;
         }
         default:
@@ -14290,7 +14290,7 @@ static void ggml_cl_glu(ggml_backend_t backend, const ggml_tensor * src0, const 
 // Op offloading
 //------------------------------------------------------------------------------
 
-typedef void (*ggml_cl_func_t)(ggml_backend_t backend, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
+typedef void (*ggml_cl_func_t)(ggml_backend_t backend, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);  // 类型定义
 
 bool ggml_cl_compute_forward(ggml_backend_t backend, struct ggml_tensor * tensor) {
     ggml_cl_func_t func = nullptr;
@@ -14305,80 +14305,80 @@ bool ggml_cl_compute_forward(ggml_backend_t backend, struct ggml_tensor * tensor
     switch (tensor->op) {
         case GGML_OP_GET_ROWS:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_get_rows;
             break;
         case GGML_OP_SET_ROWS:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_set_rows;
             break;
         case GGML_OP_CPY:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_cpy;
             break;
         case GGML_OP_SET:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_set;
             break;
         case GGML_OP_DUP:
         case GGML_OP_CONT:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_dup;
             break;
         case GGML_OP_ADD:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_add;
             break;
         case GGML_OP_ADD_ID:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_add_id;
             break;
         case GGML_OP_MUL:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_mul;
             break;
         case GGML_OP_DIV:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_div;
             break;
         case GGML_OP_SUB:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_sub;
             break;
         case GGML_OP_SQR:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_sqr;
             break;
         case GGML_OP_SQRT:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_sqrt;
             break;
         case GGML_OP_MEAN:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_mean;
             break;
@@ -14386,178 +14386,178 @@ bool ggml_cl_compute_forward(ggml_backend_t backend, struct ggml_tensor * tensor
             switch (ggml_get_unary_op(tensor)) {
                 case GGML_UNARY_OP_GELU:
                     if (!any_on_device) {
-                        return false;
+                        return false;  // 返回
                     }
                     func = ggml_cl_gelu;
                     break;
                 case GGML_UNARY_OP_GELU_ERF:
                     if (!any_on_device) {
-                        return false;
+                        return false;  // 返回
                     }
                     func = ggml_cl_gelu_erf;
                     break;
                 case GGML_UNARY_OP_GELU_QUICK:
                     if (!any_on_device) {
-                        return false;
+                        return false;  // 返回
                     }
                     func = ggml_cl_gelu_quick;
                     break;
                 case GGML_UNARY_OP_SILU:
                     if (!any_on_device) {
-                        return false;
+                        return false;  // 返回
                     }
                     func = ggml_cl_silu;
                     break;
                 case GGML_UNARY_OP_RELU:
                     if (!any_on_device) {
-                        return false;
+                        return false;  // 返回
                     }
                     func = ggml_cl_relu;
                     break;
                 case GGML_UNARY_OP_SIGMOID:
                     if (!any_on_device) {
-                        return false;
+                        return false;  // 返回
                     }
                     func = ggml_cl_sigmoid;
                     break;
                 case GGML_UNARY_OP_TANH:
                     if (!any_on_device) {
-                        return false;
+                        return false;  // 返回
                     }
                     func = ggml_cl_tanh;
                     break;
                 case GGML_UNARY_OP_NEG:
                     if (!any_on_device) {
-                        return false;
+                        return false;  // 返回
                     }
                     func = ggml_cl_neg;
                     break;
                 case GGML_UNARY_OP_EXP:
                     if (!any_on_device) {
-                        return false;
+                        return false;  // 返回
                     }
                     func = ggml_cl_exp;
                     break;
                 case GGML_UNARY_OP_EXPM1:
                     if (!any_on_device) {
-                        return false;
+                        return false;  // 返回
                     }
                     func = ggml_cl_expm1;
                     break;
                 case GGML_UNARY_OP_SOFTPLUS:
                     if (!any_on_device) {
-                        return false;
+                        return false;  // 返回
                     }
                     func = ggml_cl_softplus;
                     break;
                 default:
-                    return false;
+                    return false;  // 返回
             } break;
         case GGML_OP_GLU:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_glu;
             break;
         case GGML_OP_TRI:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_tri;
             break;
         case GGML_OP_FILL:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_fill;
             break;
         case GGML_OP_CLAMP:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_clamp;
             break;
         case GGML_OP_NORM:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_norm;
             break;
         case GGML_OP_RMS_NORM:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_rms_norm;
             break;
         case GGML_OP_L2_NORM:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_l2_norm;
             break;
         case GGML_OP_GROUP_NORM:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_group_norm;
             break;
                 case GGML_OP_REPEAT:
              if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_repeat;
             break;
         case GGML_OP_PAD:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             ggml_cl_pad(backend, tensor->src[0], tensor);
-            return true;
+            return true;  // 返回
         case GGML_OP_UPSCALE:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             ggml_cl_upscale(backend, tensor->src[0], tensor);
-            return true;
+            return true;  // 返回
         case GGML_OP_CONV_2D:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_conv_2d;
             break;
         case GGML_OP_SSM_CONV:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_ssm_conv;
             break;
         case GGML_OP_CONCAT:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_concat;
             break;
         case GGML_OP_TIMESTEP_EMBEDDING:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             ggml_cl_timestep_embedding(backend, tensor->src[0], tensor);
-            return true;
+            return true;  // 返回
         case GGML_OP_MUL_MAT:
             if (!any_on_device && !ggml_cl_can_mul_mat(tensor->src[0], tensor->src[1], tensor)) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_mul_mat;
             break;
         case GGML_OP_MUL_MAT_ID:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_mul_mat_id;
             break;
         case GGML_OP_SCALE:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_scale;
             break;
@@ -14566,74 +14566,74 @@ bool ggml_cl_compute_forward(ggml_backend_t backend, struct ggml_tensor * tensor
         case GGML_OP_PERMUTE:
         case GGML_OP_TRANSPOSE:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_nop;
             break;
         case GGML_OP_DIAG:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_diag;
             break;
         case GGML_OP_DIAG_MASK_INF:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_diag_mask_inf;
             break;
         case GGML_OP_SOFT_MAX:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_soft_max;
             break;
         case GGML_OP_ROPE:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_rope;
             break;
         case GGML_OP_SOLVE_TRI:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_solve_tri;
             break;
         case GGML_OP_IM2COL:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_im2col;
             break;
         case GGML_OP_ARGSORT:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_argsort;
             break;
         case GGML_OP_SUM_ROWS:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_sum_rows;
             break;
         case GGML_OP_CUMSUM:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             func = ggml_cl_cumsum;
             break;
         case GGML_OP_FLASH_ATTN_EXT:
             if (!any_on_device) {
-                return false;
+                return false;  // 返回
             }
             ggml_cl_flash_attn(backend, tensor->src[0], tensor->src[1], tensor);
-            return true;
+            return true;  // 返回
         default:
-            return false;
+            return false;  // 返回
     }
 
     func(backend, tensor->src[0], tensor->src[1], tensor);
-    return true;
+    return true;  // 返回
 }

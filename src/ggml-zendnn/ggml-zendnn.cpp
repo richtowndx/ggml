@@ -1,26 +1,26 @@
-#include "ggml-zendnn.h"
+#include "ggml-zendnn.h"  // 引入 ggml-zendnn.h 头文件
 
-#include "ggml-backend-impl.h"
-#include "ggml-impl.h"
-#include "zendnnl.hpp"
+#include "ggml-backend-impl.h"  // 引入 ggml-backend-impl.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "zendnnl.hpp"  // 引入 zendnnl.hpp 头文件
 
-#include <cstring>
+#include <cstring>  // 引入 cstring 头文件
 
 
-struct ggml_backend_zendnn_context {
+struct ggml_backend_zendnn_context {  // 结构体定义
     int n_threads = GGML_DEFAULT_N_THREADS;
     std::unique_ptr<char[]> work_data;
     size_t work_size = 0;
 };
 
-template<typename T>
+template<typename T>  // 模板
 zendnnl::common::data_type_t ggml_to_zendnn_type() {
     if constexpr (std::is_same_v<T, float>) {
-        return zendnnl::common::data_type_t::f32;
+        return zendnnl::common::data_type_t::f32;  // 返回
     } else if constexpr (std::is_same_v<T, ggml_bf16_t>) {
-        return zendnnl::common::data_type_t::bf16;
+        return zendnnl::common::data_type_t::bf16;  // 返回
     } else {
-        return zendnnl::common::data_type_t::none;
+        return zendnnl::common::data_type_t::none;  // 返回
     }
 }
 
@@ -36,7 +36,7 @@ zendnnl::common::data_type_t ggml_to_zendnn_type() {
  *   n = batch size      (rows of C, rows of B)
  *   k = inner dimension (columns of B, rows of A)
  */
-template <typename TA, typename TB, typename TC>
+template <typename TA, typename TB, typename TC>  // 模板
 static bool ggml_zendnn_matmul(ggml_backend_zendnn_context * ctx, int64_t m, int64_t n, int64_t k,
                                const TA * A, int64_t lda, const TB * B, int64_t ldb, TC * C,
                                int64_t ldc) {
@@ -65,9 +65,9 @@ static bool ggml_zendnn_matmul(ggml_backend_zendnn_context * ctx, int64_t m, int
 
     if (status != zendnnl::error_handling::status_t::success) {
         GGML_LOG_ERROR("%s, ZenDNN matmul failed: status=%d\n", __func__, static_cast<int>(status));
-        return false;
+        return false;  // 返回
     }
-    return true;
+    return true;  // 返回
 }
 
 static bool ggml_zendnn_sgemm(ggml_backend_zendnn_context * ctx, int64_t m, int64_t n, int64_t k,
@@ -85,30 +85,30 @@ static bool ggml_zendnn_sgemm(ggml_backend_zendnn_context * ctx, int64_t m, int6
     switch (Atype) {
         case GGML_TYPE_F32:
             if (Btype != GGML_TYPE_F32 || Ctype != GGML_TYPE_F32)
-                return false;
-            return ggml_zendnn_matmul<float, float, float>(
+                return false;  // 返回
+            return ggml_zendnn_matmul<float, float, float>(  // 返回
                 ctx, m, n, k,
                 (const float *)A, lda,
                 (const float *)B, ldb,
                 (float *)C, ldc);
         case GGML_TYPE_BF16:
             if (Btype != GGML_TYPE_BF16)
-                return false;
+                return false;  // 返回
             if (Ctype == GGML_TYPE_BF16)
-                return ggml_zendnn_matmul<ggml_bf16_t, ggml_bf16_t, ggml_bf16_t>(
+                return ggml_zendnn_matmul<ggml_bf16_t, ggml_bf16_t, ggml_bf16_t>(  // 返回
                     ctx, m, n, k,
                     (const ggml_bf16_t *)A, lda,
                     (const ggml_bf16_t *)B, ldb,
                     (ggml_bf16_t *)C, ldc);
             if (Ctype == GGML_TYPE_F32)
-                return ggml_zendnn_matmul<ggml_bf16_t, ggml_bf16_t, float>(
+                return ggml_zendnn_matmul<ggml_bf16_t, ggml_bf16_t, float>(  // 返回
                     ctx, m, n, k,
                     (const ggml_bf16_t *)A, lda,
                     (const ggml_bf16_t *)B, ldb,
                     (float *)C, ldc);
-            return false;
+            return false;  // 返回
         default:
-            return false; // unsupported type
+            return false; // unsupported type  // 返回
     }
 }
 
@@ -190,7 +190,7 @@ static void ggml_zendnn_compute_forward_mul_mat(
     }
 }
 
-struct mmid_row_mapping {
+struct mmid_row_mapping {  // 结构体定义
     int32_t i1;
     int32_t i2;
 };
@@ -207,7 +207,7 @@ static void ggml_zendnn_compute_forward_mul_mat_id(
 
     // exit for no tokens to process
     if (ne2 == 0 || ne11 == 0) {
-        return;
+        return;  // 返回
     }
 
     ggml_type         const vec_dot_type = src0->type;
@@ -357,7 +357,7 @@ static void ggml_zendnn_compute_forward_mul_mat_id(
 // backend interface
 
 static const char * ggml_backend_zendnn_get_name(ggml_backend_t backend) {
-    return "ZenDNN";
+    return "ZenDNN";  // 返回
 
     GGML_UNUSED(backend);
 }
@@ -397,7 +397,7 @@ static ggml_status ggml_backend_zendnn_graph_compute(ggml_backend_t backend, ggm
         }
     }
 
-    return GGML_STATUS_SUCCESS;
+    return GGML_STATUS_SUCCESS;  // 返回
 
     GGML_UNUSED(backend);
 }
@@ -436,7 +436,7 @@ ggml_backend_t ggml_backend_zendnn_init(void) {
         /* .context = */ ctx,
     };
 
-    return backend;
+    return backend;  // 返回
 }
 
 bool ggml_backend_is_zendnn(ggml_backend_t backend) {
@@ -452,7 +452,7 @@ void ggml_backend_zendnn_set_n_threads(ggml_backend_t backend_zendnn, int n_thre
 
 // device interface
 static const char * ggml_backend_zendnn_device_get_name(ggml_backend_dev_t dev) {
-    return "ZenDNN";
+    return "ZenDNN";  // 返回
 
     GGML_UNUSED(dev);
 }
@@ -476,7 +476,7 @@ static void ggml_backend_zendnn_device_get_memory(ggml_backend_dev_t dev, size_t
 }
 
 static enum ggml_backend_dev_type ggml_backend_zendnn_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_ACCEL;
+    return GGML_BACKEND_DEVICE_TYPE_ACCEL;  // 返回
 
     GGML_UNUSED(dev);
 }
@@ -498,23 +498,23 @@ static ggml_backend_t ggml_backend_zendnn_device_init_backend(ggml_backend_dev_t
     ggml_backend_t backend = ggml_backend_zendnn_init();
     if (backend == NULL) {
         GGML_LOG_ERROR("%s: error: failed to initialize ZenDNN backend\n", __func__);
-        return NULL;
+        return NULL;  // 返回
     }
 
-    return backend;
+    return backend;  // 返回
 
     GGML_UNUSED(dev);
     GGML_UNUSED(params);
 }
 
 static ggml_backend_buffer_type_t ggml_backend_zendnn_device_get_buffer_type(ggml_backend_dev_t dev) {
-    return ggml_backend_cpu_buffer_type();
+    return ggml_backend_cpu_buffer_type();  // ggml_backend_cpu_buffer_type
 
     GGML_UNUSED(dev);
 }
 
 static ggml_backend_buffer_t ggml_backend_zendnn_device_buffer_from_host_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
-    return ggml_backend_cpu_buffer_from_ptr(ptr, size);
+    return ggml_backend_cpu_buffer_from_ptr(ptr, size);  // ggml_backend_cpu_buffer_from_ptr
 
     GGML_UNUSED(dev);
     GGML_UNUSED(max_tensor_size);
@@ -527,7 +527,7 @@ static bool ggml_backend_zendnn_device_supports_op(ggml_backend_dev_t dev, const
         case GGML_OP_VIEW:
         case GGML_OP_PERMUTE:
         case GGML_OP_TRANSPOSE:
-            return true;
+            return true;  // 返回
 
         case GGML_OP_MUL_MAT:
         case GGML_OP_MUL_MAT_ID:
@@ -542,7 +542,7 @@ static bool ggml_backend_zendnn_device_supports_op(ggml_backend_dev_t dev, const
             const int64_t min_batch = 1;
             if (!ggml_is_contiguous(weights) || !ggml_is_contiguous(inputs) ||
                 ne0 < min_batch || ne1 < min_batch || ne10 < min_batch) {
-                    return false;
+                    return false;  // 返回
             }
             // MUL_MAT_ID performs best with a moderate number of experts due to its
             // gather + batched matmul + scatter approach. Future versions will leverage
@@ -552,27 +552,27 @@ static bool ggml_backend_zendnn_device_supports_op(ggml_backend_dev_t dev, const
                 const int64_t n_experts = weights->ne[2];
                 const int64_t max_experts = 32;
                 if (n_experts > max_experts) {
-                    return false;
+                    return false;  // 返回
                 }
             }
             switch (weights->type) {
                 case GGML_TYPE_F32:
                 case GGML_TYPE_BF16:
-                    return true;
+                    return true;  // 返回
                 default:
-                    return false;
+                    return false;  // 返回
             }
         } break;
 
         default:
-            return false;
+            return false;  // 返回
     }
 
     GGML_UNUSED(dev);
 }
 
 static bool ggml_backend_zendnn_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return ggml_backend_buft_is_host(buft);
+    return ggml_backend_buft_is_host(buft);  // ggml_backend_buft_is_host
 
     GGML_UNUSED(dev);
 }
@@ -597,13 +597,13 @@ static const struct ggml_backend_device_i ggml_backend_zendnn_device_i = {
 
 // backend reg interface
 static const char * ggml_backend_zendnn_reg_get_name(ggml_backend_reg_t reg) {
-    return "ZenDNN";
+    return "ZenDNN";  // 返回
 
     GGML_UNUSED(reg);
 }
 
 static size_t ggml_backend_zendnn_reg_get_device_count(ggml_backend_reg_t reg) {
-    return 1;
+    return 1;  // 返回
 
     GGML_UNUSED(reg);
 }
@@ -617,14 +617,14 @@ static ggml_backend_dev_t ggml_backend_zendnn_reg_get_device(ggml_backend_reg_t 
         /* .context = */ nullptr,
     };
 
-    return &ggml_backend_zendnn_device;
+    return &ggml_backend_zendnn_device;  // 返回
 }
 
 static void * ggml_backend_zendnn_get_proc_address(ggml_backend_reg_t reg, const char * name) {
     if (std::strcmp(name, "ggml_backend_set_n_threads") == 0) {
         return (void *) ggml_backend_zendnn_set_n_threads;
     }
-    return NULL;
+    return NULL;  // 返回
 
     GGML_UNUSED(reg);
     GGML_UNUSED(name);
@@ -644,7 +644,7 @@ ggml_backend_reg_t ggml_backend_zendnn_reg(void) {
         /* .context     = */ NULL,
     };
 
-    return &ggml_backend_zendnn_reg;
+    return &ggml_backend_zendnn_reg;  // 返回
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_zendnn_reg)

@@ -1,25 +1,25 @@
-#define GGML_COMMON_IMPL_C
-#include "ggml-common.h"
+#define GGML_COMMON_IMPL_C  // 宏定义 GGML_COMMON_IMPL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
 
-#include "ggml-quants.h"
-#include "ggml-impl.h"
-#include "ggml-cpu/ggml-cpu-impl.h"
-#include "ggml-cpu.h"
+#include "ggml-quants.h"  // 引入 ggml-quants.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
+#include "ggml-cpu/ggml-cpu-impl.h"  // 引入 ggml-cpu/ggml-cpu-impl.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
 
-#include <math.h>
-#include <string.h>
-#include <assert.h>
-#include <float.h>
-#include <stdlib.h> // for qsort
-#include <stdio.h>  // for GGML_ASSERT
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
+#include <assert.h>  // 引入 assert.h 头文件
+#include <float.h>  // 引入 float.h 头文件
+#include <stdlib.h> // for qsort  // 引入 stdlib.h 头文件
+#include <stdio.h>  // for GGML_ASSERT  // 引入 stdio.h 头文件
 
-#define GROUP_MAX_EPS 1e-15f
-#define GROUP_MAX_EPS_IQ3_XXS 1e-8f
-#define GROUP_MAX_EPS_IQ2_S 1e-8f
-#define GROUP_MAX_EPS_IQ1_M 1e-7f
-#define GROUP_MAX_EPS_IQ1_S 1e-12f
+#define GROUP_MAX_EPS 1e-15f  // 宏定义 GROUP_MAX_EPS
+#define GROUP_MAX_EPS_IQ3_XXS 1e-8f  // 宏定义 GROUP_MAX_EPS_IQ3_XXS
+#define GROUP_MAX_EPS_IQ2_S 1e-8f  // 宏定义 GROUP_MAX_EPS_IQ2_S
+#define GROUP_MAX_EPS_IQ1_M 1e-7f  // 宏定义 GROUP_MAX_EPS_IQ1_M
+#define GROUP_MAX_EPS_IQ1_S 1e-12f  // 宏定义 GROUP_MAX_EPS_IQ1_S
 
-#define UNUSED GGML_UNUSED
+#define UNUSED GGML_UNUSED  // 宏定义 UNUSED
 
 static inline int best_index_int8(int n, const int8_t * val, float x) {
     if (x <= val[0]) return 0;
@@ -29,7 +29,7 @@ static inline int best_index_int8(int n, const int8_t * val, float x) {
         int mav = (ml+mu)/2;
         if (x < val[mav]) mu = mav; else ml = mav;
     }
-    return x - val[mu-1] < val[mu] - x ? mu-1 : mu;
+    return x - val[mu-1] < val[mu] - x ? mu-1 : mu;  // 返回
 }
 
 // reference implementation for deterministic creation of model files
@@ -302,7 +302,7 @@ static inline int best_index_mxfp4(float x, float e) {
             best_err = err;
         }
     }
-    return best_index;
+    return best_index;  // 返回
 }
 
 void quantize_row_mxfp4_ref(const float * GGML_RESTRICT x, block_mxfp4 * GGML_RESTRICT y, int64_t k) {
@@ -575,7 +575,7 @@ static float make_qx_quants(int n, int nmax, const float * GGML_RESTRICT x, int8
         for (int i = 0; i < n; ++i) {
             L[i] = 0;
         }
-        return 0.f;
+        return 0.f;  // 返回
     }
     float iscale = -nmax / max;
     if (rmse_type == 0) {
@@ -583,7 +583,7 @@ static float make_qx_quants(int n, int nmax, const float * GGML_RESTRICT x, int8
             int l = nearest_int(iscale * x[i]);
             L[i] = nmax + MAX(-nmax, MIN(nmax-1, l));
         }
-        return 1/iscale;
+        return 1/iscale;  // 返回
     }
     bool return_early = false;
     if (rmse_type < 0) {
@@ -592,12 +592,12 @@ static float make_qx_quants(int n, int nmax, const float * GGML_RESTRICT x, int8
     }
     float sumlx = 0;
     float suml2 = 0;
-#ifdef HAVE_BUGGY_APPLE_LINKER
+#ifdef HAVE_BUGGY_APPLE_LINKER  // 如果定义了 HAVE_BUGGY_APPLE_LINKER 则编译
     // use 'volatile' to prevent unroll and work around a bug in Apple ld64 1015.7
     for (volatile int i = 0; i < n; ++i) {
-#else
+#else  // 否则
     for (int i = 0; i < n; ++i) {
-#endif
+#endif  // 条件编译结束
         int l = nearest_int(iscale * x[i]);
         l = MAX(-nmax, MIN(nmax-1, l));
         L[i] = l + nmax;
@@ -629,7 +629,7 @@ static float make_qx_quants(int n, int nmax, const float * GGML_RESTRICT x, int8
             scale = sumlx/suml2; best = scale*sumlx;
         }
     }
-    return scale;
+    return scale;  // 返回
 }
 
 static float make_q3_quants(int n, int nmax, const float * GGML_RESTRICT x, int8_t * GGML_RESTRICT L, bool do_rmse) {
@@ -641,7 +641,7 @@ static float make_q3_quants(int n, int nmax, const float * GGML_RESTRICT x, int8
     }
     if (amax < GROUP_MAX_EPS) { // all zero
         for (int i = 0; i < n; ++i) { L[i] = 0; }
-        return 0.f;
+        return 0.f;  // 返回
     }
     float iscale = -nmax / max;
     if (do_rmse) {
@@ -681,14 +681,14 @@ static float make_q3_quants(int n, int nmax, const float * GGML_RESTRICT x, int8
         for (int i = 0; i < n; ++i) {
             L[i] += nmax;
         }
-        return suml2 > 0.0f ? sumlx / suml2 : 0.0f;
+        return suml2 > 0.0f ? sumlx / suml2 : 0.0f;  // 返回
     }
     for (int i = 0; i < n; ++i) {
         int l = nearest_int(iscale * x[i]);
         l = MAX(-nmax, MIN(nmax-1, l));
         L[i] = l + nmax;
     }
-    return 1/iscale;
+    return 1/iscale;  // 返回
 }
 
 static float make_qkx1_quants(int n, int nmax, const float * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, float * GGML_RESTRICT the_min,
@@ -702,7 +702,7 @@ static float make_qkx1_quants(int n, int nmax, const float * GGML_RESTRICT x, ui
     if (max == min) {
         for (int i = 0; i < n; ++i) L[i] = 0;
         *the_min = 0;
-        return 0.f;
+        return 0.f;  // 返回
     }
     if (min > 0) min = 0;
     float iscale = nmax/(max - min);
@@ -731,7 +731,7 @@ static float make_qkx1_quants(int n, int nmax, const float * GGML_RESTRICT x, ui
         if (!did_change) break;
     }
     *the_min = -min;
-    return scale;
+    return scale;  // 返回
 }
 
 static float make_qkx2_quants(int n, int nmax, const float * GGML_RESTRICT x, const float * GGML_RESTRICT weights,
@@ -741,12 +741,12 @@ static float make_qkx2_quants(int n, int nmax, const float * GGML_RESTRICT x, co
     float max = x[0];
     float sum_w = weights[0];
     float sum_x = sum_w * x[0];
-#ifdef HAVE_BUGGY_APPLE_LINKER
+#ifdef HAVE_BUGGY_APPLE_LINKER  // 如果定义了 HAVE_BUGGY_APPLE_LINKER 则编译
     // use 'volatile' to prevent unroll and work around a bug in Apple ld64 1015.7
     for (volatile int i = 1; i < n; ++i) {
-#else
+#else  // 否则
     for (int i = 1; i < n; ++i) {
-#endif
+#endif  // 条件编译结束
         if (x[i] < min) min = x[i];
         if (x[i] > max) max = x[i];
         float w = weights[i];
@@ -757,7 +757,7 @@ static float make_qkx2_quants(int n, int nmax, const float * GGML_RESTRICT x, co
     if (max == min) {
         for (int i = 0; i < n; ++i) L[i] = 0;
         *the_min = -min;
-        return 0.f;
+        return 0.f;  // 返回
     }
     float iscale = nmax/(max - min);
     float scale = 1/iscale;
@@ -772,7 +772,7 @@ static float make_qkx2_quants(int n, int nmax, const float * GGML_RESTRICT x, co
     }
     if (nstep < 1) {
         *the_min = -min;
-        return scale;
+        return scale;  // 返回
     }
     for (int is = 0; is <= nstep; ++is) {
         iscale = (rmin + rdelta*is + nmax)/(max - min);
@@ -812,7 +812,7 @@ static float make_qkx2_quants(int n, int nmax, const float * GGML_RESTRICT x, co
         }
     }
     *the_min = -min;
-    return scale;
+    return scale;  // 返回
 }
 
 static inline void get_scale_min_k4(int j, const uint8_t * GGML_RESTRICT q, uint8_t * GGML_RESTRICT d, uint8_t * GGML_RESTRICT m) {
@@ -935,12 +935,12 @@ static float make_qkx3_quants(int n, int nmax, const float * GGML_RESTRICT x, co
     float max = x[0];
     float sum_w = weights ? weights[0] : x[0]*x[0];
     float sum_x = sum_w * x[0];
-#ifdef HAVE_BUGGY_APPLE_LINKER
+#ifdef HAVE_BUGGY_APPLE_LINKER  // 如果定义了 HAVE_BUGGY_APPLE_LINKER 则编译
     // use 'volatile' to prevent unroll and work around a bug in Apple ld64 1015.7
     for (volatile int i = 1; i < n; ++i) {
-#else
+#else  // 否则
     for (int i = 1; i < n; ++i) {
-#endif
+#endif  // 条件编译结束
         if (x[i] < min) min = x[i];
         if (x[i] > max) max = x[i];
         float w = weights ? weights[i] : x[i]*x[i];
@@ -953,7 +953,7 @@ static float make_qkx3_quants(int n, int nmax, const float * GGML_RESTRICT x, co
     if (max <= min) {
         memset(L, 0, n);
         *the_min = -min;
-        return 0.f;
+        return 0.f;  // 返回
     }
     float iscale = nmax/(max - min);
     float scale = 1/iscale;
@@ -968,7 +968,7 @@ static float make_qkx3_quants(int n, int nmax, const float * GGML_RESTRICT x, co
     }
     if (nstep < 1) {
         *the_min = -min;
-        return scale;
+        return scale;  // 返回
     }
     for (int is = 0; is <= nstep; ++is) {
         iscale = (rmin + rdelta*is + nmax)/(max - min);
@@ -1008,7 +1008,7 @@ static float make_qkx3_quants(int n, int nmax, const float * GGML_RESTRICT x, co
         }
     }
     *the_min = -min;
-    return scale;
+    return scale;  // 返回
 }
 
 static float make_qp_quants(int n, int nmax, const float * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, const float * quant_weights) {
@@ -1018,7 +1018,7 @@ static float make_qp_quants(int n, int nmax, const float * GGML_RESTRICT x, uint
     }
     if (max < GROUP_MAX_EPS) { // all zero
         for (int i = 0; i < n; ++i) { L[i] = 0; }
-        return 0.f;
+        return 0.f;  // 返回
     }
     float iscale = nmax / max;
     for (int i = 0; i < n; ++i) {
@@ -1081,7 +1081,7 @@ static float make_qp_quants(int n, int nmax, const float * GGML_RESTRICT x, uint
             break;
         }
     }
-    return suml2 > 0.0f ? sumlx / suml2 : 0.0f;
+    return suml2 > 0.0f ? sumlx / suml2 : 0.0f;  // 返回
 }
 
 static void quantize_row_q2_K_impl(const float * GGML_RESTRICT x, block_q2_K * GGML_RESTRICT y, int k, const float * GGML_RESTRICT quant_weights) {
@@ -1159,7 +1159,7 @@ size_t quantize_q2_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, 
             qrow += row_size;
         }
     }
-    return nrow * row_size;
+    return nrow * row_size;  // 返回
 }
 
 //========================= 3-bit (de)-quantization
@@ -1387,7 +1387,7 @@ size_t quantize_q3_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, 
             qrow += row_size;
         }
     }
-    return nrow * row_size;
+    return nrow * row_size;  // 返回
 }
 
 // ====================== 4-bit (de)-quantization
@@ -1574,7 +1574,7 @@ size_t quantize_q4_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, 
             qrow += row_size;
         }
     }
-    return nrow * row_size;
+    return nrow * row_size;  // 返回
 }
 
 // ====================== 5-bit (de)-quantization
@@ -1799,7 +1799,7 @@ size_t quantize_q5_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, 
             qrow += row_size;
         }
     }
-    return nrow * row_size;
+    return nrow * row_size;  // 返回
 }
 
 // ====================== 6-bit (de)-quantization
@@ -2002,7 +2002,7 @@ size_t quantize_q6_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, 
             qrow += row_size;
         }
     }
-    return nrow * row_size;
+    return nrow * row_size;  // 返回
 }
 
 static void quantize_row_q4_0_impl(const float * GGML_RESTRICT x, block_q4_0 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
@@ -2010,7 +2010,7 @@ static void quantize_row_q4_0_impl(const float * GGML_RESTRICT x, block_q4_0 * G
 
     if (!quant_weights) {
         quantize_row_q4_0_ref(x, y, n_per_row);
-        return;
+        return;  // 返回
     }
 
     float weight[QK4_0];
@@ -2045,7 +2045,7 @@ size_t quantize_q1_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, 
         src += n_per_row;
         qrow += row_size;
     }
-    return nrow * row_size;
+    return nrow * row_size;  // 返回
 }
 
 
@@ -2061,7 +2061,7 @@ size_t quantize_q4_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, 
         src += n_per_row;
         qrow += row_size;
     }
-    return nrow * row_size;
+    return nrow * row_size;  // 返回
 }
 
 static void quantize_row_q4_1_impl(const float * GGML_RESTRICT x, block_q4_1 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
@@ -2069,7 +2069,7 @@ static void quantize_row_q4_1_impl(const float * GGML_RESTRICT x, block_q4_1 * G
 
     if (!quant_weights) {
         quantize_row_q4_1_ref(x, y, n_per_row);
-        return;
+        return;  // 返回
     }
 
     float weight[QK4_1];
@@ -2106,7 +2106,7 @@ size_t quantize_q4_1(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, 
         src += n_per_row;
         qrow += row_size;
     }
-    return nrow * row_size;
+    return nrow * row_size;  // 返回
 }
 
 static void quantize_row_q5_0_impl(const float * GGML_RESTRICT x, block_q5_0 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
@@ -2114,7 +2114,7 @@ static void quantize_row_q5_0_impl(const float * GGML_RESTRICT x, block_q5_0 * G
 
     if (!quant_weights) {
         quantize_row_q5_0_ref(x, y, n_per_row);
-        return;
+        return;  // 返回
     }
 
     float weight[QK5_0];
@@ -2160,7 +2160,7 @@ size_t quantize_q5_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, 
         src += n_per_row;
         qrow += row_size;
     }
-    return nrow * row_size;
+    return nrow * row_size;  // 返回
 }
 
 static void quantize_row_q5_1_impl(const float * GGML_RESTRICT x, block_q5_1 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
@@ -2168,7 +2168,7 @@ static void quantize_row_q5_1_impl(const float * GGML_RESTRICT x, block_q5_1 * G
 
     if (!quant_weights) {
         quantize_row_q5_1_ref(x, y, n_per_row);
-        return;
+        return;  // 返回
     }
 
     float weight[QK5_1];
@@ -2213,14 +2213,14 @@ size_t quantize_q5_1(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, 
         src += n_per_row;
         qrow += row_size;
     }
-    return nrow * row_size;
+    return nrow * row_size;  // 返回
 }
 
 size_t quantize_q8_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
     (void)quant_weights; // not used
     const size_t row_size = ggml_row_size(GGML_TYPE_Q8_0, n_per_row);
     quantize_row_q8_0_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * row_size;
+    return nrow * row_size;  // 返回
 }
 
 size_t quantize_mxfp4(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
@@ -2339,14 +2339,14 @@ size_t quantize_tq1_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst,
     (void)quant_weights; // not used
     const size_t row_size = ggml_row_size(GGML_TYPE_TQ1_0, n_per_row);
     quantize_row_tq1_0_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * row_size;
+    return nrow * row_size;  // 返回
 }
 
 size_t quantize_tq2_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
     (void)quant_weights; // not used
     const size_t row_size = ggml_row_size(GGML_TYPE_TQ2_0, n_per_row);
     quantize_row_tq2_0_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * row_size;
+    return nrow * row_size;  // 返回
 }
 
 void dequantize_row_tq1_0(const block_tq1_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
@@ -2741,7 +2741,7 @@ void dequantize_row_q8_K(const block_q8_K * GGML_RESTRICT x, float * GGML_RESTRI
 
 // ================================ IQ2 quantization =============================================
 
-typedef struct {
+typedef struct {  // 类型定义
     uint64_t * grid;
     int      * map;
     uint16_t * neighbours;
@@ -2756,14 +2756,14 @@ static iq2_entry_t iq2_data[4] = {
 
 static inline int iq2_data_index(enum ggml_type type) {
     GGML_ASSERT(type == GGML_TYPE_IQ2_XXS || type == GGML_TYPE_IQ2_XS || type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M || type == GGML_TYPE_IQ2_S);
-    return type == GGML_TYPE_IQ2_XXS ? 0 :
+    return type == GGML_TYPE_IQ2_XXS ? 0 :  // 返回
            type == GGML_TYPE_IQ2_XS  ? 1 :
            type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? 2 : 3;
 }
 
 static inline int iq2_grid_size(enum ggml_type type) {
     GGML_ASSERT(type == GGML_TYPE_IQ2_XXS || type == GGML_TYPE_IQ2_XS || type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M || type == GGML_TYPE_IQ2_S);
-    return type == GGML_TYPE_IQ2_XXS ? 256 :
+    return type == GGML_TYPE_IQ2_XXS ? 256 :  // 返回
            type == GGML_TYPE_IQ2_XS  ? 512 :
            type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? NGRID_IQ1S : 1024;
 }
@@ -2771,14 +2771,14 @@ static inline int iq2_grid_size(enum ggml_type type) {
 static int iq2_compare_func(const void * left, const void * right) {
     const int * l = (const int *)left;
     const int * r = (const int *)right;
-    return l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
+    return l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;  // 返回
 }
 
 void iq2xs_init_impl(enum ggml_type type) {
     const int gindex = iq2_data_index(type);
     const int grid_size = iq2_grid_size(type);
     if (iq2_data[gindex].grid) {
-        return;
+        return;  // 返回
     }
     static const uint16_t kgrid_2bit_256[256] = {
             0,     2,     5,     8,    10,    17,    20,    32,    34,    40,    42,    65,    68,    80,    88,    97,
@@ -3161,7 +3161,7 @@ static int iq2_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, co
     GGML_ASSERT(grid_index >= 0);
     const int8_t * pg = (const int8_t *)(grid + grid_index);
     for (int i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    return grid_index;  // 返回
 }
 
 static void quantize_row_iq2_xxs_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights) {
@@ -3550,7 +3550,7 @@ size_t quantize_iq2_xs(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst
 // ============================================= 3-bit using D4 lattice
 //
 
-typedef struct {
+typedef struct {  // 类型定义
     uint32_t * grid;
     int      * map;
     uint16_t * neighbours;
@@ -3564,19 +3564,19 @@ static iq3_entry_t iq3_data[2] = {
 static inline int iq3_data_index(int grid_size) {
     (void)grid_size;
     GGML_ASSERT(grid_size == 256 || grid_size == 512);
-    return grid_size == 256 ? 0 : 1;
+    return grid_size == 256 ? 0 : 1;  // 返回
 }
 
 static int iq3_compare_func(const void * left, const void * right) {
     const int * l = (const int *)left;
     const int * r = (const int *)right;
-    return l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
+    return l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;  // 返回
 }
 
 void iq3xs_init_impl(int grid_size) {
     const int gindex = iq3_data_index(grid_size);
     if (iq3_data[gindex].grid) {
-        return;
+        return;  // 返回
     }
     static const uint16_t kgrid_256[256] = {
             0,     2,     4,     9,    11,    15,    16,    18,    25,    34,    59,    61,    65,    67,    72,    74,
@@ -3760,7 +3760,7 @@ static int iq3_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, co
     GGML_ASSERT(grid_index >= 0);
     const int8_t * pg = (const int8_t *)(grid + grid_index);
     for (int i = 0; i < 4; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    return grid_index;  // 返回
 }
 
 static void quantize_row_iq3_xxs_impl(int grid_size, const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n,
@@ -4177,7 +4177,7 @@ static void quantize_row_iq3_s_impl(int block_size, const float * GGML_RESTRICT 
     }
 }
 
-#define IQ3S_BLOCK_SIZE 32
+#define IQ3S_BLOCK_SIZE 32  // 宏定义 IQ3S_BLOCK_SIZE
 size_t quantize_iq3_s(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
     GGML_ASSERT(n_per_row%QK_K == 0);
     int64_t nblock = n_per_row/QK_K;
@@ -4265,7 +4265,7 @@ static int iq1_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, co
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     const int8_t * pg = (const int8_t *)(grid + grid_index);
     for (int i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    return grid_index;  // 返回
 }
 
 static int iq1_find_best_neighbour2(const uint16_t * GGML_RESTRICT neighbours, const uint64_t * GGML_RESTRICT grid,
@@ -4322,17 +4322,17 @@ static int iq1_find_best_neighbour2(const uint16_t * GGML_RESTRICT neighbours, c
     GGML_ASSERT(grid_index >= 0);
     const int8_t * pg = (const int8_t *)(grid + grid_index);
     for (int i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    return grid_index;  // 返回
 }
 
 static int iq1_sort_helper(const void * left, const void * right) {
     const float * l = left;
     const float * r = right;
-    return *l < *r ? -1 : *l > *r ? 1 : 0;
+    return *l < *r ? -1 : *l > *r ? 1 : 0;  // 返回
 }
 
-#define IQ1S_BLOCK_SIZE 32
-#define IQ1M_BLOCK_SIZE 16
+#define IQ1S_BLOCK_SIZE 32  // 宏定义 IQ1S_BLOCK_SIZE
+#define IQ1M_BLOCK_SIZE 16  // 宏定义 IQ1M_BLOCK_SIZE
 static void quantize_row_iq1_s_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights,
         float    * scales,
         float    * weight,
@@ -5158,15 +5158,15 @@ void quantize_row_iq2_s_ref(const float * GGML_RESTRICT x, block_iq2_s * GGML_RE
 static bool validate_float(float f, size_t i) {
     if (isinf(f)) {
         fprintf(stderr, "ggml_validate_row_data: found inf value at block %zu\n", i);
-        return false;
+        return false;  // 返回
     }
 
     if (isnan(f)) {
         fprintf(stderr, "ggml_validate_row_data: found nan value at block %zu\n", i);
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool isinf_fp16(ggml_fp16_t f) {
@@ -5180,24 +5180,24 @@ static bool isnan_fp16(ggml_fp16_t f) {
 static bool validate_fp16(ggml_fp16_t f, size_t i) {
     if (isinf_fp16(f)) {
         fprintf(stderr, "ggml_validate_row_data: found inf value at block %zu\n", i);
-        return false;
+        return false;  // 返回
     }
 
     if (isnan_fp16(f)) {
         fprintf(stderr, "ggml_validate_row_data: found nan value at block %zu\n", i);
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 static bool validate_e_e8m0(uint8_t e, size_t i) {
     if (e == 0xff) {
         fprintf(stderr, "ggml_validate_row_data: found invalid e value %d at block %zu\n", e, i);
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 #define VALIDATE_ROW_DATA_D_F16_IMPL(type, data, nb) \
@@ -5237,12 +5237,12 @@ static bool validate_e_e8m0(uint8_t e, size_t i) {
 bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbytes) {
     if (type < 0 || type >= GGML_TYPE_COUNT) {
         fprintf(stderr, "%s: invalid type %d\n", __func__, type);
-        return false;
+        return false;  // 返回
     }
 
     if (nbytes % ggml_type_size(type) != 0) {
         fprintf(stderr, "%s: invalid size %zu for type %s (type size = %zu)\n", __func__, nbytes, ggml_type_name(type), ggml_type_size(type));
-        return false;
+        return false;  // 返回
     }
 
     const size_t nb = nbytes/ggml_type_size(type);
@@ -5259,18 +5259,18 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
                 }
                 if (nans) {
                     fprintf(stderr, "%s: found %d NaNs in row of %zu BF16 values\n", __func__, nans, nb);
-                    return false;
+                    return false;  // 返回
                 }
                 if (infs) {
                     fprintf(stderr, "%s: found %d infinities in row of %zu BF16 values\n", __func__, infs, nb);
-                    return false;
+                    return false;  // 返回
                 }
             } break;
         case GGML_TYPE_F16:
             {
                 const ggml_fp16_t * f = (const ggml_fp16_t *) data;
                 size_t i = 0;
-#if defined(__AVX2__)
+#if defined(__AVX2__)  // 条件编译
                 for (; i + 15 < nb; i += 16) {
                     __m256i v = _mm256_loadu_si256((const __m256i *)(f + i));
                     __m256i vexp = _mm256_and_si256(v, _mm256_set1_epi16(0x7c00));
@@ -5279,13 +5279,13 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
                     if (mask) {
                         for (size_t j = 0; j < 16; ++j) {
                             if (!validate_fp16(f[i + j], i + j)) {
-                                return false;
+                                return false;  // 返回
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
-#elif defined(__ARM_NEON)
+#elif defined(__ARM_NEON)  // 否则如果
                 for (; i + 7 < nb; i += 8) {
                     uint16x8_t v = vld1q_u16(f + i);
                     uint16x8_t vexp = vandq_u16(v, vdupq_n_u16(0x7c00));
@@ -5294,16 +5294,16 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
                     if (mask) {
                         for (size_t j = 0; j < 8; ++j) {
                             if (!validate_fp16(f[i + j], i + j)) {
-                                return false;
+                                return false;  // 返回
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
-#endif
+#endif  // 条件编译结束
                 for (; i < nb; ++i) {
                     if (!validate_fp16(f[i], i)) {
-                        return false;
+                        return false;  // 返回
                     }
                 }
             } break;
@@ -5311,7 +5311,7 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
             {
                 const float * f = (const float *) data;
                 size_t i = 0;
-#if defined(__AVX2__)
+#if defined(__AVX2__)  // 条件编译
                 for (; i + 7 < nb; i += 8) {
                     __m256i v = _mm256_loadu_si256((const __m256i *)(f + i));
                     __m256i vexp = _mm256_and_si256(v, _mm256_set1_epi32(0x7f800000));
@@ -5320,13 +5320,13 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
                     if (mask) {
                         for (size_t j = 0; j < 8; ++j) {
                             if (!validate_float(f[i + j], i + j)) {
-                                return false;
+                                return false;  // 返回
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
-#elif defined(__ARM_NEON)
+#elif defined(__ARM_NEON)  // 否则如果
                 for (; i + 3 < nb; i += 4) {
                     uint32x4_t v = vld1q_u32((const uint32_t *)f + i);
                     uint32x4_t vexp = vandq_u32(v, vdupq_n_u32(0x7f800000));
@@ -5335,16 +5335,16 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
                     if (mask) {
                         for (size_t j = 0; j < 4; ++j) {
                             if (!validate_float(f[i + j], i + j)) {
-                                return false;
+                                return false;  // 返回
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
-#endif
+#endif  // 条件编译结束
                 for (; i < nb; ++i) {
                     if (!validate_float(f[i], i)) {
-                        return false;
+                        return false;  // 返回
                     }
                 }
             } break;
@@ -5353,7 +5353,7 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
                 const double * f = (const double *) data;
                 for (size_t i = 0; i < nb; ++i) {
                     if (!validate_float(f[i], i)) {
-                        return false;
+                        return false;  // 返回
                     }
                 }
             } break;
@@ -5416,7 +5416,7 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
                 const block_q8_K * q = (const block_q8_K *) data;
                 for (size_t i = 0; i < nb; ++i) {
                     if (!validate_float(q[i].d, i)) {
-                        return false;
+                        return false;  // 返回
                     }
                 }
             } break;
@@ -5440,7 +5440,7 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
                     const uint16_t * sc = (const uint16_t *)q[i].scales;
                     scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
                     if (!validate_fp16(scale.f16, i)) {
-                        return false;
+                        return false;  // 返回
                     }
                 }
             } break;
@@ -5483,9 +5483,9 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
         default:
             {
                 fprintf(stderr, "%s: invalid type %d\n", __func__, type);
-                return false;
+                return false;  // 返回
             }
     }
 
-    return true;
+    return true;  // 返回
 }

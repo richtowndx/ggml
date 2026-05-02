@@ -1,6 +1,6 @@
-#include "vec.h"
+#include "vec.h"  // 引入 vec.h 头文件
 
-#include <cassert>
+#include <cassert>  // 引入 cassert 头文件
 
 // precomputed gelu table for f16 (128 KB)
 ggml_fp16_t ggml_table_gelu_f16[1 << 16];
@@ -15,10 +15,10 @@ void ggml_vec_dot_f32(int n, float * GGML_RESTRICT s, size_t bs, const float * G
    GGML_UNUSED(by);
    GGML_UNUSED(bs);
 
-#if defined(GGML_SIMD)
+#if defined(GGML_SIMD)  // 条件编译
     float sumf = 0.0f;
 
-    #if defined(__ARM_FEATURE_SVE)
+    #if defined(__ARM_FEATURE_SVE)  // 条件编译
         const int sve_register_length = ggml_cpu_get_sve_cnt() * 8;
         const int ggml_f32_epr = sve_register_length / 32;//8;//svcntw(); // SVE128:4, SVE256:8, SVE512:16
         const int ggml_f32_step = 8 * ggml_f32_epr; // choose 8 SVE registers
@@ -84,7 +84,7 @@ void ggml_vec_dot_f32(int n, float * GGML_RESTRICT s, size_t bs, const float * G
         }
         // reduce sum1,sum2 to sum1
         GGML_F32_VEC_REDUCE(sumf, sum1, sum2, sum3, sum4, sum5, sum6, sum7, sum8);
-    #elif defined(__riscv_v_intrinsic)
+    #elif defined(__riscv_v_intrinsic)  // 否则如果
         int vl = __riscv_vsetvlmax_e32m8();
         vfloat32m1_t vs = __riscv_vfmv_v_f_f32m1(0.0f, 1);
         vfloat32m8_t vsum;
@@ -100,7 +100,7 @@ void ggml_vec_dot_f32(int n, float * GGML_RESTRICT s, size_t bs, const float * G
         vl = __riscv_vsetvlmax_e32m8();
         vs = __riscv_vfredusum_vs_f32m8_f32m1(vsum, vs, vl);
         sumf += __riscv_vfmv_f_s_f32m1_f32(vs);
-    #else
+    #else  // 否则
         const int np = (n & ~(GGML_F32_STEP - 1));
 
         GGML_F32_VEC sum[GGML_F32_ARR] = { GGML_F32_VEC_ZERO };
@@ -124,14 +124,14 @@ void ggml_vec_dot_f32(int n, float * GGML_RESTRICT s, size_t bs, const float * G
         for (int i = np; i < n; ++i) {
             sumf += x[i]*y[i];
         }
-    #endif
-#else
+    #endif  // 条件编译结束
+#else  // 否则
     // scalar
     ggml_float sumf = 0.0;
     for (int i = 0; i < n; ++i) {
         sumf += (ggml_float)(x[i]*y[i]);
     }
-#endif
+#endif  // 条件编译结束
 
     *s = sumf;
 }
@@ -145,7 +145,7 @@ void ggml_vec_dot_bf16(int n, float * GGML_RESTRICT s, size_t bs, ggml_bf16_t * 
     int i = 0;
     ggml_float sumf = 0;
 
-#if defined(__AVX512BF16__)
+#if defined(__AVX512BF16__)  // 条件编译
     __m512 c1 = _mm512_setzero_ps();
     __m512 c2 = _mm512_setzero_ps();
     for (; i + 64 <= n; i += 64) {
@@ -157,8 +157,8 @@ void ggml_vec_dot_bf16(int n, float * GGML_RESTRICT s, size_t bs, ggml_bf16_t * 
     sumf += (ggml_float)_mm512_reduce_add_ps(c1);
     sumf += (ggml_float)_mm512_reduce_add_ps(c2);
 
-#elif defined(__AVX512F__)
-#define LOAD(p) _mm512_castsi512_ps(_mm512_slli_epi32(_mm512_cvtepu16_epi32(_mm256_loadu_si256((const __m256i *)(p))), 16))
+#elif defined(__AVX512F__)  // 否则如果
+#define LOAD(p) _mm512_castsi512_ps(_mm512_slli_epi32(_mm512_cvtepu16_epi32(_mm256_loadu_si256((const __m256i *)(p))), 16))  // 宏定义 LOAD
     __m512 c1 = _mm512_setzero_ps();
     __m512 c2 = _mm512_setzero_ps();
     for (; i + 32 <= n; i += 32) {
@@ -169,12 +169,12 @@ void ggml_vec_dot_bf16(int n, float * GGML_RESTRICT s, size_t bs, ggml_bf16_t * 
     sumf += (ggml_float)_mm512_reduce_add_ps(c2);
 
 #undef LOAD
-#elif defined(__AVX2__) || defined(__AVX__)
-#if defined(__AVX2__)
-#define LOAD(p) _mm256_castsi256_ps(_mm256_slli_epi32(_mm256_cvtepu16_epi32(_mm_loadu_si128((const __m128i *)(p))), 16))
-#else
-#define LOAD(p) _mm256_castsi256_ps(_mm256_insertf128_si256(_mm256_castsi128_si256(_mm_slli_epi32(_mm_cvtepu16_epi32(_mm_loadu_si128((const __m128i *)(p))), 16)), (_mm_slli_epi32(_mm_cvtepu16_epi32(_mm_bsrli_si128(_mm_loadu_si128((const __m128i *)(p)), 8)), 16)), 1))
-#endif
+#elif defined(__AVX2__) || defined(__AVX__)  // 否则如果
+#if defined(__AVX2__)  // 条件编译
+#define LOAD(p) _mm256_castsi256_ps(_mm256_slli_epi32(_mm256_cvtepu16_epi32(_mm_loadu_si128((const __m128i *)(p))), 16))  // 宏定义 LOAD
+#else  // 否则
+#define LOAD(p) _mm256_castsi256_ps(_mm256_insertf128_si256(_mm256_castsi128_si256(_mm_slli_epi32(_mm_cvtepu16_epi32(_mm_loadu_si128((const __m128i *)(p))), 16)), (_mm_slli_epi32(_mm_cvtepu16_epi32(_mm_bsrli_si128(_mm_loadu_si128((const __m128i *)(p)), 8)), 16)), 1))  // 宏定义 LOAD
+#endif  // 条件编译结束
     __m256 c1 = _mm256_setzero_ps();
     __m256 c2 = _mm256_setzero_ps();
     __m256 c3 = _mm256_setzero_ps();
@@ -195,7 +195,7 @@ void ggml_vec_dot_bf16(int n, float * GGML_RESTRICT s, size_t bs, ggml_bf16_t * 
     sumf += (ggml_float)_mm_cvtss_f32(g);
 
 #undef LOAD
-#elif defined(__riscv_v_intrinsic) && defined(__riscv_zvfbfwma)
+#elif defined(__riscv_v_intrinsic) && defined(__riscv_zvfbfwma)  // 否则如果
     size_t vl = __riscv_vsetvlmax_e32m4();
 
     // initialize accumulators to all zeroes
@@ -212,12 +212,12 @@ void ggml_vec_dot_bf16(int n, float * GGML_RESTRICT s, size_t bs, ggml_bf16_t * 
         vbfloat16m2_t ax0 = __riscv_vle16_v_bf16m2((const __bf16 *)&x[i], epr);
         vbfloat16m2_t ay0 = __riscv_vle16_v_bf16m2((const __bf16 *)&y[i], epr);
         vsum0 = __riscv_vfwmaccbf16_vv_f32m4(vsum0, ax0, ay0, epr);
-        __asm__ __volatile__ ("" ::: "memory");
+        __asm__ __volatile__ ("" ::: "memory");  // __volatile__
 
         vbfloat16m2_t ax1 = __riscv_vle16_v_bf16m2((const __bf16 *)&x[i + epr], epr);
         vbfloat16m2_t ay1 = __riscv_vle16_v_bf16m2((const __bf16 *)&y[i + epr], epr);
         vsum1 = __riscv_vfwmaccbf16_vv_f32m4(vsum1, ax1, ay1, epr);
-        __asm__ __volatile__ ("" ::: "memory");
+        __asm__ __volatile__ ("" ::: "memory");  // __volatile__
     }
 
     // accumulate in 1 register
@@ -236,7 +236,7 @@ void ggml_vec_dot_bf16(int n, float * GGML_RESTRICT s, size_t bs, ggml_bf16_t * 
     vfloat32m1_t redsum = __riscv_vfredusum_vs_f32m4_f32m1(vsum0, __riscv_vfmv_v_f_f32m1(0.0f, 1), vl);
     sumf += __riscv_vfmv_f_s_f32m1_f32(redsum);
 
-#elif defined(__POWER9_VECTOR__) || defined(__VXE__) || defined(__VXE2__)
+#elif defined(__POWER9_VECTOR__) || defined(__VXE__) || defined(__VXE2__)  // 否则如果
     const int np = (n & ~(GGML_BF16_STEP - 1));
     if (np > 0) {
         GGML_F32_VEC sum[4] = {GGML_F32_VEC_ZERO};
@@ -252,7 +252,7 @@ void ggml_vec_dot_bf16(int n, float * GGML_RESTRICT s, size_t bs, ggml_bf16_t * 
         }
         GGML_F32x4_REDUCE_4(sumf, sum[0], sum[1], sum[2], sum[3]);
     }
-#endif
+#endif  // 条件编译结束
 
     for (; i < n; ++i) {
         sumf += (ggml_float)(GGML_BF16_TO_FP32(x[i]) *
@@ -271,8 +271,8 @@ void ggml_vec_dot_f16(int n, float * GGML_RESTRICT s, size_t bs, ggml_fp16_t * G
     ggml_float sumf = 0.0;
 
 
-#if defined(GGML_SIMD)
-    #if defined(__ARM_FEATURE_SVE)
+#if defined(GGML_SIMD)  // 条件编译
+    #if defined(__ARM_FEATURE_SVE)  // 条件编译
         const int sve_register_length = svcntb() * 8; //get vector length
         const int ggml_f16_epr = sve_register_length / 16; // running when 16
         const int ggml_f16_step = 8 * ggml_f16_epr; // choose 8 SVE registers
@@ -334,8 +334,8 @@ void ggml_vec_dot_f16(int n, float * GGML_RESTRICT s, size_t bs, ggml_fp16_t * G
             sum1 = svmad_f16_x(pg, hx, hy, sum1);
         }
         GGML_F16x_VEC_REDUCE(sumf, sum1, sum2, sum3, sum4);
-    #elif defined(__riscv_v_intrinsic)
-        #if defined(__riscv_zvfh)
+    #elif defined(__riscv_v_intrinsic)  // 否则如果
+        #if defined(__riscv_zvfh)  // 条件编译
             int vl = __riscv_vsetvlmax_e32m2();
             vfloat32m1_t vs = __riscv_vfmv_v_f_f32m1(0.0f, 1);
             vfloat32m2_t vsum;
@@ -352,12 +352,12 @@ void ggml_vec_dot_f16(int n, float * GGML_RESTRICT s, size_t bs, ggml_fp16_t * G
             vfloat32m1_t ac0 = __riscv_vfadd_vv_f32m1(__riscv_vget_v_f32m2_f32m1(vsum, 0), __riscv_vget_v_f32m2_f32m1(vsum, 1), vl);
             vs = __riscv_vfredusum_vs_f32m1_f32m1(ac0, vs, vl);
             sumf += __riscv_vfmv_f_s_f32m1_f32(vs);
-        #else
+        #else  // 否则
             for (int i = 0; i < n; ++i) {
                 sumf += (ggml_float)(GGML_CPU_FP16_TO_FP32(x[i])*GGML_CPU_FP16_TO_FP32(y[i]));
             }
-        #endif // __riscv_zvfh
-    #else
+        #endif // __riscv_zvfh  // 条件编译结束
+    #else  // 否则
         const int np = (n & ~(GGML_F16_STEP - 1));
 
         GGML_F16_VEC sum[GGML_F16_ARR] = { GGML_F16_VEC_ZERO };
@@ -383,48 +383,48 @@ void ggml_vec_dot_f16(int n, float * GGML_RESTRICT s, size_t bs, ggml_fp16_t * G
         }
         // if you hit this, you are likely running outside the FP range
         assert(!isnan(sumf) && !isinf(sumf));
-    #endif
-#else
+    #endif  // 条件编译结束
+#else  // 否则
     for (int i = 0; i < n; ++i) {
         sumf += (ggml_float)(GGML_CPU_FP16_TO_FP32(x[i])*GGML_CPU_FP16_TO_FP32(y[i]));
     }
-#endif // GGML_SIMD
+#endif // GGML_SIMD  // 条件编译结束
 
     *s = sumf;
 }
 
 void ggml_vec_silu_f32(const int n, float * y, const float * x) {
     int i = 0;
-#if defined(__AVX512F__) && defined(__AVX512DQ__)
+#if defined(__AVX512F__) && defined(__AVX512DQ__)  // 条件编译
     for (; i + 15 < n; i += 16) {
         _mm512_storeu_ps(y + i, ggml_v_silu(_mm512_loadu_ps(x + i)));
     }
-#elif defined(__AVX2__) && defined(__FMA__)
+#elif defined(__AVX2__) && defined(__FMA__)  // 否则如果
     for (; i + 7 < n; i += 8) {
         _mm256_storeu_ps(y + i, ggml_v_silu(_mm256_loadu_ps(x + i)));
     }
-#elif defined(__SSE2__)
+#elif defined(__SSE2__)  // 否则如果
     for (; i + 3 < n; i += 4) {
         _mm_storeu_ps(y + i, ggml_v_silu(_mm_loadu_ps(x + i)));
     }
-#elif defined(__ARM_FEATURE_SVE) && defined(__aarch64__)
+#elif defined(__ARM_FEATURE_SVE) && defined(__aarch64__)  // 否则如果
     const int vlen = svcntw();
     for (; i < n; i += vlen) {
         const svbool_t pg = svwhilelt_b32_s32(i, n);
         svst1_f32(pg, y + i, ggml_v_silu(pg, svld1_f32(pg, x + i)));
     }
-#elif defined(__ARM_NEON) && defined(__aarch64__)
+#elif defined(__ARM_NEON) && defined(__aarch64__)  // 否则如果
     for (; i + 3 < n; i += 4) {
         vst1q_f32(y + i, ggml_v_silu(vld1q_f32(x + i)));
     }
-#elif defined(__riscv_v_intrinsic)
+#elif defined(__riscv_v_intrinsic)  // 否则如果
     for (int vl; i < n; i += vl) {
         vl = __riscv_vsetvl_e32m2(n - i);
         vfloat32m2_t vx = __riscv_vle32_v_f32m2(&x[i], vl);
         vfloat32m2_t vy = ggml_v_silu_m2(vx, vl);
         __riscv_vse32_v_f32m2(&y[i], vy, vl);
     }
-#endif
+#endif  // 条件编译结束
     for (; i < n; ++i) {
         y[i] = ggml_silu_f32(x[i]);
     }
@@ -432,29 +432,29 @@ void ggml_vec_silu_f32(const int n, float * y, const float * x) {
 
 void ggml_vec_swiglu_f32(const int n, float * y, const float * x, const float * g) {
     int i = 0;
-#if defined(__AVX512F__) && defined(__AVX512DQ__)
+#if defined(__AVX512F__) && defined(__AVX512DQ__)  // 条件编译
     for (; i + 15 < n; i += 16) {
         _mm512_storeu_ps(y + i, _mm512_mul_ps(ggml_v_silu(_mm512_loadu_ps(x + i)), _mm512_loadu_ps(g + i)));
     }
-#elif defined(__AVX2__) && defined(__FMA__)
+#elif defined(__AVX2__) && defined(__FMA__)  // 否则如果
     for (; i + 7 < n; i += 8) {
         _mm256_storeu_ps(y + i, _mm256_mul_ps(ggml_v_silu(_mm256_loadu_ps(x + i)), _mm256_loadu_ps(g + i)));
     }
-#elif defined(__SSE2__)
+#elif defined(__SSE2__)  // 否则如果
     for (; i + 3 < n; i += 4) {
         _mm_storeu_ps(y + i, _mm_mul_ps(ggml_v_silu(_mm_loadu_ps(x + i)), _mm_loadu_ps(g + i)));
     }
-#elif defined(__ARM_FEATURE_SVE) && defined(__aarch64__)
+#elif defined(__ARM_FEATURE_SVE) && defined(__aarch64__)  // 否则如果
     const int vlen = svcntw();
     for (; i < n; i += vlen) {
         const svbool_t pg = svwhilelt_b32_s32(i, n);
         svst1_f32(pg, y + i, svmul_f32_x(pg, ggml_v_silu(pg, svld1_f32(pg, x + i)), svld1_f32(pg, g + i)));
     }
-#elif defined(__ARM_NEON) && defined(__aarch64__)
+#elif defined(__ARM_NEON) && defined(__aarch64__)  // 否则如果
     for (; i + 3 < n; i += 4) {
         vst1q_f32(y + i, vmulq_f32(ggml_v_silu(vld1q_f32(x + i)), vld1q_f32(g + i)));
     }
-#elif defined(__riscv_v_intrinsic)
+#elif defined(__riscv_v_intrinsic)  // 否则如果
     for (int vl; i < n; i += vl) {
         vl = __riscv_vsetvl_e32m2(n - i);
         vfloat32m2_t vx = __riscv_vle32_v_f32m2(&x[i], vl);
@@ -462,7 +462,7 @@ void ggml_vec_swiglu_f32(const int n, float * y, const float * x, const float * 
         vfloat32m2_t vy = __riscv_vfmul_vv_f32m2(ggml_v_silu_m2(vx, vl), vg, vl);
         __riscv_vse32_v_f32m2(&y[i], vy, vl);
     }
-#endif
+#endif  // 条件编译结束
     for (; i < n; ++i) {
         y[i] = ggml_silu_f32(x[i]) * g[i];
     }
@@ -473,14 +473,14 @@ ggml_float ggml_vec_cvar_f32(const int n, float * y, const float * x, const floa
     ggml_float sum = 0;
 // TODO: optimize to process the remaining elements in groups using the smaller vector sizes from AVX2 and SSE
 // ref: https://github.com/ggml-org/llama.cpp/pull/15953#pullrequestreview-3310928344
-#if defined(__AVX512F__) && defined(__AVX512DQ__)
+#if defined(__AVX512F__) && defined(__AVX512DQ__)  // 条件编译
     for (; i + 15 < n; i += 16) {
         __m512 val = _mm512_sub_ps(_mm512_loadu_ps(x + i),
                                    _mm512_set1_ps(mean));
         _mm512_storeu_ps(y + i, val);
         sum += (ggml_float)_mm512_reduce_add_ps(_mm512_mul_ps(val, val));
     }
-#elif defined(__AVX2__) && defined(__FMA__)
+#elif defined(__AVX2__) && defined(__FMA__)  // 否则如果
     for (; i + 7 < n; i += 8) {
         __m256 val = _mm256_sub_ps(_mm256_loadu_ps(x + i),
                                    _mm256_set1_ps(mean));
@@ -492,24 +492,24 @@ ggml_float ggml_vec_cvar_f32(const int n, float * y, const float * x, const floa
         val2 = _mm_add_ss(val2, _mm_movehdup_ps(val2));
         sum += (ggml_float)_mm_cvtss_f32(val2);
     }
-#elif defined(__SSE2__)
+#elif defined(__SSE2__)  // 否则如果
     for (; i + 3 < n; i += 4) {
         __m128 val = _mm_sub_ps(_mm_loadu_ps(x + i),
                                 _mm_set1_ps(mean));
         _mm_storeu_ps(y + i, val);
         val = _mm_mul_ps(val, val);
-#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
         val = _mm_add_ps(val, _mm_movehl_ps(val, val));
         val = _mm_add_ss(val, _mm_movehdup_ps(val));
-#else
+#else  // 否则
         __m128 tmp = _mm_shuffle_ps(val, val, _MM_SHUFFLE(2, 3, 0, 1));
         val = _mm_add_ps(val, tmp);
         tmp = _mm_movehl_ps(tmp, val);
         val = _mm_add_ss(val, tmp);
-#endif  // __AVX__ || __AVX2__ || __AVX512F__
+#endif  // __AVX__ || __AVX2__ || __AVX512F__  // 条件编译结束
         sum += (ggml_float)_mm_cvtss_f32(val);
     }
-#elif defined(__ARM_NEON) && defined(__aarch64__)
+#elif defined(__ARM_NEON) && defined(__aarch64__)  // 否则如果
     for (; i + 3 < n; i += 4) {
         float32x4_t val = vsubq_f32(vld1q_f32(x + i),
                                     vdupq_n_f32(mean));
@@ -517,14 +517,14 @@ ggml_float ggml_vec_cvar_f32(const int n, float * y, const float * x, const floa
         val = vmulq_f32(val, val);
         sum += (ggml_float)vaddvq_f32(val);
     }
-#elif defined(__VXE__) || defined(__VXE2__)
+#elif defined(__VXE__) || defined(__VXE2__)  // 否则如果
     for (; i + 3 < n; i += 4) {
         float32x4_t val = vec_sub(vec_xl(0, x + i), vec_splats(mean));
         vec_xst(val, 0, y + i);
         val = vec_mul(val, val);
         sum += (ggml_float)vec_hsum_f32x4(val);
     }
-#elif defined(__riscv_v_intrinsic)
+#elif defined(__riscv_v_intrinsic)  // 否则如果
     vfloat64m1_t vsum = __riscv_vfmv_v_f_f64m1(0, 1);
     for (int vl; i < n; i += vl) {
         vl = __riscv_vsetvl_e32m2(n - i);
@@ -534,27 +534,27 @@ ggml_float ggml_vec_cvar_f32(const int n, float * y, const float * x, const floa
         vsum = __riscv_vfwredusum_vs_f32m2_f64m1(val, vsum, vl);
     }
     sum = (ggml_float)__riscv_vfmv_f_s_f64m1_f64(vsum);
-#endif
+#endif  // 条件编译结束
     for (; i < n; ++i) {
         float val = x[i] - mean;
         y[i] = val;
         val *= val;
         sum += (ggml_float)val;
     }
-    return sum/n;
+    return sum/n;  // 返回
 }
 
 ggml_float ggml_vec_soft_max_f32(const int n, float * y, const float * x, float max) {
     int i = 0;
     ggml_float sum = 0;
-#if defined(__AVX512F__) && defined(__AVX512DQ__)
+#if defined(__AVX512F__) && defined(__AVX512DQ__)  // 条件编译
     for (; i + 15 < n; i += 16) {
         __m512 val = ggml_v_expf(_mm512_sub_ps(_mm512_loadu_ps(x + i),
                                                _mm512_set1_ps(max)));
         _mm512_storeu_ps(y + i, val);
         sum += (ggml_float)_mm512_reduce_add_ps(val);
     }
-#elif defined(__AVX2__) && defined(__FMA__)
+#elif defined(__AVX2__) && defined(__FMA__)  // 否则如果
     for (; i + 7 < n; i += 8) {
         __m256 val = ggml_v_expf(_mm256_sub_ps(_mm256_loadu_ps(x + i),
                                                _mm256_set1_ps(max)));
@@ -565,23 +565,23 @@ ggml_float ggml_vec_soft_max_f32(const int n, float * y, const float * x, float 
         val2 = _mm_add_ss(val2, _mm_movehdup_ps(val2));
         sum += (ggml_float)_mm_cvtss_f32(val2);
     }
-#elif defined(__SSE2__)
+#elif defined(__SSE2__)  // 否则如果
     for (; i + 3 < n; i += 4) {
         __m128 val = ggml_v_expf(_mm_sub_ps(_mm_loadu_ps(x + i),
                                             _mm_set1_ps(max)));
         _mm_storeu_ps(y + i, val);
-#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)
+#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)  // 条件编译
         val = _mm_add_ps(val, _mm_movehl_ps(val, val));
         val = _mm_add_ss(val, _mm_movehdup_ps(val));
-#else
+#else  // 否则
         __m128 tmp = _mm_shuffle_ps(val, val, _MM_SHUFFLE(2, 3, 0, 1));
         val = _mm_add_ps(val, tmp);
         tmp = _mm_movehl_ps(tmp, val);
         val = _mm_add_ss(val, tmp);
-#endif
+#endif  // 条件编译结束
         sum += (ggml_float)_mm_cvtss_f32(val);
     }
-#elif defined(__ARM_FEATURE_SVE) && defined(__aarch64__)
+#elif defined(__ARM_FEATURE_SVE) && defined(__aarch64__)  // 否则如果
     const int vlen = svcntw();
     for (; i < n; i += vlen) {
         const svbool_t pg = svwhilelt_b32_s32(i, n);
@@ -590,14 +590,14 @@ ggml_float ggml_vec_soft_max_f32(const int n, float * y, const float * x, float 
         svst1_f32(pg, y + i, val);
         sum += (ggml_float)svaddv_f32(pg, val);
     }
-#elif defined(__ARM_NEON) && defined(__aarch64__)
+#elif defined(__ARM_NEON) && defined(__aarch64__)  // 否则如果
     for (; i + 3 < n; i += 4) {
         float32x4_t val = ggml_v_expf(vsubq_f32(vld1q_f32(x + i),
                                                 vdupq_n_f32(max)));
         vst1q_f32(y + i, val);
         sum += (ggml_float)vaddvq_f32(val);
     }
-#elif defined(__riscv_v_intrinsic)
+#elif defined(__riscv_v_intrinsic)  // 否则如果
     vfloat64m1_t vsum = __riscv_vfmv_v_f_f64m1(0, 1);
     for (int avl; i < n; i += avl) {
         avl = __riscv_vsetvl_e32m2(n - i);
@@ -606,13 +606,13 @@ ggml_float ggml_vec_soft_max_f32(const int n, float * y, const float * x, float 
         vsum = __riscv_vfwredusum_vs_f32m2_f64m1(val, vsum, avl);
     }
     return (ggml_float)__riscv_vfmv_f_s_f64m1_f64(vsum);
-#endif
+#endif  // 条件编译结束
     for (; i < n; ++i) {
         float val = expf(x[i] - max);
         sum += (ggml_float)val;
         y[i] = val;
     }
-    return sum;
+    return sum;  // 返回
 }
 
 ggml_float ggml_vec_log_soft_max_f32(const int n, float * y, const float * x, float max) {

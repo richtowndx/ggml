@@ -1,19 +1,19 @@
-#define _USE_MATH_DEFINES // for M_PI
+#define _USE_MATH_DEFINES // for M_PI  // 宏定义 _USE_MATH_DEFINES
 
-#include "common.h"
+#include "common.h"  // 引入 common.h 头文件
 
-#include <cmath>
-#include <codecvt>
-#include <cstring>
-#include <fstream>
-#include <locale>
-#include <regex>
-#include <sstream>
+#include <cmath>  // 引入 cmath 头文件
+#include <codecvt>  // 引入 codecvt 头文件
+#include <cstring>  // 引入 cstring 头文件
+#include <fstream>  // 引入 fstream 头文件
+#include <locale>  // 引入 locale 头文件
+#include <regex>  // 引入 regex 头文件
+#include <sstream>  // 引入 sstream 头文件
 
 // Function to check if the next argument exists
 static std::string get_next_arg(int& i, int argc, char** argv, const std::string& flag, gpt_params& params) {
     if (i + 1 < argc && argv[i + 1][0] != '-') {
-        return argv[++i];
+        return argv[++i];  // 返回
     } else {
         fprintf(stderr, "error: %s requires one argument.\n", flag.c_str());
         gpt_print_usage(argc, argv, params);
@@ -84,7 +84,7 @@ bool gpt_params_parse(int argc, char ** argv, gpt_params & params) {
         }
     }
 
-    return true;
+    return true;  // 返回
 }
 
 void gpt_print_usage(int /*argc*/, char ** argv, const gpt_params & params) {
@@ -130,7 +130,7 @@ std::string gpt_random_prompt(std::mt19937 & rng) {
         case 9: return "They";
     }
 
-    return "The";
+    return "The";  // 返回
 }
 
 std::string trim(const std::string & s) {
@@ -145,7 +145,7 @@ std::string replace(const std::string & s, const std::string & from, const std::
         result.replace(pos, from.length(), to);
         pos += to.length();
     }
-    return result;
+    return result;  // 返回
 }
 
 void gpt_vocab::add_special_token(const std::string & token) {
@@ -169,7 +169,7 @@ std::map<std::string, int32_t> json_parse(const std::string & fname) {
     }
 
     if (json[0] != '{') {
-        return result;
+        return result;  // 返回
     }
 
     // parse json
@@ -240,7 +240,7 @@ std::map<std::string, int32_t> json_parse(const std::string & fname) {
         }
     }
 
-    return result;
+    return result;  // 返回
 }
 
 void gpt_split_words(std::string str, std::vector<std::string>& words) {
@@ -312,7 +312,7 @@ std::vector<gpt_vocab::id> gpt_tokenize(const gpt_vocab & vocab, const std::stri
         }
     }
 
-    return tokens;
+    return tokens;  // 返回
 }
 
 static std::vector<gpt_vocab::id> parse_tokens_from_string(const std::string& input, char delimiter) {
@@ -324,7 +324,7 @@ static std::vector<gpt_vocab::id> parse_tokens_from_string(const std::string& in
         output.push_back(std::stoi(token));
     }
 
-    return output;
+    return output;  // 返回
 }
 
 static std::map<std::string, std::vector<gpt_vocab::id>> extract_tests_from_file(const std::string & fpath_test){
@@ -347,7 +347,7 @@ static std::map<std::string, std::vector<gpt_vocab::id>> extract_tests_from_file
             tests[text] = parse_tokens_from_string(s_tokens, del_tok);
         }
     }
-    return tests;
+    return tests;  // 返回
 }
 
 void test_gpt_tokenizer(gpt_vocab & vocab, const std::string & fpath_test){
@@ -395,7 +395,7 @@ bool gpt_vocab_init(const std::string & fname, gpt_vocab & vocab) {
     //    printf("'%s' -> %d\n", kv.first.data(), kv.second);
     //}
 
-    return true;
+    return true;  // 返回
 }
 
 gpt_vocab::id gpt_sample_top_k_top_p(
@@ -422,7 +422,7 @@ gpt_vocab::id gpt_sample_top_k_top_p(
             logits_id.begin(),
             logits_id.begin() + top_k, logits_id.end(),
             [](const std::pair<double, gpt_vocab::id> & a, const std::pair<double, gpt_vocab::id> & b) {
-        return a.first > b.first;
+        return a.first > b.first;  // 返回
     });
 
     logits_id.resize(top_k);
@@ -475,7 +475,7 @@ gpt_vocab::id gpt_sample_top_k_top_p(
     std::discrete_distribution<> dist(probs.begin(), probs.end());
     int idx = dist(rng);
 
-    return logits_id[idx].second;
+    return logits_id[idx].second;  // 返回
 }
 
 gpt_vocab::id gpt_sample_top_k_top_p_repeat(
@@ -507,7 +507,7 @@ gpt_vocab::id gpt_sample_top_k_top_p_repeat(
                 max_id = i;
             }
         }
-        return max_id;
+        return max_id;  // 返回
     }
 
 
@@ -537,7 +537,7 @@ gpt_vocab::id gpt_sample_top_k_top_p_repeat(
             logits_id.begin(),
             logits_id.begin() + top_k, logits_id.end(),
             [](const std::pair<double, gpt_vocab::id> & a, const std::pair<double, gpt_vocab::id> & b) {
-        return a.first > b.first;
+        return a.first > b.first;  // 返回
     });
 
     logits_id.resize(top_k);
@@ -590,7 +590,7 @@ gpt_vocab::id gpt_sample_top_k_top_p_repeat(
     std::discrete_distribution<> dist(probs.begin(), probs.end());
     int idx = dist(rng);
 
-    return logits_id[idx].second;
+    return logits_id[idx].second;  // 返回
 
 }
 
@@ -613,7 +613,7 @@ bool vad_simple(std::vector<float> & pcmf32, int sample_rate, int last_ms, float
 
     if (n_samples_last >= n_samples) {
         // not enough samples - assume no speech
-        return false;
+        return false;  // 返回
     }
 
     if (freq_thold > 0.0f) {
@@ -639,10 +639,10 @@ bool vad_simple(std::vector<float> & pcmf32, int sample_rate, int last_ms, float
     }
 
     if (energy_last > vad_thold*energy_all) {
-        return false;
+        return false;  // 返回
     }
 
-    return true;
+    return true;  // 返回
 }
 
 float similarity(const std::string & s0, const std::string & s1) {

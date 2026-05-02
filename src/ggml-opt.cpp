@@ -1,19 +1,19 @@
-#include "ggml-opt.h"
+#include "ggml-opt.h"  // 引入 ggml-opt.h 头文件
 
-#include "ggml.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-impl.h"  // 引入 ggml-impl.h 头文件
 
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-#include <cinttypes>
-#include <map>
-#include <random>
-#include <vector>
+#include <algorithm>  // 引入 algorithm 头文件
+#include <cmath>  // 引入 cmath 头文件
+#include <cstdint>  // 引入 cstdint 头文件
+#include <cinttypes>  // 引入 cinttypes 头文件
+#include <map>  // 引入 map 头文件
+#include <random>  // 引入 random 头文件
+#include <vector>  // 引入 vector 头文件
 
-struct ggml_opt_dataset {
+struct ggml_opt_dataset {  // 结构体定义
     struct ggml_context   * ctx    = nullptr;
     ggml_backend_buffer_t   buf    = nullptr;
     struct ggml_tensor    * data   = nullptr;
@@ -27,7 +27,7 @@ struct ggml_opt_dataset {
     std::vector<int64_t> permutation;
 };
 
-struct ggml_opt_context {
+struct ggml_opt_context {  // 结构体定义
     ggml_backend_sched_t       backend_sched        = nullptr;
     ggml_cgraph              * allocated_graph      = nullptr;
     ggml_cgraph              * allocated_graph_copy = nullptr;
@@ -71,7 +71,7 @@ struct ggml_opt_context {
     enum ggml_opt_optimizer_type optimizer = GGML_OPT_OPTIMIZER_TYPE_ADAMW;
 };
 
-struct ggml_opt_result {
+struct ggml_opt_result {  // 结构体定义
     int64_t              ndata    = 0;
     std::vector<float>   loss;
     std::vector<int32_t> pred;
@@ -100,7 +100,7 @@ ggml_opt_dataset_t ggml_opt_dataset_init(
     result->ndata_shard = ndata_shard;
 
     {
-        struct ggml_init_params params = {
+        struct ggml_init_params params = {  // 结构体定义
             /*.mem_size   =*/ 2*ggml_tensor_overhead(),
             /*.mem_buffer =*/ nullptr,
             /*.no_alloc   =*/ true,
@@ -126,7 +126,7 @@ ggml_opt_dataset_t ggml_opt_dataset_init(
     for (int64_t i = 0; i < nshards; ++i) {
         result->permutation[i] = i;
     }
-    return result;
+    return result;  // 返回
 }
 
 void ggml_opt_dataset_free(ggml_opt_dataset_t dataset) {
@@ -136,15 +136,15 @@ void ggml_opt_dataset_free(ggml_opt_dataset_t dataset) {
 }
 
 int64_t ggml_opt_dataset_ndata(ggml_opt_dataset_t dataset) {
-    return dataset->ndata;
+    return dataset->ndata;  // 返回
 }
 
-struct ggml_tensor * ggml_opt_dataset_data(ggml_opt_dataset_t dataset) {
-    return dataset->data;
+struct ggml_tensor * ggml_opt_dataset_data(ggml_opt_dataset_t dataset) {  // 结构体定义
+    return dataset->data;  // 返回
 }
 
-struct ggml_tensor * ggml_opt_dataset_labels(ggml_opt_dataset_t dataset) {
-    return dataset->labels;
+struct ggml_tensor * ggml_opt_dataset_labels(ggml_opt_dataset_t dataset) {  // 结构体定义
+    return dataset->labels;  // 返回
 }
 
 void ggml_opt_dataset_shuffle(ggml_opt_context_t opt_ctx, ggml_opt_dataset_t dataset, int64_t idata) {
@@ -152,7 +152,7 @@ void ggml_opt_dataset_shuffle(ggml_opt_context_t opt_ctx, ggml_opt_dataset_t dat
 
     if (idata < 0) {
         std::shuffle(dataset->permutation.begin(), dataset->permutation.end(), opt_ctx->rng);
-        return;
+        return;  // 返回
     }
 
     GGML_ASSERT(idata % dataset->ndata_shard == 0);
@@ -220,7 +220,7 @@ void ggml_opt_dataset_get_batch_host(ggml_opt_dataset_t dataset, void * data_bat
 
 // ====== Model / Context ======
 
-struct ggml_opt_optimizer_params ggml_opt_get_default_optimizer_params(void * userdata) {
+struct ggml_opt_optimizer_params ggml_opt_get_default_optimizer_params(void * userdata) {  // 结构体定义
     GGML_UNUSED(userdata);
 
     ggml_opt_optimizer_params result;
@@ -234,18 +234,18 @@ struct ggml_opt_optimizer_params ggml_opt_get_default_optimizer_params(void * us
     result.sgd.alpha   = 1e-3f;
     result.sgd.wd      = 0.0f;
 
-    return result;
+    return result;  // 返回
 }
 
 
-struct ggml_opt_optimizer_params ggml_opt_get_constant_optimizer_params(void * userdata) {
+struct ggml_opt_optimizer_params ggml_opt_get_constant_optimizer_params(void * userdata) {  // 结构体定义
     return *((struct ggml_opt_optimizer_params *) userdata);
 }
 
 struct ggml_opt_params ggml_opt_default_params(
         ggml_backend_sched_t      backend_sched,
-        enum ggml_opt_loss_type   loss_type) {
-    return {
+        enum ggml_opt_loss_type   loss_type) {  // 枚举定义
+    return {  // 返回
         /*backend_sched   =*/ backend_sched,
         /*ctx_compute     =*/ nullptr,
         /*inputs          =*/ nullptr,
@@ -261,11 +261,11 @@ struct ggml_opt_params ggml_opt_default_params(
 
 static ggml_tensor * map_tensor(std::map<ggml_tensor *, ggml_tensor *> & tensor_map, ggml_context * ctx, ggml_tensor * tensor) {
     if (!tensor) {
-        return nullptr;
+        return nullptr;  // 返回
     }
 
     if (tensor_map.find(tensor) != tensor_map.end()) {
-        return tensor_map[tensor];
+        return tensor_map[tensor];  // 返回
     }
 
     ggml_tensor * new_tensor = ggml_dup_tensor(ctx, tensor);
@@ -287,7 +287,7 @@ static ggml_tensor * map_tensor(std::map<ggml_tensor *, ggml_tensor *> & tensor_
         new_tensor->src[i] = map_tensor(tensor_map, ctx, tensor->src[i]);
     }
 
-    return new_tensor;
+    return new_tensor;  // 返回
 }
 
 static ggml_cgraph * dup_graph(ggml_context * ctx, ggml_cgraph * src) {
@@ -316,7 +316,7 @@ static ggml_cgraph * dup_graph(ggml_context * ctx, ggml_cgraph * src) {
         dst->grad_accs[igrad_dst] = src->grad_accs[igrad_src];
     }
 
-    return dst;
+    return dst;  // 返回
 }
 
 static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
@@ -355,7 +355,7 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
         const size_t tensors_per_param = (accumulate ? 1 : 0) + (need_momenta ? 2 : 0);
         const size_t tensors_const = opt_ctx->static_graphs ? 9 : 0;
         const size_t size_meta = (n_loss + tensors_per_param*n_param + tensors_const) * ggml_tensor_overhead();
-        struct ggml_init_params params = {
+        struct ggml_init_params params = {  // 结构体定义
             /*.mem_size   =*/ size_meta,
             /*.mem_buffer =*/ nullptr,
             /*.no_alloc   =*/ true,
@@ -369,7 +369,7 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
         // It is used for:
         //   - optimizer parameters (1 shared for all optimizer invocations)
         const size_t size_meta = 1 * ggml_tensor_overhead();
-        struct ggml_init_params params = {
+        struct ggml_init_params params = {  // 结构体定义
             /*.mem_size   =*/ size_meta,
             /*.mem_buffer =*/ nullptr,
             /*.no_alloc   =*/ true,
@@ -447,12 +447,12 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
 
     if (opt_ctx->buf_static) {
         if (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_FORWARD) {
-            return;
+            return;  // 返回
         }
     } else if (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_FORWARD) {
         opt_ctx->buf_static = ggml_backend_alloc_ctx_tensors(
             opt_ctx->ctx_static, ggml_backend_sched_get_backend(opt_ctx->backend_sched, 0));
-        return;
+        return;  // 返回
     }
 
     if (opt_ctx->grad_accs.empty()) {
@@ -491,7 +491,7 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
 
     if (opt_ctx->buf_static) {
         if (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_GRAD) {
-            return;
+            return;  // 返回
         }
     } else if (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_GRAD) {
         opt_ctx->buf_static = ggml_backend_alloc_ctx_tensors(opt_ctx->ctx_static, ggml_backend_sched_get_backend(opt_ctx->backend_sched, 0));
@@ -567,7 +567,7 @@ ggml_opt_context_t ggml_opt_init(struct ggml_opt_params params) {
     if (!result->static_graphs) {
         GGML_ASSERT(!result->inputs);
         GGML_ASSERT(!result->outputs);
-        return result;
+        return result;  // 返回
     }
 
     GGML_ASSERT(result->inputs);
@@ -578,12 +578,12 @@ ggml_opt_context_t ggml_opt_init(struct ggml_opt_params params) {
 
     ggml_opt_build(result);
 
-    return result;
+    return result;  // 返回
 }
 
 void ggml_opt_free(ggml_opt_context_t opt_ctx) {
     if (opt_ctx == nullptr) {
-        return;
+        return;  // 返回
     }
     ggml_backend_buffer_free(opt_ctx->buf_static);
     ggml_backend_buffer_free(opt_ctx->buf_cpu);
@@ -603,41 +603,41 @@ void ggml_opt_reset(ggml_opt_context_t opt_ctx, bool optimizer) {
 }
 
 bool ggml_opt_static_graphs(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->static_graphs;
+    return opt_ctx->static_graphs;  // 返回
 }
 
-struct ggml_tensor * ggml_opt_inputs(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->inputs;
+struct ggml_tensor * ggml_opt_inputs(ggml_opt_context_t opt_ctx) {  // 结构体定义
+    return opt_ctx->inputs;  // 返回
 }
 
-struct ggml_tensor * ggml_opt_outputs(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->outputs;
+struct ggml_tensor * ggml_opt_outputs(ggml_opt_context_t opt_ctx) {  // 结构体定义
+    return opt_ctx->outputs;  // 返回
 }
 
-struct ggml_tensor * ggml_opt_labels(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->labels;
+struct ggml_tensor * ggml_opt_labels(ggml_opt_context_t opt_ctx) {  // 结构体定义
+    return opt_ctx->labels;  // 返回
 }
 
-struct ggml_tensor * ggml_opt_loss(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->loss;
+struct ggml_tensor * ggml_opt_loss(ggml_opt_context_t opt_ctx) {  // 结构体定义
+    return opt_ctx->loss;  // 返回
 }
 
-struct ggml_tensor * ggml_opt_pred(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->pred;
+struct ggml_tensor * ggml_opt_pred(ggml_opt_context_t opt_ctx) {  // 结构体定义
+    return opt_ctx->pred;  // 返回
 }
 
-struct ggml_tensor * ggml_opt_ncorrect(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->ncorrect;
+struct ggml_tensor * ggml_opt_ncorrect(ggml_opt_context_t opt_ctx) {  // 结构体定义
+    return opt_ctx->ncorrect;  // 返回
 }
 
-struct ggml_tensor * ggml_opt_grad_acc(ggml_opt_context_t opt_ctx, struct ggml_tensor * node) {
-    return ggml_graph_get_grad_acc(opt_ctx->gb_opt, node);
+struct ggml_tensor * ggml_opt_grad_acc(ggml_opt_context_t opt_ctx, struct ggml_tensor * node) {  // 结构体定义
+    return ggml_graph_get_grad_acc(opt_ctx->gb_opt, node);  // ggml_graph_get_grad_acc
 }
 
 // ====== Optimization Result ======
 
 ggml_opt_result_t ggml_opt_result_init() {
-    return new ggml_opt_result;
+    return new ggml_opt_result;  // 返回
 }
 
 void ggml_opt_result_free(ggml_opt_result_t result) {
@@ -661,7 +661,7 @@ void ggml_opt_result_loss(ggml_opt_result_t result, double * loss, double * unc)
     if (nbatches == 0) {
         *loss = 0.0;
         *unc  = NAN;
-        return;
+        return;  // 返回
     }
 
     double sum         = 0.0;
@@ -678,12 +678,12 @@ void ggml_opt_result_loss(ggml_opt_result_t result, double * loss, double * unc)
     *loss = result->loss_per_datapoint ? mean : sum;
 
     if (!unc) {
-        return;
+        return;  // 返回
     }
 
     if (nbatches < 2) {
         *unc = NAN;
-        return;
+        return;  // 返回
     }
 
     const double var_sum = sum_squared/nbatches - mean*mean; // variance without Bessel's correction, i.e. nbatches/(nbatches-1)
@@ -700,7 +700,7 @@ void ggml_opt_result_accuracy(ggml_opt_result_t result, double * accuracy, doubl
     *accuracy = result->ncorrect >= 0 ? double(result->ncorrect) / double(result->ndata) : NAN;
 
     if (!unc) {
-        return;
+        return;  // 返回
     }
 
     *unc = result->ncorrect >= 0 && result->ndata >= 2 ?
@@ -714,7 +714,7 @@ void ggml_opt_prepare_alloc(
         struct ggml_context * ctx_compute,
         struct ggml_cgraph  * gf,
         struct ggml_tensor  * inputs,
-        struct ggml_tensor  * outputs) {
+        struct ggml_tensor  * outputs) {  // 结构体定义
     GGML_ASSERT(!opt_ctx->static_graphs);
     opt_ctx->ctx_compute = ctx_compute;
     opt_ctx->gf          = gf;
@@ -754,7 +754,7 @@ void ggml_opt_alloc(ggml_opt_context_t opt_ctx, bool backward) {
 
     if (opt_ctx->allocated_graph == graph) {
         opt_ctx->eval_ready = true;
-        return;
+        return;  // 返回
     }
 
     ggml_backend_sched_reset(opt_ctx->backend_sched); // clear allocation of previous graph
@@ -836,7 +836,7 @@ void ggml_opt_eval(ggml_opt_context_t opt_ctx, ggml_opt_result_t result) {
     opt_ctx->eval_ready = false;
 
     if (!result) {
-        return;
+        return;  // 返回
     }
 
     if (result->ndata == 0) {
@@ -866,7 +866,7 @@ void ggml_opt_eval(ggml_opt_context_t opt_ctx, ggml_opt_result_t result) {
 
     if (!opt_ctx->ncorrect || result->ncorrect < 0) {
         result->ncorrect = -1;
-        return;
+        return;  // 返回
     }
 
     GGML_ASSERT(ggml_is_scalar(opt_ctx->ncorrect));
@@ -1078,17 +1078,17 @@ void ggml_opt_fit(
     ggml_opt_result_free(result_val);
 }
 
-enum ggml_opt_optimizer_type ggml_opt_context_optimizer_type(ggml_opt_context_t c) {
-    return c->optimizer;
+enum ggml_opt_optimizer_type ggml_opt_context_optimizer_type(ggml_opt_context_t c) {  // 枚举定义
+    return c->optimizer;  // 返回
 }
 
 GGML_API const char * ggml_opt_optimizer_name(enum ggml_opt_optimizer_type o) {
     switch (o) {
         case GGML_OPT_OPTIMIZER_TYPE_ADAMW:
-            return "adamw";
+            return "adamw";  // 返回
         case GGML_OPT_OPTIMIZER_TYPE_SGD:
-            return "sgd";
+            return "sgd";  // 返回
         default:
-            return "undefined";
+            return "undefined";  // 返回
     };
 }

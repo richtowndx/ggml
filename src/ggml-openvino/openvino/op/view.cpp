@@ -1,17 +1,17 @@
-#include "../op_table.h"
-#include "../utils.h"
-#include <openvino/op/reshape.hpp>
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+#include "../op_table.h"  // 引入 ../op_table.h 头文件
+#include "../utils.h"  // 引入 ../utils.h 头文件
+#include <openvino/op/reshape.hpp>  // 引入 openvino/op/reshape.hpp 头文件
+namespace ov {  // 命名空间
+namespace frontend {  // 命名空间
+namespace ggml {  // 命名空间
+namespace op {  // 命名空间
 
 OutputVector translate_view(const NodeContext & context) {
     num_inputs_check(context, 1, 1);
 
     if (context.get_op_case() == 2) {
         auto dst_shape = context.get_output_shape().to_shape();
-        return rename_outputs_with_suffix({process_view_input(context, 0, dst_shape[2] * dst_shape[3])},
+        return rename_outputs_with_suffix({process_view_input(context, 0, dst_shape[2] * dst_shape[3])},  // 返回
                                           context.get_name());
     }
     // op_case 3
@@ -42,9 +42,9 @@ OutputVector translate_view(const NodeContext & context) {
         auto stride = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
         auto axes = ov::op::v0::Constant::create(ov::element::i64, {1}, {slice_dim});
         auto sliced = std::make_shared<ov::op::v8::Slice>(input, begin, end, stride, axes);
-        return {sliced};
+        return {sliced};  // 返回
     }
-    return {context.get_input(0)};
+    return {context.get_input(0)};  // 返回
 }
 
 }  // namespace op

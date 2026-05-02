@@ -1,11 +1,11 @@
-#ifndef HVX_SCALE_H
-#define HVX_SCALE_H
+#ifndef HVX_SCALE_H  // 如果未定义 HVX_SCALE_H 则编译
+#define HVX_SCALE_H  // 宏定义 HVX_SCALE_H
 
-#include <assert.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <assert.h>  // 引入 assert.h 头文件
+#include <stddef.h>  // 引入 stddef.h 头文件
+#include <stdint.h>  // 引入 stdint.h 头文件
 
-#include "hvx-base.h"
+#include "hvx-base.h"  // 引入 hvx-base.h 头文件
 
 #define hvx_scale_f32_loop_body(dst_type, src_type, vec_store)                       \
     do {                                                                             \
@@ -130,4 +130,4 @@ static inline void hvx_scale_offset_f32(uint8_t * restrict dst, const uint8_t * 
     }
 }
 
-#endif // HVX_SCALE_H
+#endif // HVX_SCALE_H  // 条件编译结束

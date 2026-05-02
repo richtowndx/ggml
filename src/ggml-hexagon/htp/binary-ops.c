@@ -2,27 +2,27 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
 
-#include <math.h>
-#include <string.h>
+#include <math.h>  // 引入 math.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-#include "hex-dma.h"
-#include "hvx-utils.h"
+#include "hex-dma.h"  // 引入 hex-dma.h 头文件
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-ops.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
 
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
+#ifndef MIN  // 如果未定义 MIN 则编译
+#define MIN(a, b) ((a) < (b) ? (a) : (b))  // 宏定义 MIN
+#endif  // 条件编译结束
 
 // Context for binary operations
-struct htp_binary_context {
+struct htp_binary_context {  // 结构体定义
     struct htp_ops_context * octx;
 
     struct fastdiv_values src0_dim1_div; // ne01
@@ -88,7 +88,7 @@ static inline uint32_t calc_block_size(struct htp_binary_context * bctx, uint32_
          block_limit = MIN(block_limit, rows_in_plane);
     }
 
-    return MIN(bctx->block_max, block_limit);
+    return MIN(bctx->block_max, block_limit);  // MIN
 }
 
 // Macro for scalar op switch
@@ -775,7 +775,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
 
     if (rows_per_buffer < 1) {
         FARF(ERROR, "binary: VTCM too small\n");
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        return HTP_STATUS_VTCM_TOO_SMALL;  // 返回
     }
 
     octx->src0_spad.size_per_thread = rows_per_buffer * 2 * src0_row_size_aligned;
@@ -796,7 +796,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
     }
 
     if (octx->ctx->vtcm_size < (octx->src0_spad.size + octx->src1_spad.size + octx->dst_spad.size)) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        return HTP_STATUS_VTCM_TOO_SMALL;  // 返回
     }
 
     octx->src0_spad.data = octx->ctx->vtcm_base;                        octx->src0_spad.src = NULL;
@@ -804,7 +804,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
     octx->dst_spad.data  = octx->src1_spad.data + octx->src1_spad.size; octx->dst_spad.src  = NULL;
 
     if ((octx->flags & HTP_OPFLAGS_SKIP_COMPUTE)) {
-        return HTP_STATUS_OK;
+        return HTP_STATUS_OK;  // 返回
     }
 
     dma_queue * q = octx->ctx->dma[0];
@@ -851,7 +851,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
 
     worker_pool_run_func(octx->ctx->worker_pool, worker_func, &bctx, n_threads);
 
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }
 
 int op_binary(struct htp_ops_context * octx) {
@@ -859,14 +859,14 @@ int op_binary(struct htp_ops_context * octx) {
     // Does not support permutations of src1
     const struct htp_tensor * src1 = octx->src[1];
     if (src1->nb[1] < src1->nb[0]) {
-        return HTP_STATUS_NO_SUPPORT;
+        return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     const uint32_t src0_type = octx->src[0]->type;
     if ((src0_type == HTP_TYPE_F32) || (src0_type == HTP_TYPE_F16)) {
-        return execute_op_binary(octx);
+        return execute_op_binary(octx);  // execute_op_binary
     }
 
-    return HTP_STATUS_NO_SUPPORT;
+    return HTP_STATUS_NO_SUPPORT;  // 返回
 }
 

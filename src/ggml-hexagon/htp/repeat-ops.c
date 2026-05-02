@@ -2,20 +2,20 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#include <HAP_farf.h>  // 引入 HAP_farf.h 头文件
+#include <HAP_perf.h>  // 引入 HAP_perf.h 头文件
 
-#include <string.h>
+#include <string.h>  // 引入 string.h 头文件
 
-#include "hvx-utils.h"
+#include "hvx-utils.h"  // 引入 hvx-utils.h 头文件
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-ops.h"
+#define GGML_COMMON_DECL_C  // 宏定义 GGML_COMMON_DECL_C
+#include "ggml-common.h"  // 引入 ggml-common.h 头文件
+#include "htp-ctx.h"  // 引入 htp-ctx.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
+#include "htp-ops.h"  // 引入 htp-ops.h 头文件
 
-struct htp_repeat_context {
+struct htp_repeat_context {  // 结构体定义
     struct htp_ops_context * octx;
 
     uint32_t nr0;
@@ -107,7 +107,7 @@ int op_repeat(struct htp_ops_context * octx) {
         dst->ne[2] % src0->ne[2] != 0 ||
         dst->ne[3] % src0->ne[3] != 0) {
         FARF(ERROR, "repeat: dst dims must be multiples of src dims\n");
-        return HTP_STATUS_INVAL_PARAMS;
+        return HTP_STATUS_INVAL_PARAMS;  // 返回
     }
 
     size_t type_size;
@@ -116,17 +116,17 @@ int op_repeat(struct htp_ops_context * octx) {
         case HTP_TYPE_F16: type_size = 2; break;
         default:
             FARF(ERROR, "repeat: unsupported type %u\n", src0->type);
-            return HTP_STATUS_NO_SUPPORT;
+            return HTP_STATUS_NO_SUPPORT;  // 返回
     }
 
     const uint32_t total_dst_rows = dst->ne[1] * dst->ne[2] * dst->ne[3];
     const uint32_t n_threads = MIN(octx->n_threads, total_dst_rows);
 
     if (octx->flags & HTP_OPFLAGS_SKIP_COMPUTE) {
-        return HTP_STATUS_OK;
+        return HTP_STATUS_OK;  // 返回
     }
 
-    struct htp_repeat_context rctx = {
+    struct htp_repeat_context rctx = {  // 结构体定义
         .octx             = octx,
         .nr0              = dst->ne[0] / src0->ne[0],
         .nr1              = dst->ne[1] / src0->ne[1],
@@ -144,5 +144,5 @@ int op_repeat(struct htp_ops_context * octx) {
 
     worker_pool_run_func(octx->ctx->worker_pool, repeat_job_per_thread, &rctx, n_threads);
 
-    return HTP_STATUS_OK;
+    return HTP_STATUS_OK;  // 返回
 }

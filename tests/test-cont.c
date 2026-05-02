@@ -1,15 +1,15 @@
-#include "ggml-backend.h"
-#include "ggml-cpu.h"
-#include "ggml.h"
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-cpu.h"  // 引入 ggml-cpu.h 头文件
+#include "ggml.h"  // 引入 ggml.h 头文件
 
-#ifdef GGML_USE_CUDA
-#include "ggml-cuda.h"
-#endif
+#ifdef GGML_USE_CUDA  // 如果定义了 GGML_USE_CUDA 则编译
+#include "ggml-cuda.h"  // 引入 ggml-cuda.h 头文件
+#endif  // 条件编译结束
 
-#include <stdlib.h>
-#include <string.h>
+#include <stdlib.h>  // 引入 stdlib.h 头文件
+#include <string.h>  // 引入 string.h 头文件
 
-struct model {
+struct model {  // 结构体定义
     struct ggml_context* ctx;
     struct ggml_context* ctx0;
     ggml_backend_t backend;
@@ -19,28 +19,28 @@ struct model {
     uint8_t* buf;
 };
 
-struct ggml_context* make_ctx(void) {
-    struct ggml_init_params params = {
+struct ggml_context* make_ctx(void) {  // 结构体定义
+    struct ggml_init_params params = {  // 结构体定义
         .mem_size = ggml_tensor_overhead() * 3,
         .mem_buffer = NULL,
         .no_alloc = true,
     };
-    return ggml_init(params);
+    return ggml_init(params);  // ggml_init
 }
 
 ggml_backend_t make_backend(void) {
     ggml_backend_t backend = NULL;
 
-#ifdef GGML_USE_CUDA
+#ifdef GGML_USE_CUDA  // 如果定义了 GGML_USE_CUDA 则编译
     backend = ggml_backend_cuda_init(0);
     GGML_ASSERT(backend != NULL);
-#endif
+#endif  // 条件编译结束
 
     if (!backend) {
         backend = ggml_backend_cpu_init();
     }
 
-    return backend;
+    return backend;  // 返回
 }
 
 void model_init(struct model* m) {
@@ -49,7 +49,7 @@ void model_init(struct model* m) {
 
     size_t buf_size = ggml_tensor_overhead() * GGML_DEFAULT_GRAPH_SIZE + ggml_graph_overhead();
     m->buf = calloc(buf_size, sizeof(uint8_t));
-    struct ggml_init_params params0 = {
+    struct ggml_init_params params0 = {  // 结构体定义
         .mem_size = buf_size,
         .mem_buffer = m->buf,
         .no_alloc = true,
@@ -166,5 +166,5 @@ void test_cont(void) {
 
 int main(int argc, const char* argv[]) {
     test_cont();
-    return 0;
+    return 0;  // 返回
 }

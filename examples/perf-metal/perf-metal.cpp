@@ -9,14 +9,14 @@
 //   https://github.com/ggerganov/llama.cpp/issues/9507
 //
 
-#include "ggml.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
-#include "ggml-metal.h"
+#include "ggml.h"  // 引入 ggml.h 头文件
+#include "ggml-alloc.h"  // 引入 ggml-alloc.h 头文件
+#include "ggml-backend.h"  // 引入 ggml-backend.h 头文件
+#include "ggml-metal.h"  // 引入 ggml-metal.h 头文件
 
-#include <cstdio>
-#include <vector>
-#include <thread>
+#include <cstdio>  // 引入 cstdio 头文件
+#include <vector>  // 引入 vector 头文件
+#include <thread>  // 引入 thread 头文件
 
 int main(int argc, char ** argv) {
     int n_op = 1024;
@@ -42,12 +42,12 @@ int main(int argc, char ** argv) {
     ggml_backend_t backend = ggml_backend_metal_init();
     if (!backend) {
         fprintf(stderr, "%s: ggml_backend_metal_init() failed\n", __func__);
-        return 1;
+        return 1;  // 返回
     }
 
     const size_t ctx_size = 2 * ggml_tensor_overhead();
 
-    struct ggml_init_params params = {
+    struct ggml_init_params params = {  // 结构体定义
         /*.mem_size   =*/ ctx_size,
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -75,7 +75,7 @@ int main(int argc, char ** argv) {
     // ... repeat n_op times ...
     //
     {
-        struct ggml_init_params params0 = {
+        struct ggml_init_params params0 = {  // 结构体定义
             /*.mem_size   =*/ 4*n_op*ggml_tensor_overhead() + ggml_graph_overhead(),
             /*.mem_buffer =*/ NULL,
             /*.no_alloc   =*/ true,
@@ -148,5 +148,5 @@ int main(int argc, char ** argv) {
     ggml_backend_buffer_free(buffer);
     ggml_backend_free(backend);
 
-    return 0;
+    return 0;  // 返回
 }
